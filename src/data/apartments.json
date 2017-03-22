@@ -1,0 +1,14 @@
+{
+  "model": "Apartment",
+  "records": [{
+    "id": "7112VAL1",
+    "reference": "7112VAL1",
+    "name": "112 Vallier",
+    "addressStreet": "112 rue Vallier",
+    "addressZip": "69007",
+    "addressCity": "lyon",
+    "addressCountry": "france",
+    "floorArea": 80,
+    "latLng": "45.732778,4.838222"
+  }]
+}

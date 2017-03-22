@@ -1,0 +1,20 @@
+{
+  "model": "Order",
+  "records": [{
+    "id": "order-0",
+    "label": "Loyer Mars",
+    "ClientId": "alexandre-amoyel"
+  },{
+    "id": "order-1",
+    "label": "Loyer Mars",
+    "ClientId": "katya-lukina"
+  },{
+    "id": "order-2",
+    "label": "Loyer Mars",
+    "ClientId": "alice-clarke"
+  },{
+    "id": "order-3",
+    "label": "Loyer Mars",
+    "ClientId": "nhat-le-nguyen"
+  }]
+}

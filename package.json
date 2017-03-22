@@ -2,26 +2,31 @@
   "name": "chez-nestor.com",
   "version": "1.0.0",
   "description": "Chez Nestor admin built using Forest Admin",
-  "main": "index.js",
+  "main": "src/index.js",
   "dependencies": {
-    "express": "^4.14.1",
-    "forest-express-sequelize": "^0.5.5",
+    "deasync": "^0.1.9",
+    "express": "^4.15.2",
+    "forest-express-sequelize": "^1.0.6",
     "sequelize": "^4.0.0-2",
-    "sqlite3": "^3.1.8"
+    "sqlite3": "^3.1.8",
+    "swagger-client": "^2.1.32"
   },
   "devDependencies": {
-    "babel-eslint": "^7.1.1",
-    "eslint": "^3.14.1",
+    "babel-eslint": "^7.2.0",
+    "cross-env": "^3.2.4",
+    "eslint": "^3.18.0",
     "eslint-import-resolver-babel-root-import": "0.0.2",
-    "eslint-loader": "^1.6.1",
-    "eslint-plugin-babel": "^4.0.1",
+    "eslint-loader": "^1.6.3",
+    "eslint-plugin-babel": "^4.1.1",
     "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-mocha": "^4.8.0",
-    "eslint-plugin-react": "^6.9.0"
+    "eslint-plugin-mocha": "^4.9.0",
+    "eslint-plugin-react": "^6.10.3"
   },
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon src/index.js",
+    "debug": "nodemon --inspect src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "reset": "cross-env NODE_ENV=development node src/data/index.js"
   },
   "author": "@louis_remi",
   "license": "ISC"

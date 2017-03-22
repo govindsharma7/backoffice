@@ -1,0 +1,32 @@
+{
+  "model": "Room",
+  "records": [{
+    "id": "7112VAL11",
+    "reference": "7112VAL11",
+    "name": "112 Vallier - chambre 1",
+    "floorArea": 15,
+    "basePrice": 698,
+    "ApartmentId": "7112VAL1"
+  },{
+    "id": "7112VAL12",
+    "reference": "7112VAL12",
+    "name": "112 Vallier - chambre 2",
+    "floorArea": 8,
+    "basePrice": 568,
+    "ApartmentId": "7112VAL1"
+  },{
+    "id": "7112VAL13",
+    "reference": "7112VAL13",
+    "name": "112 Vallier - chambre 3",
+    "floorArea": 12,
+    "basePrice": 628,
+    "ApartmentId": "7112VAL1"
+  },{
+    "id": "7112VAL14",
+    "reference": "7112VAL14",
+    "name": "112 Vallier - chambre 4",
+    "floorArea": 10,
+    "basePrice": 598,
+    "ApartmentId": "7112VAL1"
+  }]
+}

@@ -1,0 +1,20 @@
+{
+  "model": "OrderItem",
+  "records": [{
+    "id": "orderItem-0",
+    "OrderId": "order-0",
+    "RentingId": "renting-0"
+  },{
+    "id": "orderItem-1",
+    "OrderId": "order-1",
+    "RentingId": "renting-1"
+  },{
+    "id": "orderItem-2",
+    "OrderId": "order-2",
+    "RentingId": "renting-2"
+  },{
+    "id": "orderItem-3",
+    "OrderId": "order-3",
+    "RentingId": "renting-3"
+  }]
+}

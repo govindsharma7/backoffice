@@ -16,6 +16,9 @@ coverage
 # node-waf configuration
 .lock-wscript
 
+# secrets
+config
+
 # Dist files
 dist
 
