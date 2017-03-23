@@ -9,10 +9,10 @@ const path   = require('path');
 const models = require('../models');
 
 if ( process.env.NODE_ENV !== 'development' ) {
-	return console.log('DB reset is only possible in development');
+  return console.log('DB reset is only possible in development');
 }
 
-models.sequelize.sync({ force: true })
+return models.sequelize.sync({ force: true })
   .then(() => {
     // We used to just load all files in the folder, but the order we load them
     // is important because of references constraints

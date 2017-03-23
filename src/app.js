@@ -10,18 +10,18 @@ const app = Express();
 /*
  * Middleware that will handle our custom Forest routes
  */
-// app.use(Jwt({
-//   secret: config.FOREST_AUTH_SECRET,
-//   credentialsRequired: false,
-// }));
-//
-// Object.keys(models).forEach(function(modelName) {
-//   if ('beforeLianaInit' in models[modelName]) {
-//     models[modelName].beforeLianaInit(models, app);
-//   }
-// });
-//
-// parentApp.use(app);
+app.use(Jwt({
+  secret: config.FOREST_AUTH_SECRET,
+  credentialsRequired: false,
+}));
+
+Object.keys(models).forEach(function(modelName) {
+  if ('beforeLianaInit' in models[modelName]) {
+    models[modelName].beforeLianaInit(models, app);
+  }
+});
+
+parentApp.use(app);
 
 /*
  * Forest middleware
@@ -35,8 +35,8 @@ parentApp.use(Liana.init({
 
 Object.keys(models).forEach(function(modelName) {
   if ('afterLianaInit' in models[modelName]) {
-    models[modelName].afterLianaInit(models, app);
+    models[modelName].afterLianaInit(models);
   }
 });
 
-module.exports = app;
+module.exports = parentApp;
