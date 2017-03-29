@@ -1,8 +1,6 @@
-// const Express = require('express');
-const Liana   = require('forest-express-sequelize');
-const Ninja   = require('../vendor/invoiceninja');
-
-// const router  = Express.Router();
+const Serializer = require('forest-express').ResourceSerializer;
+const Liana      = require('forest-express-sequelize');
+const Ninja      = require('../vendor/invoiceninja');
 
 module.exports = (sequelize, DataTypes) => {
   /*
@@ -38,10 +36,10 @@ module.exports = (sequelize, DataTypes) => {
     invoiceninjaClientId:       DataTypes.INTEGER,
   });
 
-  Client.afterLianaInit = (models) => {
-    /*
-     * Associations
-     */
+  /*
+   * Associations
+   */
+  Client.associate = (models) => {
     Client.hasMany(models.Renting);
     Client.hasMany(models.Order);
   };
@@ -49,28 +47,30 @@ module.exports = (sequelize, DataTypes) => {
   /*
    * Extra routes
    */
-  Client.beforeLianaInit = (models, app) => {
-    app.get('/forest/Client/:clientId/relationships/Invoice',
-      Liana.ensureAuthenticated,
-      (req, res, next) => {
-        Client
-          .findById(req.params.clientId)
-          .then((client) => {
-            return Ninja.invoice.listInvoices({
-              'client_id': client.invoiceninjaClientId,
-            });
-          })
-          .then((response) => {
-            console.log(response.obj.data[0]);
-            res.send(response);
-          })
-          .catch((error) => {
-            console.error(error);
-            next();
-          });
-      }
-    );
-  };
+  // Client.beforeLianaInit = (models, app) => {
+  //   app.get('/forest/Client/:clientId/relationships/Invoice',
+  //     Liana.ensureAuthenticated,
+  //     (req, res, next) => {
+  //       Client
+  //         .findById(req.params.clientId)
+  //         .then((client) => {
+  //           return Ninja.invoice.listInvoices({
+  //             'client_id': client.invoiceninjaClientId,
+  //           });
+  //         })
+  //         .then((response) => {
+  //           return new Serializer(Liana, models.Invoice, response.obj.data, {}, {
+  //             count: response.obj.data.length
+  //           }).perform();
+  //         })
+  //         .then(res.send)
+  //         .catch((error) => {
+  //           console.error(error);
+  //           next();
+  //         });
+  //     }
+  //   );
+  // };
 
   /*
    * CRUD hooks

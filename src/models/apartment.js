@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     floorArea:                DataTypes.FLOAT,
   });
 
-  Apartment.afterLianaInit = (models) => {
+  Apartment.associate = (models) => {
     Apartment.hasMany(models.Room);
   };
 

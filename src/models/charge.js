@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  Charge.afterLianaInit = (models) => {
+  Charge.associate = (models) => {
     Charge.belongsTo(models.Order);
   };
 

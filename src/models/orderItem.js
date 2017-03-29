@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  OrderItem.afterLianaInit = (models) => {
+  OrderItem.associate = (models) => {
     OrderItem.belongsTo(models.Order);
     OrderItem.belongsTo(models.Renting, {
       constraints: false,

@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     basePrice:                  DataTypes.FLOAT,
   });
 
-  Room.afterLianaInit = (models) => {
+  Room.associate = (models) => {
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
   };

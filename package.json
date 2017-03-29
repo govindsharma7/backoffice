@@ -4,10 +4,16 @@
   "description": "Chez Nestor admin built using Forest Admin",
   "main": "src/index.js",
   "dependencies": {
+    "bluebird": "^3.5.0",
+    "body-parser": "^1.17.1",
     "deasync": "^0.1.9",
     "express": "^4.15.2",
+    "express-cors": "0.0.3",
     "express-jwt": "^5.1.0",
+    "forest-express": "chez-nestor/forest-express#pluggable_integrations",
     "forest-express-sequelize": "^1.0.6",
+    "jsonapi-serializer": "^3.4.2",
+    "lodash": "^4.17.4",
     "sequelize": "^4.0.0-2",
     "sqlite3": "^3.1.8",
     "swagger-client": "^2.1.32"

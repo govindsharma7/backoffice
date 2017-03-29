@@ -10,6 +10,7 @@ const sequelize = new Sequelize(
   {
     host: config.SEQUELIZE_HOST,
     dialect: config.SEQUELIZE_DIALECT,
+    // this file is used when dialect is sqlite
     storage: '.database.sqlite',
   }
 );
@@ -27,5 +28,11 @@ fs.readdirSync(__dirname)
 
     db[model.name] = model;
   });
+
+Object.keys(db).forEach(function(modelName) {
+  if ('associate' in db[modelName]) {
+    db[modelName].associate(db);
+  }
+});
 
 module.exports = db;

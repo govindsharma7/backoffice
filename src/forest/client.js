@@ -1,4 +1,4 @@
-const Liana      = require('forest-express-sequelize');
+const Liana = require('forest-express-sequelize');
 
 Liana.collection('Client', {
   fields: [{

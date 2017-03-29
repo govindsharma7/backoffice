@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  Product.afterLianaInit = (models) => {
+  Product.associate = (models) => {
     Product.hasMany(models.OrderItem);
   };
 

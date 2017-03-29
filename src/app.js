@@ -1,5 +1,7 @@
 const Express    = require('express');
 const Jwt        = require('express-jwt');
+const Cors       = require('express-cors');
+const BodyParser = require('body-parser');
 const Liana      = require('forest-express-sequelize');
 const config     = require('./config');
 const models     = require('./models');
@@ -10,10 +12,20 @@ const app = Express();
 /*
  * Middleware that will handle our custom Forest routes
  */
+// JWT
 app.use(Jwt({
   secret: config.FOREST_AUTH_SECRET,
   credentialsRequired: false,
 }));
+
+// CORS
+app.use(Cors({
+  allowedOrigins: ['localhost:4200', '*.forestadmin.com'],
+  headers: ['Authorization', 'X-Requested-With', 'Content-Type'],
+}));
+
+// Mime type
+app.use(BodyParser.json());
 
 Object.keys(models).forEach(function(modelName) {
   if ('beforeLianaInit' in models[modelName]) {

@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  Renting.afterLianaInit = (models) => {
+  Renting.associate = (models) => {
     Renting.belongsTo(models.Client);
     Renting.belongsTo(models.Room);
     Renting.hasMany(models.OrderItem);
