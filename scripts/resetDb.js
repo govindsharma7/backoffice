@@ -6,11 +6,11 @@
  */
 /* eslint-disable import/no-dynamic-require */
 const path   = require('path');
-const models = require('../models');
+const models = require('../src/models');
 
-if ( process.env.NODE_ENV !== 'development' ) {
-  return console.log('DB reset is only possible in development');
-}
+// if ( process.env.NODE_ENV !== 'development' ) {
+//   return console.log('DB reset is only possible in development');
+// }
 
 return models.sequelize.sync({ force: true })
   .then(() => {
@@ -27,12 +27,15 @@ return models.sequelize.sync({ force: true })
 
     ].map((file) => {
       return () => {
-        const {model, records} = require(path.join(__dirname, file));
+        const {model, records} = require(path.join('..', 'data', file));
 
         console.log(`Loading ${records.length} records of model "${model}"`);
         return models[model].bulkCreate(records)
           .catch((err) => {
             console.error(`Failed loading records for model "${model}"`);
+            if ( 'errors' in err ) {
+              console.log(err.errors);
+            }
 
             throw err;
           });

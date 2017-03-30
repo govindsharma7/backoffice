@@ -1,0 +1,7 @@
+language: node_js
+node_js:
+- v6
+before_install:
+- openssl aes-256-cbc -K $encrypted_6cc93e374557_key -iv $encrypted_6cc93e374557_iv
+  -in src/config/development.js.enc -out src/config/development.js -d
+  -in src/config/staging.js.enc -out src/config/staging.js -d

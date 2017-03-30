@@ -16,12 +16,8 @@ coverage
 # node-waf configuration
 .lock-wscript
 
-# secrets
-/src/config/*.js
-!/src/config/index.js
-
-# Dist files
-dist
+# Data files
+data
 
 # Temporary files
 tmp
@@ -35,7 +31,7 @@ build/Release
 # Dependency directory
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
-/keyrings/live/pubring.gpg~
-/keyrings/live/pubring.kbx~
-/keyrings/live/secring.gpg
-/src/config/development.js
+
+# secrets
+src/config/*.js
+!src/config/index.js
