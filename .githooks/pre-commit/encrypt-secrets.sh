@@ -1,3 +1,3 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 travis encrypt-file .env-cmdrc --force
