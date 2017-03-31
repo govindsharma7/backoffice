@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "babel-eslint": "^7.2.0",
-    "cross-env": "^3.2.4",
+    "claudia": "^2.10.0",
     "eslint": "^3.18.0",
     "eslint-import-resolver-babel-root-import": "0.0.2",
     "eslint-loader": "^1.6.3",
@@ -33,11 +33,11 @@
   },
   "scripts": {
     "start": "nodemon src/index.js",
-    "staging": "cross-env NODE_ENV=staging nodemon src/index.js",
+    "staging": "env-cmd staging nodemon src/index.js",
     "debug": "nodemon --inspect src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "extract": "node scripts/extractNinjaClients.js",
-    "reset": "cross-env NODE_ENV=staging node scripts/resetDb.js"
+    "reset": "env-cmd development node scripts/resetDb.js"
   },
   "author": "@louis_remi",
   "license": "ISC"

@@ -8,9 +8,9 @@
 const path   = require('path');
 const models = require('../src/models');
 
-// if ( process.env.NODE_ENV !== 'development' ) {
-//   return console.log('DB reset is only possible in development');
-// }
+if ( process.env.NODE_ENV !== 'development' ) {
+  return console.log('DB reset is only possible in development');
+}
 
 return models.sequelize.sync({ force: true })
   .then(() => {
