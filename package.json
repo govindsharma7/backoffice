@@ -3,15 +3,21 @@
   "version": "1.0.0",
   "description": "Chez Nestor admin built using Forest Admin",
   "main": "src/index.js",
+  "files": [
+    "src",
+    ".env-cmdrc"
+  ],
   "dependencies": {
+    "aws-serverless-express": "^2.2.0",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
     "deasync": "^0.1.9",
+    "env-cmd": "^5.0.0",
     "express": "^4.15.2",
     "express-cors": "0.0.3",
     "express-jwt": "^5.1.0",
-    "forest-express": "chez-nestor/forest-express#pluggable_integrations",
-    "forest-express-sequelize": "^1.0.6",
+    "forest-express": "chez-nestor/forest-express#nestor_fork",
+    "forest-express-sequelize": "^1.0.9",
     "jsonapi-serializer": "^3.4.2",
     "lodash": "^4.17.4",
     "mysql2": "^1.2.0",
@@ -34,11 +40,13 @@
   },
   "scripts": {
     "start": "nodemon src/index.js",
-    "staging": "env-cmd staging nodemon src/index.js",
     "debug": "nodemon --inspect src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\" && exit 0",
     "extract": "node scripts/extractNinjaClients.js",
-    "reset": "env-cmd development node scripts/resetDb.js"
+    "reset": "node scripts/resetDb.js",
+    "sync": "node scripts/syncDb.js",
+    "deploy": "claudia update --use-local-dependencies",
+    "env": "env-cmd"
   },
   "author": "@louis_remi",
   "license": "ISC"

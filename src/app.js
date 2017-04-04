@@ -34,6 +34,10 @@ Object.keys(models).forEach(function(modelName) {
   }
 });
 
+app.get('/hello', (req, res) => {
+  res.send('hello-world');
+});
+
 parentApp.use(app);
 
 /*
