@@ -3,30 +3,53 @@
 const Ininja = require('../src/vendor/invoiceninja');
 
 // This script was used to initialize the database of users, using data from InvoiceNinja
-Ininja.client.listClients({
-  'per_page': 300,
-})
-.then((response) => {
-  let clients = response.obj.data
-    .filter((client) => {
-      return !client.is_deleted && client.contacts.length;
-    })
-    .map((client) => {
-      return {
-        id: `${client.contacts[0].first_name}-${client.contacts[0].last_name}`
-          .toLowerCase()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/\W/g, '-'),
-        firstName: client.contacts[0].first_name,
-        lastName: client.contacts[0].last_name,
-        email: client.contacts[0].email,
-        invoiceninjaClientId: client.id,
-      };
-    });
+Ininja.client
+  .listClients({
+    'per_page': 300,
+  })
+  .then((response) => {
+    var ids = {};
+    var emails = {};
 
-  console.log(JSON.stringify(clients));
-})
-.catch((error) => {
-  console.error(error);
-  throw error;
-});
+    let clients = response.obj.data
+      .filter((client) => {
+        return !client.is_deleted && client.contacts.length;
+      })
+      .map((client) => {
+        const firstName = client.contacts[0].first_name.trim();
+        const lastName = client.contacts[0].last_name.trim();
+        const id =
+          `${firstName}-${lastName}`
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/\W/g, '-');
+        const email = client.contacts[0].email.trim() || `UNKNOWN@${Math.random()}`;
+
+        if ( id in ids ) {
+          console.error(`Non unique id spotted: ${id}`);
+        }
+        ids[id] = true;
+        if ( email in emails ) {
+          console.error(`Non unique email spotted: ${email}`);
+        }
+        emails[email] = true;
+
+        return {
+          id: id,
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          invoiceninjaClientId: client.id,
+        };
+      });
+
+    console.log(JSON.stringify({
+      model: 'Client',
+      length: clients.length,
+      records: clients,
+    }, null, '  '));
+  })
+  .catch((err) => {
+    console.error(err);
+    throw err;
+  });

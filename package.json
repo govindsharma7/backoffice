@@ -36,7 +36,8 @@
     "eslint-plugin-mocha": "^4.9.0",
     "eslint-plugin-react": "^6.10.3",
     "git-hooks": "^1.1.8",
-    "nodemon": "^1.11.0"
+    "nodemon": "^1.11.0",
+    "wpapi": "^1.0.3"
   },
   "scripts": {
     "start": "nodemon src/index.js",
