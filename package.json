@@ -44,9 +44,10 @@
   },
   "scripts": {
     "gulp": "gulp",
-    "lint": "eslint .",
-    "test": "npm run lint"
+    "help": "gulp --tasks",
+    "start": "gulp dev:start",
+    "test": "npm test"
   },
   "author": "@louis_remi",
-  "license": "ISC"
+  "license": "MPLv2.0"
 }

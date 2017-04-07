@@ -13,7 +13,11 @@ const nodemonInspect = `${nodemon} --inspect`;
 const dbSync = 'node scripts/dbSync.js';
 const dbReset = 'node scripts/dbReset.js';
 
+const lint = 'eslint .';
+
 module.exports = {
+  'lint': lint,
+  'test': lint,
   'deploy': `${prod} claudia update --use-local-dependencies`,
   'extract:clients': 'node scripts/extractInvoiceninja.js > data/clients.json',
   'extract:portfolio': 'node scripts/extractWordpress.js > tmp/portfolio.json',
