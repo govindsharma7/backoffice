@@ -47,5 +47,5 @@ return models.sequelize.sync({ force: true })
     }, Promise.resolve(true));
   })
   .then(() => {
-    console.log('DATABASE SUCCESSFULLY RESET!')
+    console.log('DATABASE SUCCESSFULLY RESET!');
   });

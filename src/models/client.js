@@ -1,5 +1,5 @@
-const Serializer = require('forest-express').ResourceSerializer;
-const Liana      = require('forest-express-sequelize');
+// const Serializer = require('forest-express').ResourceSerializer;
+// const Liana      = require('forest-express-sequelize');
 const Ninja      = require('../vendor/invoiceninja');
 
 module.exports = (sequelize, DataTypes) => {

@@ -17,7 +17,7 @@
     "express-cors": "0.0.3",
     "express-jwt": "^5.1.0",
     "forest-express": "chez-nestor/forest-express#nestor_fork",
-    "forest-express-sequelize": "^1.0.9",
+    "forest-express-sequelize": "^1.0.10",
     "jsonapi-serializer": "^3.4.2",
     "lodash": "^4.17.4",
     "mysql2": "^1.2.0",
@@ -36,18 +36,16 @@
     "eslint-plugin-mocha": "^4.9.0",
     "eslint-plugin-react": "^6.10.3",
     "git-hooks": "^1.1.8",
+    "gulp": "github:gulpjs/gulp#4.0",
+    "gulp-shelter": "^1.0.1",
     "nodemon": "^1.11.0",
+    "sequelize-cli": "^2.7.0",
     "wpapi": "^1.0.3"
   },
   "scripts": {
-    "start": "nodemon src/index.js",
-    "debug": "nodemon --inspect src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 0",
-    "extract": "node scripts/extractNinjaClients.js",
-    "reset": "node scripts/resetDb.js",
-    "sync": "node scripts/syncDb.js",
-    "deploy": "claudia update --use-local-dependencies",
-    "env": "env-cmd"
+    "gulp": "gulp",
+    "lint": "eslint .",
+    "test": "npm run lint"
   },
   "author": "@louis_remi",
   "license": "ISC"

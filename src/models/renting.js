@@ -6,15 +6,15 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue:             DataTypes.UUIDV4,
     },
     checkinDate: {
-      type:                     DataTypes.DATEONLY,
+      type:                     DataTypes.DATE,
       required: true,
     },
     checkoutDate:  {
-      type:                     DataTypes.DATEONLY,
+      type:                     DataTypes.DATE,
       required: false,
     },
     price: {
-      type:                     DataTypes.FLOAT,
+      type:                     DataTypes.INTEGER,
       required: true,
     },
   });

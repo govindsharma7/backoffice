@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue:             DataTypes.UUIDV4,
     },
     amount: {
-      type:                     DataTypes.DATE,
+      type:                     DataTypes.INTEGER,
       required: true,
     },
   });

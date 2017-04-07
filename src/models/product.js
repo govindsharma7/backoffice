@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
     },
     price: {
-      type:                     DataTypes.FLOAT,
+      type:                     DataTypes.INTEGER,
       required: false,
     },
   });

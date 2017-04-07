@@ -14,10 +14,7 @@ const sequelize = new Sequelize(
     storage: '.database.sqlite',
   }
 );
-const db = {
-  sequelize: sequelize,
-  Sequelize: Sequelize,
-};
+const db = {};
 
 fs.readdirSync(__dirname)
   .filter(function(file) {
@@ -34,5 +31,8 @@ Object.keys(db).forEach(function(modelName) {
     db[modelName].associate(db);
   }
 });
+
+db.sequelize = sequelize;
+db.Sequelize = Sequelize;
 
 module.exports = db;
