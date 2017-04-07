@@ -46,7 +46,7 @@
     "gulp": "gulp",
     "help": "gulp --tasks",
     "start": "gulp dev:start",
-    "test": "npm test"
+    "test": "gulp test"
   },
   "author": "@louis_remi",
   "license": "MPLv2.0"
