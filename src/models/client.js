@@ -3,9 +3,6 @@
 const Ninja      = require('../vendor/invoiceninja');
 
 module.exports = (sequelize, DataTypes) => {
-  /*
-   * Model definition
-   */
   const Client = sequelize.define('Client', {
     id: {
       primaryKey: true,
@@ -25,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       unique: true,
     },
+    secondaryEmail:             DataTypes.STRING,
     phoneNumber: {
       type:                     DataTypes.STRING,
       required: true,
@@ -39,9 +37,45 @@ module.exports = (sequelize, DataTypes) => {
   /*
    * Associations
    */
-  Client.associate = (models) => {
+  Client.associate = () => {
+    const {models} = sequelize;
+
     Client.hasMany(models.Renting);
     Client.hasMany(models.Order);
+  };
+
+  Client.prototype.toInvoiceninjaClient = function() {
+    return Promise.resolve({
+      'name': `${this.firstName} ${this.lastName}`,
+      'contact': {
+        'first_name': this.firstName,
+        'last_name': this.lastName,
+        'email': this.email,
+      },
+    });
+  };
+
+  Client.prototype.createInvoiceninja = function() {
+    return this
+      .toInvoiceninjaClient()
+      .then((ninjaClient) => {
+        return Ninja.client.createClient({
+          'client': ninjaClient,
+        });
+      })
+      .then((response) => {
+        return this
+          .set('invoiceninjaClientId', response.obj.data.id)
+          .save({hooks: false});
+      });
+  };
+
+  Client.prototype.updateInvoiceninja = function() {
+    return Ninja.client
+      .updateClient({
+        'client_id': this.invoiceninjaClientId,
+        'client': this.toInvoiceninjaClient(),
+      });
   };
 
   /*
@@ -75,27 +109,12 @@ module.exports = (sequelize, DataTypes) => {
   /*
    * CRUD hooks
    *
-   * Those hooks are used to update InvoiceNinja records when clients are updated
+   * Those hooks are used to update Invoiceninja records when clients are updated
    * in Forest.
    */
   Client.hook('afterCreate', (client) => {
     if ( !client.invoiceninjaClientId ) {
-      return Ninja.client
-        .createClient({
-          client: {
-            name: `${client.firstName} ${client.lastName}`,
-            contact: {
-              'first_name': client.firstName,
-              'last_name': client.lastName,
-              'email': client.email,
-            },
-          },
-        })
-        .then((response) => {
-          client
-            .set('invoiceninjaClientId', response.obj.data.id)
-            .save({hooks: false});
-        })
+      client.createInvoiceninja()
         .catch((error) => {
           console.error(error);
           throw error;
@@ -106,29 +125,18 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.hook('afterUpdate', (client) => {
-    if ( client.invoiceninjaClientId ) {
-      if (
+    if (
+      client.invoiceninjaClientId && (
         client.changed('firstName') ||
         client.changed('lastName') ||
         client.changed('email')
-      ) {
-        return Ninja.client
-          .updateClient({
-            'client_id': client.invoiceninjaClientId,
-            'client': {
-              'name': `${client.firstName} ${client.lastName}`,
-              'contact': {
-                'first_name': client.firstName,
-                'last_name': client.lastName,
-                'email': client.email,
-              },
-            },
-          })
-          .catch((error) => {
-            console.error(error);
-            throw error;
-          });
-      }
+      )
+    ) {
+      client.updateInvoiceninja()
+        .catch((error) => {
+          console.error(error);
+          throw error;
+        });
     }
 
     return true;

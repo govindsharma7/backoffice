@@ -17,7 +17,9 @@ module.exports = (sequelize, DataTypes) => {
     floorArea:                DataTypes.FLOAT,
   });
 
-  Apartment.associate = (models) => {
+  Apartment.associate = () => {
+    const {models} = sequelize;
+
     Apartment.hasMany(models.Room);
   };
 

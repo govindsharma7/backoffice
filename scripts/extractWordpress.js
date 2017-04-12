@@ -153,7 +153,7 @@ function parseProperties(properties) {
       reference: roomRef,
       name: `${apartmentName} - chambre ${roomRef.slice(-1)}`,
       floorArea: parseFloat(property.meta.additional_estate_property_size_room[0]),
-      basePrice: parseFloat(property.meta.estate_property_price[0]),
+      basePrice: parseFloat(property.meta.estate_property_price[0]) * 100,
       ApartmentId: apartmentRef,
     };
 

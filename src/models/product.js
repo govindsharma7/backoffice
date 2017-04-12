@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.UUID,
       defaultValue:             DataTypes.UUIDV4,
     },
-    label: {
+    name: {
       type:                     DataTypes.STRING,
       required: true,
     },
@@ -15,7 +15,9 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  Product.associate = (models) => {
+  Product.associate = () => {
+    const {models} = sequelize;
+
     Product.hasMany(models.OrderItem);
   };
 

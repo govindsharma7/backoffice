@@ -16,7 +16,7 @@
     "express": "^4.15.2",
     "express-cors": "0.0.3",
     "express-jwt": "^5.1.0",
-    "forest-express": "chez-nestor/forest-express#nestor_fork",
+    "forest-express": "^1.0.5",
     "forest-express-sequelize": "^1.0.10",
     "jsonapi-serializer": "^3.4.2",
     "lodash": "^4.17.4",
@@ -38,6 +38,7 @@
     "git-hooks": "^1.1.8",
     "gulp": "github:gulpjs/gulp#4.0",
     "gulp-shelter": "^1.0.1",
+    "jest": "^19.0.2",
     "nodemon": "^1.11.0",
     "sequelize-cli": "^2.7.0",
     "wpapi": "^1.0.3"

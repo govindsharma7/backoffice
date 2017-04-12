@@ -11,7 +11,11 @@ const sequelize = new Sequelize(
     host: config.SEQUELIZE_HOST,
     dialect: config.SEQUELIZE_DIALECT,
     // this file is used when dialect is sqlite
-    storage: '.database.sqlite',
+    storage: config.SEQUELIZE_HOST,
+    // WTF Sequelize??
+    define: {
+      freezeTableName: true,
+    },
   }
 );
 const db = {};

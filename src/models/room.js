@@ -13,7 +13,9 @@ module.exports = (sequelize, DataTypes) => {
     basePrice:                  DataTypes.FLOAT,
   });
 
-  Room.associate = (models) => {
+  Room.associate = () => {
+    const {models} = sequelize;
+
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
   };

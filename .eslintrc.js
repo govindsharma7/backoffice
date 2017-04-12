@@ -88,6 +88,7 @@ module.exports = {
     'import/unambiguous': 'off',
   },
   'globals': {
-    expect: false
+    expect: false,
+    beforeAll: false
   }
 };

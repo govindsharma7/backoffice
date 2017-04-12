@@ -771,6 +771,7 @@
                     "invoice"
                 ],
                 "summary": "Create an invoice",
+                "operationId": "createInvoice",
                 "parameters": [
                     {
                         "name": "invoice",
@@ -802,6 +803,7 @@
                     "invoice"
                 ],
                 "summary": "Retrieve an Invoice",
+                "operationId": "getInvoice",
                 "parameters": [
                     {
                         "name": "invoice_id",
@@ -830,6 +832,7 @@
                     "invoice"
                 ],
                 "summary": "Update an invoice",
+                "operationId": "updateInvoice",
                 "parameters": [
                     {
                         "name": "invoice_id",
@@ -865,6 +868,7 @@
                     "invoice"
                 ],
                 "summary": "Delete an invoice",
+                "operationId": "deleteInvoice",
                 "parameters": [
                     {
                         "name": "invoice_id",

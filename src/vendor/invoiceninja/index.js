@@ -19,8 +19,8 @@ new Swagger({
 // Override the host hardcoded in the spec.
 .then((ninja) => {
   Ninja = ninja;
-  Ninja.setSchemes(['https']);
-  Ninja.setHost('payment.chez-nestor.com');
+  Ninja.setSchemes([config.NODE_ENV === 'development' ? 'http' : 'https']);
+  Ninja.setHost(config.INVOICENINJA_HOST);
 });
 
 // Swagger client initialization is async :thumbs-down:. Fix that!

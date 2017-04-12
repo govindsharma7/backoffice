@@ -19,7 +19,9 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  Renting.associate = (models) => {
+  Renting.associate = () => {
+    const {models} = sequelize;
+
     Renting.belongsTo(models.Client);
     Renting.belongsTo(models.Room);
     Renting.hasMany(models.OrderItem);
