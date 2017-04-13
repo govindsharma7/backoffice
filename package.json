@@ -47,7 +47,8 @@
     "gulp": "gulp",
     "help": "gulp --tasks",
     "start": "gulp dev:start",
-    "test": "gulp test"
+    "//TODO": "Fix `gulp test` so that it runs on Travis",
+    "test": "gulp lint"
   },
   "author": "@louis_remi",
   "license": "MPLv2.0"

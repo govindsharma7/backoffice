@@ -66,7 +66,8 @@ module.exports = (sequelize, DataTypes) => {
       .then((response) => {
         return this
           .set('invoiceninjaClientId', response.obj.data.id)
-          .save({hooks: false});
+          .save({hooks: false})
+          .then(() => { return response; });
       });
   };
 

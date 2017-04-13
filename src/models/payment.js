@@ -1,9 +1,14 @@
 module.exports = (sequelize, DataTypes) => {
-  const Charge = sequelize.define('Charge', {
+  const Payment = sequelize.define('Payment', {
     id: {
       primaryKey: true,
       type:                     DataTypes.UUID,
       defaultValue:             DataTypes.UUIDV4,
+    },
+    type: {
+      type:                     DataTypes.ENUM('card', 'sepa', 'manual'),
+      required: true,
+      defaultValue: 'card',
     },
     amount: {
       type:                     DataTypes.INTEGER,
@@ -11,11 +16,11 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  Charge.associate = () => {
+  Payment.associate = () => {
     const {models} = sequelize;
 
-    Charge.belongsTo(models.Order);
+    Payment.belongsTo(models.Order);
   };
 
-  return Charge;
+  return Payment;
 };
