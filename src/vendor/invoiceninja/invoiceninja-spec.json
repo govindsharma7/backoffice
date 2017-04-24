@@ -29,6 +29,12 @@
                 "operationId": "listClients",
                 "parameters": [
                     {
+                      "name": "email",
+                      "in": "query",
+                      "description": "search clients by their email address",
+                      "type": "string"
+                    },
+                    {
                         "name": "per_page",
                         "in": "query",
                         "description": "number of results returned per page",
@@ -751,6 +757,32 @@
                 ],
                 "summary": "List invoices",
                 "operationId": "listInvoices",
+                "parameters": [
+                    {
+                      "name": "invoice_number",
+                      "in": "query",
+                      "description": "search invoices by their invoice number",
+                      "type": "string"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "number of results returned per page",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "page number of results to return when the results are paginated",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "updated_at",
+                        "in": "query",
+                        "description": "Timestamp used as a filter to only show recently updated records",
+                        "type": "string"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "A list of invoices",

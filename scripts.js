@@ -1,5 +1,5 @@
 const env = {
-  test: 'env-cmd development',
+  test: 'env-cmd test',
   dev: 'env-cmd development',
   prod: 'env-cmd production',
   staging: 'env-cmd staging',
@@ -21,12 +21,13 @@ const dbSync = 'node scripts/dbSync.js';
 const dbReset = 'node scripts/dbReset.js';
 
 const lint = 'eslint .';
-const test = 'jest';
+const unitTest = 'jest __tests__/unit';
 
 module.exports = {
   'lint': lint,
-  'test': `${lint} && ${env.test} ${dbReset} &&  ${env.test} ${test}`,
-  'test:watch': `${env.test} ${dbReset} && ${env.test} ${test} --watch`,
+  'test': `${lint} && ${env.test} ${dbReset} && ${env.test} ${unitTest}`,
+  'test:watch': `${env.test} ${dbReset} && ${env.test} ${unitTest} --watch`,
+  'test:full': `${lint} && ${env.test} ${dbReset} && ${env.test} jest`,
   'deploy': `${env.prod} claudia update --use-local-dependencies`,
   'extract:clients':
     `${env.staging} node scripts/extractInvoiceninja.js > data/clients.json`,
@@ -38,12 +39,12 @@ module.exports = {
   'dev:sql:migration:create':
     `${env.dev} ${sequelizeMigrationCreate} --env devlopment`,
   'dev:db:sync': `${env.dev} ${dbSync}`,
-  'dev:db:reset': `${env.dev} ${dbReset}`,
+  'dev:db:seed': `${env.dev} ${dbReset}`,
 
   'stag:start': `${env.staging} ${nodemon}`,
   'stag:debug': `${env.staging} ${nodemonInspect}`,
   'stag:sql:migration:create':
     `${env.staging} ${sequelizeMigrationCreate} --env staging`,
   'stag:db:sync': `${env.staging} ${dbSync}`,
-  'stag:db:reset': `${env.staging} ${dbReset} ${flags}`,
+  'stag:db:seed': `${env.staging} ${dbReset} ${flags}`,
 };

@@ -46,13 +46,22 @@ module.exports = (sequelize, DataTypes) => {
     );
   };
 
-  OrderItem.prototype.toInvoiceninjaItem = function() {
+  OrderItem.prototype.ninjaSerialize = function() {
     return Promise.resolve({
       'product_key': this.label,
       'cost': this.unitPrice / 100,
       'qty': this.quantity,
     });
   };
+
+  // Run Order's afterUpdate hook when an orderItem is updated
+  OrderItem.hook('afterUpdate', (orderItem) => {
+    const {Order} = sequelize.models;
+
+    return orderItem
+      .getOrder()
+      .then(Order.afterUpdate);
+  });
 
   return OrderItem;
 };

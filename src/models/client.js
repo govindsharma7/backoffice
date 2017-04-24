@@ -1,8 +1,8 @@
-// const Serializer = require('forest-express').ResourceSerializer;
-// const Liana      = require('forest-express-sequelize');
-const Ninja      = require('../vendor/invoiceninja');
+const D           = require('date-fns');
+const Ninja       = require('../vendor/invoiceninja');
 
 module.exports = (sequelize, DataTypes) => {
+  const Sequelize = sequelize.constructor;
   const Client = sequelize.define('Client', {
     id: {
       primaryKey: true,
@@ -31,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('fr','en'),
       defaultValue: 'en',
     },
-    invoiceninjaClientId:       DataTypes.INTEGER,
+    ninjaId:       DataTypes.INTEGER,
   });
 
   /*
@@ -44,7 +44,44 @@ module.exports = (sequelize, DataTypes) => {
     Client.hasMany(models.Order);
   };
 
-  Client.prototype.toInvoiceninjaClient = function() {
+  Client.prototype.getRentingOrder = function(date = Date.now()) {
+    return this.getOrders({
+        limit: 1,
+        where: {
+          type: 'invoice',
+          dueDate: { $between: [D.startOfMonth(date), D.endOfMonth(date)] },
+        },
+        include: [{
+          model: sequelize.models.OrderItem,
+          where: { RentingId: { $not: null } },
+        }],
+      })
+      .then(([order]) => {
+        return order;
+      });
+  };
+
+  Client.prototype.getRentingsForMonth = function(date = Date.now()) {
+    return this.getRentings({
+      where: {
+        $and: {
+          checkinDate: { $lte: D.endOfMonth(date) },
+          checkoutDate: {
+            $or: {
+              $eq: null,
+              $gte: D.startOfMonth(date),
+            },
+          },
+        },
+      },
+    });
+  };
+
+  Client.prototype.createRentingOrder = function(date = Date.now()) {
+
+  };
+
+  Client.prototype.ninjaSerialize = function() {
     return Promise.resolve({
       'name': `${this.firstName} ${this.lastName}`,
       'contact': {
@@ -55,27 +92,55 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Client.prototype.createInvoiceninja = function() {
+  Client.prototype.ninjaCreate = function() {
     return this
-      .toInvoiceninjaClient()
+      .ninjaSerialize()
       .then((ninjaClient) => {
         return Ninja.client.createClient({
           'client': ninjaClient,
         });
       })
       .then((response) => {
-        return this
-          .set('invoiceninjaClientId', response.obj.data.id)
-          .save({hooks: false})
-          .then(() => { return response; });
+        this
+          .set('ninjaId', response.obj.data.id)
+          .save({hooks: false});
+        return response.obj.data;
       });
   };
 
-  Client.prototype.updateInvoiceninja = function() {
+  Client.prototype.ninjaUpdate = function() {
+    return this
+      .ninjaSerialize()
+      .then((ninjaClient) => {
+        return Ninja.client.updateClient({
+          'client_id': this.ninjaId,
+          'client': ninjaClient,
+        });
+      })
+      .then((response) => {
+        return response.obj.data;
+      });
+  };
+
+  Client.prototype.ninjaUpsert = function() {
+    if (this.ninjaId != null && this.ninjaId !== -1) {
+      return this.ninjaUpdate();
+    }
+
     return Ninja.client
-      .updateClient({
-        'client_id': this.invoiceninjaClientId,
-        'client': this.toInvoiceninjaClient(),
+      .listClients({
+        'email': this.email,
+        'per_page': 1,
+      })
+      .then((response) => {
+        if ( response.obj.data.length ) {
+          this
+            .set('ninjaId', response.obj.data[0].id)
+            .save({hooks: false});
+          return this.ninjaUpdate();
+        }
+
+        return this.ninjaCreate();
       });
   };
 
@@ -90,7 +155,7 @@ module.exports = (sequelize, DataTypes) => {
   //         .findById(req.params.clientId)
   //         .then((client) => {
   //           return Ninja.invoice.listInvoices({
-  //             'client_id': client.invoiceninjaClientId,
+  //             'client_id': client.ninjaId,
   //           });
   //         })
   //         .then((response) => {
@@ -114,8 +179,8 @@ module.exports = (sequelize, DataTypes) => {
    * in Forest.
    */
   Client.hook('afterCreate', (client) => {
-    if ( !client.invoiceninjaClientId ) {
-      client.createInvoiceninja()
+    if ( !client.ninjaId ) {
+      client.ninjaCreate()
         .catch((error) => {
           console.error(error);
           throw error;
@@ -127,13 +192,13 @@ module.exports = (sequelize, DataTypes) => {
 
   Client.hook('afterUpdate', (client) => {
     if (
-      client.invoiceninjaClientId && (
+      client.ninjaId && (
         client.changed('firstName') ||
         client.changed('lastName') ||
         client.changed('email')
       )
     ) {
-      client.updateInvoiceninja()
+      client.ninjaUpdate()
         .catch((error) => {
           console.error(error);
           throw error;

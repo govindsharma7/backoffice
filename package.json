@@ -11,6 +11,7 @@
     "aws-serverless-express": "^2.2.0",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
+    "date-fns": "^1.28.3",
     "deasync": "^0.1.9",
     "env-cmd": "^5.0.0",
     "express": "^4.15.2",
@@ -21,13 +22,14 @@
     "jsonapi-serializer": "^3.4.2",
     "lodash": "^4.17.4",
     "mysql2": "^1.2.0",
-    "sequelize": "^4.0.0-2",
+    "sequelize": "github:louisremi/sequelize#fix_upsert_virtual_field",
     "sqlite3": "^3.1.8",
     "swagger-client": "^2.1.32"
   },
   "devDependencies": {
     "babel-eslint": "^7.2.0",
     "claudia": "^2.10.0",
+    "deptree": "^1.0.0",
     "eslint": "^3.18.0",
     "eslint-import-resolver-babel-root-import": "0.0.2",
     "eslint-loader": "^1.6.3",

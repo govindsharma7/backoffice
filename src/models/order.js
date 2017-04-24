@@ -1,7 +1,8 @@
-const Promise   = require('bluebird');
+const Promise    = require('bluebird');
 const Ninja      = require('../vendor/invoiceninja');
 
 module.exports = (sequelize, DataTypes) => {
+
   const Order = sequelize.define('Order', {
     id: {
       primaryKey: true,
@@ -13,13 +14,21 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'invoice',
     },
+    number: {
+      type:                     DataTypes.STRING,
+      unique: true,
+    },
     label: {
       type:                     DataTypes.STRING,
       required: true,
     },
-    invoiceninjaInvoiceId: {
+    ninjaId: {
       type:                     DataTypes.INTEGER,
-      unique: true,
+    },
+    dueDate: {
+      type:                     DataTypes.DATEONLY,
+      required: true,
+      default: Date.now(),
     },
   });
 
@@ -58,7 +67,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Order.prototype.toInvoiceninjaOrder = function(props) {
+  Order.prototype.ninjaSerialize = function(props) {
     return Promise.all([
         this.getClient(),
         this.getOrderItems(),
@@ -69,88 +78,117 @@ module.exports = (sequelize, DataTypes) => {
           this.getAmount(orderItems),
           this.getTotalPaid(),
           Promise.map(orderItems, (item) => {
-            return item.toInvoiceninjaItem();
+            return item.ninjaSerialize();
           }),
         ]);
       })
       .then(([client, amount, totalPaid, items]) => {
         return Object.assign({
-          'client_id': client.invoiceninjaClientId,
+          'client_id': client.ninjaId,
           'amount': amount,
           'balance': totalPaid - amount,
           'invoice_items': items,
+          'invoice_number': this.number,
         }, props);
       });
   };
 
-  Order.prototype.createInvoiceninja = function(props) {
+  Order.prototype.ninjaCreate = function() {
     return this
-      .toInvoiceninjaOrder(Object.assign({
-        'invoice_number': this.invoiceNumber,
+      .ninjaSerialize({
         'invoice_status_id': Order.INVOICE_STATUS_DRAFT,
-      }, props))
+      })
       .then((ninjaOrder) => {
         return Ninja.invoice.createInvoice({
           'invoice': ninjaOrder,
         });
       })
       .then((response) => {
-        return this
-          .set('invoiceninjaInvoiceId', response.obj.data.id)
-          .save({hooks: false})
-          // return response for consistency
-          .then(() => { return response; });
+        this
+          .set('ninjaId', response.obj.data.id)
+          .save({hooks: false});
+        return response.obj.data;
       });
   };
 
-  Order.prototype.updateInvoiceninja = function(props) {
+  Order.prototype.ninjaUpdate = function() {
     return this
-      .toInvoiceninjaOrder(props)
+      .ninjaSerialize()
       .then((ninjaOrder) => {
         return Ninja.invoice.updateInvoice({
-          'invoice_id': this.invoiceninjaInvoiceId,
+          'invoice_id': this.ninjaId,
           'invoice': ninjaOrder,
         });
+      })
+      .then((response) => {
+        return response.obj.data;
       });
   };
 
-  // Order.hook('afterUpdate', (order) => {
-  //   if (
-  //     order.invoiceninjaInvoiceId &&
-  //     order.invoiceninjaInvoiceId === Order.READY
-  //   ) {
-  //     return sequelize.transaction((t) => {
-  //       var currCounter;
-  //       return models.Setting.findById(`${order.type}-counter`)
-  //         .then((setting) => {
-  //           currCounter = parseInt(setting.value);
-  //
-  //           return Ninja.invoice.createInvoice({
-  //
-  //           })
-  //         });
-  //     })
-  //
-  //     return Ninja.client
-  //       .updateClient({
-  //         'client_id': client.invoiceninjaClientId,
-  //         'client': {
-  //           'name': `${client.firstName} ${client.lastName}`,
-  //           'contact': {
-  //             'first_name': client.firstName,
-  //             'last_name': client.lastName,
-  //             'email': client.email,
-  //           },
-  //         },
-  //       })
-  //       .catch((error) => {
-  //         console.error(error);
-  //         throw error;
-  //       });
-  //   }
-  //
-  //   return true;
-  // });
+  Order.prototype.ninjaUpsert = function() {
+    if (this.ninjaId != null && this.ninjaId !== -1) {
+      return this.ninjaUpdate();
+    }
+
+    return Ninja.invoice
+      .listInvoices({
+        'invoice_number': this.number,
+        'per_page': 1,
+      })
+      .then((response) => {
+        if ( response.obj.data.length ) {
+          this
+            .set('ninjaId', response.obj.data[0].id)
+            .save({hooks: false});
+          return this.ninjaUpdate();
+        }
+
+        return this.ninjaCreate();
+      });
+  };
+
+  Order.afterUpdate = function(order) {
+    if (
+      order.ninjaId &&
+      order.ninjaId !== Order.READY
+    ) {
+      return order.ninja.update();
+    }
+
+    return true;
+  };
+  Order.hook('afterUpdate', Order.afterUpdate);
+
+  Order.hook('beforeCreate', (order) => {
+    if ( order.number != null ) {
+      return order;
+    }
+
+    return sequelize.models.Setting
+      .findById(`${order.type}-counter`)
+      .then((counter) => {
+        return counter.increment();
+      })
+      .then((counter) => {
+        return counter.reload();
+      })
+      .then((counter) => {
+        switch (order.type) {
+          case 'deposit':
+            order.number = `deposit-${counter.value}`;
+            break;
+          case 'credit':
+            order.number = `avoir-${counter.value}`;
+            break;
+          case 'invoice':
+          default:
+            order.number = counter.value;
+            break;
+        }
+
+        return order;
+      });
+  });
 
   return Order;
 };

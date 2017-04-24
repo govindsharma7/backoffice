@@ -39,7 +39,7 @@ Ininja.client
           firstName: firstName,
           lastName: lastName,
           email: email,
-          invoiceninjaClientId: client.id,
+          ninjaId: client.id,
         };
       });
 
