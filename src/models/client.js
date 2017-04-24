@@ -78,7 +78,11 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.prototype.createRentingOrder = function(date = Date.now()) {
-
+    this.getRentingsForMonth(date)
+      .then((records) => {
+        console.log('YEAAAAAAAAAAAAAAAAAAAAAAAAAAAAH')
+        console.log(records);
+      });
   };
 
   Client.prototype.ninjaSerialize = function() {

@@ -19,6 +19,7 @@ const nodemonInspect = `${nodemon} --inspect`;
 
 const dbSync = 'node scripts/dbSync.js';
 const dbReset = 'node scripts/dbReset.js';
+const dbSeed = 'node scripts/dbSeed.js';
 
 const lint = 'eslint .';
 const unitTest = 'jest __tests__/unit';
@@ -39,12 +40,12 @@ module.exports = {
   'dev:sql:migration:create':
     `${env.dev} ${sequelizeMigrationCreate} --env devlopment`,
   'dev:db:sync': `${env.dev} ${dbSync}`,
-  'dev:db:seed': `${env.dev} ${dbReset}`,
+  'dev:db:seed': `${env.dev} ${dbSeed}`,
 
   'stag:start': `${env.staging} ${nodemon}`,
   'stag:debug': `${env.staging} ${nodemonInspect}`,
   'stag:sql:migration:create':
     `${env.staging} ${sequelizeMigrationCreate} --env staging`,
   'stag:db:sync': `${env.staging} ${dbSync}`,
-  'stag:db:seed': `${env.staging} ${dbReset} ${flags}`,
+  'stag:db:seed': `${env.staging} ${dbSeed} ${flags}`,
 };

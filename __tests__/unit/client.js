@@ -14,10 +14,19 @@ describe('Client', () => {
   });
 
   describe('#getRentingOrder()', () => {
-    test('it should find the renting order for the current month', () => {
+    test('it should find the renting order for a specific month', () => {
       return client.getRentingOrder(D.parse('2016-01 Z'))
         .then((order) => {
           expect(order.dueDate).toEqual('2016-01-01');
+        });
+    });
+  });
+
+  describe('#getRentingForMonth', () => {
+    test('it should find all rentings for a specific month', () => {
+      return client.getRentingsForMonth(D.parse('2017-02 Z'))
+        .then((rentings) => {
+          console.log(rentings);
         });
     });
   });

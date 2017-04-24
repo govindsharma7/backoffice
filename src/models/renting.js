@@ -17,6 +17,11 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.INTEGER,
       required: true,
     },
+    serviceFees: {
+      type:                     DataTypes.INTEGER,
+      required: true,
+      defaultValue: 30,
+    },
   });
 
   Renting.associate = () => {
