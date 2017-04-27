@@ -43,7 +43,7 @@ Ininja.client
         };
       });
 
-    console.log(JSON.stringify({
+    return console.log(JSON.stringify({
       model: 'Client',
       length: clients.length,
       records: clients,

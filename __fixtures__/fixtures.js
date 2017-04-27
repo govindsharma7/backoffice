@@ -121,7 +121,9 @@ function fixtures({models, common = Promise.resolve({}), options: opts}) {
 
           return create({
             models,
+            /* eslint-disable promise/no-callback-in-promise */
             data: callback(unique),
+            /* eslint-enable promise/no-callback-in-promise */
             unique,
             instances,
             options,

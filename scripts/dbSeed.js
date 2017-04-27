@@ -16,6 +16,7 @@ Use "--force" when if you're certain you want to do that.
   `);
 }
 
+/* eslint-disable promise/no-nesting */
 return models.sequelize.sync({ force: true })
   .then(() => {
     // We used to just load all files in the folder, but the order we load them
@@ -51,5 +52,5 @@ return models.sequelize.sync({ force: true })
     }, Promise.resolve(true));
   })
   .then(() => {
-    console.log('DATABASE SUCCESSFULLY RESET!');
+    return console.log('DATABASE SUCCESSFULLY RESET!');
   });

@@ -16,5 +16,5 @@ Use "--force" when if you're certain you want to do that.
 
 return models.sequelize.sync({ force: true })
   .then(() => {
-    console.log('DATABASE SUCCESSFULLY RESET!');
+    return console.log('DATABASE SUCCESSFULLY RESET!');
   });

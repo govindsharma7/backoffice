@@ -16,14 +16,14 @@ const server = http.createServer(app);
 /*
  * Load models
  */
-models.sequelize.sync().then(function() {
+return models.sequelize.sync().then(() => {
   server.listen(port, function() {
     console.log('Express server listening on port ' + server.address().port);
   });
   server.on('error', onError);
   server.on('listening', onListening);
+  return null;
 });
-
 
 /*
  * Utils

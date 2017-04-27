@@ -2,7 +2,6 @@ const D           = require('date-fns');
 const Ninja       = require('../vendor/invoiceninja');
 
 module.exports = (sequelize, DataTypes) => {
-  const Sequelize = sequelize.constructor;
   const Client = sequelize.define('Client', {
     id: {
       primaryKey: true,
@@ -44,9 +43,8 @@ module.exports = (sequelize, DataTypes) => {
     Client.hasMany(models.Order);
   };
 
-  Client.prototype.getRentingOrder = function(date = Date.now()) {
+  Client.prototype.getRentingOrders = function(date = Date.now()) {
     return this.getOrders({
-        limit: 1,
         where: {
           type: 'invoice',
           dueDate: { $between: [D.startOfMonth(date), D.endOfMonth(date)] },

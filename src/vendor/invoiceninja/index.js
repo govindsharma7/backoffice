@@ -5,6 +5,7 @@ const spec      = require('./invoiceninja-spec');
 
 let Ninja;
 
+/* eslint-disable promise/catch-or-return, promise/always-return */
 new Swagger({
   spec,
   usePromise: true,

@@ -48,11 +48,13 @@ module.exports = (sequelize, DataTypes) => {
       orderItems && Promise.resolve(orderItems) ||
       this.getOrderItems()
     ).then((orderItems) => {
+      /* eslint-disable promise/no-nesting */
       return Promise.reduce(orderItems, (sum, orderItem) => {
         return orderItem.getAmount().then((amount) => {
           return sum + amount;
         });
       }, 0);
+      /* eslint-enable promise/no-nesting */
     });
   };
 

@@ -4,5 +4,5 @@ const models = require('../src/models');
 
 return models.sequelize.sync()
   .then(() => {
-    console.log('DATABASE SUCCESSFULLY SYNCHRONIZED!');
+    return console.log('DATABASE SUCCESSFULLY SYNCHRONIZED!');
   });

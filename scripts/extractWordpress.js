@@ -26,6 +26,8 @@ WPAPI.discover('http://localhost:8080/wp-json')
       length: Object.keys(portfolio.apartments).length,
       records: _.sortBy(_.values(portfolio.apartments), ['id']),
     }, null, '  '));
+
+    return null;
   })
   .catch((err) => {
     console.error(err);
@@ -33,18 +35,20 @@ WPAPI.discover('http://localhost:8080/wp-json')
   });
 
 function recursePaginate(request) {
-  return request.then(function( response ) {
-    if ( ! response._paging || ! response._paging.next ) {
-      return response;
-    }
-    // Request the next page and return both responses as one collection
-    return Promise.all([
-      response,
-      recursePaginate( response._paging.next ),
-    ]).then(function( responses ) {
+  return request
+    .then(function( response ) {
+      if ( ! response._paging || ! response._paging.next ) {
+        return response;
+      }
+      // Request the next page and return both responses as one collection
+      return Promise.all([
+        response,
+        recursePaginate( response._paging.next ),
+      ]);
+    })
+    .then(function( responses ) {
       return _.flatten( responses );
     });
-  });
 }
 
 const fixedNames = {
