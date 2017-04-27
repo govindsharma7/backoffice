@@ -1,13 +1,17 @@
 const fixtures = require('../../__fixtures__/order');
-const {Order, Setting} = require('../../src/models');
+const {Order} = require('../../src/models');
 
 var order;
+var invoiceCounter;
 
 describe('Order', () => {
   beforeAll(() => {
     return fixtures()
       .then(({instances}) => {
-        order = instances['order-1'];
+        return (
+          order = instances['order-1'],
+          invoiceCounter = instances['invoice-counter']
+        );
       });
   });
 
@@ -16,7 +20,7 @@ describe('Order', () => {
       return order
         .getAmount()
         .then((amount) => {
-          expect(amount).toEqual(300 + 200);
+          return expect(amount).toEqual(300 + 200);
         });
     });
   });
@@ -26,7 +30,7 @@ describe('Order', () => {
       return order
         .getTotalPaid()
         .then((totalPaid) => {
-          expect(totalPaid).toEqual(100);
+          return expect(totalPaid).toEqual(100);
         });
     });
   });
@@ -38,7 +42,7 @@ describe('Order', () => {
           'invoice_number': '1234',
         })
         .then((obj) => {
-          expect(obj).toEqual({
+          return expect(obj).toEqual({
             'client_id': null,
             'invoice_number': '1234',
             'amount': 300 + 200,
@@ -59,16 +63,19 @@ describe('Order', () => {
 
   describe('auto-numbering', () => {
     test('it should set the order number automatically according to its type', () => {
-      Setting.findById('invoice-counter')
+      return invoiceCounter.set('value', Math.round(Math.random() * 1E12))
+        .save()
         .then((counter) => {
-          return Order
-            .create({
+          return Promise.all([
+            counter,
+            Order.create({
               type: 'invoice',
               label: 'test numbering',
-            })
-            .then((order) => {
-              expect(order.number).toEqual(counter.value.toString());
-            });
+            }),
+          ]);
+        })
+        .then(([counter, order]) => {
+          return expect(order.number).toEqual(counter.value + 1);
         });
     });
   });

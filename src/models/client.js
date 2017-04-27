@@ -62,6 +62,8 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.prototype.getRentingsForMonth = function(date = Date.now()) {
+    const {models} = sequelize;
+
     return this.getRentings({
       where: {
         $and: {
@@ -74,14 +76,50 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      include: [{
+        model: models.Room,
+        attributes: ['reference'],
+        include: [{
+          model: models.Apartment,
+          attributes: ['reference'],
+        }],
+      }],
     });
   };
 
-  Client.prototype.createRentingOrder = function(date = Date.now()) {
-    this.getRentingsForMonth(date)
-      .then((records) => {
-        console.log('YEAAAAAAAAAAAAAAAAAAAAAAAAAAAAH')
-        console.log(records);
+  Client.prototype.createRentingOrder = function(date = Date.now(), number) {
+    const {Order, OrderItem} = sequelize.models;
+
+    return this.getRentingsForMonth(date)
+      .then((rentings) => {
+        const items = [];
+
+        rentings.forEach((renting) => {
+          const prorated = renting.prorate(date);
+          const room = renting.Room;
+          const apartment = room.Apartment;
+          const month = D.format(date, 'MMMM');
+
+          items.push({
+            label: `${month} Rent - Room #${room.reference}`,
+            unitPrice: prorated.price,
+            RentingId: renting.id,
+          },{
+            label: `${month} Service Fees - Apt #${apartment.reference}`,
+            unitPrice: prorated.serviceFees,
+            ProductId: 'service-fees',
+          });
+        });
+
+        return Order.create({
+          type: 'invoice',
+          label: `${D.format('MMMM')} Invoice`,
+          dueDate: D.startOfMonth(date),
+          OrderItems: items,
+          number,
+        }, {
+          include: [OrderItem],
+        });
       });
   };
 

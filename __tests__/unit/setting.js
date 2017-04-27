@@ -6,7 +6,7 @@ describe('Setting', () => {
   beforeAll(() => {
     return fixtures()
       .then(({instances}) => {
-        setting = instances['setting-1'];
+        return setting = instances['setting-1'];
       });
   });
 
@@ -23,7 +23,7 @@ describe('Setting', () => {
           return setting.reload();
         })
         .then((setting) => {
-          expect(setting.value).toEqual(prevVal + 1);
+          return expect(setting.value).toEqual(prevVal + 1);
         });
     });
   });

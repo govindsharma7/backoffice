@@ -8,12 +8,14 @@ module.exports = {
     }
   },
   extends: [
-    'eslint:recommended'
+    'eslint:recommended',
+    'plugin:promise/recommended',
   ],
   plugins: [
     'react',
     'mocha',
-    'import'
+    'import',
+    'promise'
   ],
   settings: {
     'import/resolver': 'babel-root-import',

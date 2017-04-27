@@ -1,7 +1,6 @@
-const models = require('../src/models');
-const fixtures = require('./fixtures');
+const fixtures = require('./index');
 
-module.exports = fixtures(models)((u) => {
+module.exports = fixtures((u) => {
   return {
     Client:[{
       id: u.id('client-1'),

@@ -9,22 +9,24 @@ Object.entries = typeof Object.entries === 'function' ?
   Object.entries :
   (obj) => Object.keys(obj).map(k => [k, obj[k]]);
 
-function create(models, data, unique, options) {
+function create({models, data, unique, instances: ins, options}) {
   const u2record = {};
-  const instances = {};
+  const instances = Object.assign({}, ins);
   const deptree = new DeptTree();
 
   for (let [modelName, records] of Object.entries(data)) {
+    const primaryKey = Object.keys(models[modelName].primaryKeys)[0];
+
     for (let record of records) {
       let deps = [];
 
       for (let [key, value] of Object.entries(record)) {
-        if ( key !== 'id' && rUUID.test(value) && !(value in unique.parent.u2l) ) {
+        if ( key !== primaryKey && rUUID.test(value) && !(value in unique.parent.u2l) ) {
           deps.push(value);
         }
       }
-      u2record[record.id] = { modelName, record };
-      deptree.add(record.id, deps);
+      u2record[record[primaryKey]] = { modelName, record };
+      deptree.add(record[primaryKey], deps);
     }
   }
 
@@ -32,11 +34,20 @@ function create(models, data, unique, options) {
     .map((uid) => {
       return () => {
         const {modelName, record} = u2record[uid];
+        const instanceId = unique.u2l[uid] || uid;
 
-        return models[modelName]
-          .create(record, options)
-          .then((instance) => {
-            instances[unique.u2l[uid]] = instance;
+        return models[modelName][options.method || 'create'](record, options)
+          .then((result) => {
+            if (typeof result === 'object') {
+              return instances[instanceId] = result;
+            }
+
+            // In case of upsert, the instance isn't returned
+            // here we can use a query-less alternative to findById
+            const instance = models[modelName].build(record);
+
+            instance.isNewRecord = false;
+            return instances[instanceId] = instance;
           });
       };
     })
@@ -97,27 +108,24 @@ Unique.prototype = {
   },
 };
 
-function defaultCommon() {
-  return Promise.resolve({});
-}
-
-function fixtures(models, common = defaultCommon, _options = {}) {
+function fixtures({models, common = Promise.resolve({}), options: opts}) {
   const options = Object.assign({
     hooks: false,
-  }, _options);
+  }, opts || {});
 
   return function(callback) {
     return function() {
-      return common()
-        .then(({unique}) => {
-          const _u = new Unique(unique);
+      return common
+        .then(({instances, unique: u}) => {
+          const unique = new Unique(u);
 
-          return create(
+          return create({
             models,
-            callback(_u),
-            _u,
-            options
-          );
+            data: callback(unique),
+            unique,
+            instances,
+            options,
+          });
         });
     };
   };

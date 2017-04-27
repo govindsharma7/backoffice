@@ -8,8 +8,10 @@ describe('Client', () => {
   beforeAll(() => {
     return fixtures()
       .then(({instances, unique}) => {
-        client = instances['client-1'];
-        u = unique;
+        return (
+          client = instances['client-1'],
+          u = unique
+        );
       });
   });
 
@@ -17,16 +19,31 @@ describe('Client', () => {
     test('it should find the renting order for a specific month', () => {
       return client.getRentingOrder(D.parse('2016-01 Z'))
         .then((order) => {
-          expect(order.dueDate).toEqual('2016-01-01');
+          return expect(order.dueDate).toEqual('2016-01-01');
         });
     });
   });
 
-  describe('#getRentingForMonth', () => {
+  describe('#getRentingsForMonth', () => {
     test('it should find all rentings for a specific month', () => {
       return client.getRentingsForMonth(D.parse('2017-02 Z'))
         .then((rentings) => {
-          console.log(rentings);
+          return expect(rentings.length).toEqual(2);
+        });
+    });
+  });
+
+  describe('#createRentingOrder', () => {
+    test('it should create an order with appropriate orderitems', () => {
+      return client.createRentingOrder(
+          D.parse('2017-02 Z'),
+          Math.round(Math.random() * 1E12)
+        )
+        .then((order) => {
+          return order.getOrderItems();
+        })
+        .then((orderItems) => {
+          return expect(orderItems.length).toEqual(4);
         });
     });
   });
@@ -35,7 +52,7 @@ describe('Client', () => {
     test('it should serialize the client for InvoiceNinja', () => {
       return client.ninjaSerialize()
         .then((obj) => {
-          expect(obj).toEqual({
+          return expect(obj).toEqual({
             'name': 'John Doe',
             'contact': {
               'email': u.str('john@doe.com'),

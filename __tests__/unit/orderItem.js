@@ -12,7 +12,7 @@ describe('OrderItem', () => {
     test('it should calculate the amount for one item', () => {
       return item.getAmount()
         .then((amount) => {
-          expect(amount).toEqual(360);
+          return expect(amount).toEqual(360);
         });
     });
   });
@@ -21,7 +21,7 @@ describe('OrderItem', () => {
     test('it should serialize the item for InvoiceNinja', () => {
       return item.ninjaSerialize()
         .then((obj) => {
-          expect(obj).toEqual({
+          return expect(obj).toEqual({
             'product_key': 'test item',
             'cost': 100 / 100,
             'qty': 3,
