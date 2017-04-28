@@ -47,7 +47,7 @@ module.exports = (sequelize, DataTypes) => {
     return this.getOrders({
         where: {
           type: 'invoice',
-          dueDate: { $between: [D.startOfMonth(date), D.endOfMonth(date)] },
+          dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
         },
         include: [{
           model: sequelize.models.OrderItem,
@@ -244,6 +244,14 @@ module.exports = (sequelize, DataTypes) => {
 
     return true;
   });
+
+  Client.beforeLianaInit = (models, app) => {
+    app.get('/forest/Client/:recordId/relationships/Invoices', (req, res) => {
+      console.log('COUCOU!');
+
+      res.send({'OK':true});
+    });
+  };
 
   return Client;
 };

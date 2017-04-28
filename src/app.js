@@ -58,7 +58,7 @@ parentApp.use(Liana.init({
 // This hook is currently useless
 Object.keys(models).forEach(function(modelName) {
   if ('afterLianaInit' in models[modelName]) {
-    models[modelName].afterLianaInit(models);
+    models[modelName].afterLianaInit(models, parentApp);
   }
 });
 

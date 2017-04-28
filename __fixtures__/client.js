@@ -1,3 +1,4 @@
+const D        = require('date-fns');
 const fixtures = require('./index');
 
 module.exports = fixtures((u) => {
@@ -15,7 +16,7 @@ module.exports = fixtures((u) => {
       number: u.int(1),
       label: 'test order 1',
       ClientId: u.id('client-1'),
-      dueDate: '2016-01-01',
+      dueDate: D.parse('2016-01-01 Z'),
     }],
     OrderItem: [{
       id: u.id('orderitem-1'),

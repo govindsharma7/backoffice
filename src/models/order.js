@@ -1,6 +1,6 @@
 const Promise    = require('bluebird');
 const Ninja      = require('../vendor/invoiceninja');
-const makePublic = require('../services/public');
+const makePublic = require('../services/makePublic');
 
 module.exports = (sequelize, DataTypes) => {
 
@@ -211,7 +211,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Order.beforeLianaInit = (models, app) => {
     // ake this route completely public
-    app.get('/forest/order/:orderId', makePublic);
+    app.get('/forest/Order/:orderId', makePublic);
   };
 
   return Order;
