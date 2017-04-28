@@ -5,6 +5,7 @@ const BodyParser = require('body-parser');
 const Liana      = require('forest-express-sequelize');
 const config     = require('./config');
 const models     = require('./models');
+const checkToken = require('./services/checkToken');
 
 const parentApp = Express();
 const app = Express();
@@ -12,16 +13,24 @@ const app = Express();
 /*
  * Middleware that will handle our custom Forest routes
  */
-// JWT
+// JWT authentication
 app.use(Jwt({
   secret: config.FOREST_AUTH_SECRET,
   credentialsRequired: false,
 }));
 
+// Token authentication
+app.use(checkToken);
+
 // CORS
 app.use(Cors({
-  allowedOrigins: ['localhost:4200', '*.forestadmin.com'],
-  headers: ['Authorization', 'X-Requested-With', 'Content-Type'],
+  allowedOrigins: ['localhost:*', '*.forestadmin.com'],
+  headers: [
+    'Authorization',
+    'X-Requested-With',
+    'Content-Type',
+    'Access-Control-Allow-Origin',
+  ],
 }));
 
 // Mime type

@@ -69,22 +69,38 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  // Return all calculated props (amount, totalPaid, balance)
+  Order.prototype.getCalculatedProps = function() {
+    return Promise.all([
+        this.getAmount(),
+        this.getTotalPaid(),
+      ])
+      .then(([amount, totalPaid]) => {
+        return {
+          amount,
+          totalPaid,
+          balance: totalPaid - amount,
+        };
+      });
+  };
+
   Order.prototype.ninjaSerialize = function(props) {
+    // We don't #getCalculatedProps as we want to avoid getOrderItems to be
+    // called twice
     return Promise.all([
         this.getClient(),
-        this.getOrderItems(),
-      ])
-      .then(([client, orderItems]) => {
-        return Promise.all([
-          client,
-          this.getAmount(orderItems),
-          this.getTotalPaid(),
-          Promise.map(orderItems, (item) => {
-            return item.ninjaSerialize();
+        this.getTotalPaid(),
+        this.getOrderItems()
+          .then((orderItems) => {
+            return Promise.all([
+              this.getAmount(orderItems),
+              Promise.map(orderItems, (item) => {
+                return item.ninjaSerialize();
+              }),
+            ]);
           }),
-        ]);
-      })
-      .then(([client, amount, totalPaid, items]) => {
+      ])
+      .then(([client, totalPaid, [amount, items]]) => {
         return Object.assign({
           'client_id': client.ninjaId,
           'amount': amount,

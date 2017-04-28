@@ -17,7 +17,7 @@ describe('Client', () => {
 
   describe('#getRentingOrder()', () => {
     test('it should find the renting order for a specific month', () => {
-      return client.getRentingOrder(D.parse('2016-01 Z'))
+      return client.getRentingOrders(D.parse('2016-01 Z'))
         .then((order) => {
           return expect(order.dueDate).toEqual('2016-01-01');
         });

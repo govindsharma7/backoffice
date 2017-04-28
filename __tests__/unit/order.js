@@ -35,6 +35,20 @@ describe('Order', () => {
     });
   });
 
+  describe('#getCalculatedProps()', () => {
+    test('it should calculate amount totalPaid and balance properties', () => {
+      return order
+        .getCalculatedProps()
+        .then((result) => {
+          return expect(result).toEqual({
+            amount: 500,
+            totalPaid: 100,
+            balance: -400,
+          });
+        });
+    });
+  });
+
   describe('#ninjaSerialize()', () => {
     test('it should serialize the order for InvoiceNinja', () => {
       return order
