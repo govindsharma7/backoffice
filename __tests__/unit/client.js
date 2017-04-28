@@ -15,11 +15,11 @@ describe('Client', () => {
       });
   });
 
-  describe('#getRentingOrder()', () => {
+  describe('#getRentingOrders()', () => {
     test('it should find the renting order for a specific month', () => {
       return client.getRentingOrders(D.parse('2016-01 Z'))
-        .then((order) => {
-          return expect(order.dueDate).toEqual('2016-01-01');
+        .then((orders) => {
+          return expect(orders[0].dueDate).toEqual('2016-01-01');
         });
     });
   });

@@ -53,9 +53,6 @@ module.exports = (sequelize, DataTypes) => {
           model: sequelize.models.OrderItem,
           where: { RentingId: { $not: null } },
         }],
-      })
-      .then(([order]) => {
-        return order;
       });
   };
 
