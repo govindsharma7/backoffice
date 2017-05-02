@@ -1,5 +1,6 @@
-const Liana = require('forest-express');
+const Liana   = require('forest-express');
 const {Order} = require('../src/models');
+const config  = require('../src/config');
 
 const cache = new WeakMap();
 
@@ -16,7 +17,6 @@ function getCalculatedProps(object) {
   if ( cache.has(object) ) {
     return cache.get(object);
   }
-
   const promise = object.getCalculatedProps();
 
   cache.set(object, promise);
@@ -50,6 +50,17 @@ Liana.collection('Order', {
         .then((result) => {
           return result.balance / 100;
         });
+    },
+  },{
+    field: 'invoice',
+    type: 'String',
+    get(object){
+      if (object.ninjaId !== null) {
+        return `${config.INVOICENINJA_HOST}/invoices/${object.ninjaId}/edit`;
+      }
+      else {
+        return null;
+      }
     },
   }],
   actions: [{

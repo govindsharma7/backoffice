@@ -1,5 +1,9 @@
 const D           = require('date-fns');
+const Serializer  = require('forest-express').ResourceSerializer;
+const Liana       = require('forest-express-sequelize');
 const Ninja       = require('../vendor/invoiceninja');
+const config     = require('../config');
+
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -246,10 +250,38 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.beforeLianaInit = (models, app) => {
-    app.get('/forest/Client/:recordId/relationships/Invoices', (req, res) => {
-      console.log('COUCOU!');
-
-      res.send({'OK':true});
+    app.get('/forest/Client/:recordId/relationships/Invoices', (req, res, next) => {
+        Client
+           .findById(req.params.recordId)
+           .then((client) => {
+             return Ninja.invoice.listInvoices({
+               'client_id': client.ninjaId,
+             });
+           })
+           .then((response) => {
+            var obj ={};
+            obj.data = [];
+            response.obj.data.forEach((invoice, index) => {
+              obj.data[index] = {
+                id: invoice.id,
+                type: 'Invoice',
+                attributes: {
+                  href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
+                },
+              }
+            });
+          obj.meta = {};
+          obj.meta.count = response.obj.data.length;
+          res.send(obj);
+//             return new Serializer(Liana, models.Invoice, response.obj.data, {}, {
+//               count: response.obj.data.length
+//             }).perform();
+           })
+//           .then(res.send)
+           .catch((error) => {
+             console.error(error);
+             next();
+           });
     });
   };
 

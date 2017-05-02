@@ -765,6 +765,12 @@
                       "type": "string"
                     },
                     {
+                      "name": "client_id",
+                      "in": "query",
+                      "description": "search invoices by their client id",
+                      "type": "string"
+                    },
+                    {
                         "name": "per_page",
                         "in": "query",
                         "description": "number of results returned per page",
