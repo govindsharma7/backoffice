@@ -46,7 +46,7 @@ module.exports = (sequelize, DataTypes) => {
   Client.prototype.getRentingOrders = function(date = Date.now()) {
     return this.getOrders({
         where: {
-          type: 'invoice',
+          type: 'debit',
           dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
         },
         include: [{
@@ -107,7 +107,7 @@ module.exports = (sequelize, DataTypes) => {
         });
 
         return Order.create({
-          type: 'invoice',
+          type: 'debit',
           label: `${D.format('MMMM')} Invoice`,
           dueDate: D.startOfMonth(date),
           OrderItems: items,

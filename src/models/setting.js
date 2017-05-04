@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Setting.prototype._increment = Setting.prototype.increment;
 
-  Setting.prototype.increment = function(fields, options) {
+  Setting.prototype.increment = function(options) {
     if ( !this.type === 'int' ) {
       return Promise.reject(new Error(
         `Increment only works on 'int' settings, found: ${this.type}`

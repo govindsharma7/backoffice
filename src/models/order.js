@@ -13,9 +13,9 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue:             DataTypes.UUIDV4,
     },
     type: {
-      type:                     DataTypes.ENUM('invoice', 'deposit', 'credit'),
+      type:                     DataTypes.ENUM('debit', 'credit', 'deposit'),
       required: true,
-      defaultValue: 'invoice',
+      defaultValue: 'debit',
     },
     receiptNumber: {
       type:                     DataTypes.STRING,
@@ -87,26 +87,36 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.prototype.pickReceiptNumber = function() {
-    return sequelize.models.Setting
-      .findById(`${this.type}-counter`)
-      .then((counter) => {
-        return counter.increment();
-      })
-      .then((counter) => {
-        return counter.reload();
-      })
-      .then((counter) => {
-        switch (this.type) {
-          case 'deposit':
-            this.receiptNumber = `deposit-${counter.value}`;
-            break;
-          case 'credit':
-          case 'invoice':
-          default:
-            this.receiptNumber = counter.value;
-            break;
-        }
+    var settingId;
+    var strNumber;
 
+    switch (this.type) {
+      case 'deposit':
+        settingId = 'deposit-counter';
+        strNumber = (num) => { return `deposit-${num}`; };
+        break;
+      case 'credit':
+      case 'debit':
+      default:
+        settingId = 'invoice-counter';
+        strNumber = (num) => { return num.toString(); };
+        break;
+    }
+
+    return sequelize.transaction((transaction) => {
+      return sequelize.models.Setting
+        .findById(settingId, { transaction })
+        .then((counter) => {
+          return Promise.all([
+            counter.increment({transaction}),
+            this.update(
+              { receiptNumber: strNumber(counter.value + 1) },
+              { transaction }
+            ),
+          ]);
+        });
+      })
+      .then(() => {
         return this;
       });
   };
@@ -149,6 +159,7 @@ module.exports = (sequelize, DataTypes) => {
         });
       })
       .then((response) => {
+        console.log(response);
         this
           .set('ninjaId', response.obj.data.id)
           .save({hooks: false});

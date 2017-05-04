@@ -18,7 +18,7 @@ describe('Setting', () => {
     test('it should be able to increment the value', () => {
       const prevVal = setting.value;
 
-      return setting.increment('value')
+      return setting.increment()
         .then((setting) => {
           return setting.reload();
         })

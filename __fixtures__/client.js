@@ -12,7 +12,7 @@ module.exports = fixtures((u) => {
     }],
     Order: [{
       id: u.id('order-1'),
-      type: 'invoice',
+      type: 'debit',
       number: u.int(1),
       label: 'test order 1',
       ClientId: u.id('client-1'),

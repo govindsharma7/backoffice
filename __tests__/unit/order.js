@@ -56,7 +56,7 @@ describe('Order', () => {
             .set('value', Math.round(Math.random() * 1E12))
             .save(),
           Order.create({
-            type: 'invoice',
+            type: 'debit',
             label: 'test numbering',
           }),
         ])
@@ -67,7 +67,7 @@ describe('Order', () => {
           ]);
         })
         .then(([counter, order]) => {
-          return expect(order.receiptNumber).toEqual(counter.value + 1);
+          return expect(order.receiptNumber).toEqual((counter.value + 1).toString());
         });
     });
   });
