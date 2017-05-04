@@ -1,13 +1,9 @@
 const Promise    = require('bluebird');
-<<<<<<< HEAD
 const Liana      = require('forest-express');
-=======
-const Liana      = require('forest-express-sequelize');
-const Serializer = require('forest-express').ResourceSerializer;
->>>>>>> WIP smart actions
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../services/makePublic');
 
+const Serializer = Liana.ResourceSerializer;
 
 module.exports = (sequelize, DataTypes) => {
 

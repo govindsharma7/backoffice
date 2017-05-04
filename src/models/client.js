@@ -229,7 +229,6 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.beforeLianaInit = (models, app) => {
-<<<<<<< HEAD
     app.post('/forest/actions/credit-client', Liana.ensureAuthenticated, (req,res) =>{
       var id = uuid();
       var card = {
@@ -272,7 +271,7 @@ module.exports = (sequelize, DataTypes) => {
       .catch((err) => {
         console.error(err);
         res.status(400).send({error: err.longMessage});
-      })
+      });
     });
 
     app.get('/forest/Client/:recordId/relationships/Invoices',
@@ -304,40 +303,6 @@ module.exports = (sequelize, DataTypes) => {
         .catch((error) => {
           console.error(error);
         });
-=======
-    app.get('/forest/Client/:recordId/relationships/Invoices', (req, res, next) => {
-        Client
-           .findById(req.params.recordId)
-           .then((client) => {
-             return Ninja.invoice.listInvoices({
-               'client_id': client.ninjaId,
-             });
-           })
-           .then((response) => {
-            var obj ={};
-            obj.data = [];
-            response.obj.data.forEach((invoice, index) => {
-              obj.data[index] = {
-                id: invoice.id,
-                type: 'Invoice',
-                attributes: {
-                  href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
-                },
-              }
-            });
-          obj.meta = {};
-          obj.meta.count = response.obj.data.length;
-          res.send(obj);
-//             return new Serializer(Liana, models.Invoice, response.obj.data, {}, {
-//               count: response.obj.data.length
-//             }).perform();
-           })
-//           .then(res.send)
-           .catch((error) => {
-             console.error(error);
-             next();
-           });
->>>>>>> implement invoices relationships
     });
   };
 
