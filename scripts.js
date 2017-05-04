@@ -15,7 +15,6 @@ const sequelizeMigrationCreate =
   `sequelize migration:create ${sequelizeFlags}`;
 
 const entryPoint = 'src/index.js';
-const nodemon = `nodemon ${entryPoint}`;
 const nodemonInspect = `nodemon --inspect ${entryPoint}`;
 
 const dbSync = 'node scripts/dbSync.js';
@@ -36,15 +35,13 @@ module.exports = {
   'extract:portfolio':
     `${env.staging} node scripts/extractWordpress.js > tmp/portfolio.json`,
 
-  'dev:start': `${env.dev} ${nodemon}`,
-  'dev:debug': `${env.dev} ${nodemonInspect}`,
+  'dev:start': `${env.dev} ${nodemonInspect}`,
   'dev:sql:migration:create':
     `${env.dev} ${sequelizeMigrationCreate} --env devlopment`,
   'dev:db:sync': `${env.dev} ${dbSync}`,
   'dev:db:seed': `${env.dev} ${dbSeed}`,
 
-  'stag:start': `${env.staging} ${nodemon}`,
-  'stag:debug': `${env.staging} ${nodemonInspect}`,
+  'stag:start': `${env.staging} ${nodemonInspect}`,
   'stag:sql:migration:create':
     `${env.staging} ${sequelizeMigrationCreate} --env staging`,
   'stag:db:sync': `${env.staging} ${dbSync}`,

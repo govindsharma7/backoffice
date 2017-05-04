@@ -1,6 +1,8 @@
 const Promise    = require('bluebird');
+const Liana      = require('forest-express');
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../services/makePublic');
+
 
 module.exports = (sequelize, DataTypes) => {
 
@@ -15,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'invoice',
     },
-    number: {
+    receiptNumber: {
       type:                     DataTypes.STRING,
       unique: true,
     },
@@ -41,7 +43,6 @@ module.exports = (sequelize, DataTypes) => {
     Order.hasMany(models.Payment);
   };
 
-  Order.READY = -1;
   Order.INVOICE_STATUS_DRAFT = 1;
 
   Order.prototype.getAmount = function(orderItems) {
@@ -85,6 +86,31 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Order.prototype.pickReceiptNumber = function() {
+    return sequelize.models.Setting
+      .findById(`${this.type}-counter`)
+      .then((counter) => {
+        return counter.increment();
+      })
+      .then((counter) => {
+        return counter.reload();
+      })
+      .then((counter) => {
+        switch (this.type) {
+          case 'deposit':
+            this.receiptNumber = `deposit-${counter.value}`;
+            break;
+          case 'credit':
+          case 'invoice':
+          default:
+            this.receiptNumber = counter.value;
+            break;
+        }
+
+        return this;
+      });
+  };
+
   Order.prototype.ninjaSerialize = function(props) {
     // We don't #getCalculatedProps as we want to avoid getOrderItems to be
     // called twice
@@ -107,7 +133,7 @@ module.exports = (sequelize, DataTypes) => {
           'amount': amount,
           'balance': totalPaid - amount,
           'invoice_items': items,
-          'invoice_number': this.number,
+          'invoice_number': this.receiptNumber,
         }, props);
       });
   };
@@ -151,7 +177,7 @@ module.exports = (sequelize, DataTypes) => {
 
     return Ninja.invoice
       .listInvoices({
-        'invoice_number': this.number,
+        'invoice_number': this.receiptNumber,
         'per_page': 1,
       })
       .then((response) => {
@@ -166,52 +192,56 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Order.afterUpdate = function(order) {
-    if (
-      order.ninjaId &&
-      order.ninjaId !== Order.READY
-    ) {
-      return order.ninja.update();
+  Order.generateInvoices = (orders) => {
+    return Promise.all(
+      orders
+        .filter((order) => {
+          return order.ninjaId == null;
+        })
+        .map((order) => {
+          return ( order.receiptNumber ?
+              Promise.resolve(order) :
+              order.pickReceiptNumber()
+            ).then(() => {
+              return order.ninjaCreate();
+            });
+        })
+    );
+  };
+
+  Order.afterUpdate = (order) => {
+    if ( order.ninjaId != null ) {
+      return order.ninjaUpdate();
     }
 
     return true;
   };
   Order.hook('afterUpdate', Order.afterUpdate);
 
-  Order.hook('beforeCreate', (order) => {
-    if ( order.number != null ) {
-      return order;
-    }
-
-    return sequelize.models.Setting
-      .findById(`${order.type}-counter`)
-      .then((counter) => {
-        return counter.increment();
-      })
-      .then((counter) => {
-        return counter.reload();
-      })
-      .then((counter) => {
-        switch (order.type) {
-          case 'deposit':
-            order.number = `deposit-${counter.value}`;
-            break;
-          case 'credit':
-            order.number = `avoir-${counter.value}`;
-            break;
-          case 'invoice':
-          default:
-            order.number = counter.value;
-            break;
-        }
-
-        return order;
-      });
-  });
-
   Order.beforeLianaInit = (models, app) => {
-    // ake this route completely public
+    // Make this route completely public
     app.get('/forest/Order/:orderId', makePublic);
+
+    app.post(
+      '/forest/actions/generate-invoice',
+      Liana.ensureAuthenticated,
+      (req, res) => {
+        return Order
+          .findAll({ where: { id: { $in: req.body.data.attributes.ids } } })
+          .then((orders) => {
+            return Order.generateInvoices(orders);
+          })
+          .then(() => {
+            return res.send({success: 'Invoice successfully generated'});
+          })
+          .catch((err) => {
+            console.error(err);
+            return res.status(400).send({
+              error: `Invoice creation failed. Reason: ${err.message}`,
+            });
+          });
+      }
+    );
   };
 
   return Order;

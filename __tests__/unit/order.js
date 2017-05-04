@@ -49,6 +49,29 @@ describe('Order', () => {
     });
   });
 
+  describe('#pickReceiptNumber', () => {
+    test('it should set the order number automatically according to its type', () => {
+      return Promise.all([
+          invoiceCounter
+            .set('value', Math.round(Math.random() * 1E12))
+            .save(),
+          Order.create({
+            type: 'invoice',
+            label: 'test numbering',
+          }),
+        ])
+        .then(([counter, order]) => {
+          return Promise.all([
+            counter,
+            order.pickReceiptNumber(),
+          ]);
+        })
+        .then(([counter, order]) => {
+          return expect(order.receiptNumber).toEqual(counter.value + 1);
+        });
+    });
+  });
+
   describe('#ninjaSerialize()', () => {
     test('it should serialize the order for InvoiceNinja', () => {
       return order
@@ -71,25 +94,6 @@ describe('Order', () => {
               'qty': 1,
             }],
           });
-        });
-    });
-  });
-
-  describe('auto-numbering', () => {
-    test('it should set the order number automatically according to its type', () => {
-      return invoiceCounter.set('value', Math.round(Math.random() * 1E12))
-        .save()
-        .then((counter) => {
-          return Promise.all([
-            counter,
-            Order.create({
-              type: 'invoice',
-              label: 'test numbering',
-            }),
-          ]);
-        })
-        .then(([counter, order]) => {
-          return expect(order.number).toEqual(counter.value + 1);
         });
     });
   });

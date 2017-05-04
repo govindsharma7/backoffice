@@ -1,9 +1,18 @@
 const Liana = require('forest-express');
+const {Order} = require('../src/models');
 
 const cache = new WeakMap();
 
 // #getCalculatedProps with a WeakMap cache
 function getCalculatedProps(object) {
+  // It seems sometimes object isn't an Order instance
+  if ( !('dataValues' in object) ) {
+    return Order.findById(object.id)
+      .then((order) => {
+        return getCalculatedProps(order);
+      });
+  }
+
   if ( cache.has(object) ) {
     return cache.get(object);
   }
@@ -42,5 +51,8 @@ Liana.collection('Order', {
           return result.balance / 100;
         });
     },
+  }],
+  actions: [{
+    name: 'Generate Invoice',
   }],
 });

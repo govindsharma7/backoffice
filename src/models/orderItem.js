@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
   OrderItem.prototype.ninjaSerialize = function() {
     return Promise.resolve({
       'product_key': this.label,
-      'cost': this.unitPrice / 100,
+      'cost': this.unitPrice,
       'qty': this.quantity,
     });
   };
