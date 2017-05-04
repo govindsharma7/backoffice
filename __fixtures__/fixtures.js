@@ -65,13 +65,13 @@ function Unique(parent = { l2u: {}, u2l: {} }) {
   this.u2l = Object.assign({}, parent.u2l);
 }
 
-Unique.hashCode = function(){
+Unique.hashCode = function() {
 	let hash = 0;
 
 	for (let i = 0; i < this.length; i++) {
 		let char = this.charCodeAt(i);
 
-		hash = ((hash<<5)-hash)+char;
+		hash = ((hash << 5) - hash) + char;
 		hash = hash & hash; // Convert to 32bit integer
 	}
 

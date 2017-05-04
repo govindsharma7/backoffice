@@ -28,7 +28,7 @@ new Swagger({
 
 // Swagger client initialization is async :thumbs-down:. Fix that!
 /* eslint-disable no-unmodified-loop-condition */
-while( !Ninja ) {
+while ( !Ninja ) {
   Deasync.sleep(1);
 }
 
