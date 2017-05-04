@@ -1,23 +1,26 @@
-const {Client, Order} = require('../../src/models');
+const fixtures = require('../../__fixtures__/order');
 
 var client;
 var order;
 
 describe('InvoiceNinja integration', () => {
   beforeAll(() => {
-    return Promise.all([
-      Client.findById('client-1'),
-      Order.findById('order-1'),
-    ])
-    .then(([_client, _order]) => {
-      client = _client;
-      order = _order;
+    return fixtures()
+      .then(({instances}) => {
+        order = instances['order-1'];
+        client = instances['client-1'];
 
-      return client.ninjaUpsert();
-    })
-    .then(() => {
-      return order.ninjaUpsert();
-    });
+        return client.ninjaUpsert();
+      })
+      .then(() => {
+        return order.ninjaUpsert();
+      })
+      .then(() => {
+        return Promise.all([
+          client.reload(),
+          order.reload(),
+        ]);
+      });
   });
 
   // We only test upsert methods because they're the only ones which don't

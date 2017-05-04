@@ -23,11 +23,13 @@ const dbSeed = 'node scripts/dbSeed.js';
 
 const lint = 'eslint .';
 const unitTest = 'jest __tests__/unit';
+const intTest = 'jest __tests__/integration';
 
 module.exports = {
   'lint': lint,
   'test': `${lint} && ${env.test} ${dbReset} && ${env.test} ${unitTest}`,
   'test:watch': `${env.test} ${dbReset} && ${env.test} ${unitTest} --watch`,
+  'test:integration': `${env.test} ${dbReset} && ${env.test} ${intTest}`,
   'test:full': `${lint} && ${env.test} ${dbReset} && ${env.test} jest`,
   'deploy': `${env.prod} claudia update --use-local-dependencies`,
   'extract:clients':
