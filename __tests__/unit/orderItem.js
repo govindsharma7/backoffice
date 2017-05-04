@@ -23,7 +23,7 @@ describe('OrderItem', () => {
         .then((obj) => {
           return expect(obj).toEqual({
             'product_key': 'test item',
-            'cost': 100,
+            'cost': 1,
             'qty': 3,
           });
         });
