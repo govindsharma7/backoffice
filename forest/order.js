@@ -54,7 +54,7 @@ Liana.collection('Order', {
   },{
     field: 'invoice',
     type: 'String',
-    get(object){
+    get(object) {
       if (object.ninjaId !== null) {
         return `${config.INVOICENINJA_HOST}/invoices/${object.ninjaId}/edit`;
       }

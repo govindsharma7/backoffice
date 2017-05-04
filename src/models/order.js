@@ -1,5 +1,10 @@
 const Promise    = require('bluebird');
+<<<<<<< HEAD
 const Liana      = require('forest-express');
+=======
+const Liana      = require('forest-express-sequelize');
+const Serializer = require('forest-express').ResourceSerializer;
+>>>>>>> WIP smart actions
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../services/makePublic');
 
@@ -41,6 +46,7 @@ module.exports = (sequelize, DataTypes) => {
     Order.hasMany(models.OrderItem);
     Order.belongsTo(models.Client);
     Order.hasMany(models.Payment);
+    Order.hasMany(models.Credit);
   };
 
   Order.INVOICE_STATUS_DRAFT = 1;
@@ -177,7 +183,10 @@ module.exports = (sequelize, DataTypes) => {
       })
       .then((response) => {
         return response.obj.data;
-      });
+      })
+      .catch((error) => {
+      console.error(error);
+    });
   };
 
   Order.prototype.ninjaUpsert = function() {
@@ -252,6 +261,27 @@ module.exports = (sequelize, DataTypes) => {
           });
       }
     );
+
+    app.get(
+      '/forest/Order/:orderId/relationships/refund',
+      Liana.ensureAuthenticated,
+      (req,res) => {
+        models.Refund.findFromOrder(req.params.orderId)
+          .then((refund) => {
+            return new Serializer(Liana, models.Refund, refund, {}, {
+              count: refund.length,
+            }).perform();
+          })
+          .then((result) => {
+            res.send(result);
+            return null;
+          })
+          .catch((err) =>{
+            console.error(err);
+          });
+      }
+    );
+
   };
 
   return Order;

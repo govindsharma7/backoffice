@@ -1,3 +1,12 @@
+const Liana   = require('forest-express-sequelize');
+const Payline = require('payline');
+const config  = require('../config');
+
+const payline = new Payline(config.PAYLINE_MERCHANT_ID,
+                config.PAYLINE_ACCESS_KEY, config.PAYLINE_CONTRACT_NUMBER);
+
+
+
 module.exports = (sequelize, DataTypes) => {
   const Payment = sequelize.define('Payment', {
     id: {
@@ -14,12 +23,53 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.INTEGER,
       required: true,
     },
+    paylineId: {
+      type:                     DataTypes.STRING,
+      required: true,
+    },
   });
 
   Payment.associate = () => {
     const {models} = sequelize;
 
     Payment.belongsTo(models.Order);
+    Payment.hasMany(models.Credit);
+  };
+
+  Payment.beforeLianaInit = (models, app) =>{
+    app.post('/forest/actions/refund', Liana.ensureAuthenticated, (req,res) =>{
+      var amount = req.body.data.attributes.values.amount * 100;
+
+      Payment
+      .findById(req.body.data.attributes.ids[0])
+      .then((payment) => {
+        if (payment.dataValues.paylineId !== null){
+        return payline.doRefund(payment.dataValues.paylineId, amount);
+        }
+        else{
+         throw new Error('This payment can\'t be refund online');
+        }
+      })
+      .then((result) => {
+         return models.Credit
+          .create({
+            amount,
+            reason: req.body.data.attributes.values.reason,
+            paylineId: result.transactionId,
+            PaymentId: req.body.data.attributes.ids[0],
+          });
+      })
+      .then(() => {
+        res.statusCode = 200;
+        res.send({success: 'Refund ok'});
+        return true;
+      })
+      .catch((err) => {
+        console.error(err);
+        res.statusCode = 400;
+        res.send({error: err.message || err.longMessage});
+      });
+    });
   };
 
   return Payment;

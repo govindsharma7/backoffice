@@ -1,9 +1,16 @@
-const D           = require('date-fns');
-const Serializer  = require('forest-express').ResourceSerializer;
-const Liana       = require('forest-express-sequelize');
-const Ninja       = require('../vendor/invoiceninja');
+const D          = require('date-fns');
+const Liana      = require('forest-express');
+const Payline    = require('payline');
+const uuid       = require('uuid/v4');
+const Ninja      = require('../vendor/invoiceninja');
 const config     = require('../config');
 
+const Serializer = Liana.ResourceSerializer;
+const payline    = new Payline(
+  config.PAYLINE_MERCHANT_ID,
+  config.PAYLINE_ACCESS_KEY,
+  config.PAYLINE_CONTRACT_NUMBER
+);
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -186,34 +193,6 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   /*
-   * Extra routes
-   */
-  // Client.beforeLianaInit = (models, app) => {
-  //   app.get('/forest/Client/:clientId/relationships/Invoice',
-  //     Liana.ensureAuthenticated,
-  //     (req, res, next) => {
-  //       Client
-  //         .findById(req.params.clientId)
-  //         .then((client) => {
-  //           return Ninja.invoice.listInvoices({
-  //             'client_id': client.ninjaId,
-  //           });
-  //         })
-  //         .then((response) => {
-  //           return new Serializer(Liana, models.Invoice, response.obj.data, {}, {
-  //             count: response.obj.data.length
-  //           }).perform();
-  //         })
-  //         .then(res.send)
-  //         .catch((error) => {
-  //           console.error(error);
-  //           next();
-  //         });
-  //     }
-  //   );
-  // };
-
-  /*
    * CRUD hooks
    *
    * Those hooks are used to update Invoiceninja records when clients are updated
@@ -250,6 +229,82 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.beforeLianaInit = (models, app) => {
+<<<<<<< HEAD
+    app.post('/forest/actions/credit-client', Liana.ensureAuthenticated, (req,res) =>{
+      var id = uuid();
+      var card = {
+        number: req.body.data.attributes.values.cardNumber,
+        type: req.body.data.attributes.values.cardType,
+        expirationDate: req.body.data.attributes.values.expirationMonth +
+        req.body.data.attributes.values.expirationYear.slice(-2),
+        cvx: req.body.data.attributes.values.cvv,
+        holder: req.body.data.attributes.values.cardHolder,
+      };
+      var amount = req.body.data.attributes.values.amount * 100;
+
+      payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
+      .then((result) => {
+        return models.Order
+        .create({
+          id,
+          type: 'credit',
+          label: req.body.data.attributes.values.orderLabel,
+          ClientId: req.body.data.attributes.ids[0],
+          OrderItems: [{
+              label: req.body.data.attributes.values.reason,
+              unitPrice: amount * -1,
+              OrderId: id,
+          }],
+          Credits:[{
+            amount,
+            reason: req.body.data.attributes.values.orderLabel,
+            paylineId: result.transactionId,
+            OrderId: id,
+          }],
+        },{
+          include: [models.OrderItem, models.Credit],
+        });
+      })
+      .then(() =>{
+       res.status(200).send({success: 'Refund ok'});
+        return true;
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(400).send({error: err.longMessage});
+      })
+    });
+
+    app.get('/forest/Client/:recordId/relationships/Invoices',
+            Liana.ensureAuthenticated, (req, res) => {
+      Client
+        .findById(req.params.recordId)
+        .then((client) => {
+          return Ninja.invoice.listInvoices({
+           'client_id': client.ninjaId,
+          });
+        })
+        .then((response) => {
+          var obj ={};
+
+          obj.data = [];
+          response.obj.data.forEach((invoice, index) => {
+            obj.data[index] = {
+              id: invoice.id,
+              type: 'Invoice',
+              attributes: {
+                href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
+              },
+            };
+          });
+          obj.meta = {};
+          obj.meta.count = response.obj.data.length;
+          return res.send(obj);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+=======
     app.get('/forest/Client/:recordId/relationships/Invoices', (req, res, next) => {
         Client
            .findById(req.params.recordId)
@@ -282,6 +337,7 @@ module.exports = (sequelize, DataTypes) => {
              console.error(error);
              next();
            });
+>>>>>>> implement invoices relationships
     });
   };
 
