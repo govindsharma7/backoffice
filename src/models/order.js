@@ -159,7 +159,6 @@ module.exports = (sequelize, DataTypes) => {
         });
       })
       .then((response) => {
-        console.log(response);
         this
           .set('ninjaId', response.obj.data.id)
           .save({hooks: false});
@@ -182,7 +181,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.prototype.ninjaUpsert = function() {
-    if (this.ninjaId != null && this.ninjaId !== -1) {
+    if (this.ninjaId != null) {
       return this.ninjaUpdate();
     }
 
