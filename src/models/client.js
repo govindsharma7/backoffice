@@ -1,5 +1,11 @@
-const D           = require('date-fns');
-const Ninja       = require('../vendor/invoiceninja');
+const D          = require('date-fns');
+const Liana      = require('forest-express');
+const Payline    = require('payline');
+const uuid       = require('uuid/v4');
+const Ninja      = require('../vendor/invoiceninja');
+const config     = require('../config');
+const payline    = require('../vendor/payline');
+
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -182,34 +188,6 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   /*
-   * Extra routes
-   */
-  // Client.beforeLianaInit = (models, app) => {
-  //   app.get('/forest/Client/:clientId/relationships/Invoice',
-  //     Liana.ensureAuthenticated,
-  //     (req, res, next) => {
-  //       Client
-  //         .findById(req.params.clientId)
-  //         .then((client) => {
-  //           return Ninja.invoice.listInvoices({
-  //             'client_id': client.ninjaId,
-  //           });
-  //         })
-  //         .then((response) => {
-  //           return new Serializer(Liana, models.Invoice, response.obj.data, {}, {
-  //             count: response.obj.data.length
-  //           }).perform();
-  //         })
-  //         .then(res.send)
-  //         .catch((error) => {
-  //           console.error(error);
-  //           next();
-  //         });
-  //     }
-  //   );
-  // };
-
-  /*
    * CRUD hooks
    *
    * Those hooks are used to update Invoiceninja records when clients are updated
@@ -246,11 +224,89 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.beforeLianaInit = (models, app) => {
-    app.get('/forest/Client/:recordId/relationships/Invoices', (req, res) => {
-      console.log('COUCOU!');
+    app.post(
+      '/forest/actions/credit-client',
+      Liana.ensureAuthenticated,
+      (req, res) => {
+        const id = uuid();
+        const {values, ids} = req.body.data.attributes;
+        const card = {
+          number: values.cardNumber,
+          type: values.cardType,
+          expirationDate: values.expirationMonth +
+          values.expirationYear.slice(-2),
+          cvx: values.cvv,
+          holder: values.cardHolder,
+        };
+        const amount = values.amount * 100;
 
-      res.send({'OK':true});
-    });
+        if (ids.length > 1) {
+          return res.status(400).send({error:'Can\'t credit multiple clients'});
+        }
+
+        return payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
+          .then((result) => {
+            return models.Order.create({
+              id,
+              type: 'credit',
+              label: values.orderLabel,
+              ClientId: ids[0],
+              OrderItems: [{
+                label: values.reason,
+                unitPrice: amount * -1,
+              }],
+              Credits:[{
+                amount,
+                reason: values.orderLabel,
+                paylineId: result.transactionId,
+              }],
+            }, {
+              include: [models.OrderItem, models.Credit],
+            });
+          })
+          .then(() =>{
+            return res.status(200).send({success: 'Refund ok'});
+          })
+          .catch((err) => {
+            console.error(err);
+            return res.status(400).send({error: err.longMessage});
+          });
+      }
+    );
+
+    app.get(
+      '/forest/Client/:recordId/relationships/Invoices',
+      Liana.ensureAuthenticated,
+      (req, res) => {
+        Client
+          .findById(req.params.recordId)
+          .then((client) => {
+            return Ninja.invoice.listInvoices({
+             'client_id': client.ninjaId,
+            });
+          })
+          .then((response) => {
+            const {data} = response.obj.data;
+
+            return res.send({
+              data: data.map((invoice) => {
+                return {
+                  id: invoice.id,
+                  type: 'Invoice',
+                  attributes: {
+                    href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
+                  },
+                };
+              }),
+              meta: {count: data.length},
+            });
+          })
+          .catch((err) => {
+            console.error(err);
+            return res.status(400).send({error: err.message});
+          });
+      }
+    );
   };
 
   return Client;

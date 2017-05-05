@@ -1,5 +1,6 @@
-const Liana = require('forest-express');
+const Liana   = require('forest-express');
 const {Order} = require('../src/models');
+const config  = require('../src/config');
 
 const cache = new WeakMap();
 
@@ -51,6 +52,20 @@ Liana.collection('Order', {
           return result.balance / 100;
         });
     },
+  }, {
+    field: 'invoice',
+    type: 'String',
+    get(object) {
+      if (object.ninjaId !== null) {
+        return `${config.INVOICENINJA_HOST}/invoices/${object.ninjaId}/edit`;
+      }
+
+      return null;
+    },
+  }, {
+    field: 'Refunds',
+    type: ['String'],
+    reference: 'Credit.id',
   }],
   actions: [{
     name: 'Generate Invoice',

@@ -1,8 +1,9 @@
 const Promise    = require('bluebird');
-const Liana      = require('forest-express');
+const Liana      = require('forest-express-sequelize');
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../services/makePublic');
 
+const Serializer = Liana.ResourceSerializer;
 
 module.exports = (sequelize, DataTypes) => {
 
@@ -41,6 +42,7 @@ module.exports = (sequelize, DataTypes) => {
     Order.hasMany(models.OrderItem);
     Order.belongsTo(models.Client);
     Order.hasMany(models.Payment);
+    Order.hasMany(models.Credit);
   };
 
   Order.INVOICE_STATUS_DRAFT = 1;
@@ -71,17 +73,28 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  Order.prototype.getRefunds = function() {
+    return sequelize.models.Credit
+      .findRefundsFromOrder(this.id)
+      .then((refunds) => {
+        return refunds.reduce((sum, refund) => {
+          return sum + refund.amount;
+        }, 0);
+      });
+  };
+
   // Return all calculated props (amount, totalPaid, balance)
   Order.prototype.getCalculatedProps = function() {
     return Promise.all([
         this.getAmount(),
         this.getTotalPaid(),
+        this.getRefunds(),
       ])
-      .then(([amount, totalPaid]) => {
+      .then(([amount, totalPaid, refunds]) => {
         return {
           amount,
           totalPaid,
-          balance: totalPaid - amount,
+          balance: totalPaid - amount - refunds,
         };
       });
   };
@@ -236,7 +249,7 @@ module.exports = (sequelize, DataTypes) => {
       '/forest/actions/generate-invoice',
       Liana.ensureAuthenticated,
       (req, res) => {
-        return Order
+        Order
           .findAll({ where: { id: { $in: req.body.data.attributes.ids } } })
           .then((orders) => {
             return Order.generateInvoices(orders);
@@ -246,12 +259,31 @@ module.exports = (sequelize, DataTypes) => {
           })
           .catch((err) => {
             console.error(err);
-            return res.status(400).send({
-              error: `Invoice creation failed. Reason: ${err.message}`,
-            });
+            return res.status(400).send({error: err.message});
           });
       }
     );
+
+    app.get(
+      '/forest/Order/:orderId/relationships/Refunds',
+      Liana.ensureAuthenticated,
+      (req, res) => {
+        models.Credit.findRefundsFromOrder(req.params.orderId)
+          .then((credits) => {
+            return new Serializer(Liana, models.Credit, credits, {}, {
+              count: credits.length,
+            }).perform();
+          })
+          .then((result) => {
+            return res.send(result);
+          })
+          .catch((err) => {
+            console.error(err);
+            return res.status(400).send({error: err.message});
+          });
+      }
+    );
+
   };
 
   return Order;

@@ -1,4 +1,23 @@
-const D = require('date-fns');
+const D     = require('date-fns');
+const Liana = require('forest-express-sequelize');
+
+const PACK_PRICES = {
+  lyon: {
+    basique: 59000,
+    confort: 79000,
+    privilege: 99000,
+  },
+  montpellier: {
+    basique: 39000,
+    confort: 59000,
+    privilege: 79000,
+  },
+  paris: {
+    basique: 79000,
+    confort: 99000,
+    privilege: 119000,
+  },
+};
 
 module.exports = (sequelize, DataTypes) => {
   const Renting = sequelize.define('Renting', {
@@ -57,6 +76,59 @@ module.exports = (sequelize, DataTypes) => {
       price: Math.round(( this.price / daysInMonth ) * daysStayed),
       serviceFees: Math.round(( this.serviceFees / daysInMonth ) * daysStayed),
     };
+  };
+
+  Renting.findCity = (roomId) => {
+    return sequelize.models.Room
+      .findAll({
+        where: {
+          '$Room.id$': roomId,
+        },
+        include: [{
+          model: sequelize.models.Apartment,
+        }],
+      })
+      .then((result) =>{
+        return result[0].Apartment;
+      });
+  };
+
+  Renting.beforeLianaInit = (models, app) => {
+    app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req, res) =>{
+      const {values, ids} = req.body.data.attributes;
+      const comfortLevel = values.comfortLevel;
+
+      Renting
+        .findById(ids[0])
+        .then((renting) =>{
+          return Promise.all([Renting.findCity(renting.RoomId), renting]);
+        })
+        .then(([apartment, renting]) => {
+          return models.Order
+            .create({
+              type: 'invoice',
+              label: 'Housing Pack',
+              ClientId: renting.ClientId,
+              OrderItems:[{
+                label: `Housing Pack ${apartment.addressCity} ${comfortLevel}`,
+                unitPrice: values.price ?
+                  values.price * 100 :
+                  PACK_PRICES[apartment.addressCity][comfortLevel],
+                RentingId: renting.id,
+                ProductId: 'pack',
+              }],
+              }, {
+              include: [models.OrderItem],
+            });
+        })
+        .then(() => {
+          return res.status(200).send({success: 'Housing pack ok'});
+        })
+        .catch((err) =>{
+          console.error(err);
+          res.status(400).send({error: err.message});
+        });
+    });
   };
 
   return Renting;
