@@ -58,5 +58,6 @@ module.exports = {
 // To create a new deploying environment, run
 // claudia create --handler=src/lambda.handler --role=chez-nestor_com-executor \
 // --name=chez-nestor-<new env>_com --config=claudia.<new env>.json \
-// --region=eu-west-1 --memory=256
+// --region=eu-west-1 --memory=256 --deploy-proxy-api
 // But set AWS env variables thrugh 'export' first, as env-cmd doesn't help here
+// then create an env variable in lambda console set to <new env>

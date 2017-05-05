@@ -1,9 +1,13 @@
 {
   "lambda": {
     "role": "chez-nestor_com-executor",
-    "name": "chez-nestor-dev_com",
+    "name": "chez-nestor-stag_com",
     "region": "eu-west-1",
     "runtime": "nodejs6.10",
     "memory": "256"
+  },
+  "api": {
+    "id": "7789dwm2t3",
+    "url": "https://7789dwm2t3.execute-api.eu-west-1.amazonaws.com/latest"
   }
 }
