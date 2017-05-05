@@ -4,7 +4,7 @@ const Payline    = require('payline');
 const uuid       = require('uuid/v4');
 const Ninja      = require('../vendor/invoiceninja');
 const config     = require('../config');
-const payline     = require('../vendor/payline');
+const payline    = require('../vendor/payline');
 
 
 module.exports = (sequelize, DataTypes) => {
@@ -228,83 +228,85 @@ module.exports = (sequelize, DataTypes) => {
       '/forest/actions/credit-client',
       Liana.ensureAuthenticated,
       (req, res) => {
-      var id = uuid();
-      var {values, ids} = req.body.data.attributes;
-      var card = {
-        number: values.cardNumber,
-        type: values.cardType,
-        expirationDate: values.expirationMonth +
-        values.expirationYear.slice(-2),
-        cvx: values.cvv,
-        holder: values.cardHolder,
-      };
-      var amount = values.amount * 100;
+        var id = uuid();
+        var {values, ids} = req.body.data.attributes;
+        var card = {
+          number: values.cardNumber,
+          type: values.cardType,
+          expirationDate: values.expirationMonth +
+          values.expirationYear.slice(-2),
+          cvx: values.cvv,
+          holder: values.cardHolder,
+        };
+        var amount = values.amount * 100;
 
-      if (ids.length > 1) {
-        return res.status(400).send({error:'Can\'t credit multiple clients'});
-      }
+        if (ids.length > 1) {
+          return res.status(400).send({error:'Can\'t credit multiple clients'});
+        }
 
-      return payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
-        .then((result) => {
-          return models.Order
-          .create({
-            id,
-            type: 'credit',
-            label: values.orderLabel,
-            ClientId: ids[0],
-            OrderItems: [{
-              label: values.reason,
-              unitPrice: amount * -1,
-            }],
-            Credits:[{
-              amount,
-              reason: values.orderLabel,
-              paylineId: result.transactionId,
-            }],
-          }, {
-            include: [models.OrderItem, models.Credit],
+        return payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
+          .then((result) => {
+            return models.Order.create({
+              id,
+              type: 'credit',
+              label: values.orderLabel,
+              ClientId: ids[0],
+              OrderItems: [{
+                label: values.reason,
+                unitPrice: amount * -1,
+              }],
+              Credits:[{
+                amount,
+                reason: values.orderLabel,
+                paylineId: result.transactionId,
+              }],
+            }, {
+              include: [models.OrderItem, models.Credit],
+            });
+          })
+          .then(() =>{
+            return res.status(200).send({success: 'Refund ok'});
+          })
+          .catch((err) => {
+            console.error(err);
+            return res.status(400).send({error: err.longMessage});
           });
-        })
-        .then(() =>{
-          return res.status(200).send({success: 'Refund ok'});
-        })
-        .catch((err) => {
-          console.error(err);
-          return res.status(400).send({error: err.longMessage});
-        });
-    });
+      }
+    );
 
     app.get(
       '/forest/Client/:recordId/relationships/Invoices',
       Liana.ensureAuthenticated,
       (req, res) => {
-      Client
-        .findById(req.params.recordId)
-        .then((client) => {
-          return Ninja.invoice.listInvoices({
-           'client_id': client.ninjaId,
-          });
-        })
-        .then((response) => {
-          var obj = {};
+        Client
+          .findById(req.params.recordId)
+          .then((client) => {
+            return Ninja.invoice.listInvoices({
+             'client_id': client.ninjaId,
+            });
+          })
+          .then((response) => {
+            var obj = {};
 
-          obj.data = [];
-          response.obj.data.forEach((invoice, index) => {
-            obj.data[index] = {
-              id: invoice.id,
-              type: 'Invoice',
-              attributes: {
-                href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
-              },
-            };
+            obj.data = [];
+            response.obj.data.forEach((invoice, index) => {
+              obj.data[index] = {
+                id: invoice.id,
+                type: 'Invoice',
+                attributes: {
+                  href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
+                },
+              };
+            });
+            obj.meta = {count: response.obj.data.length};
+            return res.send(obj);
+          })
+          .catch((err) => {
+            console.error(err);
+            return res.status(400).send({error: err.message});
           });
-          obj.meta = {count: response.obj.data.length};
-          return res.send(obj);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    });
+      }
+    );
   };
 
   return Client;

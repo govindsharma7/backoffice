@@ -74,12 +74,13 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.prototype.getRefunds = function () {
-    return sequelize.models.Credit.findRefundsFromOrder(this.id)
-    .then((refunds) => {
-      return refunds.reduce((sum, refund) =>{
-        return sum + refund.amount;
-      }, 0);
-    });
+    return sequelize.models.Credit
+      .findRefundsFromOrder(this.id)
+      .then((refunds) => {
+        return refunds.reduce((sum, refund) =>{
+          return sum + refund.amount;
+        }, 0);
+      });
   };
 
   // Return all calculated props (amount, totalPaid, balance)
@@ -258,9 +259,7 @@ module.exports = (sequelize, DataTypes) => {
           })
           .catch((err) => {
             console.error(err);
-            return res.status(400).send({
-              error: `Invoice creation failed. Reason: ${err.message}`,
-            });
+            return res.status(400).send({error: err.message});
           });
       }
     );
@@ -268,19 +267,20 @@ module.exports = (sequelize, DataTypes) => {
     app.get(
       '/forest/Order/:orderId/relationships/Refunds',
       Liana.ensureAuthenticated,
-      (req, res, next) => {
+      (req, res) => {
         models.Credit.findRefundsFromOrder(req.params.orderId)
           .then((credits) => {
-          return new Serializer(Liana, models.Credit, credits, {}, {
+            return new Serializer(Liana, models.Credit, credits, {}, {
               count: credits.length,
             }).perform();
           })
           .then((result) => {
             return res.send(result);
           })
-          /* eslint-disable promise/no-callback-in-promise */
-          .catch(next);
-          /* eslint-enable promise/no-callback-in-promise */
+          .catch((err) => {
+            console.error(err);
+            return res.status(400).send({error: err.message});
+          });
       }
     );
 

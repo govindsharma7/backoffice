@@ -60,8 +60,7 @@ Liana.collection('Order', {
         return `${config.INVOICENINJA_HOST}/invoices/${object.ninjaId}/edit`;
       }
 
-        return null;
-
+      return null;
     },
   }, {
     field: 'Refunds',

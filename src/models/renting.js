@@ -1,6 +1,24 @@
 const D     = require('date-fns');
 const Liana = require('forest-express-sequelize');
 
+const PACK_PRICES = {
+  lyon: {
+    basique: 59000,
+    confort: 79000,
+    privilege: 99000,
+  },
+  montpellier: {
+    basique: 39000,
+    confort: 59000,
+    privilege: 79000,
+  },
+  paris: {
+    basique: 79000,
+    confort: 99000,
+    privilege: 119000,
+  },
+};
+
 module.exports = (sequelize, DataTypes) => {
   const Renting = sequelize.define('Renting', {
     id: {
@@ -77,25 +95,8 @@ module.exports = (sequelize, DataTypes) => {
 
   Renting.beforeLianaInit = (models, app) => {
     app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req, res) =>{
-      var {values, ids} = req.body.data.attributes;
-      var comfortLevel = values.comfortLevel;
-      var packPrices = {
-        lyon: {
-          basique: 59000,
-          confort: 79000,
-          privilege: 99000,
-        },
-        montpellier: {
-          basique: 39000,
-          confort: 59000,
-          privilege: 79000,
-        },
-        paris: {
-          basique: 79000,
-          confort: 99000,
-          privilege: 119000,
-        },
-      };
+      const {values, ids} = req.body.data.attributes;
+      const comfortLevel = values.comfortLevel;
 
       Renting
         .findById(ids[0])
@@ -110,8 +111,9 @@ module.exports = (sequelize, DataTypes) => {
               ClientId: renting.ClientId,
               OrderItems:[{
                 label: `Housing Pack ${apartment.addressCity} ${comfortLevel}`,
-                unitPrice: values.price ? values.price * 100 :
-                packPrices[apartment.addressCity][comfortLevel],
+                unitPrice: values.price ?
+                  values.price * 100 :
+                  PACK_PRICES[apartment.addressCity][comfortLevel],
                 RentingId: renting.id,
                 ProductId: 'pack',
               }],
@@ -120,12 +122,11 @@ module.exports = (sequelize, DataTypes) => {
             });
         })
         .then(() => {
-          res.status(200).send({success: 'Housing pack ok'});
-          return true;
+          return res.status(200).send({success: 'Housing pack ok'});
         })
         .catch((err) =>{
           console.error(err);
-          res.status(400).send({error: 'Housing pack not created'});
+          res.status(400).send({error: err.message});
         });
     });
   };

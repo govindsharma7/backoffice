@@ -42,12 +42,11 @@ module.exports = (sequelize, DataTypes) => {
       Payment
         .findById(ids[0])
         .then((payment) => {
-          if (payment.paylineId !== null) {
-            return payline.doRefund(payment.paylineId, amount);
+          if (payment.paylineId == null) {
+            throw new Error('This payment can\'t be refund online');
           }
 
-            throw new Error('This payment can\'t be refund online');
-
+          return payline.doRefund(payment.paylineId, amount);
         })
         .then((result) => {
           return models.Credit
@@ -59,14 +58,11 @@ module.exports = (sequelize, DataTypes) => {
             });
         })
         .then(() => {
-          res.statusCode = 200;
-          res.send({success: 'Refund ok'});
-          return true;
+          return res.send({success: 'Refund ok'});
         })
         .catch((err) => {
           console.error(err);
-          res.statusCode = 400;
-          res.send({error: err.message || err.longMessage});
+          return res.status(400).send({error: err.message || err.longMessage});
         });
     });
   };
