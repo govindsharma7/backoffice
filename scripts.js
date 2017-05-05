@@ -35,9 +35,9 @@ module.exports = {
   'test:full': `${lint} && ${env.test} ${dbReset} && ${env.test} jest`,
 
   'extract:clients':
-    `${env.staging} node scripts/extractInvoiceninja.js > data/clients.json`,
+    `${env.prod} node scripts/extractInvoiceninja.js > data/clients.json`,
   'extract:portfolio':
-    `${env.staging} node scripts/extractWordpress.js > tmp/portfolio.json`,
+    `${env.prod} node scripts/extractWordpress.js > tmp/portfolio.json`,
 
   'dev:start': `${env.dev} ${nodemonInspect}`,
   'dev:sql:migration:create':
