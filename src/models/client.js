@@ -4,12 +4,8 @@ const Payline    = require('payline');
 const uuid       = require('uuid/v4');
 const Ninja      = require('../vendor/invoiceninja');
 const config     = require('../config');
+const payline     = require('../vendor/payline');
 
-const payline    = new Payline(
-  config.PAYLINE_MERCHANT_ID,
-  config.PAYLINE_ACCESS_KEY,
-  config.PAYLINE_CONTRACT_NUMBER
-);
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -236,8 +232,7 @@ module.exports = (sequelize, DataTypes) => {
       var {values, ids} = req.body.data.attributes;
 
       if (ids.length > 1){
-        res.status(400).send({error:'Can\'t credit multiple clients'});
-        return false;
+        return res.status(400).send({error:'Can\'t credit multiple clients'});
       }
       var card = {
         number: values.cardNumber,
@@ -249,7 +244,7 @@ module.exports = (sequelize, DataTypes) => {
       };
       var amount = values.amount * 100;
 
-      payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
+      return payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
         .then((result) => {
           return models.Order
           .create({
@@ -271,12 +266,11 @@ module.exports = (sequelize, DataTypes) => {
           });
         })
         .then(() =>{
-          res.status(200).send({success: 'Refund ok'});
-          return true;
+          return res.status(200).send({success: 'Refund ok'});
         })
         .catch((err) => {
           console.error(err);
-          res.status(400).send({error: err.longMessage});
+          return res.status(400).send({error: err.longMessage});
         });
     });
 
