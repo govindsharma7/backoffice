@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
     },
     preferredLanguage: {
-      type:                     DataTypes.ENUM('fr','en'),
+      type:                     DataTypes.ENUM('fr', 'en'),
       defaultValue: 'en',
     },
     ninjaId:       DataTypes.INTEGER,
@@ -99,7 +99,7 @@ module.exports = (sequelize, DataTypes) => {
             label: `${month} Rent - Room #${room.reference}`,
             unitPrice: prorated.price,
             RentingId: renting.id,
-          },{
+          }, {
             label: `${month} Service Fees - Apt #${apartment.reference}`,
             unitPrice: prorated.serviceFees,
             ProductId: 'service-fees',

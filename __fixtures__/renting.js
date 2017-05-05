@@ -17,7 +17,7 @@ module.exports = fixtures((u) => {
       serviceFees: 3000,
       ClientId: u.id('client-1'),
       RoomId: u.id('room-1'),
-    },{
+    }, {
       id: u.id('renting-2'),
       checkinDate: '2015-03-03',
       checkoutDate: '2015-03-28',

@@ -71,7 +71,8 @@ module.exports = {
     'no-multi-str': 'error',
     'no-param-reassign': 'error',
     'no-proto': 'error',
-    'no-return-assign': 'warn',
+    // TODO: restore this rule later. Right now it's really noisy
+    //'no-return-assign': 'warn',
     'no-return-await': 'error',
     'no-self-compare': 'error',
     'no-sequences': 'warn',
@@ -97,19 +98,33 @@ module.exports = {
     'no-use-before-define': ['error', {functions: false}],
 
     // Stylistic
+    'array-bracket-spacing': ['error', 'never'],
+    'block-spacing': ['error', 'always'],
+    'brace-style': [ 'error', 'stroustrup', { 'allowSingleLine': true } ],
+    'camelcase': ['error', {properties: 'always'}],
+    'comma-dangle': ['error', 'always-multiline'],
+    'comma-spacing': 'error',
+    'comma-style': ['error', 'last'],
+    'computed-property-spacing': ['error', 'never'],
+    'consistent-this': ["error", "self"],
+
     'semi': ['error', 'always'],
     'one-var': ['error', 'never'],
     // Do not disable max-len. If your code exceeds 90 chars, then there's no arguing that you are making it hard to read for other devs. See?
     'max-len': ['error', { code: 90, ignoreUrls: true }],
     'newline-after-var': ['error', 'always'],
-    'comma-dangle': ['error', 'always-multiline'],
-    'quotes': [ 'error', 'single' ],
-    'brace-style': [ 'error', 'stroustrup', { 'allowSingleLine': true } ],
-    'camelcase': ['error', {properties: 'always'}],
+    'quotes': ['error', 'single'],
+    'eol-last': ['error', 'always'],
+    'func-call-spacing': ['error', 'never'],
+    // TODO: restore this rule later. Right now it's really noisy
+    //'indent': ['error', 2],
+
     'space-before-blocks': ['error', 'always'],
     'keyword-spacing': ['error', { before: true, after: true }],
     'space-infix-ops': ['error'],
-    'no-underscore-dangle': ['warn'],
+
+    // TODO: restore this rule later. Right now it's really noisy
+    //'no-underscore-dangle': ['warn'],
     'no-trailing-spaces': ['error'],
 
     // React

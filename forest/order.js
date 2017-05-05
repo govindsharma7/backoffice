@@ -33,7 +33,7 @@ Liana.collection('Order', {
           return result.amount / 100;
         });
     },
-  },{
+  }, {
     field: 'totalPaid',
     type: 'Number',
     get(object) {
@@ -42,7 +42,7 @@ Liana.collection('Order', {
           return result.totalPaid / 100;
         });
     },
-  },{
+  }, {
     field: 'balance',
     type: 'Number',
     get(object) {

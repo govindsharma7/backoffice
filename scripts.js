@@ -26,7 +26,7 @@ const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
 module.exports = {
-  'lint': lint,
+  'lint': `${lint} ${flags}`,
   'test': `${lint} && ${env.test} ${dbReset} && ${env.test} ${unitTest}`,
   'test:watch': `${env.test} ${dbReset} && ${env.test} ${unitTest} --watch`,
   'test:integration': `${env.test} ${dbReset} && ${env.test} ${intTest}`,

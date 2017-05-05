@@ -5,7 +5,7 @@ Liana.collection('Invoice', {
   fields: [{
     field: 'id',
     type: 'String',
-  },{
+  }, {
     field: 'href',
     type: 'String',
   }],

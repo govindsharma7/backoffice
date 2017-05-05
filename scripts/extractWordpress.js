@@ -74,9 +74,9 @@ function parseProperties(properties) {
     let addressCity;
     let addressArrdt;
     let apartmentRef =
-      property.meta.estate_property_id[0].slice(0,-1);
+      property.meta.estate_property_id[0].slice(0, -1);
     let apartmentName =
-      property.slug.replace(/-chambre.*/, '').replace(/-/g,' ');
+      property.slug.replace(/-chambre.*/, '').replace(/-/g, ' ');
     let addressZip;
 
     if (
@@ -100,7 +100,7 @@ function parseProperties(properties) {
     // Shorten bis/ter
     apartmentName =
       apartmentName.replace(/ ?(bis|ter) /, (a, b) => {
-        return `${b.slice(0,1)} `;
+        return `${b.slice(0, 1)} `;
       });
     // Shorten saint
     apartmentName = apartmentName.replace(/ sainte? /, ' st ');

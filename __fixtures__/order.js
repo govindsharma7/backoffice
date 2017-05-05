@@ -24,7 +24,7 @@ module.exports = fixtures((u) => {
       unitPrice: 100,
       vatRate: 0,
       OrderId: u.id('order-1'),
-    },{
+    }, {
       id: u.id('orderitem-2'),
       label: 'test item 2',
       quantity: 1,

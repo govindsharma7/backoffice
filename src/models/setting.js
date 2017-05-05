@@ -14,20 +14,20 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.VIRTUAL,
       get() {
         switch (this.type) {
-          case 'int':
-            return this.intVal;
-          case 'str':
-          default:
-            return this.strVal;
+        case 'int':
+          return this.intVal;
+        case 'str':
+        default:
+          return this.strVal;
         }
       },
       set(val) {
         switch (this.type) {
-          case 'int':
-            return this.intVal = val;
-          case 'str':
-          default:
-            return this.strVal = val;
+        case 'int':
+          return this.intVal = val;
+        case 'str':
+        default:
+          return this.strVal = val;
         }
       },
     },

@@ -34,14 +34,14 @@ module.exports = fixtures((u) => {
       price: '20000',
       ClientId: u.id('client-1'),
       RoomId: u.id('room-1'),
-    },{
+    }, {
       id: u.id('renting-2'),
       checkinDate: '2016-01-01',
       checkoutDate: '2017-02-10',
       price: '20000',
       ClientId: u.id('client-1'),
       RoomId: u.id('room-1'),
-    },{
+    }, {
       id: u.id('renting-3'),
       checkinDate: '2017-02-11',
       price: '30000',

@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       required: false,
     },
     vatRate: {
-      type:                     DataTypes.ENUM(0,0.2),
+      type:                     DataTypes.ENUM(0, 0.2),
       required: true,
       defaultValue: 0,
       get: function() {
