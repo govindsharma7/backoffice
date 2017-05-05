@@ -1,5 +1,5 @@
 const Promise    = require('bluebird');
-const Liana      = require('forest-express');
+const Liana      = require('forest-express-sequelize');
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../services/makePublic');
 
@@ -73,17 +73,27 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  Order.prototype.getRefunds = function () {
+    return sequelize.models.Credit.findRefundsFromOrder(this.id)
+    .then((refunds) => {
+      return refunds.reduce((sum, refund) =>{
+        return sum + refund.amount;
+      }, 0);
+    });
+  };
+
   // Return all calculated props (amount, totalPaid, balance)
   Order.prototype.getCalculatedProps = function() {
     return Promise.all([
         this.getAmount(),
         this.getTotalPaid(),
+        this.getRefunds(),
       ])
-      .then(([amount, totalPaid]) => {
+      .then(([amount, totalPaid, refunds]) => {
         return {
           amount,
           totalPaid,
-          balance: totalPaid - amount,
+          balance: totalPaid - amount - refunds,
         };
       });
   };
@@ -179,10 +189,7 @@ module.exports = (sequelize, DataTypes) => {
       })
       .then((response) => {
         return response.obj.data;
-      })
-      .catch((error) => {
-      console.error(error);
-    });
+      });
   };
 
   Order.prototype.ninjaUpsert = function() {
@@ -241,7 +248,7 @@ module.exports = (sequelize, DataTypes) => {
       '/forest/actions/generate-invoice',
       Liana.ensureAuthenticated,
       (req, res) => {
-        return Order
+        Order
           .findAll({ where: { id: { $in: req.body.data.attributes.ids } } })
           .then((orders) => {
             return Order.generateInvoices(orders);
@@ -259,22 +266,19 @@ module.exports = (sequelize, DataTypes) => {
     );
 
     app.get(
-      '/forest/Order/:orderId/relationships/refund',
+      '/forest/Order/:orderId/relationships/Refunds',
       Liana.ensureAuthenticated,
-      (req,res) => {
-        models.Refund.findFromOrder(req.params.orderId)
-          .then((refund) => {
-            return new Serializer(Liana, models.Refund, refund, {}, {
-              count: refund.length,
+      (req,res,next) => {
+        models.Credit.findRefundsFromOrder(req.params.orderId)
+          .then((credits) => {
+          return new Serializer(Liana, models.Credit, credits, {}, {
+              count: credits.length,
             }).perform();
           })
           .then((result) => {
-            res.send(result);
-            return null;
+            return res.send(result);
           })
-          .catch((err) =>{
-            console.error(err);
-          });
+          .catch(next);
       }
     );
 

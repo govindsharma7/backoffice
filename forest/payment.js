@@ -9,7 +9,6 @@ Liana.collection('Payment', {
       },{
         field: 'reason',
         type: 'String',
-      },
-    ],
+      }],
   }],
 });

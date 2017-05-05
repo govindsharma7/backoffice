@@ -30,12 +30,10 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Credit.findFromOrder = (orderId) => {
+  Credit.findRefundsFromOrder = (orderId) => {
     return Credit
       .findAll({
-        where: {
-          '$Payment.OrderId$' : orderId,
-        },
+        where: {'$Payment.OrderId$' : orderId},
         include: [{
           model: sequelize.models.Payment,
           attributes: ['id', 'OrderId'],

@@ -72,18 +72,33 @@ module.exports = (sequelize, DataTypes) => {
       })
       .then((result) =>{
         return result[0].Apartment;
-      })
-      .catch((err) => {
-        console.error(err);
-    });
+      });
   };
 
   Renting.beforeLianaInit = (models, app) => {
     app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req,res) =>{
-      var comfortLevel = req.body.data.attributes.values.comfortLevel;
+      var {values, ids} = req.body.data.attributes;
+      var comfortLevel = values.comfortLevel;
+      var packPrices = {
+        lyon: {
+          basique: 59000,
+          confort: 79000,
+          privilege: 99000,
+        },
+        montpellier: {
+          basique: 39000,
+          confort: 59000,
+          privilege: 79000,
+        },
+        paris: {
+          basique: 79000,
+          confort: 99000,
+          privilege: 119000,
+        },
+      };
 
       Renting
-        .findById(req.body.data.attributes.ids[0])
+        .findById(ids[0])
         .then((renting) =>{
           return Promise.all([Renting.findCity(renting.RoomId), renting]);
         })
@@ -95,12 +110,13 @@ module.exports = (sequelize, DataTypes) => {
               ClientId: renting.ClientId,
               OrderItems:[{
                 label: `Housing Pack ${apartment.addressCity} ${comfortLevel}`,
-                unitPrice: req.body.data.attributes.values.price ?  req.body.data.attributes.values.price : '460',
+                unitPrice: values.price ? values.price * 100 :
+                packPrices[apartment.addressCity][comfortLevel],
                 RentingId: renting.id,
                 ProductId: 'pack',
               }],
-            },{
-            include: [models.OrderItem],
+              },{
+              include: [models.OrderItem],
             });
         })
         .then(() => {

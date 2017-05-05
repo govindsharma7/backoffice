@@ -5,7 +5,6 @@ const uuid       = require('uuid/v4');
 const Ninja      = require('../vendor/invoiceninja');
 const config     = require('../config');
 
-const Serializer = Liana.ResourceSerializer;
 const payline    = new Payline(
   config.PAYLINE_MERCHANT_ID,
   config.PAYLINE_ACCESS_KEY,
@@ -229,53 +228,62 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.beforeLianaInit = (models, app) => {
-    app.post('/forest/actions/credit-client', Liana.ensureAuthenticated, (req,res) =>{
+    app.post(
+      '/forest/actions/credit-client',
+      Liana.ensureAuthenticated,
+      (req,res) => {
       var id = uuid();
+      var {values, ids} = req.body.data.attributes;
+
+      if (ids.length > 1){
+        res.status(400).send({error:'Can\'t credit multiple clients'});
+        return false;
+      }
       var card = {
-        number: req.body.data.attributes.values.cardNumber,
-        type: req.body.data.attributes.values.cardType,
-        expirationDate: req.body.data.attributes.values.expirationMonth +
-        req.body.data.attributes.values.expirationYear.slice(-2),
-        cvx: req.body.data.attributes.values.cvv,
-        holder: req.body.data.attributes.values.cardHolder,
+        number: values.cardNumber,
+        type: values.cardType,
+        expirationDate: values.expirationMonth +
+        values.expirationYear.slice(-2),
+        cvx: values.cvv,
+        holder: values.cardHolder,
       };
-      var amount = req.body.data.attributes.values.amount * 100;
+      var amount = values.amount * 100;
 
       payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
-      .then((result) => {
-        return models.Order
-        .create({
-          id,
-          type: 'credit',
-          label: req.body.data.attributes.values.orderLabel,
-          ClientId: req.body.data.attributes.ids[0],
-          OrderItems: [{
-              label: req.body.data.attributes.values.reason,
+        .then((result) => {
+          return models.Order
+          .create({
+            id,
+            type: 'credit',
+            label: values.orderLabel,
+            ClientId: ids[0],
+            OrderItems: [{
+              label: values.reason,
               unitPrice: amount * -1,
-              OrderId: id,
-          }],
-          Credits:[{
-            amount,
-            reason: req.body.data.attributes.values.orderLabel,
-            paylineId: result.transactionId,
-            OrderId: id,
-          }],
-        },{
-          include: [models.OrderItem, models.Credit],
+            }],
+            Credits:[{
+              amount,
+              reason: values.orderLabel,
+              paylineId: result.transactionId,
+            }],
+          },{
+            include: [models.OrderItem, models.Credit],
+          });
+        })
+        .then(() =>{
+          res.status(200).send({success: 'Refund ok'});
+          return true;
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(400).send({error: err.longMessage});
         });
-      })
-      .then(() =>{
-       res.status(200).send({success: 'Refund ok'});
-        return true;
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(400).send({error: err.longMessage});
-      });
     });
 
-    app.get('/forest/Client/:recordId/relationships/Invoices',
-            Liana.ensureAuthenticated, (req, res) => {
+    app.get(
+      '/forest/Client/:recordId/relationships/Invoices',
+      Liana.ensureAuthenticated,
+      (req, res) => {
       Client
         .findById(req.params.recordId)
         .then((client) => {
@@ -284,7 +292,7 @@ module.exports = (sequelize, DataTypes) => {
           });
         })
         .then((response) => {
-          var obj ={};
+          var obj = {};
 
           obj.data = [];
           response.obj.data.forEach((invoice, index) => {
@@ -296,8 +304,7 @@ module.exports = (sequelize, DataTypes) => {
               },
             };
           });
-          obj.meta = {};
-          obj.meta.count = response.obj.data.length;
+          obj.meta = {count: response.obj.data.length};
           return res.send(obj);
         })
         .catch((error) => {

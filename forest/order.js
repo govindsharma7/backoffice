@@ -17,6 +17,7 @@ function getCalculatedProps(object) {
   if ( cache.has(object) ) {
     return cache.get(object);
   }
+
   const promise = object.getCalculatedProps();
 
   cache.set(object, promise);
@@ -62,6 +63,10 @@ Liana.collection('Order', {
         return null;
       }
     },
+  },{
+    field: 'Refunds',
+    type: ['String'],
+    reference: 'Credit.id',
   }],
   actions: [{
     name: 'Generate Invoice',

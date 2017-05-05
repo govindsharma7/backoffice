@@ -1,14 +1,14 @@
 const Liana   = require('forest-express-sequelize');
 
-Liana.collection('Renting',{
+Liana.collection('Renting', {
   actions:[{
     name: 'Housing pack',
     fields: [{
         field: 'comfortLevel',
         type: 'Enum',
-        enums: ['Basic', 'Confort', 'Privilège'],
+        enums: ['basique', 'confort', 'privilege'],
       },{
-        field: 'Price',
+        field: 'price',
         type: 'Number',
       }],
   }],
