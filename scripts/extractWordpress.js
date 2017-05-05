@@ -57,6 +57,7 @@ const fixedNames = {
   '4230 2': '40 verdun',
 };
 
+/* eslint-disable complexity */
 function parseProperties(properties) {
   return properties.reduce((portfolio, property) => {
 
@@ -165,3 +166,4 @@ function parseProperties(properties) {
 
   }, { rooms: {}, apartments: {} });
 }
+/* eslint-enable complexity */
