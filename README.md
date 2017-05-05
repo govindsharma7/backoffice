@@ -6,7 +6,7 @@ You can use this project to take inspiration, but we're keeping a few secrets fo
 ## Installation
 
 - Install Travis-cli: `gem install travis` (see [installation instructions](https://github.com/travis-ci/travis.rb#installation))
-- Install deps : `npm install`
+- Install deps: `npm install`
 
 ## Usage
 
