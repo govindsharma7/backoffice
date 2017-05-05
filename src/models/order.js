@@ -73,11 +73,11 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Order.prototype.getRefunds = function () {
+  Order.prototype.getRefunds = function() {
     return sequelize.models.Credit
       .findRefundsFromOrder(this.id)
       .then((refunds) => {
-        return refunds.reduce((sum, refund) =>{
+        return refunds.reduce((sum, refund) => {
           return sum + refund.amount;
         }, 0);
       });

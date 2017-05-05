@@ -228,9 +228,9 @@ module.exports = (sequelize, DataTypes) => {
       '/forest/actions/credit-client',
       Liana.ensureAuthenticated,
       (req, res) => {
-        var id = uuid();
-        var {values, ids} = req.body.data.attributes;
-        var card = {
+        const id = uuid();
+        const {values, ids} = req.body.data.attributes;
+        const card = {
           number: values.cardNumber,
           type: values.cardType,
           expirationDate: values.expirationMonth +
@@ -238,7 +238,7 @@ module.exports = (sequelize, DataTypes) => {
           cvx: values.cvv,
           holder: values.cardHolder,
         };
-        var amount = values.amount * 100;
+        const amount = values.amount * 100;
 
         if (ids.length > 1) {
           return res.status(400).send({error:'Can\'t credit multiple clients'});
@@ -286,20 +286,20 @@ module.exports = (sequelize, DataTypes) => {
             });
           })
           .then((response) => {
-            var obj = {};
+            const {data} = response.obj.data;
 
-            obj.data = [];
-            response.obj.data.forEach((invoice, index) => {
-              obj.data[index] = {
-                id: invoice.id,
-                type: 'Invoice',
-                attributes: {
-                  href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
-                },
-              };
+            return res.send({
+              data: data.map((invoice) => {
+                return {
+                  id: invoice.id,
+                  type: 'Invoice',
+                  attributes: {
+                    href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
+                  },
+                };
+              }),
+              meta: {count: data.length},
             });
-            obj.meta = {count: response.obj.data.length};
-            return res.send(obj);
           })
           .catch((err) => {
             console.error(err);
