@@ -52,6 +52,7 @@ module.exports = {
   'stag:db:seed': `${env.staging} ${dbSeed} ${flags}`,
   'stag:deploy': `${env.staging} ${claudiaUpdate} --config claudia.stag.json`,
 
+  'prod:db:seed': `${env.prod} ${dbSeed} ${flags}`,
   'prod:deploy': `${env.prod} ${claudiaUpdate}`,
 };
 

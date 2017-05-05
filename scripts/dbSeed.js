@@ -53,5 +53,5 @@ return models.sequelize.sync({ force: true })
     }, Promise.resolve(true));
   })
   .then(() => {
-    return console.log('DATABASE SUCCESSFULLY RESET!');
+    return console.log('DATABASE SUCCESSFULLY SEEDED!');
   });
