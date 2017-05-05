@@ -13,7 +13,6 @@
     "body-parser": "^1.17.1",
     "date-fns": "^1.28.3",
     "deasync": "^0.1.9",
-    "env-cmd": "^5.0.0",
     "express": "^4.15.2",
     "express-cors": "0.0.3",
     "express-jwt": "^5.1.0",
@@ -29,8 +28,9 @@
     "uuid": "^3.0.1"
   },
   "devDependencies": {
+    "env-cmd": "^5.0.0",
     "babel-eslint": "^7.2.0",
-    "claudia": "^2.10.0",
+    "claudia": "^2.12.1",
     "deptree": "^1.0.0",
     "eslint": "^3.18.0",
     "eslint-import-resolver-babel-root-import": "0.0.2",

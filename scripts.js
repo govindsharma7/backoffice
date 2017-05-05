@@ -25,13 +25,15 @@ const lint = 'eslint .';
 const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
+const claudiaUpdate = 'claudia update --use-local-dependencies';
+
 module.exports = {
   'lint': `${lint} ${flags}`,
   'test': `${lint} && ${env.test} ${dbReset} && ${env.test} ${unitTest}`,
   'test:watch': `${env.test} ${dbReset} && ${env.test} ${unitTest} --watch`,
   'test:integration': `${env.test} ${dbReset} && ${env.test} ${intTest}`,
   'test:full': `${lint} && ${env.test} ${dbReset} && ${env.test} jest`,
-  'deploy': `${env.prod} claudia update --use-local-dependencies`,
+
   'extract:clients':
     `${env.staging} node scripts/extractInvoiceninja.js > data/clients.json`,
   'extract:portfolio':
@@ -48,4 +50,13 @@ module.exports = {
     `${env.staging} ${sequelizeMigrationCreate} --env staging`,
   'stag:db:sync': `${env.staging} ${dbSync}`,
   'stag:db:seed': `${env.staging} ${dbSeed} ${flags}`,
+  'stag:deploy': `${env.staging} ${claudiaUpdate} --config claudia.stag.json`,
+
+  'prod:deploy': `${env.prod} ${claudiaUpdate}`,
 };
+
+// To create a new deploying environment, run
+// claudia create --handler=src/lambda.handler --role=chez-nestor_com-executor \
+// --name=chez-nestor-<new env>_com --config=claudia.<new env>.json \
+// --region=eu-west-1 --memory=256
+// But set AWS env variables thrugh 'export' first, as env-cmd doesn't help here

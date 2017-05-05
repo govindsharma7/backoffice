@@ -5,4 +5,5 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_6cc93e374557_key -iv $encrypted_6cc93e374557_iv
   -in .env-cmdrc.enc -out .env-cmdrc -d
 after_success:
-- npm run gulp -- deploy
+- '[ $TRAVIS_BRANCH == master ] && npm run gulp -- stag:deploy'
+- '[ $TRAVIS_BRANCH == release ] && npm run gulp -- prod:deploy'
