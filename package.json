@@ -22,7 +22,7 @@
     "jsonapi-serializer": "^3.4.2",
     "lodash": "^4.17.4",
     "mysql2": "^1.2.0",
-    "payline": "git+https://git@github.com/chez-nestor/payline.git#vquesnel",
+    "payline": "github:chez-nestor/payline#vquesnel",
     "sequelize": "github:louisremi/sequelize#fix_upsert_virtual_field",
     "sqlite3": "^3.1.8",
     "swagger-client": "^2.1.32",
