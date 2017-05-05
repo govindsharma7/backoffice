@@ -227,13 +227,9 @@ module.exports = (sequelize, DataTypes) => {
     app.post(
       '/forest/actions/credit-client',
       Liana.ensureAuthenticated,
-      (req,res) => {
+      (req, res) => {
       var id = uuid();
       var {values, ids} = req.body.data.attributes;
-
-      if (ids.length > 1){
-        return res.status(400).send({error:'Can\'t credit multiple clients'});
-      }
       var card = {
         number: values.cardNumber,
         type: values.cardType,
@@ -243,6 +239,10 @@ module.exports = (sequelize, DataTypes) => {
         holder: values.cardHolder,
       };
       var amount = values.amount * 100;
+
+      if (ids.length > 1) {
+        return res.status(400).send({error:'Can\'t credit multiple clients'});
+      }
 
       return payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
         .then((result) => {
@@ -261,7 +261,7 @@ module.exports = (sequelize, DataTypes) => {
               reason: values.orderLabel,
               paylineId: result.transactionId,
             }],
-          },{
+          }, {
             include: [models.OrderItem, models.Credit],
           });
         })

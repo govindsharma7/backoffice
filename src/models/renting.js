@@ -76,7 +76,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Renting.beforeLianaInit = (models, app) => {
-    app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req,res) =>{
+    app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req, res) =>{
       var {values, ids} = req.body.data.attributes;
       var comfortLevel = values.comfortLevel;
       var packPrices = {
@@ -115,7 +115,7 @@ module.exports = (sequelize, DataTypes) => {
                 RentingId: renting.id,
                 ProductId: 'pack',
               }],
-              },{
+              }, {
               include: [models.OrderItem],
             });
         })

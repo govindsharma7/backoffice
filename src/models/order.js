@@ -268,7 +268,7 @@ module.exports = (sequelize, DataTypes) => {
     app.get(
       '/forest/Order/:orderId/relationships/Refunds',
       Liana.ensureAuthenticated,
-      (req,res,next) => {
+      (req, res, next) => {
         models.Credit.findRefundsFromOrder(req.params.orderId)
           .then((credits) => {
           return new Serializer(Liana, models.Credit, credits, {}, {
@@ -278,7 +278,9 @@ module.exports = (sequelize, DataTypes) => {
           .then((result) => {
             return res.send(result);
           })
+          /* eslint-disable promise/no-callback-in-promise */
           .catch(next);
+          /* eslint-enable promise/no-callback-in-promise */
       }
     );
 

@@ -35,8 +35,8 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Payment.beforeLianaInit = (models, app) => {
-    app.post('/forest/actions/refund', Liana.ensureAuthenticated, (req,res) => {
-      var{values, ids} = req.body.data.attributes;
+    app.post('/forest/actions/refund', Liana.ensureAuthenticated, (req, res) => {
+      var {values, ids} = req.body.data.attributes;
       var amount = values.amount * 100;
 
       Payment
@@ -45,9 +45,9 @@ module.exports = (sequelize, DataTypes) => {
           if (payment.paylineId !== null) {
             return payline.doRefund(payment.paylineId, amount);
           }
-          else {
+
             throw new Error('This payment can\'t be refund online');
-          }
+
         })
         .then((result) => {
           return models.Credit

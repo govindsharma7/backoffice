@@ -6,7 +6,7 @@ Liana.collection('Payment', {
     fields: [{
         field: 'amount',
         type: 'Number',
-      },{
+      }, {
         field: 'reason',
         type: 'String',
       }],

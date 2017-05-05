@@ -52,18 +52,18 @@ Liana.collection('Order', {
           return result.balance / 100;
         });
     },
-  },{
+  }, {
     field: 'invoice',
     type: 'String',
     get(object) {
       if (object.ninjaId !== null) {
         return `${config.INVOICENINJA_HOST}/invoices/${object.ninjaId}/edit`;
       }
-      else {
+
         return null;
-      }
+
     },
-  },{
+  }, {
     field: 'Refunds',
     type: ['String'],
     reference: 'Credit.id',
