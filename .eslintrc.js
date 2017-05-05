@@ -40,7 +40,7 @@ module.exports = {
     // Best practices
     'array-callback-return': 'error',
     'block-scoped-var': 'error', // ??
-    'complexity': ['error', {max: 5}], // adjust ??,
+    'complexity': ['error', {max: 10}],
     'consistent-return': 'error',
     'curly': 'error',
     'default-case': 'error',

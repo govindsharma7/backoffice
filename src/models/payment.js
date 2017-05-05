@@ -39,7 +39,13 @@ module.exports = (sequelize, DataTypes) => {
       var {values, ids} = req.body.data.attributes;
       var amount = values.amount * 100;
 
-      Payment
+      if (!values.amount) {
+        return res.status(400).send({error:'Please specify an amount'});
+      }
+      if (ids.length > 1) {
+        return res.status(400).send({error:'Can\'t refund multiple payments'});
+      }
+      return Payment
         .findById(ids[0])
         .then((payment) => {
           if (payment.paylineId == null) {

@@ -53,6 +53,15 @@ Liana.collection('Order', {
         });
     },
   }, {
+    field: 'refund',
+    type: 'Number',
+    get(object) {
+      return getCalculatedProps(object)
+        .then((result) => {
+          return result.refunds / 100;
+      });
+    },
+  }, {
     field: 'invoice',
     type: 'String',
     get(object) {
