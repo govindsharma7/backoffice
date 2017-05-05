@@ -55,7 +55,7 @@ module.exports = {
   'prod:deploy': `${env.prod} ${claudiaUpdate}`,
 };
 
-// To create a new deploying environment, run
+// To create a new deploying environment, run:
 // claudia create --handler=src/lambda.handler --role=chez-nestor_com-executor \
 // --name=chez-nestor-<new env>_com --config=claudia.<new env>.json \
 // --region=eu-west-1 --memory=256 --deploy-proxy-api
