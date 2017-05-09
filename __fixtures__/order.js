@@ -38,5 +38,10 @@ module.exports = fixtures((u) => {
       amount: 100,
       OrderId: u.id('order-1'),
     }],
+    Credit: [{
+      id: u.id('refund-1'),
+      amount: 90,
+      PaymentId: u.id('payment-1'),
+    }],
   };
 });

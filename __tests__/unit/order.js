@@ -43,7 +43,8 @@ describe('Order', () => {
           return expect(result).toEqual({
             amount: 500,
             totalPaid: 100,
-            balance: -400,
+            refunds: 90,
+            balance: -490,
           });
         });
     });

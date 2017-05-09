@@ -98,7 +98,13 @@ module.exports = (sequelize, DataTypes) => {
       const {values, ids} = req.body.data.attributes;
       const comfortLevel = values.comfortLevel;
 
-      Renting
+      if (!comfortLevel) {
+        return res.status(400).send({error:'Please select a comfort level'});
+      }
+      if (ids.length > 1) {
+        return res.status(400).send({error:'Can\'t create multiple house packs'});
+      }
+      return Renting
         .findById(ids[0])
         .then((renting) =>{
           return Promise.all([Renting.findCity(renting.RoomId), renting]);

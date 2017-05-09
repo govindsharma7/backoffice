@@ -95,6 +95,7 @@ module.exports = (sequelize, DataTypes) => {
           amount,
           totalPaid,
           balance: totalPaid - amount - refunds,
+          refunds,
         };
       });
   };

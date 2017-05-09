@@ -230,6 +230,15 @@ module.exports = (sequelize, DataTypes) => {
       (req, res) => {
         const id = uuid();
         const {values, ids} = req.body.data.attributes;
+
+        if (
+          !values.cardNumber || !values.cardType ||
+          !values.expirationMonth || !values.expirationYear ||
+          !values.cvv || !values.cardHolder || !values.amount
+        ) {
+          return res.status(400).send({error:'All fields are required'});
+        }
+
         const card = {
           number: values.cardNumber,
           type: values.cardType,
@@ -286,7 +295,7 @@ module.exports = (sequelize, DataTypes) => {
             });
           })
           .then((response) => {
-            const {data} = response.obj.data;
+            const {data} = response.obj;
 
             return res.send({
               data: data.map((invoice) => {
