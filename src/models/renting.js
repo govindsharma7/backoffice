@@ -1,5 +1,5 @@
-const D     = require('date-fns');
-const Liana = require('forest-express-sequelize');
+const D                = require('date-fns');
+const Liana            = require('forest-express-sequelize');
 
 const PACK_PRICES = {
   lyon: {
@@ -78,57 +78,105 @@ module.exports = (sequelize, DataTypes) => {
     };
   };
 
-  Renting.findCity = (roomId) => {
-    return sequelize.models.Room
-      .findAll({
-        where: {
-          '$Room.id$': roomId,
-        },
-        include: [{
-          model: sequelize.models.Apartment,
-        }],
-      })
-      .then((result) =>{
-        return result[0].Apartment;
-      });
+  Renting.prototype.toOrderItems = function(date = Date.now()) {
+    const prorated = this.prorate(date);
+    const room = this.Room;
+    const apartment = room.Apartment;
+    const month = D.format(date, 'MMMM');
+
+    return [{
+      label: `${month} Rent - Room #${room.reference}`,
+      unitPrice: prorated.price,
+      RentingId: this.id,
+      ProductId: 'rent',
+    }, {
+      label: `${month} Service Fees - Apt #${apartment.reference}`,
+      unitPrice: prorated.serviceFees,
+      RentingId: this.id,
+      ProductId: 'service-fees',
+    }];
+  };
+
+  Renting.prototype.createOrder = function(date = Date.now(), number) {
+    const {Order, OrderItem} = sequelize.models;
+
+    return Order.create({
+      type: 'debit',
+      label: `${D.format('MMMM')} Invoice`,
+      dueDate: Math.max(Date.now(), D.startOfMonth(this.checkinDate)),
+      ClientId: this.ClientId,
+      OrderItems: this.toOrderItems(),
+      number,
+    }, {
+      include: [OrderItem],
+    });
+  };
+
+  Renting.prototype.createPackOrder = function({comfortLevel, price}, number) {
+    const {Order, OrderItem} = sequelize.models;
+    const {addressCity} = this.Room.Apartment;
+
+    return Order.create({
+      type: 'debit',
+      label: 'Housing Pack',
+      dueDate: Math.max(Date.now(), D.startOfMonth(this.checkinDate)),
+      ClientId: this.ClientId,
+      OrderItems:[{
+        label: `Housing Pack ${addressCity} ${comfortLevel}`,
+        unitPrice: PACK_PRICES[addressCity][comfortLevel],
+        RentingId: this.id,
+        ProductId: 'pack',
+      }],
+      number,
+    }, {
+      include: [OrderItem],
+    });
   };
 
   Renting.beforeLianaInit = (models, app) => {
-    app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req, res) =>{
-      const {values, ids} = req.body.data.attributes;
-      const comfortLevel = values.comfortLevel;
+    const {ROOM_APARTMENT} = sequelize.includes;
 
-      if (!comfortLevel) {
+    app.post('/forest/actions/create-order', Liana.ensureAuthenticated, (req, res) => {
+      const {ids} = req.body.data.attributes;
+
+      if ( ids.length > 1 ) {
+        return res.status(400).send({error:'Can\'t create multiple orders'});
+      }
+
+      return Renting
+        .findById(ids[0], {
+          include: ROOM_APARTMENT,
+        })
+        .then((renting) => {
+          return renting.createOrder();
+        })
+        .then(() => {
+          return res.status(200).send({success: 'Renting Order Created'});
+        })
+        .catch((err) =>{
+          console.error(err);
+          res.status(400).send({error: err.message});
+        });
+    });
+
+    app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req, res) => {
+      const {values, ids} = req.body.data.attributes;
+
+      if ( !values.comfortLevel ) {
         return res.status(400).send({error:'Please select a comfort level'});
       }
-      if (ids.length > 1) {
+      if ( ids.length > 1 ) {
         return res.status(400).send({error:'Can\'t create multiple house packs'});
       }
       return Renting
-        .findById(ids[0])
-        .then((renting) =>{
-          return Promise.all([Renting.findCity(renting.RoomId), renting]);
+        .findById(ids[0], {
+          include: ROOM_APARTMENT,
         })
-        .then(([apartment, renting]) => {
-          return models.Order
-            .create({
-              type: 'invoice',
-              label: 'Housing Pack',
-              ClientId: renting.ClientId,
-              OrderItems:[{
-                label: `Housing Pack ${apartment.addressCity} ${comfortLevel}`,
-                unitPrice: values.price ?
-                  values.price * 100 :
-                  PACK_PRICES[apartment.addressCity][comfortLevel],
-                RentingId: renting.id,
-                ProductId: 'pack',
-              }],
-              }, {
-              include: [models.OrderItem],
-            });
+        .then((renting) => {
+          return renting.createPackOrder(values);
         })
         .then(() => {
-          return res.status(200).send({success: 'Housing pack ok'});
+          return res.status(200).send({success: 'Housing Pack created'});
         })
         .catch((err) =>{
           console.error(err);

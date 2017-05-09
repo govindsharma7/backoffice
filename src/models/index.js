@@ -2,6 +2,7 @@ const fs        = require('fs');
 const path      = require('path');
 const Sequelize = require('sequelize');
 const config    = require('../config');
+const includes  = require('../utils/includes');
 
 const sequelize = new Sequelize(
   config.SEQUELIZE_DATABASE,
@@ -37,6 +38,7 @@ Object.keys(db).forEach(function(modelName) {
 });
 
 db.sequelize = sequelize;
+db.sequelize.includes = includes(db);
 db.Sequelize = Sequelize;
 
 module.exports = db;

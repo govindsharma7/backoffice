@@ -11,5 +11,7 @@ Liana.collection('Renting', {
         field: 'price',
         type: 'Number',
       }],
+  }, {
+    name: 'Create Order',
   }],
 });

@@ -1,11 +1,10 @@
-const D          = require('date-fns');
-const Liana      = require('forest-express');
-const Payline    = require('payline');
-const uuid       = require('uuid/v4');
-const Ninja      = require('../vendor/invoiceninja');
-const config     = require('../config');
-const payline    = require('../vendor/payline');
-
+const D                = require('date-fns');
+const Liana            = require('forest-express');
+const Payline          = require('payline');
+const uuid             = require('uuid/v4');
+const Ninja            = require('../vendor/invoiceninja');
+const config           = require('../config');
+const payline          = require('../vendor/payline');
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -36,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('fr', 'en'),
       defaultValue: 'en',
     },
-    ninjaId:       DataTypes.INTEGER,
+    ninjaId:                    DataTypes.INTEGER,
   });
 
   /*
@@ -49,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
     Client.hasMany(models.Order);
   };
 
-  Client.prototype.getRentingOrders = function(date = Date.now()) {
+  Client.prototype.getRentingOrdersFor = function(date = Date.now()) {
     return this.getOrders({
         where: {
           type: 'debit',
@@ -62,9 +61,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Client.prototype.getRentingsForMonth = function(date = Date.now()) {
-    const {models} = sequelize;
-
+  Client.prototype.getRentingsFor = function(date = Date.now()) {
     return this.getRentings({
       where: {
         $and: {
@@ -77,51 +74,25 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      include: [{
-        model: models.Room,
-        attributes: ['reference'],
-        include: [{
-          model: models.Apartment,
-          attributes: ['reference'],
-        }],
-      }],
+      include: sequelize.includes.ROOM_APARTMENT,
     });
   };
 
-  Client.prototype.createRentingOrder = function(date = Date.now(), number) {
+  Client.prototype.createRentingsOrder = function(rentings, date = Date.now(), number) {
     const {Order, OrderItem} = sequelize.models;
+    const items = rentings.reduce((all, renting) => {
+      return all.concat(renting.toOrderItems());
+    }, []);
 
-    return this.getRentingsForMonth(date)
-      .then((rentings) => {
-        const items = [];
-
-        rentings.forEach((renting) => {
-          const prorated = renting.prorate(date);
-          const room = renting.Room;
-          const apartment = room.Apartment;
-          const month = D.format(date, 'MMMM');
-
-          items.push({
-            label: `${month} Rent - Room #${room.reference}`,
-            unitPrice: prorated.price,
-            RentingId: renting.id,
-          }, {
-            label: `${month} Service Fees - Apt #${apartment.reference}`,
-            unitPrice: prorated.serviceFees,
-            ProductId: 'service-fees',
-          });
-        });
-
-        return Order.create({
-          type: 'debit',
-          label: `${D.format('MMMM')} Invoice`,
-          dueDate: D.startOfMonth(date),
-          OrderItems: items,
-          number,
-        }, {
-          include: [OrderItem],
-        });
-      });
+    return Order.create({
+      type: 'debit',
+      label: `${D.format('MMMM')} Invoice`,
+      dueDate: D.startOfMonth(date),
+      OrderItems: items,
+      number,
+    }, {
+      include: [OrderItem],
+    });
   };
 
   Client.prototype.ninjaSerialize = function() {
@@ -255,6 +226,7 @@ module.exports = (sequelize, DataTypes) => {
 
         return payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
           .then((result) => {
+            // TODO: move order creation to an instance method and unit test it
             return models.Order.create({
               id,
               type: 'credit',

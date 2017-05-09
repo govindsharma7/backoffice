@@ -1,7 +1,10 @@
-const D        = require('date-fns');
-const fixtures = require('../../__fixtures__/client');
+const D                = require('date-fns');
+const {includes}       = require('../../src/models').sequelize;
+const fixtures         = require('../../__fixtures__/client');
 
 var client;
+var renting2;
+var renting3;
 var u;
 
 describe('Client', () => {
@@ -10,35 +13,46 @@ describe('Client', () => {
       .then(({instances, unique}) => {
         return (
           client = instances['client-1'],
+          renting2 = instances['renting-2'],
+          renting3 = instances['renting-3'],
           u = unique
         );
       });
   });
 
-  describe('#getRentingOrders()', () => {
+  describe('#getRentingOrdersFor()', () => {
     test('it should find the renting order for a specific month', () => {
-      return client.getRentingOrders(D.parse('2016-01 Z'))
+      return client.getRentingOrdersFor(D.parse('2016-01 Z'))
         .then((orders) => {
           return expect(orders[0].dueDate).toEqual('2016-01-01');
         });
     });
   });
 
-  describe('#getRentingsForMonth', () => {
+  describe('#getRentingsFor', () => {
     test('it should find all rentings for a specific month', () => {
-      return client.getRentingsForMonth(D.parse('2017-02 Z'))
+      return client.getRentingsFor(D.parse('2017-02 Z'))
         .then((rentings) => {
           return expect(rentings.length).toEqual(2);
         });
     });
   });
 
-  describe('#createRentingOrder', () => {
+  describe('#createRentingsOrder', () => {
+    const include = includes.ROOM_APARTMENT;
+
     test('it should create an order with appropriate orderitems', () => {
-      return client.createRentingOrder(
-          D.parse('2017-02 Z'),
-          Math.round(Math.random() * 1E12)
-        )
+      return Promise.all([
+          renting2.reload({include}),
+          renting3.reload({include}),
+        ])
+        .then(() => {
+          return client.createRentingsOrder(
+            [renting2, renting3],
+            D.parse('2017-02 Z'),
+            Math.round(Math.random() * 1E12)
+          );
+        })
         .then((order) => {
           return order.getOrderItems();
         })

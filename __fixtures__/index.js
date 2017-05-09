@@ -14,6 +14,12 @@ const common = fixtures({
     Product: [{
       id: 'service-fees',
       name: 'Service Fees',
+    }, {
+      id: 'rent',
+      name: 'Rent',
+    }, {
+      id: 'pack',
+      name: 'Housing Pack',
     }],
   };
 })();
