@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     floorArea:                  DataTypes.FLOAT,
     basePrice:                  DataTypes.FLOAT,
+    status: {
+      type:                     DataTypes.ENUM('draft', 'active', 'archived'),
+      required: true,
+      defaultValue: 'active',
+    },
   });
   const {models} = sequelize;
 

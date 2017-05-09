@@ -2,7 +2,6 @@ const D                = require('date-fns');
 const Liana            = require('forest-express-sequelize');
 const Utils            = require('../utils');
 
-
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
   const Renting = sequelize.define('Renting', {
@@ -30,6 +29,11 @@ module.exports = (sequelize, DataTypes) => {
     serviceFees: {
       type:                     DataTypes.INTEGER,
       required: true,
+    },
+    status: {
+      type:                   DataTypes.ENUM('draft', 'active', 'archived'),
+      required: true,
+      defaultValue: 'active',
     },
   });
 

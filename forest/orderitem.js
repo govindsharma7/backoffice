@@ -5,10 +5,12 @@ Liana.collection('OrderItem', {
     field: '_unitPrice',
     type: 'Number',
     get(item) {
+      console.log(item.unitPrice);
       return item.unitPrice / 100;
     },
     set(item, value) {
-      return item.unitPrice = Math.round(value * 100);
+      item.unitPrice = Math.round(value * 100);
+      return item;
     },
   }],
   actions: [{

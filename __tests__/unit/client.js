@@ -80,4 +80,30 @@ describe('Client', () => {
         });
     });
   });
+
+  describe('.beforeFind()', () => {
+    test('it should not return a client because of its status (draft)', () =>{
+      var query = { attributes: ['id',
+                                'firstName',
+                                'lastName',
+                                'email',
+                                'secondaryEmail',
+                                'phoneNumber',
+                                'preferredLanguage',
+                                'ninjaId',
+                                'status'],
+                    include: [],
+                    limit: 10,
+                    offset: 0,
+                    where: { 'id': 'toto', '$and': [] },
+                    order: [],
+                    hooks: true,
+                    rejectOnEmpty: false,
+                  };
+
+      models.Client.beforeFind(query);
+      expect(query.where.status).toBeUndefined();
+    });
+
+  });
 });

@@ -21,6 +21,11 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.STRING,
       required: true,
     },
+    status: {
+      type:                     DataTypes.ENUM('draft', 'active', 'archived'),
+      required: true,
+      defaultValue: 'active',
+    },
   });
   const {models} = sequelize;
 

@@ -68,7 +68,6 @@ Liana.collection('Order', {
       if (object.ninjaId !== null) {
         return `${config.INVOICENINJA_HOST}/invoices/${object.ninjaId}/edit`;
       }
-
       return null;
     },
   }, {

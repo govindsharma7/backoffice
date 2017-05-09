@@ -37,6 +37,11 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'en',
     },
     ninjaId:                    DataTypes.INTEGER,
+    status: {
+      type:                     DataTypes.ENUM('draft', 'active', 'archived'),
+      required: true,
+      defaultValue: 'active',
+    },
   });
   const {models} = sequelize;
 
@@ -156,12 +161,41 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Client.beforeFind = (query) => {
+    if (!('id' in query.where) && !('status' in query.where)) {
+      if (query.where.$and) {
+        const verif = query.where.$and.some((element) => {
+          if (element.$and) {
+            return element.$and.some((secondElement) => {
+              return element.id ||
+                element.status ||
+                secondElement.id ||
+                secondElement.status;
+            });
+          }
+          return element.id || element.status;
+        });
+
+        if (!verif) {
+          query.where.status = 'active';
+        }
+      }
+      else {
+        query.where.status = 'active';
+      }
+    }
+  };
+
+  Client.hook('beforeFind', Client.beforeFind);
+
   /*
    * CRUD hooks
    *
    * Those hooks are used to update Invoiceninja records when clients are updated
    * in Forest.
    */
+
+
   Client.hook('afterCreate', (client) => {
     if ( !client.ninjaId ) {
       client.ninjaCreate()

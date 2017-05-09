@@ -9,6 +9,7 @@ module.exports = fixtures((u) => {
       lastName: 'Doe',
       email: u.str('john@doe.com'),
       phoneNumber: '0033612345678',
+      status: 'active',
     }],
     Order: [{
       id: u.id('order-1'),
