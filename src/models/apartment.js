@@ -16,10 +16,9 @@ module.exports = (sequelize, DataTypes) => {
     latLng:                   DataTypes.STRING,
     floorArea:                DataTypes.FLOAT,
   });
+  const {models} = sequelize;
 
   Apartment.associate = () => {
-    const {models} = sequelize;
-
     Apartment.hasMany(models.Room);
   };
 

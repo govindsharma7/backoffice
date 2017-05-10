@@ -3,7 +3,9 @@ const D = require('date-fns');
 var COEFS;
 
 module.exports = function(date) {
-  return COEFS[D.format(date, 'DDD')];
+  // make this method artificially asynchronous, as it is likely to read from
+  // the DB in the future.
+  return Promise.resolve(COEFS[D.format(date, 'DDD')]);
 };
 
 COEFS = [

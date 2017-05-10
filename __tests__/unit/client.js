@@ -1,5 +1,4 @@
 const D                = require('date-fns');
-const {includes}       = require('../../src/models').sequelize;
 const fixtures         = require('../../__fixtures__/client');
 
 var client;
@@ -33,18 +32,18 @@ describe('Client', () => {
     test('it should find all rentings for a specific month', () => {
       return client.getRentingsFor(D.parse('2017-02 Z'))
         .then((rentings) => {
-          return expect(rentings.length).toEqual(2);
+          expect(rentings.length).toEqual(2);
+          expect(rentings[0].Room).toBeDefined();
+          return true;
         });
     });
   });
 
   describe('#createRentingsOrder', () => {
-    const include = includes.ROOM_APARTMENT;
-
     test('it should create an order with appropriate orderitems', () => {
       return Promise.all([
-          renting2.reload({include}),
-          renting3.reload({include}),
+          renting2.reload({scope: 'room-apartment'}),
+          renting3.reload({scope: 'room-apartment'}),
         ])
         .then(() => {
           return client.createRentingsOrder(

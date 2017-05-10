@@ -26,15 +26,14 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
     },
   });
+  const {models} = sequelize;
 
   Payment.associate = () => {
-    const {models} = sequelize;
-
     Payment.belongsTo(models.Order);
     Payment.hasMany(models.Credit);
   };
 
-  Payment.beforeLianaInit = (models, app) => {
+  Payment.beforeLianaInit = (app) => {
     app.post('/forest/actions/refund', Liana.ensureAuthenticated, (req, res) => {
       var {values, ids} = req.body.data.attributes;
       var amount = values.amount * 100;

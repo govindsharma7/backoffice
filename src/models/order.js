@@ -35,10 +35,9 @@ module.exports = (sequelize, DataTypes) => {
       default: Date.now(),
     },
   });
+  const {models} = sequelize;
 
   Order.associate = () => {
-    const {models} = sequelize;
-
     Order.hasMany(models.OrderItem);
     Order.belongsTo(models.Client);
     Order.hasMany(models.Payment);
@@ -74,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.prototype.getRefunds = function() {
-    return sequelize.models.Credit
+    return models.Credit
       .findRefundsFromOrder(this.id)
       .then((refunds) => {
         return refunds.reduce((sum, refund) => {
@@ -118,7 +117,7 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     return sequelize.transaction((transaction) => {
-      return sequelize.models.Setting
+      return models.Setting
         .findById(settingId, { transaction })
         .then((counter) => {
           return Promise.all([
@@ -242,7 +241,7 @@ module.exports = (sequelize, DataTypes) => {
   };
   Order.hook('afterUpdate', Order.afterUpdate);
 
-  Order.beforeLianaInit = (models, app) => {
+  Order.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
     // Make this route completely public

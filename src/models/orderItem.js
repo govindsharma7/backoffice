@@ -29,10 +29,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
   });
+  const {models} = sequelize;
 
   OrderItem.associate = () => {
-    const {models} = sequelize;
-
     OrderItem.belongsTo(models.Order);
     OrderItem.belongsTo(models.Renting, {
       constraints: false,
@@ -58,14 +57,12 @@ module.exports = (sequelize, DataTypes) => {
 
   // Run Order's afterUpdate hook when an orderItem is updated
   OrderItem.hook('afterUpdate', (orderItem) => {
-    const {Order} = sequelize.models;
-
     return orderItem
       .getOrder()
-      .then(Order.afterUpdate);
+      .then(models.Order.afterUpdate);
   });
 
-  OrderItem.beforeLianaInit = (models, app) => {
+  OrderItem.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
     app.post('/forest/actions/add-discount', LEA, (req, res) => {

@@ -1,8 +1,10 @@
 const D                = require('date-fns');
 const Liana            = require('forest-express-sequelize');
-const getPackPrice     = require('../utils/getPackPrice');
+const Utils            = require('../utils');
+
 
 module.exports = (sequelize, DataTypes) => {
+  const {models} = sequelize;
   const Renting = sequelize.define('Renting', {
     id: {
       primaryKey: true,
@@ -28,13 +30,23 @@ module.exports = (sequelize, DataTypes) => {
     serviceFees: {
       type:                     DataTypes.INTEGER,
       required: true,
-      defaultValue: 30,
+    },
+  }, {
+    scopes: {
+      'room-apartment': {
+        include: [{
+          model: models.Room,
+          attributes: ['reference'],
+          include: [{
+            model: models.Apartment,
+            attributes: ['reference', 'addressCity'],
+          }],
+        }],
+      },
     },
   });
 
   Renting.associate = () => {
-    const {models} = sequelize;
-
     Renting.belongsTo(models.Client);
     Renting.belongsTo(models.Room);
     Renting.hasMany(models.OrderItem);
@@ -85,7 +97,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Renting.prototype.createOrder = function(date = Date.now(), number) {
-    const {Order, OrderItem} = sequelize.models;
+    const {Order, OrderItem} = models;
 
     return Order.create({
       type: 'debit',
@@ -100,39 +112,55 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Renting.prototype.createPackOrder = function({comfortLevel, discount}, number) {
-    const {Order, OrderItem} = sequelize.models;
+    const {Order, OrderItem} = models;
     const {addressCity} = this.Room.Apartment;
-    const items = [{
-      label: `Housing Pack ${addressCity} ${comfortLevel}`,
-      unitPrice: getPackPrice(addressCity, comfortLevel),
-      RentingId: this.id,
-      ProductId: 'pack',
-    }];
 
-    if ( discount != null && discount !== 0 ) {
-      items.push({
-        label: 'Discount',
-        unitPrice: -100 * discount,
-        RentingId: this.id,
-        ProductId: 'pack',
+    return Utils.getPackPrice(addressCity, comfortLevel)
+      .then((packPrice) => {
+        const items = [{
+          label: `Housing Pack ${addressCity} ${comfortLevel}`,
+          unitPrice: packPrice,
+          RentingId: this.id,
+          ProductId: 'pack',
+        }];
+
+        if ( discount != null && discount !== 0 ) {
+          items.push({
+            label: 'Discount',
+            unitPrice: -100 * discount,
+            RentingId: this.id,
+            ProductId: 'pack',
+          });
+        }
+
+        return Order.create({
+          type: 'debit',
+          label: 'Housing Pack',
+          dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
+          ClientId: this.ClientId,
+          OrderItems: items,
+          number,
+        }, {
+          include: [OrderItem],
+        });
       });
-    }
-
-    return Order.create({
-      type: 'debit',
-      label: 'Housing Pack',
-      dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
-      ClientId: this.ClientId,
-      OrderItems: items,
-      number,
-    }, {
-      include: [OrderItem],
-    });
   };
 
-  Renting.beforeLianaInit = (models, app) => {
-    const {ROOM_APARTMENT} = sequelize.includes;
+  Renting.hook('beforeValidate', (order) => {
+    return order
+      .getRoom()
+      .then((room) => {
+        return room.getCalculatedProps(order.bookingDate);
+      })
+      .then(({periodPrice, serviceFees}) => {
+        return Object.assign(order, {
+          price: periodPrice,
+          serviceFees,
+        });
+      });
+  });
 
+  Renting.beforeLianaInit = (app) => {
     app.post('/forest/actions/create-order', Liana.ensureAuthenticated, (req, res) => {
       const {ids} = req.body.data.attributes;
 
@@ -142,7 +170,7 @@ module.exports = (sequelize, DataTypes) => {
 
       Renting
         .findById(ids[0], {
-          include: ROOM_APARTMENT,
+          scope: 'room-apartment',
         })
         .then((renting) => {
           return renting.createOrder();
@@ -170,7 +198,7 @@ module.exports = (sequelize, DataTypes) => {
 
       Renting
         .findById(ids[0], {
-          include: ROOM_APARTMENT,
+          scope: 'room-apartment',
         })
         .then((renting) => {
           return renting.createPackOrder(values);

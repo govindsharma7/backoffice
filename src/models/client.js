@@ -3,8 +3,8 @@ const Liana            = require('forest-express');
 const Payline          = require('payline');
 const uuid             = require('uuid/v4');
 const Ninja            = require('../vendor/invoiceninja');
-const config           = require('../config');
 const payline          = require('../vendor/payline');
+const config           = require('../config');
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -37,13 +37,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     ninjaId:                    DataTypes.INTEGER,
   });
+  const {models} = sequelize;
 
   /*
    * Associations
    */
   Client.associate = () => {
-    const {models} = sequelize;
-
     Client.hasMany(models.Renting);
     Client.hasMany(models.Order);
   };
@@ -55,31 +54,29 @@ module.exports = (sequelize, DataTypes) => {
           dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
         },
         include: [{
-          model: sequelize.models.OrderItem,
+          model: models.OrderItem,
           where: { RentingId: { $not: null } },
         }],
       });
   };
 
   Client.prototype.getRentingsFor = function(date = Date.now()) {
-    return this.getRentings({
+    return models.Renting.scope('room-apartment').findAll({
       where: {
-        $and: {
-          bookingDate: { $lte: D.endOfMonth(date) },
-          checkoutDate: {
-            $or: {
-              $eq: null,
-              $gte: D.startOfMonth(date),
-            },
+        ClientId: this.id,
+        bookingDate: { $lte: D.endOfMonth(date) },
+        checkoutDate: {
+          $or: {
+            $eq: null,
+            $gte: D.startOfMonth(date),
           },
         },
       },
-      include: sequelize.includes.ROOM_APARTMENT,
     });
   };
 
   Client.prototype.createRentingsOrder = function(rentings, date = Date.now(), number) {
-    const {Order, OrderItem} = sequelize.models;
+    const {Order, OrderItem} = models;
     const items = rentings.reduce((all, renting) => {
       return all.concat(renting.toOrderItems());
     }, []);
@@ -194,7 +191,7 @@ module.exports = (sequelize, DataTypes) => {
     return true;
   });
 
-  Client.beforeLianaInit = (models, app) => {
+  Client.beforeLianaInit = (app) => {
     app.post(
       '/forest/actions/credit-client',
       Liana.ensureAuthenticated,

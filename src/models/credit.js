@@ -18,10 +18,9 @@ module.exports = (sequelize, DataTypes) => {
       require: true,
     },
   });
+  const {models} = sequelize;
 
   Credit.associate = () => {
-    const {models} = sequelize;
-
     Credit.belongsTo(models.Payment, {
       constraints: false,
     });
@@ -33,12 +32,14 @@ module.exports = (sequelize, DataTypes) => {
   Credit.findRefundsFromOrder = (orderId) => {
     return Credit
       .findAll({
+        // TODO: why is Payment.orderId wrapped in $?
         where: {'$Payment.OrderId$' : orderId},
         include: [{
-          model: sequelize.models.Payment,
+          model: models.Payment,
           attributes: ['id', 'OrderId'],
+          // TODO: is this include really necessary?
           include: [{
-            model: sequelize.models.Order,
+            model: models.Order,
             attributes: ['id'],
           }],
         }],

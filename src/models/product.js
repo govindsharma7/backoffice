@@ -14,10 +14,9 @@ module.exports = (sequelize, DataTypes) => {
       required: false,
     },
   });
+  const {models} = sequelize;
 
   Product.associate = () => {
-    const {models} = sequelize;
-
     Product.hasMany(models.OrderItem);
   };
 

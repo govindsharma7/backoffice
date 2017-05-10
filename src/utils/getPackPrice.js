@@ -17,5 +17,7 @@ const PACK_PRICES = {
 };
 
 module.exports = function(city, level) {
-  return PACK_PRICES[city][level];
+  // make this method artificially asynchronous, as it is likely to read from
+  // the DB in the future.
+  return Promise.resolve(PACK_PRICES[city][level]);
 };
