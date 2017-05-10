@@ -10,7 +10,7 @@ if (
   throw new Error(`
 /!\\ WARNING /!\\
 This script will erase all your data!
-Use "--force" when if you're certain you want to do that.
+Use "--force" if you're certain you want to do that.
   `);
 }
 

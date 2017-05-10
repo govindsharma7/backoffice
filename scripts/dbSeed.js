@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /* eslint-disable import/no-dynamic-require */
-const path   = require('path');
 const models = require('../src/models');
+const seed   = require('../seed');
 
 if (
   process.env.NODE_ENV !== 'test' &&
@@ -11,46 +11,23 @@ if (
 ) {
   throw new Error(`
 /!\\ WARNING /!\\
-This script will erase all your data!
-Use "--force" when if you're certain you want to do that.
+This script will reset seed data!
+Use "--force" if you're certain you want to do that.
   `);
 }
 
 /* eslint-disable promise/no-nesting */
-return models.sequelize.sync({ force: true })
+return models.sequelize.sync()
   .then(() => {
-    // We used to just load all files in the folder, but the order we load them
-    // is important because of references constraints
-    return [
-      'apartments.json',
-      'rooms.json',
-      'clients.json',
-      'products.json',
-      'rentings.json',
-      'orders.json',
-      'orderItems.json',
-      'settings.json',
+    const promises = [];
 
-    ].map((file) => {
-      return () => {
-        const {model, records} = require(path.join('..', 'data', file));
+    for (let [modelName, records] of Object.entries(seed)) {
+      for (let record of records) {
+        promises.push(models[modelName].create(record));
+      }
+    }
 
-        console.log(`Loading ${records.length} records of model "${model}"`);
-        return models[model].bulkCreate(records, { hooks: false })
-          .catch((err) => {
-            console.error(`Failed loading records for model "${model}"`);
-            if ( 'errors' in err ) {
-              console.log(err.errors);
-            }
-
-            throw err;
-          });
-      };
-    })
-    // Load entities in serie
-    .reduce((prev, curr) => {
-      return prev.then(curr);
-    }, Promise.resolve(true));
+    return Promise.all(promises);
   })
   .then(() => {
     return console.log('DATABASE SUCCESSFULLY SEEDED!');
