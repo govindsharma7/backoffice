@@ -161,6 +161,7 @@ module.exports = (sequelize, DataTypes) => {
         return this.ninjaCreate();
       });
   };
+
   /*
    * CRUD hooks
    *

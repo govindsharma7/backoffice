@@ -1,7 +1,6 @@
 const Liana = require('forest-express-sequelize');
 const {TRASHED_DRAFT} = require('../src/utils/segments');
 
-
 Liana.collection('OrderItem', {
   fields: [{
     field: '_unitPrice',

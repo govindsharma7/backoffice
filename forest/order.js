@@ -3,7 +3,6 @@ const {Order} = require('../src/models');
 const config  = require('../src/config');
 const {TRASHED_DRAFT} = require('../src/utils/segments');
 
-
 const cache = new WeakMap();
 
 // #getCalculatedProps with a WeakMap cache
@@ -70,6 +69,7 @@ Liana.collection('Order', {
       if (object.ninjaId !== null) {
         return `${config.INVOICENINJA_HOST}/invoices/${object.ninjaId}/edit`;
       }
+
       return null;
     },
   }, {
