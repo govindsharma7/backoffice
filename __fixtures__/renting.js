@@ -11,7 +11,7 @@ module.exports = fixtures((u) => {
     }],
     Renting: [{
       id: u.id('renting-1'),
-      checkinDate: '2015-01-20',
+      bookingDate: '2015-01-20',
       checkoutDate: '2015-02-10',
       price: 20000,
       serviceFees: 3000,
@@ -19,7 +19,7 @@ module.exports = fixtures((u) => {
       RoomId: u.id('room-1'),
     }, {
       id: u.id('renting-2'),
-      checkinDate: '2015-03-03',
+      bookingDate: '2015-03-03',
       checkoutDate: '2015-03-28',
       price: 20000,
       serviceFees: 3000,

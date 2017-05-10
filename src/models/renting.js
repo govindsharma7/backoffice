@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     checkinDate: {
       type:                     DataTypes.DATE,
-      required: true,
+      required: false,
     },
     checkoutDate:  {
       type:                     DataTypes.DATE,
