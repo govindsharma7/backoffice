@@ -78,4 +78,11 @@ Liana.collection('Order', {
   actions: [{
     name: 'Generate Invoice',
   }],
+  segments: [{
+    name: 'Trashed',
+    scope: 'trashed',
+  }, {
+    name: 'Draft',
+    scope: 'draft',
+  }],
 });

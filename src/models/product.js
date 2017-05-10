@@ -14,9 +14,29 @@ module.exports = (sequelize, DataTypes) => {
       required: false,
     },
     status: {
-      type:                     DataTypes.ENUM('draft', 'active', 'archived'),
+      type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+    },
+  }, {
+    paranoid: true,
+    scopes: {
+      trashed: {
+        attributes: ['id'],
+        where: {
+          deletedAt: { $not: null },
+          status: { $ne: 'draft'},
+        },
+        paranoid: false,
+      },
+      draft: {
+        attributes: ['id'],
+        where: {
+          deletedAt: { $not: null },
+          status: 'draft',
+        },
+        paranoid: false,
+      },
     },
   });
   const {models} = sequelize;
@@ -25,33 +45,6 @@ module.exports = (sequelize, DataTypes) => {
     Product.hasMany(models.OrderItem);
   };
 
-  Product.beforeFind = (query) => {
-    console.log(query);
-    if (!('id' in query.where) && !('status' in query.where)) {
-      if (query.where.$and) {
-        const verif = query.where.$and.some((element) => {
-          if (element.$and) {
-            return element.$and.some((secondElement) => {
-              return element.id ||
-                element.status ||
-                secondElement.id ||
-                secondElement.status;
-            });
-          }
-          return element.id || element.status;
-        });
-
-        if (!verif) {
-          query.where.status = 'active';
-        }
-      }
-      else {
-        query.where.status = 'active';
-      }
-    }
-  };
-
-  Product.hook('beforeFind', Product.beforeFind);
 
   return Product;
 };

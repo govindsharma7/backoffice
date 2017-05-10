@@ -5,7 +5,6 @@ Liana.collection('OrderItem', {
     field: '_unitPrice',
     type: 'Number',
     get(item) {
-      console.log(item.unitPrice);
       return item.unitPrice / 100;
     },
     set(item, value) {
@@ -15,5 +14,12 @@ Liana.collection('OrderItem', {
   }],
   actions: [{
     name: 'Add Discount',
+  }],
+  segments: [{
+    name: 'Trashed',
+    scope: 'trashed',
+  }, {
+    name: 'Draft',
+    scope: 'draft',
   }],
 });

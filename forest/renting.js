@@ -14,4 +14,11 @@ Liana.collection('Renting', {
   }, {
     name: 'Create Order',
   }],
+  segments: [{
+    name: 'Trashed',
+    scope: 'trashed',
+  }, {
+    name: 'Draft',
+    scope: 'draft',
+  }],
 });

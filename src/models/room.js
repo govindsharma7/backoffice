@@ -15,9 +15,29 @@ module.exports = (sequelize, DataTypes) => {
     floorArea:                  DataTypes.FLOAT,
     basePrice:                  DataTypes.FLOAT,
     status: {
-      type:                     DataTypes.ENUM('draft', 'active', 'archived'),
+      type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+    },
+  }, {
+    paranoid: true,
+    scopes: {
+      trashed: {
+        attributes: ['id'],
+        where: {
+          deletedAt: { $not: null },
+          status: { $ne: 'draft'},
+        },
+        paranoid: false,
+      },
+      draft: {
+        attributes: ['id'],
+        where: {
+          deletedAt: { $not: null },
+          status: 'draft',
+        },
+        paranoid: false,
+      },
     },
   });
   const {models} = sequelize;

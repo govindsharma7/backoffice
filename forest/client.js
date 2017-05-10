@@ -48,4 +48,11 @@ Liana.collection('Client', {
       },
     ],
   }],
+  segments: [{
+    name: 'Trashed',
+    scope: 'trashed',
+  }, {
+    name: 'Draft',
+    scope: 'draft',
+  }],
 });

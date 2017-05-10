@@ -31,9 +31,29 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
     },
     status: {
-      type:                   DataTypes.ENUM('draft', 'active', 'archived'),
+      type:                   DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+    },
+  }, {
+    paranoid: true,
+    scopes: {
+      trashed: {
+        attributes: ['id'],
+        where: {
+          deletedAt: { $not: null },
+          status: { $ne: 'draft'},
+        },
+        paranoid: false,
+      },
+      draft: {
+        attributes: ['id'],
+        where: {
+          deletedAt: { $not: null },
+          status: 'draft',
+        },
+        paranoid: false,
+      },
     },
   });
 

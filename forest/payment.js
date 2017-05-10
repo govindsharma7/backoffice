@@ -12,4 +12,11 @@ Liana.collection('Payment', {
         type: 'String',
       }],
   }],
+  segments: [{
+    name: 'Trashed',
+    scope: 'trashed',
+  }, {
+    name: 'Draft',
+    scope: 'draft',
+  }],
 });
