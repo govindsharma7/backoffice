@@ -1,6 +1,8 @@
 const Liana   = require('forest-express');
 const {Order} = require('../src/models');
 const config  = require('../src/config');
+const {TRASHED_DRAFT} = require('../src/utils/segments');
+
 
 const cache = new WeakMap();
 
@@ -78,11 +80,5 @@ Liana.collection('Order', {
   actions: [{
     name: 'Generate Invoice',
   }],
-  segments: [{
-    name: 'Trashed',
-    scope: 'trashed',
-  }, {
-    name: 'Draft',
-    scope: 'draft',
-  }],
+  segments: TRASHED_DRAFT,
 });

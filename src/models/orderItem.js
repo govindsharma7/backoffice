@@ -1,5 +1,6 @@
 const Promise          = require('bluebird');
 const Liana            = require('forest-express-sequelize');
+const {SCOPE}          = require('../utils/scope');
 
 module.exports = (sequelize, DataTypes) => {
   const OrderItem = sequelize.define('OrderItem', {
@@ -34,27 +35,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, {
-    paranoid: true,
-    scopes: {
-      trashed: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: { $ne: 'draft'},
-        },
-        paranoid: false,
-      },
-      draft: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: 'draft',
-        },
-        paranoid: false,
-      },
-    },
-  });
+  }, SCOPE);
   const {models} = sequelize;
 
   OrderItem.associate = () => {
@@ -80,7 +61,6 @@ module.exports = (sequelize, DataTypes) => {
       'qty': this.quantity,
     });
   };
-
 
   // Run Order's afterUpdate hook when an orderItem is updated
   OrderItem.hook('afterUpdate', (orderItem) => {

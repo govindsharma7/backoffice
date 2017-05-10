@@ -1,4 +1,6 @@
 const Liana = require('forest-express-sequelize');
+const {TRASHED_DRAFT} = require('../src/utils/segments');
+
 
 Liana.collection('OrderItem', {
   fields: [{
@@ -15,11 +17,5 @@ Liana.collection('OrderItem', {
   actions: [{
     name: 'Add Discount',
   }],
-  segments: [{
-    name: 'Trashed',
-    scope: 'trashed',
-  }, {
-    name: 'Draft',
-    scope: 'draft',
-  }],
+  segments: TRASHED_DRAFT,
 });

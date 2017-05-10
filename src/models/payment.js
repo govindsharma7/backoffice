@@ -1,5 +1,6 @@
 const Liana   = require('forest-express-sequelize');
 const payline = require('../vendor/payline');
+const {SCOPE} = require('../utils/scope');
 
 module.exports = (sequelize, DataTypes) => {
   const Payment = sequelize.define('Payment', {
@@ -26,27 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, {
-    paranoid: true,
-    scopes: {
-      trashed: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: { $ne: 'draft'},
-        },
-        paranoid: false,
-      },
-      draft: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: 'draft',
-        },
-        paranoid: false,
-      },
-    },
-  });
+  }, SCOPE);
   const {models} = sequelize;
 
   Payment.associate = () => {

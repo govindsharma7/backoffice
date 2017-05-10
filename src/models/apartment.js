@@ -1,3 +1,5 @@
+const {SCOPE} = require('../utils/scope');
+
 module.exports = (sequelize, DataTypes) => {
   const Apartment = sequelize.define('Apartment', {
     id: {
@@ -20,27 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, {
-    paranoid: true,
-    scopes: {
-      trashed: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: { $ne: 'draft'},
-        },
-        paranoid: false,
-      },
-      draft: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: 'draft',
-        },
-        paranoid: false,
-      },
-    },
-  });
+  }, SCOPE);
   const {models} = sequelize;
 
   Apartment.associate = () => {

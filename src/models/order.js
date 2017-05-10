@@ -2,6 +2,7 @@ const Promise    = require('bluebird');
 const Liana      = require('forest-express-sequelize');
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../middlewares/makePublic');
+const {SCOPE}    = require('../utils/scope');
 
 const Serializer = Liana.ResourceSerializer;
 
@@ -39,27 +40,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, {
-    paranoid: true,
-    scopes: {
-      trashed: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: { $ne: 'draft'},
-        },
-        paranoid: false,
-      },
-      draft: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: 'draft',
-        },
-        paranoid: false,
-      },
-    },
-  });
+  }, SCOPE);
   const {models} = sequelize;
 
   Order.associate = () => {

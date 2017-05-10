@@ -1,11 +1,12 @@
 const Promise          = require('bluebird');
-const D                = require('date-fns');
-const Liana            = require('forest-express');
-const Payline          = require('payline');
-const uuid             = require('uuid/v4');
-const Ninja            = require('../vendor/invoiceninja');
-const payline          = require('../vendor/payline');
-const config           = require('../config');
+const D          = require('date-fns');
+const Liana      = require('forest-express');
+const Payline    = require('payline');
+const uuid       = require('uuid/v4');
+const Ninja      = require('../vendor/invoiceninja');
+const config     = require('../config');
+const payline    = require('../vendor/payline');
+const {SCOPE}    = require('../utils/scope');
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -42,27 +43,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, {
-    paranoid: true,
-    scopes: {
-      trashed: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: { $ne: 'draft'},
-        },
-        paranoid: false,
-      },
-      draft: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: 'draft',
-        },
-        paranoid: false,
-      },
-    },
-  });
+  }, SCOPE);
   const {models} = sequelize;
 
   /*
@@ -187,7 +168,6 @@ module.exports = (sequelize, DataTypes) => {
    * Those hooks are used to update Invoiceninja records when clients are updated
    * in Forest.
    */
-
 
   Client.hook('afterCreate', (client) => {
     if ( !client.ninjaId ) {

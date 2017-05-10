@@ -1,11 +1,7 @@
 const Liana = require('forest-express-sequelize');
+const {TRASHED_DRAFT} = require('../src/utils/segments');
+
 
 Liana.collection('Apartment', {
-  segments: [{
-    name: 'Trashed',
-    scope: 'trashed',
-  }, {
-    name: 'Draft',
-    scope: 'draft',
-  }],
+  segments: TRASHED_DRAFT
 });

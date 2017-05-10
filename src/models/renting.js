@@ -1,6 +1,7 @@
-const D                = require('date-fns');
-const Liana            = require('forest-express-sequelize');
-const Utils            = require('../utils');
+const D       = require('date-fns');
+const Liana   = require('forest-express-sequelize');
+const Utils   = require('../utils');
+const {SCOPE} = require('../utils/scope');
 
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
@@ -35,27 +36,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, {
-    paranoid: true,
-    scopes: {
-      trashed: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: { $ne: 'draft'},
-        },
-        paranoid: false,
-      },
-      draft: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: 'draft',
-        },
-        paranoid: false,
-      },
-    },
-  });
+  }, SCOPE);
 
   Renting.associate = () => {
     Renting.belongsTo(models.Client);

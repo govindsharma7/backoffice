@@ -1,5 +1,6 @@
 const Promise          = require('bluebird');
 const Utils            = require('../utils');
+const {SCOPE}          = require('../utils/scope');
 
 module.exports = (sequelize, DataTypes) => {
   const Room = sequelize.define('Room', {
@@ -19,27 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, {
-    paranoid: true,
-    scopes: {
-      trashed: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: { $ne: 'draft'},
-        },
-        paranoid: false,
-      },
-      draft: {
-        attributes: ['id'],
-        where: {
-          deletedAt: { $not: null },
-          status: 'draft',
-        },
-        paranoid: false,
-      },
-    },
-  });
+  }, SCOPE);
   const {models} = sequelize;
 
   Room.associate = () => {
