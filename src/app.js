@@ -5,7 +5,7 @@ const BodyParser = require('body-parser');
 const Liana      = require('forest-express-sequelize');
 const config     = require('./config');
 const models     = require('./models');
-const checkToken = require('./services/checkToken');
+const checkToken = require('./middlewares/checkToken');
 
 const parentApp = Express();
 const app = Express();

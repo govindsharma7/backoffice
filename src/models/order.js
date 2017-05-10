@@ -1,7 +1,7 @@
 const Promise    = require('bluebird');
 const Liana      = require('forest-express-sequelize');
 const Ninja      = require('../vendor/invoiceninja');
-const makePublic = require('../services/makePublic');
+const makePublic = require('../middlewares/makePublic');
 
 const Serializer = Liana.ResourceSerializer;
 
@@ -243,48 +243,41 @@ module.exports = (sequelize, DataTypes) => {
   Order.hook('afterUpdate', Order.afterUpdate);
 
   Order.beforeLianaInit = (models, app) => {
+    const LEA = Liana.ensureAuthenticated;
+
     // Make this route completely public
     app.get('/forest/Order/:orderId', makePublic);
 
-    app.post(
-      '/forest/actions/generate-invoice',
-      Liana.ensureAuthenticated,
-      (req, res) => {
-        Order
-          .findAll({ where: { id: { $in: req.body.data.attributes.ids } } })
-          .then((orders) => {
-            return Order.generateInvoices(orders);
-          })
-          .then(() => {
-            return res.send({success: 'Invoice successfully generated'});
-          })
-          .catch((err) => {
-            console.error(err);
-            return res.status(400).send({error: err.message});
-          });
-      }
-    );
+    app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
+      Order
+        .findAll({ where: { id: { $in: req.body.data.attributes.ids } } })
+        .then((orders) => {
+          return Order.generateInvoices(orders);
+        })
+        .then(() => {
+          return res.send({success: 'Invoice successfully generated'});
+        })
+        .catch((err) => {
+          console.error(err);
+          return res.status(400).send({error: err.message});
+        });
+    });
 
-    app.get(
-      '/forest/Order/:orderId/relationships/Refunds',
-      Liana.ensureAuthenticated,
-      (req, res) => {
-        models.Credit.findRefundsFromOrder(req.params.orderId)
-          .then((credits) => {
-            return new Serializer(Liana, models.Credit, credits, {}, {
-              count: credits.length,
-            }).perform();
-          })
-          .then((result) => {
-            return res.send(result);
-          })
-          .catch((err) => {
-            console.error(err);
-            return res.status(400).send({error: err.message});
-          });
-      }
-    );
-
+    app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) => {
+      models.Credit.findRefundsFromOrder(req.params.orderId)
+        .then((credits) => {
+          return new Serializer(Liana, models.Credit, credits, {}, {
+            count: credits.length,
+          }).perform();
+        })
+        .then((result) => {
+          return res.send(result);
+        })
+        .catch((err) => {
+          console.error(err);
+          return res.status(400).send({error: err.message});
+        });
+    });
   };
 
   return Order;

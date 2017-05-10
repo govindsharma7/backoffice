@@ -45,6 +45,7 @@ module.exports = (sequelize, DataTypes) => {
       if (ids.length > 1) {
         return res.status(400).send({error:'Can\'t refund multiple payments'});
       }
+
       return Payment
         .findById(ids[0])
         .then((payment) => {

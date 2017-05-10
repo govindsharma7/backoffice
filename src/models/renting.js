@@ -1,23 +1,6 @@
 const D                = require('date-fns');
 const Liana            = require('forest-express-sequelize');
-
-const PACK_PRICES = {
-  lyon: {
-    basique: 59000,
-    confort: 79000,
-    privilege: 99000,
-  },
-  montpellier: {
-    basique: 39000,
-    confort: 59000,
-    privilege: 79000,
-  },
-  paris: {
-    basique: 79000,
-    confort: 99000,
-    privilege: 119000,
-  },
-};
+const getPackPrice     = require('../utils/getPackPrice');
 
 module.exports = (sequelize, DataTypes) => {
   const Renting = sequelize.define('Renting', {
@@ -25,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       type:                     DataTypes.UUID,
       defaultValue:             DataTypes.UUIDV4,
+    },
+    bookingDate: {
+      type:                     DataTypes.DATE,
+      required: true,
     },
     checkinDate: {
       type:                     DataTypes.DATE,
@@ -60,12 +47,12 @@ module.exports = (sequelize, DataTypes) => {
     const endOfMonth = D.endOfMonth(date);
     var daysStayed = daysInMonth;
 
-    if ( this.checkinDate > endOfMonth || this.checkoutDate < startOfMonth ) {
+    if ( this.bookingDate > endOfMonth || this.checkoutDate < startOfMonth ) {
       daysStayed = 0;
     }
     else {
-      if ( this.checkinDate > startOfMonth ) {
-        daysStayed -= D.getDate(this.checkinDate);
+      if ( this.bookingDate > startOfMonth ) {
+        daysStayed -= D.getDate(this.bookingDate);
       }
       if ( this.checkoutDate < endOfMonth ) {
         daysStayed -= daysInMonth - D.getDate(this.checkoutDate);
@@ -103,7 +90,7 @@ module.exports = (sequelize, DataTypes) => {
     return Order.create({
       type: 'debit',
       label: `${D.format('MMMM')} Invoice`,
-      dueDate: Math.max(Date.now(), D.startOfMonth(this.checkinDate)),
+      dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
       ClientId: this.ClientId,
       OrderItems: this.toOrderItems(),
       number,
@@ -112,21 +99,31 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Renting.prototype.createPackOrder = function({comfortLevel, price}, number) {
+  Renting.prototype.createPackOrder = function({comfortLevel, discount}, number) {
     const {Order, OrderItem} = sequelize.models;
     const {addressCity} = this.Room.Apartment;
+    const items = [{
+      label: `Housing Pack ${addressCity} ${comfortLevel}`,
+      unitPrice: getPackPrice(addressCity, comfortLevel),
+      RentingId: this.id,
+      ProductId: 'pack',
+    }];
+
+    if ( discount != null && discount !== 0 ) {
+      items.push({
+        label: 'Discount',
+        unitPrice: -100 * discount,
+        RentingId: this.id,
+        ProductId: 'pack',
+      });
+    }
 
     return Order.create({
       type: 'debit',
       label: 'Housing Pack',
-      dueDate: Math.max(Date.now(), D.startOfMonth(this.checkinDate)),
+      dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
       ClientId: this.ClientId,
-      OrderItems:[{
-        label: `Housing Pack ${addressCity} ${comfortLevel}`,
-        unitPrice: PACK_PRICES[addressCity][comfortLevel],
-        RentingId: this.id,
-        ProductId: 'pack',
-      }],
+      OrderItems: items,
       number,
     }, {
       include: [OrderItem],
@@ -143,7 +140,7 @@ module.exports = (sequelize, DataTypes) => {
         return res.status(400).send({error:'Can\'t create multiple orders'});
       }
 
-      return Renting
+      Renting
         .findById(ids[0], {
           include: ROOM_APARTMENT,
         })
@@ -157,6 +154,8 @@ module.exports = (sequelize, DataTypes) => {
           console.error(err);
           res.status(400).send({error: err.message});
         });
+
+      return null;
     });
 
     app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req, res) => {
@@ -166,9 +165,10 @@ module.exports = (sequelize, DataTypes) => {
         return res.status(400).send({error:'Please select a comfort level'});
       }
       if ( ids.length > 1 ) {
-        return res.status(400).send({error:'Can\'t create multiple house packs'});
+        return res.status(400).send({error:'Can\'t create multiple housing packs'});
       }
-      return Renting
+
+      Renting
         .findById(ids[0], {
           include: ROOM_APARTMENT,
         })
@@ -182,6 +182,8 @@ module.exports = (sequelize, DataTypes) => {
           console.error(err);
           res.status(400).send({error: err.message});
         });
+
+      return null;
     });
   };
 

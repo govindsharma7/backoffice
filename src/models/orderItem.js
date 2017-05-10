@@ -1,3 +1,5 @@
+const Liana = require('forest-express-sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   const OrderItem = sequelize.define('OrderItem', {
     id: {
@@ -62,6 +64,38 @@ module.exports = (sequelize, DataTypes) => {
       .getOrder()
       .then(Order.afterUpdate);
   });
+
+  OrderItem.beforeLianaInit = (models, app) => {
+    const LEA = Liana.ensureAuthenticated;
+
+    app.post('/forest/actions/add-discount', LEA, (req, res) => {
+      const {ids, values} = req.body.data.attributes;
+
+      if ( ids.length > 1 ) {
+        return res.status(400).send({error:'Can\'t create multiple discounts'});
+      }
+
+      OrderItem
+        .findById(ids[0])
+        .then((orderItem) => {
+          return OrderItem.create({
+            label: 'Discount',
+            unitPrice: -100 * values.amount,
+            RentingId: orderItem.RentingId,
+            ProductId: 'rent',
+          });
+        })
+        .then(() => {
+          return res.status(200).send({success: 'Discount created'});
+        })
+        .catch((err) =>{
+          console.error(err);
+          res.status(400).send({error: err.message});
+        });
+
+      return null;
+    });
+  };
 
   return OrderItem;
 };

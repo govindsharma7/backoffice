@@ -65,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
     return this.getRentings({
       where: {
         $and: {
-          checkinDate: { $lte: D.endOfMonth(date) },
+          bookingDate: { $lte: D.endOfMonth(date) },
           checkoutDate: {
             $or: {
               $eq: null,

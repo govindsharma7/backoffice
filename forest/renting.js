@@ -8,7 +8,7 @@ Liana.collection('Renting', {
         type: 'Enum',
         enums: ['basique', 'confort', 'privilege'],
       }, {
-        field: 'price',
+        field: 'Discount',
         type: 'Number',
       }],
   }, {

@@ -11,4 +11,7 @@ Liana.collection('OrderItem', {
       return item.unitPrice = Math.round(value * 100);
     },
   }],
+  actions: [{
+    name: 'Add Discount',
+  }],
 });
