@@ -161,14 +161,12 @@ module.exports = (sequelize, DataTypes) => {
         return this.ninjaCreate();
       });
   };
-
   /*
    * CRUD hooks
    *
    * Those hooks are used to update Invoiceninja records when clients are updated
    * in Forest.
    */
-
   Client.hook('afterCreate', (client) => {
     if ( !client.ninjaId ) {
       client.ninjaCreate()
