@@ -6,7 +6,7 @@ const uuid       = require('uuid/v4');
 const Ninja      = require('../vendor/invoiceninja');
 const config     = require('../config');
 const payline    = require('../vendor/payline');
-const {SCOPE}    = require('../utils/scope');
+const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -43,7 +43,10 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, SCOPE);
+  }, {
+    paranoid: true,
+    scopes: TRASH_SCOPES,
+  });
   const {models} = sequelize;
 
   /*
@@ -163,7 +166,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
  Client.doCredit = (clientId, values, idCredit) => {
-    const {Order, OrderItem, Credit} = sequelize.models;
+    const {Order, OrderItem, Credit} = models;
     const card = {
       number: values.cardNumber,
       type: values.cardType,
@@ -172,9 +175,8 @@ module.exports = (sequelize, DataTypes) => {
       cvx: values.cvv,
       holder: values.cardHolder,
     };
-    const amount = values.amount * 100;
 
-    return payline.doCredit(idCredit, card, amount, Payline.CURRENCIES.EUR)
+    return payline.doCredit(idCredit, card, values.amount, Payline.CURRENCIES.EUR)
       .then((result) => {
         return Order.create({
           id: idCredit,
@@ -183,10 +185,10 @@ module.exports = (sequelize, DataTypes) => {
           ClientId: clientId,
           OrderItems: [{
             label: values.reason,
-            unitPrice: amount * -1,
+            unitPrice: values.amount * -1,
           }],
           Credits:[{
-            amount,
+            amount: values.amount,
             reason: values.orderLabel,
             paylineId: result.transactionId,
           }],
@@ -227,67 +229,65 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.beforeLianaInit = (app) => {
-    app.post(
-      '/forest/actions/credit-client',
-      Liana.ensureAuthenticated,
-      (req, res) => {
-        const idCredit = uuid();
-        const {values, ids} = req.body.data.attributes;
+    const LEA = Liana.ensureAuthenticated;
 
-        if (
-          !values.cardNumber || !values.cardType ||
-          !values.expirationMonth || !values.expirationYear ||
-          !values.cvv || !values.cardHolder || !values.amount
-        ) {
-          return res.status(400).send({error:'All fields are required'});
-        }
-        if (ids.length > 1) {
-          return res.status(400).send({error:'Can\'t credit multiple clients'});
-        }
-        return Client.doCredit(ids[0], values, idCredit)
-          .then(() =>{
-            return res.status(200).send({success: 'Credit ok'});
-          })
-          .catch((err) => {
-            console.error(err);
-            return res.status(400).send({error: err.longMessage});
-          });
+    app.post('/forest/actions/credit-client', LEA, (req, res) => {
+      const idCredit = uuid();
+      const {values, ids} = req.body.data.attributes;
+
+      if (
+        !values.cardNumber || !values.cardType ||
+        !values.expirationMonth || !values.expirationYear ||
+        !values.cvv || !values.cardHolder || !values.amount
+      ) {
+        return res.status(400).send({error:'All fields are required'});
       }
-    );
 
-    app.get(
-      '/forest/Client/:recordId/relationships/Invoices',
-      Liana.ensureAuthenticated,
-      (req, res) => {
-        Client
-          .findById(req.params.recordId)
-          .then((client) => {
-            return Ninja.invoice.listInvoices({
-             'client_id': client.ninjaId,
-            });
-          })
-          .then((response) => {
-            const {data} = response.obj;
-
-            return res.send({
-              data: data.map((invoice) => {
-                return {
-                  id: invoice.id,
-                  type: 'Invoice',
-                  attributes: {
-                    href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
-                  },
-                };
-              }),
-              meta: {count: data.length},
-            });
-          })
-          .catch((err) => {
-            console.error(err);
-            return res.status(400).send({error: err.message});
-          });
+      if (ids.length > 1) {
+        return res.status(400).send({error:'Can\'t credit multiple clients'});
       }
-    );
+
+      values.amount *= 100;
+
+      return Client.doCredit(ids[0], values, idCredit)
+        .then(() =>{
+          return res.status(200).send({success: 'Credit ok'});
+        })
+        .catch((err) => {
+          console.error(err);
+          return res.status(400).send({error: err.longMessage});
+        });
+    });
+
+    app.get('/forest/Client/:recordId/relationships/Invoices', LEA, (req, res) => {
+      Client
+        .findById(req.params.recordId)
+        .then((client) => {
+          return Ninja.invoice.listInvoices({
+           'client_id': client.ninjaId,
+          });
+        })
+        .then((response) => {
+          const {data} = response.obj;
+
+          return res.send({
+            data: data.map((invoice) => {
+              return {
+                id: invoice.id,
+                type: 'Invoice',
+                attributes: {
+                  href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
+                },
+              };
+            }),
+            meta: {count: data.length},
+          });
+        })
+        .catch((err) => {
+          console.error(err);
+          return res.status(400).send({error: err.message});
+        });
+    });
   };
 
   return Client;

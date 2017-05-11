@@ -8,7 +8,8 @@ Liana.collection('Setting', {
       return setting.value;
     },
     set(setting, value) {
-      return setting.value = value;
+      setting.value = value;
+      return setting;
     },
   }],
 });

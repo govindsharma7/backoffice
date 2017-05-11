@@ -1,7 +1,7 @@
 const Liana   = require('forest-express');
 const {Order} = require('../src/models');
 const config  = require('../src/config');
-const {TRASHED_DRAFT} = require('../src/utils/segments');
+const {TRASHED_DRAFT} = require('../src/const');
 
 const cache = new WeakMap();
 

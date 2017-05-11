@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 /* eslint-disable import/no-dynamic-require */
-const models = require('../src/models');
-const seed   = require('../seed');
+const Promise = require('bluebird');
+const models  = require('../src/models');
+const seed    = require('../seed');
 
 // Object.entries polyfill
 Object.entries = typeof Object.entries === 'function' ?

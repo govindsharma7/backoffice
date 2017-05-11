@@ -1,4 +1,4 @@
-const {SCOPE} = require('../utils/scope');
+const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const Apartment = sequelize.define('Apartment', {
@@ -22,7 +22,10 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, SCOPE);
+  }, {
+    paranoid: true,
+    scopes: TRASH_SCOPES,
+  });
   const {models} = sequelize;
 
   Apartment.associate = () => {

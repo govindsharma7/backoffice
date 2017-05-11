@@ -1,3 +1,4 @@
+const Promise  = require('bluebird');
 const fixtures = require('../../__fixtures__/room');
 const Utils    = require('../../src/utils');
 

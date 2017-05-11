@@ -1,5 +1,6 @@
+const Promise  = require('bluebird');
 const fixtures = require('../../__fixtures__/order');
-const {Order} = require('../../src/models');
+const {Order}  = require('../../src/models');
 
 var order;
 var invoiceCounter;
@@ -43,8 +44,8 @@ describe('Order', () => {
           return expect(result).toEqual({
             amount: 500,
             totalPaid: 100,
-            refunds: 90,
-            balance: -490,
+            totalRefund: 0,
+            balance: -400,
           });
         });
     });

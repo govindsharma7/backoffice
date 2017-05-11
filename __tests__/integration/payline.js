@@ -1,5 +1,4 @@
-const uuid = require('uuid/v4');
-
+const uuid     = require('uuid/v4');
 const {Client} = require('../../src/models');
 const fixtures = require('../../__fixtures__/client');
 
@@ -35,9 +34,6 @@ describe('Payline integration', () => {
           expect(order.OrderItems).toBeDefined();
           expect(order.OrderItems[0].unitPrice).toBe(-10000);
           return true;
-        })
-        .catch((err) => {
-          throw err;
         });
     });
   });

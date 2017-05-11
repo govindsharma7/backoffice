@@ -1,7 +1,7 @@
 const D       = require('date-fns');
 const Liana   = require('forest-express-sequelize');
 const Utils   = require('../utils');
-const {SCOPE} = require('../utils/scope');
+const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
@@ -36,7 +36,10 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, SCOPE);
+  }, {
+    paranoid: true,
+    scopes: TRASH_SCOPES,
+  });
 
   Renting.associate = () => {
     Renting.belongsTo(models.Client);
@@ -130,7 +133,7 @@ module.exports = (sequelize, DataTypes) => {
         if ( discount != null && discount !== 0 ) {
           items.push({
             label: 'Discount',
-            unitPrice: -100 * discount,
+            unitPrice: -1 * discount,
             RentingId: this.id,
             ProductId: 'pack',
           });
@@ -164,7 +167,9 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Renting.beforeLianaInit = (app) => {
-    app.post('/forest/actions/create-order', Liana.ensureAuthenticated, (req, res) => {
+    const LEA = Liana.ensureAuthenticated;
+
+    app.post('/forest/actions/create-order', LEA, (req, res) => {
       const {ids} = req.body.data.attributes;
 
       if ( ids.length > 1 ) {
@@ -189,7 +194,7 @@ module.exports = (sequelize, DataTypes) => {
       return null;
     });
 
-    app.post('/forest/actions/housing-pack', Liana.ensureAuthenticated, (req, res) => {
+    app.post('/forest/actions/housing-pack', LEA, (req, res) => {
       const {values, ids} = req.body.data.attributes;
 
       if ( !values.comfortLevel ) {
@@ -198,6 +203,8 @@ module.exports = (sequelize, DataTypes) => {
       if ( ids.length > 1 ) {
         return res.status(400).send({error:'Can\'t create multiple housing packs'});
       }
+
+      values.discount *= 100;
 
       Renting
         .findById(ids[0], {

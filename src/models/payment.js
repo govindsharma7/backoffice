@@ -1,6 +1,6 @@
 const Liana   = require('forest-express-sequelize');
 const payline = require('../vendor/payline');
-const {SCOPE} = require('../utils/scope');
+const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const Payment = sequelize.define('Payment', {
@@ -27,7 +27,10 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, SCOPE);
+  }, {
+    paranoid: true,
+    scopes: TRASH_SCOPES,
+  });
   const {models} = sequelize;
 
   Payment.associate = () => {
@@ -36,8 +39,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Payment.doRefund = (id, values) => {
-    const {Credit} = sequelize.models;
-    const amount = values.amount * 100;
+    const {Credit} = models;
 
     return Payment
       .findById(id)
@@ -45,12 +47,12 @@ module.exports = (sequelize, DataTypes) => {
         if (payment.paylineId == null) {
           throw new Error('This payment can\'t be refund online');
         }
-        return payline.doRefund(payment.paylineId, amount);
+        return payline.doRefund(payment.paylineId, values.amount);
       })
       .then((result) => {
         return Credit
           .create({
-            amount,
+            amount: values.amount,
             reason: values.reason,
             paylineId: result.transactionId,
             PaymentId: id,
@@ -59,7 +61,9 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Payment.beforeLianaInit = (app) => {
-    app.post('/forest/actions/refund', Liana.ensureAuthenticated, (req, res) => {
+    const LEA = Liana.ensureAuthenticated;
+
+    app.post('/forest/actions/refund', LEA, (req, res) => {
       var {values, ids} = req.body.data.attributes;
 
       if (!values.amount) {
@@ -68,6 +72,8 @@ module.exports = (sequelize, DataTypes) => {
       if (ids.length > 1) {
         return res.status(400).send({error:'Can\'t refund multiple payments'});
       }
+
+      values.amount *= 100;
 
       return Payment.doRefund(ids[0], values)
         .then(() => {

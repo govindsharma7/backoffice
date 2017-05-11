@@ -2,7 +2,7 @@ const Promise    = require('bluebird');
 const Liana      = require('forest-express-sequelize');
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../middlewares/makePublic');
-const {SCOPE}    = require('../utils/scope');
+const {TRASH_SCOPES} = require('../const');
 
 const Serializer = Liana.ResourceSerializer;
 
@@ -40,7 +40,10 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, SCOPE);
+  }, {
+    paranoid: true,
+    scopes: TRASH_SCOPES,
+  });
   const {models} = sequelize;
 
   Order.associate = () => {
@@ -78,7 +81,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Order.prototype.getRefunds = function() {
+  Order.prototype.getTotalRefund = function() {
     return models.Credit
       .findRefundsFromOrder(this.id)
       .then((refunds) => {
@@ -93,14 +96,14 @@ module.exports = (sequelize, DataTypes) => {
     return Promise.all([
         this.getAmount(),
         this.getTotalPaid(),
-        this.getRefunds(),
+        this.getTotalRefund(),
       ])
-      .then(([amount, totalPaid, refunds]) => {
+      .then(([amount, totalPaid, totalRefund]) => {
         return {
           amount,
           totalPaid,
-          balance: totalPaid - amount - refunds,
-          refunds,
+          balance: totalPaid - amount - totalRefund,
+          totalRefund,
         };
       });
   };

@@ -1,6 +1,6 @@
 const Promise          = require('bluebird');
 const Liana            = require('forest-express-sequelize');
-const {SCOPE}          = require('../utils/scope');
+const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const OrderItem = sequelize.define('OrderItem', {
@@ -35,7 +35,10 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
-  }, SCOPE);
+  }, {
+    paranoid: true,
+    scopes: TRASH_SCOPES,
+  });
   const {models} = sequelize;
 
   OrderItem.associate = () => {
@@ -52,6 +55,15 @@ module.exports = (sequelize, DataTypes) => {
     return Promise.resolve(
         this.unitPrice * this.quantity * ( 1 + this.vatRate )
     );
+  };
+
+  OrderItem.prototype.createDiscount = function(amount) {
+    return OrderItem.create({
+      label: 'Discount',
+      unitPrice: -1 * amount,
+      RentingId: this.RentingId,
+      ProductId: this.ProductId,
+    });
   };
 
   OrderItem.prototype.ninjaSerialize = function() {
@@ -82,12 +94,7 @@ module.exports = (sequelize, DataTypes) => {
       OrderItem
         .findById(ids[0])
         .then((orderItem) => {
-          return OrderItem.create({
-            label: 'Discount',
-            unitPrice: -100 * values.amount,
-            RentingId: orderItem.RentingId,
-            ProductId: 'rent',
-          });
+          return orderItem.createDiscount(100 * values.amount);
         })
         .then(() => {
           return res.status(200).send({success: 'Discount created'});

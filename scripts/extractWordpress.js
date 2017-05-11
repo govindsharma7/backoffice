@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-const WPAPI = require('wpapi');
-const _ = require('lodash');
+const Promise = require('bluebird');
+const _       = require('lodash');
+const WPAPI   = require('wpapi');
 
 WPAPI.discover('http://localhost:8080/wp-json')
   .then((nestor) => {
