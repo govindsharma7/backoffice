@@ -4,6 +4,11 @@
 const models = require('../src/models');
 const seed   = require('../seed');
 
+// Object.entries polyfill
+Object.entries = typeof Object.entries === 'function' ?
+  Object.entries :
+  (obj) => Object.keys(obj).map(k => [k, obj[k]]);
+
 if (
   process.env.NODE_ENV !== 'test' &&
   process.env.NODE_ENV !== 'development' &&
@@ -23,7 +28,7 @@ return models.sequelize.sync()
 
     for (let [modelName, records] of Object.entries(seed)) {
       for (let record of records) {
-        promises.push(models[modelName].create(record));
+        promises.push(models[modelName].upsert(record));
       }
     }
 

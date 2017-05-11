@@ -19,7 +19,7 @@ const nodemonInspect = `nodemon --inspect ${entryPoint}`;
 
 const dbSync = 'node scripts/dbSync.js';
 const dbReset = 'node scripts/dbReset.js';
-const dbSeed = 'node scripts/dbSeed.js';
+const dbFixture = 'node scripts/dbFixture.js';
 
 const lint = 'eslint .';
 const unitTest = 'jest __tests__/unit';
@@ -43,16 +43,16 @@ module.exports = {
   'dev:sql:migration:create':
     `${env.dev} ${sequelizeMigrationCreate} --env devlopment`,
   'dev:db:sync': `${env.dev} ${dbSync}`,
-  'dev:db:seed': `${env.dev} ${dbSeed}`,
+  'dev:db:fixture': `${env.dev} ${dbFixture}`,
 
   'stag:start': `${env.staging} ${nodemonInspect}`,
   'stag:sql:migration:create':
     `${env.staging} ${sequelizeMigrationCreate} --env staging`,
   'stag:db:sync': `${env.staging} ${dbSync}`,
-  'stag:db:seed': `${env.staging} ${dbSeed} ${flags}`,
+  'stag:db:fixture': `${env.staging} ${dbFixture} ${flags}`,
   'stag:deploy': `${env.staging} ${claudiaUpdate} --config claudia.stag.json`,
 
-  'prod:db:seed': `${env.prod} ${dbSeed} ${flags}`,
+  'prod:db:fixture': `${env.prod} ${dbFixture} ${flags}`,
   'prod:deploy': `${env.prod} ${claudiaUpdate}`,
 };
 

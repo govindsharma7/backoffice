@@ -35,10 +35,32 @@ module.exports = (sequelize, DataTypes) => {
     Payment.hasMany(models.Credit);
   };
 
+  Payment.doRefund = (id, values) => {
+    const {Credit} = sequelize.models;
+    const amount = values.amount * 100;
+
+    return Payment
+      .findById(id)
+      .then((payment) => {
+        if (payment.paylineId == null) {
+          throw new Error('This payment can\'t be refund online');
+        }
+        return payline.doRefund(payment.paylineId, amount);
+      })
+      .then((result) => {
+        return Credit
+          .create({
+            amount,
+            reason: values.reason,
+            paylineId: result.transactionId,
+            PaymentId: id,
+          });
+      });
+  };
+
   Payment.beforeLianaInit = (app) => {
     app.post('/forest/actions/refund', Liana.ensureAuthenticated, (req, res) => {
       var {values, ids} = req.body.data.attributes;
-      var amount = values.amount * 100;
 
       if (!values.amount) {
         return res.status(400).send({error:'Please specify an amount'});
@@ -47,24 +69,7 @@ module.exports = (sequelize, DataTypes) => {
         return res.status(400).send({error:'Can\'t refund multiple payments'});
       }
 
-      return Payment
-        .findById(ids[0])
-        .then((payment) => {
-          if (payment.paylineId == null) {
-            throw new Error('This payment can\'t be refund online');
-          }
-
-          return payline.doRefund(payment.paylineId, amount);
-        })
-        .then((result) => {
-          return models.Credit
-            .create({
-              amount,
-              reason: values.reason,
-              paylineId: result.transactionId,
-              PaymentId: ids[0],
-            });
-        })
+      return Payment.doRefund(ids[0], values)
         .then(() => {
           return res.send({success: 'Refund ok'});
         })

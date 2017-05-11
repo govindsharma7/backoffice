@@ -162,6 +162,40 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+ Client.doCredit = (clientId, values, idCredit) => {
+    const {Order, OrderItem, Credit} = sequelize.models;
+    const card = {
+      number: values.cardNumber,
+      type: values.cardType,
+      expirationDate: values.expirationMonth +
+      values.expirationYear.slice(-2),
+      cvx: values.cvv,
+      holder: values.cardHolder,
+    };
+    const amount = values.amount * 100;
+
+    return payline.doCredit(idCredit, card, amount, Payline.CURRENCIES.EUR)
+      .then((result) => {
+        return Order.create({
+          id: idCredit,
+          type: 'credit',
+          label: values.orderLabel,
+          ClientId: clientId,
+          OrderItems: [{
+            label: values.reason,
+            unitPrice: amount * -1,
+          }],
+          Credits:[{
+            amount,
+            reason: values.orderLabel,
+            paylineId: result.transactionId,
+          }],
+        }, {
+          include: [OrderItem, Credit],
+        });
+      });
+  };
+
   /*
    * CRUD hooks
    *
@@ -197,7 +231,7 @@ module.exports = (sequelize, DataTypes) => {
       '/forest/actions/credit-client',
       Liana.ensureAuthenticated,
       (req, res) => {
-        const id = uuid();
+        const idCredit = uuid();
         const {values, ids} = req.body.data.attributes;
 
         if (
@@ -207,44 +241,12 @@ module.exports = (sequelize, DataTypes) => {
         ) {
           return res.status(400).send({error:'All fields are required'});
         }
-
-        const card = {
-          number: values.cardNumber,
-          type: values.cardType,
-          expirationDate: values.expirationMonth +
-          values.expirationYear.slice(-2),
-          cvx: values.cvv,
-          holder: values.cardHolder,
-        };
-        const amount = values.amount * 100;
-
         if (ids.length > 1) {
           return res.status(400).send({error:'Can\'t credit multiple clients'});
         }
-
-        return payline.doCredit(id, card, amount, Payline.CURRENCIES.EUR)
-          .then((result) => {
-            // TODO: move order creation to an instance method and unit test it
-            return models.Order.create({
-              id,
-              type: 'credit',
-              label: values.orderLabel,
-              ClientId: ids[0],
-              OrderItems: [{
-                label: values.reason,
-                unitPrice: amount * -1,
-              }],
-              Credits:[{
-                amount,
-                reason: values.orderLabel,
-                paylineId: result.transactionId,
-              }],
-            }, {
-              include: [models.OrderItem, models.Credit],
-            });
-          })
+        return Client.doCredit(ids[0], values, idCredit)
           .then(() =>{
-            return res.status(200).send({success: 'Refund ok'});
+            return res.status(200).send({success: 'Credit ok'});
           })
           .catch((err) => {
             console.error(err);
