@@ -1,4 +1,5 @@
-const D = require('date-fns');
+const D       = require('date-fns');
+const Promise = require('bluebird');
 
 var COEFS;
 

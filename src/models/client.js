@@ -1,3 +1,4 @@
+const Promise          = require('bluebird');
 const D                = require('date-fns');
 const Liana            = require('forest-express');
 const Payline          = require('payline');
@@ -164,10 +165,7 @@ module.exports = (sequelize, DataTypes) => {
   Client.hook('afterCreate', (client) => {
     if ( !client.ninjaId ) {
       client.ninjaCreate()
-        .catch((error) => {
-          console.error(error);
-          throw error;
-        });
+        .tapCatch(console.error);
     }
 
     return true;
@@ -182,10 +180,7 @@ module.exports = (sequelize, DataTypes) => {
       )
     ) {
       client.ninjaUpdate()
-        .catch((error) => {
-          console.error(error);
-          throw error;
-        });
+        .tapCatch(console.error);
     }
 
     return true;

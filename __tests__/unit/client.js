@@ -1,4 +1,6 @@
+const Promise          = require('bluebird');
 const D                = require('date-fns');
+const models           = require('../../src/models');
 const fixtures         = require('../../__fixtures__/client');
 
 var client;
@@ -41,13 +43,15 @@ describe('Client', () => {
 
   describe('#createRentingsOrder', () => {
     test('it should create an order with appropriate orderitems', () => {
+      const _Renting = models.Renting.scope('room-apartment');
+
       return Promise.all([
-          renting2.reload({scope: 'room-apartment'}),
-          renting3.reload({scope: 'room-apartment'}),
+          _Renting.findById(renting2.id),
+          _Renting.findById(renting3.id),
         ])
-        .then(() => {
+        .then((rentings) => {
           return client.createRentingsOrder(
-            [renting2, renting3],
+            rentings,
             D.parse('2017-02 Z'),
             Math.round(Math.random() * 1E12)
           );

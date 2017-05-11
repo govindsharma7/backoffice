@@ -155,6 +155,9 @@ module.exports = {
     // surprisingly, those two rules don't work
     'import/no-webpack-loader-syntax': 'off',
     'import/unambiguous': 'off',
+
+    // Promise
+    'promise/no-native': 'error',
   },
   'globals': {
     expect: false,

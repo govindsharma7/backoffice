@@ -1,3 +1,5 @@
+const Promise          = require('bluebird');
+
 module.exports = (sequelize, DataTypes) => {
   const Setting = sequelize.define('Setting', {
     id: {

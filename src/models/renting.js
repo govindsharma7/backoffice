@@ -31,25 +31,23 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.INTEGER,
       required: true,
     },
-  }, {
-    scopes: {
-      'room-apartment': {
-        include: [{
-          model: models.Room,
-          attributes: ['reference'],
-          include: [{
-            model: models.Apartment,
-            attributes: ['reference', 'addressCity'],
-          }],
-        }],
-      },
-    },
   });
 
   Renting.associate = () => {
     Renting.belongsTo(models.Client);
     Renting.belongsTo(models.Room);
     Renting.hasMany(models.OrderItem);
+
+    Renting.addScope('room-apartment', {
+      include: [{
+        model: models.Room,
+        attributes: ['reference'],
+        include: [{
+          model: models.Apartment,
+          attributes: ['reference', 'addressCity'],
+        }],
+      }],
+    });
   };
 
   // Prorate the price and service fees of a renting for a given month

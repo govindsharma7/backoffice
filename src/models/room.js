@@ -1,4 +1,5 @@
-const Utils = require('../utils');
+const Promise          = require('bluebird');
+const Utils            = require('../utils');
 
 module.exports = (sequelize, DataTypes) => {
   const Room = sequelize.define('Room', {

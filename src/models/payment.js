@@ -1,9 +1,5 @@
 const Liana   = require('forest-express-sequelize');
-
 const payline = require('../vendor/payline');
-
-
-
 
 module.exports = (sequelize, DataTypes) => {
   const Payment = sequelize.define('Payment', {

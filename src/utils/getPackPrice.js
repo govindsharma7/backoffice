@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 const PACK_PRICES = {
   lyon: {
     basique: 59000,

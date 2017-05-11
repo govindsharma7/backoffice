@@ -1,4 +1,5 @@
-const Liana = require('forest-express-sequelize');
+const Promise          = require('bluebird');
+const Liana            = require('forest-express-sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   const OrderItem = sequelize.define('OrderItem', {
