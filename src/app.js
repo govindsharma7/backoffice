@@ -39,7 +39,7 @@ app.use(BodyParser.json());
 // This hook and all app.use above are currently useless
 Object.keys(models).forEach(function(modelName) {
   if ('beforeLianaInit' in models[modelName]) {
-    models[modelName].beforeLianaInit(models, app);
+    models[modelName].beforeLianaInit(app);
   }
 });
 
@@ -58,7 +58,7 @@ parentApp.use(Liana.init({
 // This hook is currently useless
 Object.keys(models).forEach(function(modelName) {
   if ('afterLianaInit' in models[modelName]) {
-    models[modelName].afterLianaInit(models, parentApp);
+    models[modelName].afterLianaInit(parentApp);
   }
 });
 
