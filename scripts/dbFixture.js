@@ -33,8 +33,6 @@ return models.sequelize.sync({ force: true })
       'clients.json',
       'products.json',
       'rentings.json',
-      'orders.json',
-      'orderItems.json',
       'settings.json',
 
     ].map((file) => {

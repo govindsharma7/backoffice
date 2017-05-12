@@ -26,4 +26,4 @@ module.exports.TRASH_SCOPES = {
 };
 
 module.exports.INVOICENINJA_URL =
-  `${config.INVOICENINJA_PROTOCOL}://${config.INVOICENINJA_HOST}`;
+  `${config.INVOICENINJA_PROTOCOL || 'http'}://${config.INVOICENINJA_HOST}`;
