@@ -65,14 +65,17 @@ module.exports = (sequelize, DataTypes) => {
     const endOfMonth = D.endOfMonth(date);
     var daysStayed = daysInMonth;
 
-    if ( this.bookingDate > endOfMonth || this.checkoutDate < startOfMonth ) {
+    if (
+      this.bookingDate > endOfMonth ||
+      ( this.checkoutDate != null && this.checkoutDate < startOfMonth )
+    ) {
       daysStayed = 0;
     }
     else {
       if ( this.bookingDate > startOfMonth ) {
         daysStayed -= D.getDate(this.bookingDate);
       }
-      if ( this.checkoutDate < endOfMonth ) {
+      if ( this.checkoutDate != null && this.checkoutDate < endOfMonth ) {
         daysStayed -= daysInMonth - D.getDate(this.checkoutDate);
       }
     }
@@ -107,10 +110,10 @@ module.exports = (sequelize, DataTypes) => {
 
     return Order.create({
       type: 'debit',
-      label: `${D.format('MMMM')} Invoice`,
+      label: `${D.format(date, 'MMMM')} Invoice`,
       dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
       ClientId: this.ClientId,
-      OrderItems: this.toOrderItems(),
+      OrderItems: this.toOrderItems(date),
       number,
     }, {
       include: [OrderItem],
@@ -152,34 +155,36 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Renting.hook('beforeValidate', (order) => {
-    return order
+  Renting.hook('beforeValidate', (renting) => {
+    // Only calculate the price and fees once!
+    if ( renting.price != null ) {
+      return renting;
+    }
+
+    return renting
       .getRoom()
       .then((room) => {
-        return room.getCalculatedProps(order.bookingDate);
+        return room.getCalculatedProps(renting.bookingDate);
       })
       .then(({periodPrice, serviceFees}) => {
-        return Object.assign(order, {
-          price: periodPrice,
-          serviceFees,
-        });
+        renting.setDataValue('price', periodPrice);
+        renting.setDataValue('serviceFees', serviceFees);
+        return renting;
       });
   });
 
   Renting.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
-    app.post('/forest/actions/create-order', LEA, (req, res) => {
+    app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
       const {ids} = req.body.data.attributes;
 
       if ( ids.length > 1 ) {
         return res.status(400).send({error:'Can\'t create multiple orders'});
       }
 
-      Renting
-        .findById(ids[0], {
-          scope: 'room-apartment',
-        })
+      Renting.scope('room-apartment')
+        .findById(ids[0])
         .then((renting) => {
           return renting.createOrder();
         })
@@ -194,7 +199,7 @@ module.exports = (sequelize, DataTypes) => {
       return null;
     });
 
-    app.post('/forest/actions/housing-pack', LEA, (req, res) => {
+    app.post('/forest/actions/create-pack-order', LEA, (req, res) => {
       const {values, ids} = req.body.data.attributes;
 
       if ( !values.comfortLevel ) {
@@ -204,12 +209,12 @@ module.exports = (sequelize, DataTypes) => {
         return res.status(400).send({error:'Can\'t create multiple housing packs'});
       }
 
-      values.discount *= 100;
+      if ( values.discount != null ) {
+        values.discount *= 100;
+      }
 
-      Renting
-        .findById(ids[0], {
-          scope: 'room-apartment',
-        })
+      Renting.scope('room-apartment')
+        .findById(ids[0])
         .then((renting) => {
           return renting.createPackOrder(values);
         })

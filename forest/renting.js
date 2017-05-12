@@ -2,18 +2,29 @@ const Liana   = require('forest-express-sequelize');
 const {TRASHED_DRAFT} = require('../src/const');
 
 Liana.collection('Renting', {
+  fields: [{
+    field: '_price',
+    type: 'Number',
+    get(renting) {
+      return renting.price / 100;
+    },
+    set(renting, value) {
+      renting.price = Math.round(value * 100);
+      return renting;
+    },
+  }],
   actions:[{
-    name: 'Housing pack',
+    name: 'Create Pack Order',
     fields: [{
-        field: 'comfortLevel',
-        type: 'Enum',
-        enums: ['basique', 'confort', 'privilege'],
-      }, {
-        field: 'Discount',
-        type: 'Number',
-      }],
+      field: 'comfortLevel',
+      type: 'Enum',
+      enums: ['basique', 'confort', 'privilege'],
+    }, {
+      field: 'Discount',
+      type: 'Number',
+    }],
   }, {
-    name: 'Create Order',
+    name: 'Create Rent Order',
   }],
   segments : TRASHED_DRAFT,
 });

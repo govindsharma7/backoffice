@@ -88,14 +88,15 @@ module.exports = (sequelize, DataTypes) => {
   Client.prototype.createRentingsOrder = function(rentings, date = Date.now(), number) {
     const {Order, OrderItem} = models;
     const items = rentings.reduce((all, renting) => {
-      return all.concat(renting.toOrderItems());
+      return all.concat(renting.toOrderItems(date));
     }, []);
 
     return Order.create({
       type: 'debit',
-      label: `${D.format('MMMM')} Invoice`,
+      label: `${D.format(date, 'MMMM')} Invoice`,
       dueDate: D.startOfMonth(date),
       OrderItems: items,
+      ClientId: this.id,
       number,
     }, {
       include: [OrderItem],

@@ -15,7 +15,7 @@ const sequelizeMigrationCreate =
   `sequelize migration:create ${sequelizeFlags}`;
 
 const entryPoint = 'src/index.js';
-const nodemonInspect = `nodemon --inspect ${entryPoint}`;
+const nodemonInspect = `nodemon --watch src --watch __tests__ --inspect ${entryPoint}`;
 
 const dbSync = 'node scripts/dbSync.js';
 const dbReset = 'node scripts/dbReset.js';
@@ -38,6 +38,8 @@ module.exports = {
     `${env.prod} node scripts/extractInvoiceninja.js > data/clients.json`,
   'extract:portfolio':
     `${env.prod} node scripts/extractWordpress.js > tmp/portfolio.json`,
+  'generate:rentorders':
+    `${env.dev} node scripts/generateRentingInvoices.js`,
 
   'dev:start': `${env.dev} ${nodemonInspect}`,
   'dev:sql:migration:create':

@@ -4,7 +4,8 @@ const Promise = require('bluebird');
 const D       = require('date-fns');
 const models  = require('../src/models');
 
-const {Client, Order} = models;
+// const {Client, Order} = models;
+const {Client} = models;
 const month = D.addMonths(Date.now(), 1);
 
 Client.findAll()
@@ -32,20 +33,20 @@ Client.findAll()
   })
   // Filter-out clients with no active rentings
   .then((tuples) => {
-    return Promise.filter(tuples, ({rentings}) => {
+    return Promise.filter(tuples, ([, rentings]) => {
       return rentings.length > 0;
     });
   })
   .then((tuples) => {
-    return Promise.map(tuples, ({client, rentings}) => {
+    return Promise.map(tuples, ([client, rentings]) => {
       return client.createRentingsOrder(rentings, month);
     });
   })
+  // .then((orders) => {
+  //   return Order.generateInvoices(orders);
+  // })
   .then((orders) => {
-    return Order.generateInvoices(orders);
-  })
-  .then(() => {
-    return console.log('ALL ORDERS GENERATED!');
+    return console.log(`${orders.length} RENT ORDERS GENERATED!`);
   })
   .catch((err) => {
     console.error(err);

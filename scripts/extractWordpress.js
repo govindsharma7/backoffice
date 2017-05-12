@@ -154,6 +154,7 @@ function parseProperties(properties) {
     if ( portfolio.rooms[roomRef] !== void 0 ) {
       console.error(`Room reference already exist: ${roomRef}`);
     }
+
     portfolio.rooms[roomRef] = {
       id: roomRef,
       reference: roomRef,
