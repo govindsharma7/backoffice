@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     addressStreet:            DataTypes.STRING,
     addressZip:               DataTypes.STRING,
-    addressCity:              DataTypes.ENUM('lyon', 'montpellier'),
+    addressCity:              DataTypes.ENUM('lyon', 'montpellier', 'paris'),
     addressCountry:           DataTypes.ENUM('france'),
     latLng:                   DataTypes.STRING,
     floorArea:                DataTypes.FLOAT,
@@ -24,7 +24,23 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     paranoid: true,
-    scopes: TRASH_SCOPES,
+    scopes: Object.assign(TRASH_SCOPES, {
+      lyon: {
+        where: {
+          addressCity: 'lyon',
+        },
+      },
+      paris: {
+        where: {
+          addressCity: 'paris',
+        },
+      },
+      montpellier: {
+        where: {
+          addressCity: 'montpellier',
+        },
+      },
+    }),
   });
   const {models} = sequelize;
 

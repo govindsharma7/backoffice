@@ -1,7 +1,7 @@
 const Liana   = require('forest-express');
 const {Order} = require('../src/models');
 const {
-  TRASHED_DRAFT,
+  TRASH_SEGMENTS,
   INVOICENINJA_URL,
 } = require('../src/const');
 
@@ -82,5 +82,5 @@ Liana.collection('Order', {
   actions: [{
     name: 'Generate Invoice',
   }],
-  segments: TRASHED_DRAFT,
+  segments: TRASH_SEGMENTS,
 });

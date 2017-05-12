@@ -1,6 +1,6 @@
 const Liana          = require('forest-express-sequelize');
 const {
-  TRASHED_DRAFT,
+  TRASH_SEGMENTS,
   INVOICENINJA_URL,
 }                    = require('../src/const');
 
@@ -62,5 +62,5 @@ Liana.collection('Client', {
       },
     ],
   }],
-  segments: TRASHED_DRAFT,
+  segments: TRASH_SEGMENTS,
 });

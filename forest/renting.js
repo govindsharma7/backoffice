@@ -3,7 +3,7 @@ const {
   BASIC_PACK,
   COMFORT_PACK,
   PRIVILEGE_PACK,
-  TRASHED_DRAFT,
+  TRASH_SEGMENTS,
 } = require('../src/const');
 
 Liana.collection('Renting', {
@@ -41,5 +41,5 @@ Liana.collection('Renting', {
   }, {
     name: 'Create Rent Order',
   }],
-  segments : TRASHED_DRAFT,
+  segments : TRASH_SEGMENTS,
 });
