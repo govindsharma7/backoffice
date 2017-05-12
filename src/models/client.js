@@ -4,9 +4,11 @@ const Liana      = require('forest-express');
 const Payline    = require('payline');
 const uuid       = require('uuid/v4');
 const Ninja      = require('../vendor/invoiceninja');
-const config     = require('../config');
 const payline    = require('../vendor/payline');
-const {TRASH_SCOPES} = require('../const');
+const {
+  TRASH_SCOPES,
+  INVOICENINJA_URL,
+}                = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -277,7 +279,7 @@ module.exports = (sequelize, DataTypes) => {
                 id: invoice.id,
                 type: 'Invoice',
                 attributes: {
-                  href: `${config.INVOICENINJA_HOST}/invoices/${invoice.id}/edit`,
+                  href: `${INVOICENINJA_URL}/invoices/${invoice.id}/edit`,
                 },
               };
             }),

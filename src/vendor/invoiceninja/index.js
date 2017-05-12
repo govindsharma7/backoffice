@@ -20,9 +20,7 @@ new Swagger({
 // Override the host hardcoded in the spec.
 .then((ninja) => {
   Ninja = ninja;
-  Ninja.setSchemes(
-    [/^(test|development)$/.test(config.NODE_ENV) ? 'http' : 'https']
-  );
+  Ninja.setSchemes([config.INVOICENINJA_PROTOCOL || 'http']);
   Ninja.setHost(config.INVOICENINJA_HOST);
 });
 

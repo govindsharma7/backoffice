@@ -1,11 +1,24 @@
-const Liana = require('forest-express-sequelize');
-const {TRASHED_DRAFT} = require('../src/const');
+const Liana          = require('forest-express-sequelize');
+const {
+  TRASHED_DRAFT,
+  INVOICENINJA_URL,
+}                    = require('../src/const');
 
 Liana.collection('Client', {
   fields: [{
     field: 'Invoices',
     type: ['String'],
     reference: 'Invoice.id',
+  }, {
+    field: 'ninja',
+    type: 'String',
+    get(object) {
+      if (object.ninjaId !== null) {
+        return `${INVOICENINJA_URL}/clients/${object.ninjaId}`;
+      }
+
+      return null;
+    },
   }],
   actions:[{
     name: 'Credit client',

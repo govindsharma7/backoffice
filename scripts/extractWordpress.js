@@ -4,7 +4,13 @@ const Promise = require('bluebird');
 const _       = require('lodash');
 const WPAPI   = require('wpapi');
 
-WPAPI.discover('http://localhost:8080/wp-json')
+const fixedNames = {
+  '1638 2': '59 saint anne 1',
+  '4946 2': '156 gambetta 3',
+  '4230 2': '40 verdun',
+};
+
+return WPAPI.discover('http://localhost:8080/wp-json')
   .then((nestor) => {
     return recursePaginate(
       nestor.property().embed()
@@ -51,12 +57,6 @@ function recursePaginate(request) {
       return _.flatten( responses );
     });
 }
-
-const fixedNames = {
-  '1638 2': '59 saint anne 1',
-  '4946 2': '156 gambetta 3',
-  '4230 2': '40 verdun',
-};
 
 /* eslint-disable complexity */
 function parseProperties(properties) {

@@ -1,7 +1,9 @@
 const Liana   = require('forest-express');
 const {Order} = require('../src/models');
-const config  = require('../src/config');
-const {TRASHED_DRAFT} = require('../src/const');
+const {
+  TRASHED_DRAFT,
+  INVOICENINJA_URL,
+} = require('../src/const');
 
 const cache = new WeakMap();
 
@@ -67,7 +69,7 @@ Liana.collection('Order', {
     type: 'String',
     get(object) {
       if (object.ninjaId !== null) {
-        return `${config.INVOICENINJA_HOST}/invoices/${object.ninjaId}/edit`;
+        return `${INVOICENINJA_URL}/invoices/${object.ninjaId}/edit`;
       }
 
       return null;

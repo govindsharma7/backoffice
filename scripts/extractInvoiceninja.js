@@ -3,9 +3,9 @@
 const Ininja = require('../src/vendor/invoiceninja');
 
 // This script was used to initialize the database of users, using data from InvoiceNinja
-Ininja.client
+return Ininja.client
   .listClients({
-    'per_page': 300,
+    'per_page': 400,
   })
   .then((response) => {
     var ids = {};

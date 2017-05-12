@@ -8,7 +8,7 @@ const models  = require('../src/models');
 const {Client} = models;
 const month = D.addMonths(Date.now(), 1);
 
-Client.findAll()
+return Client.findAll()
   .then((clients) => {
     return Promise.map(clients, (client) => {
       return Promise.all([

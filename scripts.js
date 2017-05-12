@@ -15,7 +15,8 @@ const sequelizeMigrationCreate =
   `sequelize migration:create ${sequelizeFlags}`;
 
 const entryPoint = 'src/index.js';
-const nodemonInspect = `nodemon --watch src --watch __tests__ --inspect ${entryPoint}`;
+const nodemonInspect =
+  `nodemon --watch src --watch forest --watch __tests__ --inspect ${entryPoint}`;
 
 const dbSync = 'node scripts/dbSync.js';
 const dbReset = 'node scripts/dbReset.js';

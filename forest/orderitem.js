@@ -3,7 +3,7 @@ const {TRASHED_DRAFT} = require('../src/const');
 
 Liana.collection('OrderItem', {
   fields: [{
-    field: '_unitPrice',
+    field: 'unit price euro',
     type: 'Number',
     get(item) {
       return item.unitPrice / 100;

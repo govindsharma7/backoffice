@@ -1,3 +1,5 @@
+const config = require('./config');
+
 module.exports.TRASH_SEGMENTS = [{
     name: 'Trashed',
     scope: 'trashed',
@@ -22,3 +24,6 @@ module.exports.TRASH_SCOPES = {
     paranoid: false,
   },
 };
+
+module.exports.INVOICENINJA_URL =
+  `${config.INVOICENINJA_PROTOCOL}://${config.INVOICENINJA_HOST}`;
