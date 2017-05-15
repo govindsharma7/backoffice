@@ -1,5 +1,10 @@
 const Liana   = require('forest-express-sequelize');
-const {TRASHED_DRAFT} = require('../src/const');
+const {
+  BASIC_PACK,
+  COMFORT_PACK,
+  PRIVILEGE_PACK,
+  TRASHED_DRAFT,
+} = require('../src/const');
 
 Liana.collection('Renting', {
   fields: [{
@@ -28,7 +33,7 @@ Liana.collection('Renting', {
     fields: [{
       field: 'comfortLevel',
       type: 'Enum',
-      enums: ['basique', 'confort', 'privilege'],
+      enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
     }, {
       field: 'Discount',
       type: 'Number',

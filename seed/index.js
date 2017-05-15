@@ -13,5 +13,8 @@ module.exports = {
   }, {
     id: 'pack',
     name: 'Housing Pack',
+  }, {
+    id: 'special-checkinout',
+    name: 'Special Checkin/Checkout',
   }],
 };

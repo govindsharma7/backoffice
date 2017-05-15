@@ -1,6 +1,7 @@
-const D       = require('date-fns');
-const Liana   = require('forest-express-sequelize');
-const Utils   = require('../utils');
+const Promise        = require('bluebird');
+const D              = require('date-fns');
+const Liana          = require('forest-express-sequelize');
+const Utils          = require('../utils');
 const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
@@ -128,14 +129,25 @@ module.exports = (sequelize, DataTypes) => {
     const {Order, OrderItem} = models;
     const {addressCity} = this.Room.Apartment;
 
-    return Utils.getPackPrice(addressCity, comfortLevel)
-      .then((packPrice) => {
+    return Promise.all([
+        Utils.getPackPrice(addressCity, comfortLevel),
+        Utils.getCheckinPrice(this.checkinDate, comfortLevel),
+      ])
+      .then(([packPrice, checkinPrice]) => {
         const items = [{
           label: `Housing Pack ${addressCity} ${comfortLevel}`,
           unitPrice: packPrice,
           RentingId: this.id,
           ProductId: 'pack',
         }];
+
+        if ( checkinPrice !== 0 ) {
+          items.push({
+            label: 'Special checkin',
+            unitPrice: checkinPrice,
+            ProductId: 'special-checkinout',
+          });
+        }
 
         if ( discount != null && discount !== 0 ) {
           items.push({
@@ -183,12 +195,14 @@ module.exports = (sequelize, DataTypes) => {
     app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
       const {ids} = req.body.data.attributes;
 
-      if ( ids.length > 1 ) {
-        return res.status(400).send({error:'Can\'t create multiple orders'});
-      }
+      Promise.resolve()
+        .then(() => {
+          if ( ids.length > 1 ) {
+            throw new Error('Can\'t create multiple rent orders');
+          }
 
-      Renting.scope('room-apartment')
-        .findById(ids[0])
+          return Renting.scope('room-apartment').findById(ids[0]);
+        })
         .then((renting) => {
           return renting.createOrder();
         })
@@ -206,20 +220,26 @@ module.exports = (sequelize, DataTypes) => {
     app.post('/forest/actions/create-pack-order', LEA, (req, res) => {
       const {values, ids} = req.body.data.attributes;
 
-      if ( !values.comfortLevel ) {
-        return res.status(400).send({error:'Please select a comfort level'});
-      }
-      if ( ids.length > 1 ) {
-        return res.status(400).send({error:'Can\'t create multiple housing packs'});
-      }
-
       if ( values.discount != null ) {
         values.discount *= 100;
       }
 
-      Renting.scope('room-apartment')
-        .findById(ids[0])
+      Promise.resolve()
+        .then(() => {
+          if ( !values.comfortLevel ) {
+            throw new Error('Please select a comfort level');
+          }
+          if ( ids.length > 1 ) {
+            throw new Error('Can\'t create multiple housing-pack orders');
+          }
+
+          return Renting.scope('room-apartment').findById(ids[0]);
+        })
         .then((renting) => {
+          if ( renting.checkinDate == null ) {
+            throw new Error('Checkin date is required to create the housing-pack order');
+          }
+
           return renting.createPackOrder(values);
         })
         .then(() => {
