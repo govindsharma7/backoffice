@@ -51,6 +51,12 @@ module.exports = {
 
   SPECIAL_CHECKIN_PRICE: 7500,
 
+  SERVICE_FEES: {
+    1: 5000, // 1 room
+    2: 4000, // 2 rooms
+    default: 3000, // 3 or more rooms
+  },
+
   RENT_COEFS: [
     null, // D.format returns '1' for the first day of the year, not 0.
     0.95,
