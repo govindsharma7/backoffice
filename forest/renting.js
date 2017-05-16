@@ -40,6 +40,18 @@ Liana.collection('Renting', {
     }],
   }, {
     name: 'Create Rent Order',
+  }, {
+    name: 'Add Checkin Date',
+    fields: [{
+      field: 'plannedDate',
+      type: 'Date',
+    }],
+  }, {
+    name: 'Add Checkout Date',
+    fields :[{
+      field: 'plannedDate',
+      type: 'Date',
+    }],
   }],
   segments : TRASH_SEGMENTS,
 });

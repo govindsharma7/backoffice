@@ -22,6 +22,7 @@ const dbSync = 'node scripts/dbSync.js';
 const dbSeed = 'node scripts/dbSeed.js';
 const dbReset = 'node scripts/dbReset.js';
 const dbFixture = 'node scripts/dbFixture.js';
+const createCalendar = 'node scripts/createCalendar.js';
 
 const lint = 'eslint .';
 const unitTest = 'jest __tests__/unit';
@@ -49,6 +50,7 @@ module.exports = {
   'dev:db:sync': `${env.dev} ${dbSync}`,
   'dev:db:seed': `${env.dev} ${dbSeed}`,
   'dev:db:fixture': `${env.dev} ${dbFixture}`,
+  'dev:create:calendar': `${env.dev} ${createCalendar}`,
 
   'stag:start': `${env.staging} ${nodemonInspect}`,
   'stag:sql:migration:create':

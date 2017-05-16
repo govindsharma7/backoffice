@@ -20,14 +20,6 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.DATE,
       required: true,
     },
-    checkinDate: {
-      type:                     DataTypes.DATE,
-      required: false,
-    },
-    checkoutDate:  {
-      type:                     DataTypes.DATE,
-      required: false,
-    },
     price: {
       type:                     DataTypes.INTEGER,
       required: true,
@@ -46,19 +38,37 @@ module.exports = (sequelize, DataTypes) => {
     scopes: TRASH_SCOPES,
   });
 
+
+
   Renting.associate = () => {
     Renting.belongsTo(models.Client);
     Renting.belongsTo(models.Room);
     Renting.hasMany(models.OrderItem);
 
+    Renting.hasMany(models.Event, {
+    foreignKey: 'eventableId',
+    constraints: false,
+    scope: {
+      eventable: 'renting',
+      },
+    });
     Renting.addScope('room-apartment', {
       include: [{
         model: models.Room,
         attributes: ['reference'],
         include: [{
           model: models.Apartment,
-          attributes: ['reference', 'addressCity'],
+          attributes: ['reference', 'addressCity', 'addressStreet'],
         }],
+      }],
+    });
+    Renting.addScope('event', {
+      include: [{
+        model: models.Event,
+        where: {
+          type: 'checkin',
+        },
+        required: false,
       }],
     });
   };
@@ -126,6 +136,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Renting.prototype.createPackOrder = function({comfortLevel, discount}, number) {
+
     const {Order, OrderItem} = models;
     const {addressCity} = this.Room.Apartment;
 
@@ -189,6 +200,38 @@ module.exports = (sequelize, DataTypes) => {
       });
   });
 
+    Renting.prototype.addCheckoutDate = function({plannedDate}) {
+    const {Event} = models;
+    const {addressStreet}  = this.Room.Apartment;
+
+    return Event
+      .create({
+        startDate: plannedDate,
+        //a checkout average a time of 45 minutes
+        endDate: D.addMinutes(plannedDate, 45),
+        description: this.ClientId + ' ' + addressStreet,
+        type: 'checkout',
+        eventable: 'renting',
+        eventableId: this.id,
+      })
+  };
+
+  Renting.prototype.addCheckinDate = function({plannedDate}) {
+    const {Event} = models;
+    const {addressStreet}  = this.Room.Apartment;
+
+    return Event
+      .create({
+        startDate: plannedDate,
+        //a checkin average a time of 45 minutes
+        endDate: D.addMinutes(plannedDate, 45),
+        description: this.ClientId + ' ' + addressStreet,
+        type: 'checkin',
+        eventable: 'renting',
+        eventableId: this.id,
+      })
+  };
+
   Renting.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
@@ -230,10 +273,11 @@ module.exports = (sequelize, DataTypes) => {
             throw new Error('Can\'t create multiple housing-pack orders');
           }
 
-          return Renting.scope('room-apartment').findById(ids[0]);
+          return Renting.scope('room-apartment', 'event').findById(ids[0]);
         })
         .then((renting) => {
-          if ( renting.checkinDate == null ) {
+          console.log(renting);
+          if ( !renting.Events.length ) {
             throw new Error('Checkin date is required to create the housing-pack order');
           }
 
@@ -244,6 +288,58 @@ module.exports = (sequelize, DataTypes) => {
         })
         .catch(Utils.logAndSend(res));
 
+      return null;
+    });
+
+    app.post('/forest/actions/add-checkout-date', LEA, (req, res) => {
+      const {values, ids} = req.body.data.attributes;
+
+      if ( !values.plannedDate ) {
+        return res.status(400).send({error:'Please select a planned date'});
+      }
+      if ( ids.length > 1 ) {
+        return res.status(400).send({error:'Can\'t create multiple checkout events'});
+      }
+
+      Renting
+        .scope('room-apartment').findById(ids[0])
+        .then((renting) => {
+//          console.log(renting);
+          return renting.addCheckoutDate(values);
+        })
+        .then(() => {
+          return res.status(200).send({success: 'Checkout event created'});
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(400).send({error: err.message});
+        });
+      return null;
+    });
+
+    app.post('/forest/actions/add-checkin-date', LEA, (req, res) => {
+      const {values, ids} = req.body.data.attributes;
+
+      if ( !values.plannedDate ) {
+        return res.status(400).send({error:'Please select a planned date'});
+      }
+      if ( ids.length > 1 ) {
+        return res.status(400).send({error:'Can\'t create multiple checkin events'});
+      }
+
+      Renting
+        .scope('room-apartment').findById(ids[0])
+        .then((renting) => {
+//          console.log(renting);
+          return renting.addCheckinDate(values);
+        })
+        .then(() => {
+          return res.status(200).send({success: 'Checkin event created'});
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(400).send({error: err.message});
+        });
       return null;
     });
   };
