@@ -137,10 +137,11 @@ module.exports = (sequelize, DataTypes) => {
 
     const {Order, OrderItem} = models;
     const {addressCity} = this.Room.Apartment;
+    const {startDate} = this.Events[0];
 
     return Promise.all([
         Utils.getPackPrice(addressCity, comfortLevel),
-        Utils.getCheckinPrice(this.checkinDate, comfortLevel),
+        Utils.getCheckinPrice(startDate, comfortLevel),
       ])
       .then(([packPrice, checkinPrice]) => {
         const items = [{
@@ -211,7 +212,7 @@ module.exports = (sequelize, DataTypes) => {
         type: 'checkout',
         eventable: 'renting',
         eventableId: this.id,
-      })
+      });
   };
 
   Renting.prototype.addCheckinDate = function({plannedDate}) {
@@ -227,7 +228,7 @@ module.exports = (sequelize, DataTypes) => {
         type: 'checkin',
         eventable: 'renting',
         eventableId: this.id,
-      })
+      });
   };
 
   Renting.beforeLianaInit = (app) => {

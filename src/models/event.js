@@ -71,18 +71,18 @@ module.exports = (sequelize, DataTypes) => {
 //    });
 //  };
 //
-//  Event.afterCreate = (event) => {
-//      console.log(event);
-//    event.getRenting()
-//    .then((result) => {
-//      console.log(result);
-//      return true;
-//    })
-//    .catch((err) => {
-//      console.log(err);
-//    });
-//
-//  };
+  Event.afterCreate = (event) => {
+      console.log(event);
+    event.getRenting()
+    .then((result) => {
+      console.log(result);
+      return true;
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+
+  };
 ////    calendar.events.insert({
 //      auth: jwtClient,
 //      calendarId: config.GOOGLE_CALENDAR_ID,
