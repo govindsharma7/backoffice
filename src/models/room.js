@@ -1,6 +1,7 @@
 const Promise          = require('bluebird');
+const D                = require('date-fns');
 const Utils            = require('../utils');
-const {TRASH_SCOPES} = require('../const');
+const {TRASH_SCOPES}   = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const Room = sequelize.define('Room', {
@@ -20,6 +21,18 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: 'active',
     },
+    latestBookingDate: {
+      type:                     DataTypes.VIRTUAL,
+      get() {
+        return D.parse(this.dataValues.latestBookingDate);
+      },
+    },
+    latestCheckoutDate: {
+      type:                     DataTypes.VIRTUAL,
+      get() {
+        return D.parse(this.dataValues.latestCheckoutDate);
+      },
+    },
   }, {
     paranoid: true,
     scopes: TRASH_SCOPES,
@@ -30,15 +43,18 @@ module.exports = (sequelize, DataTypes) => {
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
 
-    // Room.addScope('availability', {
-    //   include: [{
-    //     model: models.Renting,
-    //   }],
-    //   group: ['Room.id'],
-    //   order: [
-    //     []
-    //   ]
-    // });
+    Room.addScope('latestRenting', {
+      attributes: { include: [
+        [sequelize.col('Rentings.id'), 'latestRentingId'],
+        [sequelize.col('Rentings.checkoutDate'), 'latestCheckoutDate'],
+        [sequelize.fn('max', sequelize.col('Rentings.bookingDate')), 'latestBookingDate'],
+      ]},
+      include: [{
+        model: models.Renting,
+        attributes: [],
+      }],
+      group: ['Room.id'],
+    });
   };
 
   // calculate periodPrice and serviceFees for the room
@@ -58,11 +74,6 @@ module.exports = (sequelize, DataTypes) => {
       .then(([periodPrice, serviceFees]) => {
         return { periodPrice, serviceFees };
       });
-  };
-
-  // For now, this method is mainly used to test 'available' scope
-  Room.findAllAvailability = function(options) {
-    return Room.scope('availability').findAll(options);
   };
 
   return Room;
