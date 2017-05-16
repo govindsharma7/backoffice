@@ -38,8 +38,6 @@ module.exports = (sequelize, DataTypes) => {
     scopes: TRASH_SCOPES,
   });
 
-
-
   Renting.associate = () => {
     Renting.belongsTo(models.Client);
     Renting.belongsTo(models.Room);
@@ -200,7 +198,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   });
 
-    Renting.prototype.addCheckoutDate = function({plannedDate}) {
+  Renting.prototype.addCheckoutDate = function({plannedDate}) {
     const {Event} = models;
     const {addressStreet}  = this.Room.Apartment;
 
