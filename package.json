@@ -12,6 +12,7 @@
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
     "date-fns": "^1.28.3",
+    "date-holidays": "^0.1.10",
     "deasync": "^0.1.9",
     "express": "^4.15.2",
     "express-cors": "0.0.3",

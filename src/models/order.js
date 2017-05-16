@@ -51,6 +51,17 @@ module.exports = (sequelize, DataTypes) => {
     Order.belongsTo(models.Client);
     Order.hasMany(models.Payment);
     Order.hasMany(models.Credit);
+
+    Order.addScope('totalPaid', {
+      attributes: { include: [
+        [sequelize.fn('sum', sequelize.col('Payments.amount')), 'totalPaid'],
+      ]},
+      include: [{
+        model: models.Payment,
+        attributes: [],
+      }],
+      group: ['Order.id'],
+    });
   };
 
   Order.INVOICE_STATUS_DRAFT = 1;
@@ -70,15 +81,12 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Order.prototype.getTotalPaid = function(payments) {
-    return (
-      payments && Promise.resolve(payments) ||
-      this.getPayments()
-    ).then((payments) => {
-      return payments.reduce((sum, payment) => {
-        return sum + payment.amount;
-      }, 0);
-    });
+  Order.prototype.getTotalPaid = function() {
+    return Order.scope('totalPaid')
+      .findById(this.id)
+      .then((order) => {
+        return order.get('totalPaid');
+      });
   };
 
   Order.prototype.getTotalRefund = function() {

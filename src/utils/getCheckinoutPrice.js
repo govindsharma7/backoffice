@@ -1,6 +1,6 @@
 const Promise                 = require('bluebird');
 const D                       = require('date-fns');
-const Holydays                = require('date-holydays');
+const Holidays                = require('date-holidays');
 const {
   BASIC_PACK,
   PRIVILEGE_PACK,
@@ -17,7 +17,7 @@ function isWorkingHours(date) {
   );
 }
 
-const h = new Holydays('FR');
+const h = new Holidays('FR');
 
 function isSpecialDate(date) {
   return D.isWeekend(date) || !isWorkingHours(date) || h.isHolyday(date);

@@ -29,6 +29,16 @@ module.exports = (sequelize, DataTypes) => {
   Room.associate = () => {
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
+
+    // Room.addScope('availability', {
+    //   include: [{
+    //     model: models.Renting,
+    //   }],
+    //   group: ['Room.id'],
+    //   order: [
+    //     []
+    //   ]
+    // });
   };
 
   // calculate periodPrice and serviceFees for the room
@@ -48,6 +58,11 @@ module.exports = (sequelize, DataTypes) => {
       .then(([periodPrice, serviceFees]) => {
         return { periodPrice, serviceFees };
       });
+  };
+
+  // For now, this method is mainly used to test 'available' scope
+  Room.findAllAvailability = function(options) {
+    return Room.scope('availability').findAll(options);
   };
 
   return Room;
