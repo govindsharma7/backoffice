@@ -1,6 +1,5 @@
 const config   = require('./config');
 
-
 module.exports = {
   TRASH_SEGMENTS: [{
     name: 'Trashed',
