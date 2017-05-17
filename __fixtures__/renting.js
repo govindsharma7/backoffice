@@ -46,5 +46,20 @@ module.exports = fixtures((u) => {
       basePrice: 598,
       ApartmentId: u.id('apartment-1'),
     }],
+    Event: [{
+      id: u.id('event-1'),
+      startDate: '2017-05-14',
+      endDate: '2017-05-16',
+      type: 'checkin',
+      eventable: 'renting',
+      eventableId: u.id('renting-1'),
+    }, {
+      id: u.id('event-2'),
+      startDate: '2017-05-16',
+      endDate: '2017-05-16',
+      type: 'checkout',
+      eventable: 'renting',
+      eventableId: u.id('renting-2'),
+    }],
   };
 });

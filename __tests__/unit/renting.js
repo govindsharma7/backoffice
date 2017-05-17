@@ -1,6 +1,7 @@
 const D        = require('date-fns');
 const fixtures = require('../../__fixtures__/renting');
 const Utils    = require('../../src/utils');
+const {Renting} = require('../../src/models');
 
 var renting1;
 var renting2;
@@ -38,6 +39,31 @@ describe('Renting', () => {
         price: Utils.euroRound(20000 / 31 * (31 - 6)),
         serviceFees: Utils.euroRound(3000 / 31 * (31 - 6)),
       });
+    });
+  });
+
+  describe('#getCheckinDate()', () => {
+    test('it should return the checkinDate', () => {
+      return Renting
+        .scope('events')
+        .findById(renting1.id)
+        .then((renting) => {
+          return renting.getCheckinDate();
+        })
+        .then((checkinDate) => {
+          return expect(checkinDate).toEqual(D.parse('2017-05-14 Z'));
+        });
+    });
+    test('checkinDate should be null when there is no checkin event', () => {
+      return Renting
+        .scope('events')
+        .findById(renting2.id)
+        .then((renting) => {
+          return renting.getCheckinDate();
+        })
+        .then((checkinDate) => {
+          return expect(checkinDate).toBeNull();
+        });
     });
   });
 });

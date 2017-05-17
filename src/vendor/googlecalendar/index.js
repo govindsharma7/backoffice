@@ -14,7 +14,7 @@ var jwtClient = new google.auth.JWT(
 
 jwtClient.authorize(function(err) {
   if (err) {
-    console.log(err);
+    console.error(err);
   }
 });
 

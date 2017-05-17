@@ -47,26 +47,26 @@ module.exports = (sequelize, DataTypes) => {
     foreignKey: 'eventableId',
     constraints: false,
     scope: {
-      eventable: 'renting',
+      eventable: 'Renting',
       },
+    });
+    Renting.addScope('events', {
+      include: [{
+        model: models.Event,
+        required: false,
+      }],
+    });
+    Renting.addScope('client', {
+      include: [{
+        model: models.Client,
+      }],
     });
     Renting.addScope('room-apartment', {
       include: [{
         model: models.Room,
-        attributes: ['reference'],
         include: [{
           model: models.Apartment,
-          attributes: ['reference', 'addressCity', 'addressStreet'],
         }],
-      }],
-    });
-    Renting.addScope('event', {
-      include: [{
-        model: models.Event,
-        where: {
-          type: 'checkin',
-        },
-        required: false,
       }],
     });
   };
@@ -137,11 +137,10 @@ module.exports = (sequelize, DataTypes) => {
 
     const {Order, OrderItem} = models;
     const {addressCity} = this.Room.Apartment;
-    const {startDate} = this.Events[0];
 
     return Promise.all([
         Utils.getPackPrice(addressCity, comfortLevel),
-        Utils.getCheckinPrice(startDate, comfortLevel),
+        Utils.getCheckinPrice(this.getCheckinDate(), comfortLevel),
       ])
       .then(([packPrice, checkinPrice]) => {
         const items = [{
@@ -181,6 +180,79 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Renting.prototype.getOrAddCheckoutDate = function({plannedDate}) {
+    const {Event} = models;
+    const {firstName, lastName, phoneNumber} = this.Client;
+
+    return Event
+      .findOrCreate({
+        where: {
+          eventableId: this.id,
+          type: 'checkout',
+        },
+        defaults: {
+          startDate: plannedDate,
+          //a checkout average a time of 45 minutes
+          endDate: D.addMinutes(plannedDate, 45),
+          description: `${firstName} ${lastName},
+${this.Room.name},
+tel: ${phoneNumber}`,
+          type: 'checkout',
+          eventable: 'renting',
+          eventableId: this.id,
+        },
+      })
+      .then((result) => {
+        if ( !result[1] ) {
+          throw new Error('Checkout already exists');
+        }
+        return true;
+    });
+  };
+
+  Renting.prototype.getOrAddCheckinDate = function({plannedDate}) {
+    const {Event} = models;
+    const {firstName, lastName, phoneNumber} = this.Client;
+
+    return Event
+      .findOrCreate({
+        where: {
+          eventableId: this.id,
+          type: 'checkin',
+        },
+        defaults: {
+          startDate: plannedDate,
+          //a checkin average a time of 45 minutes
+          endDate: D.addMinutes(plannedDate, 45),
+          description: `${firstName} ${lastName},
+${this.Room.name},
+tel: ${phoneNumber}`,
+          type: 'checkin',
+          eventable: 'renting',
+          eventableId: this.id,
+        },
+      })
+      .then((result) => {
+        if ( !result[1] ) {
+          throw new Error('Checkin already exists');
+        }
+        return true;
+    });
+  };
+
+  Renting.prototype.getCheckinDate = function() {
+    const {Events} = this;
+    var result;
+
+    if ( !Events ) {
+      return null;
+    }
+    result = Events.filter((event) => {
+        return event.type === 'checkin';
+    });
+    return result.length ? result[0].startDate : null;
+  };
+
   Renting.hook('beforeValidate', (renting) => {
     // Only calculate the price and fees once!
     if ( renting.price != null ) {
@@ -198,38 +270,6 @@ module.exports = (sequelize, DataTypes) => {
         return renting;
       });
   });
-
-  Renting.prototype.addCheckoutDate = function({plannedDate}) {
-    const {Event} = models;
-    const {addressStreet}  = this.Room.Apartment;
-
-    return Event
-      .create({
-        startDate: plannedDate,
-        //a checkout average a time of 45 minutes
-        endDate: D.addMinutes(plannedDate, 45),
-        description: this.ClientId + ' ' + addressStreet,
-        type: 'checkout',
-        eventable: 'renting',
-        eventableId: this.id,
-      });
-  };
-
-  Renting.prototype.addCheckinDate = function({plannedDate}) {
-    const {Event} = models;
-    const {addressStreet}  = this.Room.Apartment;
-
-    return Event
-      .create({
-        startDate: plannedDate,
-        //a checkin average a time of 45 minutes
-        endDate: D.addMinutes(plannedDate, 45),
-        description: this.ClientId + ' ' + addressStreet,
-        type: 'checkin',
-        eventable: 'renting',
-        eventableId: this.id,
-      });
-  };
 
   Renting.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
@@ -272,11 +312,10 @@ module.exports = (sequelize, DataTypes) => {
             throw new Error('Can\'t create multiple housing-pack orders');
           }
 
-          return Renting.scope('room-apartment', 'event').findById(ids[0]);
+          return Renting.scope('room-apartment', 'events').findById(ids[0]);
         })
         .then((renting) => {
-          console.log(renting);
-          if ( !renting.Events.length ) {
+          if ( !renting.getCheckinDate() ) {
             throw new Error('Checkin date is required to create the housing-pack order');
           }
 
@@ -301,10 +340,9 @@ module.exports = (sequelize, DataTypes) => {
       }
 
       Renting
-        .scope('room-apartment').findById(ids[0])
+        .scope('room-apartment', 'events', 'client').findById(ids[0])
         .then((renting) => {
-//          console.log(renting);
-          return renting.addCheckoutDate(values);
+          return renting.getOrAddCheckoutDate(values);
         })
         .then(() => {
           return res.status(200).send({success: 'Checkout event created'});
@@ -313,6 +351,7 @@ module.exports = (sequelize, DataTypes) => {
           console.error(err);
           res.status(400).send({error: err.message});
         });
+
       return null;
     });
 
@@ -327,10 +366,9 @@ module.exports = (sequelize, DataTypes) => {
       }
 
       Renting
-        .scope('room-apartment').findById(ids[0])
+        .scope('room-apartment', 'events', 'client').findById(ids[0])
         .then((renting) => {
-//          console.log(renting);
-          return renting.addCheckinDate(values);
+          return renting.getOrAddCheckinDate(values);
         })
         .then(() => {
           return res.status(200).send({success: 'Checkin event created'});
@@ -339,6 +377,7 @@ module.exports = (sequelize, DataTypes) => {
           console.error(err);
           res.status(400).send({error: err.message});
         });
+
       return null;
     });
   };
