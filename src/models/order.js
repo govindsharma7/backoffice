@@ -2,6 +2,7 @@ const Promise    = require('bluebird');
 const Liana      = require('forest-express-sequelize');
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../middlewares/makePublic');
+const Utils      = require('../utils');
 const {TRASH_SCOPES} = require('../const');
 
 const Serializer = Liana.ResourceSerializer;
@@ -47,38 +48,74 @@ module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
 
   Order.associate = () => {
+    const oic = (col) => {
+      return `\`OrderItems\`.\`${col}\``;
+    };
+
     Order.hasMany(models.OrderItem);
     Order.belongsTo(models.Client);
     Order.hasMany(models.Payment);
     Order.hasMany(models.Credit);
 
+    Order.addScope('amount', {
+      attributes: [
+        [sequelize.fn('sum', sequelize.literal(
+          `${oic('unitPrice')} * ${oic('quantity')} * ( 1 + ${oic('vatRate')} )`
+        )), 'amount'],
+      ],
+      include: [{
+        model: models.OrderItem,
+        attributes: [],
+      }],
+      group: ['Order.id'],
+    });
+
     Order.addScope('totalPaid', {
-      attributes: { include: [
+      attributes: [
         [sequelize.fn('sum', sequelize.col('Payments.amount')), 'totalPaid'],
-      ]},
+      ],
       include: [{
         model: models.Payment,
         attributes: [],
       }],
       group: ['Order.id'],
     });
+
+    Order.addScope('totalRefund', {
+      attributes: [
+        [sequelize.fn('sum', sequelize.col('Payments->Refunds.amount')), 'totalRefund'],
+      ],
+      include: [{
+        model: models.Payment,
+        attributes: [],
+        include: [{
+          model: models.Credit,
+          as: 'Refunds',
+          attributes: [],
+        }],
+      }],
+      group: ['Order.id'],
+    });
+
+    Order.addScope('refunds', {
+      include: [{
+        model: models.Payment,
+        include: [{
+          model: models.Credit,
+          as: 'Refunds',
+        }],
+      }],
+    });
   };
 
   Order.INVOICE_STATUS_DRAFT = 1;
 
-  Order.prototype.getAmount = function(orderItems) {
-    return (
-      orderItems && Promise.resolve(orderItems) ||
-      this.getOrderItems()
-    ).then((orderItems) => {
-      /* eslint-disable promise/no-nesting */
-      return Promise.reduce(orderItems, (sum, orderItem) => {
-        return orderItem.getAmount().then((amount) => {
-          return sum + amount;
-        });
-      }, 0);
-      /* eslint-enable promise/no-nesting */
-    });
+  Order.prototype.getAmount = function() {
+    return Order.scope('amount')
+      .findById(this.id)
+      .then((order) => {
+        return order.get('amount');
+      });
   };
 
   Order.prototype.getTotalPaid = function() {
@@ -90,12 +127,10 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.prototype.getTotalRefund = function() {
-    return models.Credit
-      .findRefundsFromOrder(this.id)
-      .then((refunds) => {
-        return refunds.reduce((sum, refund) => {
-          return sum + refund.amount;
-        }, 0);
+    return Order.scope('totalRefund')
+      .findById(this.id)
+      .then((order) => {
+        return order.get('totalRefund');
       });
   };
 
@@ -232,7 +267,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Order.generateInvoices = (orders) => {
+  Order.ninjaCreateInvoices = (orders) => {
     return Promise.all(
       orders
         .filter((order) => {
@@ -256,7 +291,6 @@ module.exports = (sequelize, DataTypes) => {
 
     return true;
   };
-
   Order.hook('afterUpdate', Order.afterUpdate);
 
   Order.beforeLianaInit = (app) => {
@@ -269,19 +303,17 @@ module.exports = (sequelize, DataTypes) => {
       Order
         .findAll({ where: { id: { $in: req.body.data.attributes.ids } } })
         .then((orders) => {
-          return Order.generateInvoices(orders);
+          return Order.ninjaCreateInvoices(orders);
         })
         .then(() => {
           return res.send({success: 'Invoice successfully generated'});
         })
-        .catch((err) => {
-          console.error(err);
-          return res.status(400).send({error: err.message});
-        });
+        .catch(Utils.logAndSend(res));
     });
 
     app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) => {
-      models.Credit.findRefundsFromOrder(req.params.orderId)
+      models.Credit.scope('order')
+        .findAll({ where: { 'Payment.OrderId': req.params.orderId } })
         .then((credits) => {
           return new Serializer(Liana, models.Credit, credits, {}, {
             count: credits.length,
@@ -290,10 +322,7 @@ module.exports = (sequelize, DataTypes) => {
         .then((result) => {
           return res.send(result);
         })
-        .catch((err) => {
-          console.error(err);
-          return res.status(400).send({error: err.message});
-        });
+        .catch(Utils.logAndSend(res));
     });
   };
 

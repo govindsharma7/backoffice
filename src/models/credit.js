@@ -39,22 +39,5 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Credit.findRefundsFromOrder = (orderId) => {
-    return Credit
-      .findAll({
-        // TODO: why is Payment.orderId wrapped in $?
-        where: {'$Payment.OrderId$' : orderId},
-        include: [{
-          model: models.Payment,
-          attributes: ['id', 'OrderId'],
-          // TODO: is this include really necessary?
-          include: [{
-            model: models.Order,
-            attributes: ['id'],
-          }],
-        }],
-      });
-  };
-
   return Credit;
 };

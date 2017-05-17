@@ -35,7 +35,9 @@ module.exports = (sequelize, DataTypes) => {
 
   Payment.associate = () => {
     Payment.belongsTo(models.Order);
-    Payment.hasMany(models.Credit);
+    Payment.hasMany(models.Credit, {
+      as: 'Refunds',
+    });
   };
 
   Payment.doRefund = (id, values) => {

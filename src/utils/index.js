@@ -5,6 +5,7 @@ const {
 const getPackPrice    = require('./getPackPrice');
 const getPeriodCoef   = require('./getPeriodCoef');
 const getServiceFees  = require('./getServiceFees');
+const logAndSend      = require('./logAndSend');
 
 module.exports = {
   getCheckinPrice,
@@ -12,4 +13,5 @@ module.exports = {
   getPackPrice,
   getPeriodCoef,
   getServiceFees,
+  logAndSend,
 };

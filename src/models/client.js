@@ -5,6 +5,7 @@ const Payline    = require('payline');
 const uuid       = require('uuid/v4');
 const Ninja      = require('../vendor/invoiceninja');
 const payline    = require('../vendor/payline');
+const Utils      = require('../utils');
 const {
   TRASH_SCOPES,
   INVOICENINJA_URL,
@@ -238,28 +239,28 @@ module.exports = (sequelize, DataTypes) => {
       const idCredit = uuid();
       const {values, ids} = req.body.data.attributes;
 
-      if (
-        !values.cardNumber || !values.cardType ||
-        !values.expirationMonth || !values.expirationYear ||
-        !values.cvv || !values.cardHolder || !values.amount
-      ) {
-        return res.status(400).send({error:'All fields are required'});
-      }
+      Promise.resolve()
+        .then(() => {
+          if (
+            !values.cardNumber || !values.cardType ||
+            !values.expirationMonth || !values.expirationYear ||
+            !values.cvv || !values.cardHolder || !values.amount
+          ) {
+            throw new Error('All fields are required');
+          }
 
-      if (ids.length > 1) {
-        return res.status(400).send({error:'Can\'t credit multiple clients'});
-      }
+          if (ids.length > 1) {
+            throw new Error('Can\'t credit multiple clients');
+          }
 
-      values.amount *= 100;
+          values.amount *= 100;
 
-      return Client.doCredit(ids[0], values, idCredit)
+          return Client.doCredit(ids[0], values, idCredit);
+        })
         .then(() =>{
           return res.status(200).send({success: 'Credit ok'});
         })
-        .catch((err) => {
-          console.error(err);
-          return res.status(400).send({error: err.longMessage});
-        });
+        .catch(Utils.logAndSend(res));
     });
 
     app.get('/forest/Client/:recordId/relationships/Invoices', LEA, (req, res) => {
@@ -286,10 +287,7 @@ module.exports = (sequelize, DataTypes) => {
             meta: {count: data.length},
           });
         })
-        .catch((err) => {
-          console.error(err);
-          return res.status(400).send({error: err.message});
-        });
+        .catch(Utils.logAndSend(res));
     });
   };
 

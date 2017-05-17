@@ -1,4 +1,3 @@
-const D        = require('date-fns');
 const fixtures = require('./index');
 
 module.exports = fixtures((u) => {
@@ -47,32 +46,32 @@ module.exports = fixtures((u) => {
     Renting: [
       Object.assign({
         id: u.id('renting-1'),
-        bookingDate: D.parse('2015-01-20 Z'),
-        checkoutDate: D.parse('2016-01-20 Z'),
+        bookingDate: '2015-01-20',
+        checkoutDate: '2016-01-20',
         RoomId: u.id('room-1'),
       }, renting),
       Object.assign({
         id: u.id('renting-2'),
-        bookingDate: D.parse('2016-01-20 Z'),
-        checkoutDate: D.parse('2015-01-20 Z'),
+        bookingDate: '2016-01-20',
+        checkoutDate: '2015-01-20',
         RoomId: u.id('room-1'),
       }, renting),
       Object.assign({
         id: u.id('renting-3'),
-        bookingDate: D.parse('2015-01-20 Z'),
-        checkoutDate: D.parse('2017-01-20 Z'),
+        bookingDate: '2015-01-20',
+        checkoutDate: '2017-01-20',
         RoomId: u.id('room-2'),
       }, renting),
       Object.assign({
         id: u.id('renting-4'),
-        bookingDate: D.parse('2017-01-20 Z'),
-        checkoutDate: D.parse('2016-02-20 Z'),
+        bookingDate: '2017-01-20',
+        checkoutDate: '2016-02-20',
         RoomId: u.id('room-2'),
       }, renting),
       Object.assign({
         id: u.id('renting-5'),
-        bookingDate: D.parse('2016-01-20 Z'),
-        checkoutDate: D.parse('2015-01-20 Z'),
+        bookingDate: '2016-01-20',
+        checkoutDate: '2015-01-20',
         RoomId: u.id('room-2'),
       }, renting),
     ],

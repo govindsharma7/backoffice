@@ -19,6 +19,7 @@ const nodemonInspect =
   `nodemon --watch src --watch forest --watch __tests__ --inspect ${entryPoint}`;
 
 const dbSync = 'node scripts/dbSync.js';
+const dbSeed = 'node scripts/dbSeed.js';
 const dbReset = 'node scripts/dbReset.js';
 const dbFixture = 'node scripts/dbFixture.js';
 
@@ -46,6 +47,7 @@ module.exports = {
   'dev:sql:migration:create':
     `${env.dev} ${sequelizeMigrationCreate} --env devlopment`,
   'dev:db:sync': `${env.dev} ${dbSync}`,
+  'dev:db:seed': `${env.dev} ${dbSeed}`,
   'dev:db:fixture': `${env.dev} ${dbFixture}`,
 
   'stag:start': `${env.staging} ${nodemonInspect}`,

@@ -40,6 +40,10 @@ module.exports = fixtures((u) => {
     }],
     Credit: [{
       id: u.id('credit-1'),
+      amount: 100,
+      PaymentId: u.id('payment-1'),
+    }, {
+      id: u.id('credit-2'),
       status: 'draft',
       amount: 100,
       deletedAt: '2015-02-10',
