@@ -60,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
     Event.addScope('roomApartment', {
       include:[{
         model: models.Renting,
-        as: 'Renting',
+        as: 'renting',
         include: [{
           model: models.Room,
           include: [{

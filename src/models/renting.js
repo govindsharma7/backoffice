@@ -198,7 +198,7 @@ module.exports = (sequelize, DataTypes) => {
 ${this.Room.name},
 tel: ${phoneNumber}`,
           type: 'checkout',
-          eventable: 'renting',
+          eventable: 'Renting',
           eventableId: this.id,
         },
       })
@@ -228,7 +228,7 @@ tel: ${phoneNumber}`,
 ${this.Room.name},
 tel: ${phoneNumber}`,
           type: 'checkin',
-          eventable: 'renting',
+          eventable: 'Renting',
           eventableId: this.id,
         },
       })
@@ -249,6 +249,19 @@ tel: ${phoneNumber}`,
     }
     result = Events.filter((event) => {
         return event.type === 'checkin';
+    });
+    return result.length ? result[0].startDate : null;
+  };
+
+  Renting.prototype.getCheckoutDate = function() {
+    const {Events} = this;
+    var result;
+
+    if ( !Events ) {
+      return null;
+    }
+    result = Events.filter((event) => {
+        return event.type === 'checkout';
     });
     return result.length ? result[0].startDate : null;
   };
@@ -380,7 +393,12 @@ tel: ${phoneNumber}`,
 
       return null;
     });
+    app.post('/forest/actions/create-checkout-order', LEA, (req,res) => {
+      const {ids} = req.body.data.attributes;
+
+    });
   };
+
 
   return Renting;
 };
