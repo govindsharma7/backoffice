@@ -468,11 +468,14 @@ tel: ${phoneNumber}`,
         if ( ids.length > 1 ) {
           throw new Error('Can\'t create multiple checkout order');
         }
-        return Renting.scope('comfort-level', 'events', 'room-apartment').findById(ids[0]);
+        return Renting
+                .scope('comfort-level', 'events', 'room-apartment')
+                .findById(ids[0]);
       })
       .then((renting) => {
         if (!renting.getCheckoutDate() || !renting.getComfortLevel()) {
-          throw new Error('Checkout and housing pack are required to create the checkout order');
+          throw new Error(`Checkout and housing pack are
+ required to create checkout order`);
         }
         return renting.createCheckoutOrder();
       })

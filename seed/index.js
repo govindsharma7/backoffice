@@ -24,6 +24,6 @@ module.exports = {
     name: 'Special Checkin/Checkout',
   }, {
     id: 'late-notice',
-    name: 'Late Notice'
+    name: 'Late Notice',
   }],
 };
