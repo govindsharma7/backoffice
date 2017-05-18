@@ -20,7 +20,7 @@ function isWorkingHours(date) {
 const h = new Holidays('FR');
 
 function isSpecialDate(date) {
-  return D.isWeekend(date) || !isWorkingHours(date) || h.isHolyday(date);
+  return D.isWeekend(date) || !isWorkingHours(date) || h.isHoliday(date);
 }
 
 module.exports.getCheckinPrice = function(date, level) {

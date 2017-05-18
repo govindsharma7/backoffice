@@ -49,12 +49,22 @@ module.exports = {
     },
   },
 
-  SPECIAL_CHECKIN_PRICE: 7500,
+  SPECIAL_CHECKIN_PRICE: 7900,
 
   SERVICE_FEES: {
     1: 5000, // 1 room
     2: 4000, // 2 rooms
     default: 3000, // 3 or more rooms
+  },
+
+  CHECKIN_DURATION: 30,
+  CHECKOUT_DURATION: 60,
+
+  LATE_NOTICE_CHECKOUT: {
+    veryLate: 67900,
+    late: 47900,
+    bitLate: 27900,
+    good: 0,
   },
 
   RENT_COEFS: [

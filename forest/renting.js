@@ -52,6 +52,8 @@ Liana.collection('Renting', {
       field: 'plannedDate',
       type: 'Date',
     }],
+  }, {
+    name: 'Create Checkout Order',
   }],
   segments : TRASH_SEGMENTS,
 });

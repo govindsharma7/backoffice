@@ -1,6 +1,7 @@
 const calendar        = require('googleapis').calendar('v3');
 const Promise         = require('bluebird');
 
+const Utils           = require('../utils');
 const {TRASH_SCOPES}  = require('../const');
 const config          = require('../config');
 const jwtClient       = require('../vendor/googlecalendar');
@@ -60,7 +61,7 @@ module.exports = (sequelize, DataTypes) => {
     Event.addScope('roomApartment', {
       include:[{
         model: models.Renting,
-        as: 'renting',
+        as: 'Renting',
         include: [{
           model: models.Room,
           include: [{
@@ -96,7 +97,7 @@ ${Apartment.addressCountry}`,
           dateTime: this.startDate,
         },
         end: {
-          dateTime: this.endDate,
+          dateTime: Utils.getCheckinoutDuration(this.startDate, this.type),
         },
         description: this.description,
       },

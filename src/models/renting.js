@@ -69,6 +69,12 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
+    Renting.addScope('comfort-level', {
+      include: [{
+        model: models.OrderItem,
+        required: false,
+      }],
+    });
   };
 
   // Prorate the price and service fees of a renting for a given month
@@ -147,7 +153,7 @@ module.exports = (sequelize, DataTypes) => {
           label: `Housing Pack ${addressCity} ${comfortLevel}`,
           unitPrice: packPrice,
           RentingId: this.id,
-          ProductId: 'pack',
+          ProductId: `${comfortLevel}-pack`,
         }];
 
         if ( checkinPrice !== 0 ) {
@@ -163,7 +169,7 @@ module.exports = (sequelize, DataTypes) => {
             label: 'Discount',
             unitPrice: -1 * discount,
             RentingId: this.id,
-            ProductId: 'pack',
+            ProductId: `${comfortLevel}-pack`,
           });
         }
 
@@ -180,6 +186,48 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Renting.prototype.createCheckoutOrder = function(number) {
+    const {Order, OrderItem} = models;
+    const {name} = this.Room;
+
+    return Promise.all([
+      Utils.getCheckoutPrice(
+        this.getCheckoutDate(),
+        this.getComfortLevel().split('-')[0]),
+      Utils.getCheckoutLateNotice(
+        this.getCheckoutDate())])
+      .then(([checkoutPrice, lateNotice]) => {
+        const items = [];
+
+        if ( checkoutPrice !== 0 ) {
+          items.push({
+            label: 'Special checkout',
+            unitPrice: checkoutPrice,
+            ProductId: 'special-checkinout',
+          });
+        }
+        if ( lateNotice !== 0 ) {
+          items.push({
+            label: `Late notice ${name}`,
+            unitPrice: lateNotice,
+            ProductId: 'late-notice',
+          });
+        }
+        if (items.length) {
+          return Order.create({
+            type: 'debit',
+            label: 'Checkout',
+            ClientId: this.ClientId,
+            OrderItems: items,
+            number,
+          }, {
+            include: [OrderItem],
+          });
+        }
+        throw new Error('No need to create an Order!');
+      });
+  };
+
   Renting.prototype.getOrAddCheckoutDate = function({plannedDate}) {
     const {Event} = models;
     const {firstName, lastName, phoneNumber} = this.Client;
@@ -192,8 +240,8 @@ module.exports = (sequelize, DataTypes) => {
         },
         defaults: {
           startDate: plannedDate,
-          //a checkout average a time of 45 minutes
-          endDate: D.addMinutes(plannedDate, 45),
+          //a checkout average a time of  1 hour
+          endDate: D.addHours(plannedDate, 1),
           description: `${firstName} ${lastName},
 ${this.Room.name},
 tel: ${phoneNumber}`,
@@ -222,8 +270,8 @@ tel: ${phoneNumber}`,
         },
         defaults: {
           startDate: plannedDate,
-          //a checkin average a time of 45 minutes
-          endDate: D.addMinutes(plannedDate, 45),
+          //a checkin average a time of 30 minutes
+          endDate: D.addMinutes(plannedDate, 30),
           description: `${firstName} ${lastName},
 ${this.Room.name},
 tel: ${phoneNumber}`,
@@ -264,6 +312,21 @@ tel: ${phoneNumber}`,
         return event.type === 'checkout';
     });
     return result.length ? result[0].startDate : null;
+  };
+
+  Renting.prototype.getComfortLevel = function() {
+    const {OrderItems} = this;
+    var result;
+
+    if ( !OrderItems ) {
+      return null;
+    }
+    result = OrderItems.filter((orderItem) => {
+      return orderItem.ProductId === 'basic-pack' ||
+        orderItem.ProductId === 'comfort-pack' ||
+        orderItem.ProductId === 'privilege-pack';
+    });
+    return result.length ? result[0].ProductId : null;
   };
 
   Renting.hook('beforeValidate', (renting) => {
@@ -345,25 +408,27 @@ tel: ${phoneNumber}`,
     app.post('/forest/actions/add-checkout-date', LEA, (req, res) => {
       const {values, ids} = req.body.data.attributes;
 
-      if ( !values.plannedDate ) {
-        return res.status(400).send({error:'Please select a planned date'});
-      }
-      if ( ids.length > 1 ) {
-        return res.status(400).send({error:'Can\'t create multiple checkout events'});
-      }
+      Promise.resolve()
+      .then(() =>{
+        if ( !values.plannedDate ) {
+          throw new Error('Please select a planned date');
+        }
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple checkout events');
+        }
 
-      Renting
-        .scope('room-apartment', 'events', 'client').findById(ids[0])
-        .then((renting) => {
-          return renting.getOrAddCheckoutDate(values);
-        })
-        .then(() => {
-          return res.status(200).send({success: 'Checkout event created'});
-        })
-        .catch((err) => {
-          console.error(err);
-          res.status(400).send({error: err.message});
-        });
+        return Renting.scope('room-apartment', 'events', 'client').findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.getOrAddCheckoutDate(values);
+      })
+      .then(() => {
+        return res.status(200).send({success: 'Checkout event created'});
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(400).send({error: err.message});
+      });
 
       return null;
     });
@@ -371,31 +436,54 @@ tel: ${phoneNumber}`,
     app.post('/forest/actions/add-checkin-date', LEA, (req, res) => {
       const {values, ids} = req.body.data.attributes;
 
-      if ( !values.plannedDate ) {
-        return res.status(400).send({error:'Please select a planned date'});
-      }
-      if ( ids.length > 1 ) {
-        return res.status(400).send({error:'Can\'t create multiple checkin events'});
-      }
-
-      Renting
-        .scope('room-apartment', 'events', 'client').findById(ids[0])
-        .then((renting) => {
-          return renting.getOrAddCheckinDate(values);
-        })
-        .then(() => {
-          return res.status(200).send({success: 'Checkin event created'});
-        })
-        .catch((err) => {
-          console.error(err);
-          res.status(400).send({error: err.message});
-        });
+      Promise.resolve()
+      .then(() =>{
+        if ( !values.plannedDate ) {
+          throw new Error('Please select a planned date');
+        }
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple checkin events');
+        }
+        return Renting.scope('room-apartment', 'events', 'client').findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.getOrAddCheckinDate(values);
+      })
+      .then(() => {
+        return res.status(200).send({success: 'Checkin event created'});
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(400).send({error: err.message});
+      });
 
       return null;
     });
-    app.post('/forest/actions/create-checkout-order', LEA, (req,res) => {
+
+    app.post('/forest/actions/create-checkout-order', LEA, (req, res) => {
       const {ids} = req.body.data.attributes;
 
+      Promise.resolve()
+      .then(() =>{
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple checkout order');
+        }
+        return Renting.scope('comfort-level', 'events', 'room-apartment').findById(ids[0]);
+      })
+      .then((renting) => {
+        if (!renting.getCheckoutDate() || !renting.getComfortLevel()) {
+          throw new Error('Checkout and housing pack are required to create the checkout order');
+        }
+        return renting.createCheckoutOrder();
+      })
+      .then(() => {
+        return res.status(200).send({success: 'Checkout order created'});
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(400).send({error: err.message});
+      });
+      return null;
     });
   };
 
