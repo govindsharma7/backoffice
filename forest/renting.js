@@ -54,6 +54,12 @@ Liana.collection('Renting', {
     }],
   }, {
     name: 'Create Checkout Order',
+  }, {
+    name: 'Room Switch Order',
+    fields: [{
+      field: 'discount',
+      type: 'Number',
+    }],
   }],
   segments : TRASH_SEGMENTS,
 });

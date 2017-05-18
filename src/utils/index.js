@@ -10,6 +10,7 @@ const logAndSend      = require('./logAndSend');
 const getPeriodCoef         = require('./getPeriodCoef');
 const getCheckinoutDuration = require('./getCheckinoutDuration');
 const getCheckoutLateNotice = require('./getCheckoutLateNotice');
+const getRoomSwitchPrice    = require('./getRoomSwitchPrice');
 
 module.exports = {
   euroRound,
@@ -22,4 +23,5 @@ module.exports = {
   getPeriodCoef,
   getCheckinoutDuration,
   getCheckoutLateNotice,
+  getRoomSwitchPrice,
 };

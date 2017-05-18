@@ -1,3 +1,4 @@
+const Promise            = require('bluebird');
 const D                  = require('date-fns');
 const {CHECKIN_DURATION,
       CHECKOUT_DURATION} = require('../const');
@@ -16,5 +17,5 @@ module.exports = function(date, type) {
     default:
       endDate = date;
   }
-  return endDate;
+  return Promise.resolve(endDate);
 };

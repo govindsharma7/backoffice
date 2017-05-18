@@ -67,6 +67,12 @@ module.exports = {
     good: 0,
   },
 
+  ROOM_SWITCH_PRICES: {
+    privilege: 0,
+    comfort: 19000,
+    basic: 29000,
+  },
+
   RENT_COEFS: [
     null, // D.format returns '1' for the first day of the year, not 0.
     0.95,

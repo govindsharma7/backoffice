@@ -84,41 +84,50 @@ module.exports = (sequelize, DataTypes) => {
     const {Apartment} = this.Renting.Room;
     const {Client} = this.Renting;
 
-    return {
-      auth: jwtClient,
-      eventId : this.googleEventId,
-      calendarId: config.GOOGLE_CALENDAR_IDS[Apartment.addressCity],
-      resource: {
-        location: `${Apartment.addressStreet}
+    return Utils.getCheckinoutDuration(this.startDate, this.type)
+      .then((endDate) => {
+        return {
+          auth: jwtClient,
+          eventId : this.googleEventId,
+          calendarId: config.GOOGLE_CALENDAR_IDS[Apartment.addressCity],
+          resource: {
+            location: `${Apartment.addressStreet}
 , ${Apartment.addressZip} ${Apartment.addressCity},
 ${Apartment.addressCountry}`,
-        summary: `${this.type} ${Client.firstName} ${Client.lastName}`,
-        start: {
-          dateTime: this.startDate,
-        },
-        end: {
-          dateTime: Utils.getCheckinoutDuration(this.startDate, this.type),
-        },
-        description: this.description,
-      },
-    };
+            summary: `${this.type} ${Client.firstName} ${Client.lastName}`,
+            start: {
+              dateTime: this.startDate,
+            },
+            end: {
+              dateTime: endDate,
+            },
+            description: this.description,
+          },
+        };
+    });
   };
 
   Event.prototype.createCalendarEvent = function() {
     /* eslint-disable promise/avoid-new */
     return new Promise((resolve, reject) => {
     /* eslint-enable promise/avoid-new */
-      calendar.events.insert(
-        this.googleSerialize(),
-        (err, calendarEvent) => {
-          if ( err ) {
-            return reject(err);
-          }
-          this
-            .set('googleEventId', calendarEvent.id)
-            .save({hooks: false});
-          return resolve(calendarEvent);
-      });
+      this.googleSerialize()
+        .then((googleEvent) => {
+          return calendar.events.insert(
+            googleEvent,
+            (err, calendarEvent) => {
+              if ( err ) {
+                return reject(err);
+              }
+              this
+              .set('googleEventId', calendarEvent.id)
+              .save({hooks: false});
+              return resolve(calendarEvent);
+            });
+        })
+        .catch((err) =>{
+          console.error(err);
+        });
     });
   };
 
@@ -126,13 +135,19 @@ ${Apartment.addressCountry}`,
     /* eslint-disable promise/avoid-new */
     return new Promise((resolve, reject) => {
     /* eslint-enable promise/avoid-new */
-      calendar.events.update(
-        this.googleSerialize(),
-        (err, calendarEvent) => {
-          if ( err ) {
-            return reject(err);
-          }
-          return resolve(calendarEvent);
+      this.googleSerialize()
+        .then((googleEvent) =>{
+          return calendar.events.update(
+            googleEvent,
+            (err, calendarEvent) => {
+              if ( err ) {
+                return reject(err);
+              }
+              return resolve(calendarEvent);
+            });
+        })
+        .catch((err) =>{
+          console.error(err);
         });
     });
   };

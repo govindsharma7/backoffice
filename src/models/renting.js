@@ -61,6 +61,15 @@ module.exports = (sequelize, DataTypes) => {
         model: models.Client,
       }],
     });
+    Renting.addScope('orders', {
+      include: [{
+        model: models.Client,
+        include: [{
+          model: models.Order,
+          required: false,
+        }],
+      }],
+    });
     Renting.addScope('room-apartment', {
       include: [{
         model: models.Room,
@@ -69,7 +78,7 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
-    Renting.addScope('comfort-level', {
+    Renting.addScope('orderItems', {
       include: [{
         model: models.OrderItem,
         required: false,
@@ -103,6 +112,60 @@ module.exports = (sequelize, DataTypes) => {
       price: Utils.euroRound(( this.price / daysInMonth ) * daysStayed),
       serviceFees: Utils.euroRound(( this.serviceFees / daysInMonth ) * daysStayed),
     };
+  };
+
+  Renting.getCheckinoutDate = function({Events}, type) {
+    var result;
+
+    if ( !Events ) {
+      return null;
+    }
+    result = Events.filter((event) => {
+        return event.type === type;
+    });
+    console.log(result);
+    return result.length ? result[0].startDate : null;
+  };
+
+  Renting.prototype.getCheckinDate = function() {
+    return Renting.getCheckinoutDate(this, 'checkin');
+  };
+
+  Renting.prototype.getCheckoutDate = function() {
+    return Renting.getCheckinoutDate(this, 'checkout');
+  };
+
+  Renting.prototype.getComfortLevel = function() {
+    const {OrderItems} = this;
+    var result;
+
+    if ( !OrderItems ) {
+      return null;
+    }
+    result = OrderItems.filter((orderItem) => {
+      return orderItem.ProductId === 'basic-pack' ||
+        orderItem.ProductId === 'comfort-pack' ||
+        orderItem.ProductId === 'privilege-pack';
+    });
+
+    return result.length ? result[0].ProductId : null;
+  };
+
+  Renting.prototype.getRoomSwitchCount = function() {
+    const {Orders} = this.Client;
+    var result = 0;
+
+    if ( !Orders ) {
+      return result;
+    }
+    Orders.filter((order) => {
+      if ( order.label === 'Room Switch' ) {
+        result++;
+        return false;
+      }
+      return true;
+    });
+    return result;
   };
 
   Renting.prototype.toOrderItems = function(date = Date.now()) {
@@ -139,7 +202,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Renting.prototype.createPackOrder = function({comfortLevel, discount}, number) {
+  Renting.prototype.getOrCreatePackOrder = function({comfortLevel, discount}, number) {
 
     const {Order, OrderItem} = models;
     const {addressCity} = this.Room.Apartment;
@@ -173,10 +236,56 @@ module.exports = (sequelize, DataTypes) => {
           });
         }
 
+        return Order
+          .findOrCreate({
+            where: {
+              ClientId: this.ClientId,
+              label: 'Housing Pack',
+            },
+            defaults: {
+              type: 'debit',
+              label: 'Housing Pack',
+              dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
+              ClientId: this.ClientId,
+              OrderItems: items,
+              number,
+            },
+            include: [OrderItem],
+          });
+      })
+      .then((result) =>{
+        if ( !result[1] ) {
+          throw new Error('Housing pack order already exists');
+        }
+
+        return true;
+      });
+  };
+
+  Renting.prototype.createRoomSwitchOrder = function({discount}, number) {
+    const {Order, OrderItem} = models;
+
+    return Utils.getRoomSwitchPrice(
+      this.getRoomSwitchCount(),
+      this.getComfortLevel().split('-')[0])
+      .then((price) => {
+        const items = [{
+          label: `Room switch ${this.getComfortLevel()}`,
+          unitPrice: price,
+          ProductId: 'room-switch',
+        }];
+
+        if (discount != null && discount !== 0 ) {
+          items.push({
+            label: 'Discount',
+            unitPrice: -1 * discount,
+            ProductId: 'room-switch',
+          });
+        }
+
         return Order.create({
           type: 'debit',
-          label: 'Housing Pack',
-          dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
+          label: 'Room Switch',
           ClientId: this.ClientId,
           OrderItems: items,
           number,
@@ -186,7 +295,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Renting.prototype.createCheckoutOrder = function(number) {
+  Renting.prototype.getOrCreateCheckoutOrder = function(number) {
     const {Order, OrderItem} = models;
     const {name} = this.Room;
 
@@ -214,17 +323,31 @@ module.exports = (sequelize, DataTypes) => {
           });
         }
         if (items.length) {
-          return Order.create({
-            type: 'debit',
-            label: 'Checkout',
-            ClientId: this.ClientId,
-            OrderItems: items,
-            number,
-          }, {
-            include: [OrderItem],
-          });
+          return Order
+            .findOrCreate({
+              where: {
+                ClientId: this.ClientId,
+                label: 'Checkout',
+              },
+              default: {
+                type: 'debit',
+                label: 'Checkout',
+                ClientId: this.ClientId,
+                OrderItems: items,
+                number,
+              },
+              include: [OrderItem],
+            });
         }
+
         throw new Error('No need to create an Order!');
+      })
+      .then((result) => {
+        if ( !result[1] ) {
+          throw new Error('Checkout order already exists');
+        }
+
+        return true;
       });
   };
 
@@ -286,47 +409,6 @@ tel: ${phoneNumber}`,
         }
         return true;
     });
-  };
-
-  Renting.prototype.getCheckinDate = function() {
-    const {Events} = this;
-    var result;
-
-    if ( !Events ) {
-      return null;
-    }
-    result = Events.filter((event) => {
-        return event.type === 'checkin';
-    });
-    return result.length ? result[0].startDate : null;
-  };
-
-  Renting.prototype.getCheckoutDate = function() {
-    const {Events} = this;
-    var result;
-
-    if ( !Events ) {
-      return null;
-    }
-    result = Events.filter((event) => {
-        return event.type === 'checkout';
-    });
-    return result.length ? result[0].startDate : null;
-  };
-
-  Renting.prototype.getComfortLevel = function() {
-    const {OrderItems} = this;
-    var result;
-
-    if ( !OrderItems ) {
-      return null;
-    }
-    result = OrderItems.filter((orderItem) => {
-      return orderItem.ProductId === 'basic-pack' ||
-        orderItem.ProductId === 'comfort-pack' ||
-        orderItem.ProductId === 'privilege-pack';
-    });
-    return result.length ? result[0].ProductId : null;
   };
 
   Renting.hook('beforeValidate', (renting) => {
@@ -395,7 +477,7 @@ tel: ${phoneNumber}`,
             throw new Error('Checkin date is required to create the housing-pack order');
           }
 
-          return renting.createPackOrder(values);
+          return renting.getOrCreatePackOrder(values);
         })
         .then(() => {
           return res.status(200).send({success: 'Housing Pack created'});
@@ -466,18 +548,18 @@ tel: ${phoneNumber}`,
       Promise.resolve()
       .then(() =>{
         if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple checkout order');
+          throw new Error('Can\'t create multiple checkout orders');
         }
         return Renting
-                .scope('comfort-level', 'events', 'room-apartment')
+                .scope('orderItems', 'events', 'room-apartment')
                 .findById(ids[0]);
       })
       .then((renting) => {
-        if (!renting.getCheckoutDate() || !renting.getComfortLevel()) {
+        if ( !renting.getCheckoutDate() || !renting.getComfortLevel() ) {
           throw new Error(`Checkout and housing pack are
  required to create checkout order`);
         }
-        return renting.createCheckoutOrder();
+        return renting.getOrCreateCheckoutOrder();
       })
       .then(() => {
         return res.status(200).send({success: 'Checkout order created'});
@@ -486,10 +568,41 @@ tel: ${phoneNumber}`,
         console.error(err);
         res.status(400).send({error: err.message});
       });
+
+      return null;
+    });
+
+    app.post('/forest/actions/room-switch-order', LEA, (req, res) =>{
+      const {ids, values} = req.body.data.attributes;
+
+      if ( values.discount != null ) {
+        values.discount *= 100;
+      }
+
+      Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple room switch orders');
+        }
+        return Renting.scope('orders', 'orderItems').findById(ids[0]);
+      })
+      .then((renting) => {
+        if ( !renting.getComfortLevel() ) {
+          throw new Error('Housing pack is required to create room switch order');
+        }
+        return renting.createRoomSwitchOrder(values);
+      })
+      .then(() => {
+        return res.status(200).send({success: 'Room switch order created'});
+      })
+      .catch((err) =>{
+        console.error(err);
+        res.status(400).send({error: err.message});
+      });
+
       return null;
     });
   };
-
 
   return Renting;
 };

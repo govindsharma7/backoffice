@@ -25,5 +25,8 @@ module.exports = {
   }, {
     id: 'late-notice',
     name: 'Late Notice',
+  }, {
+    id: 'room-switch',
+    name: 'Room Switch',
   }],
 };
