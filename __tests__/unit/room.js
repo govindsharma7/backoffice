@@ -53,13 +53,13 @@ describe('Room', () => {
   describe('#getCalculatedProps()', () => {
     const scoped = models.Room.scope('roomCount');
 
-    test('it calculates the period price using Utils.getPeriodCoef', () => {
+    test('it calculates the period price using Utils.getPeriodPrice', () => {
       return Promise.all([
-          Utils.getPeriodCoef(now),
+          Utils.getPeriodPrice(room1.basePrice, now),
           room1.getCalculatedProps(now),
         ])
-        .then(([periodCoef, { periodPrice }]) => {
-          return expect(periodPrice).toEqual(periodCoef * room1.basePrice);
+        .then(([expected, { periodPrice }]) => {
+          return expect(periodPrice).toEqual(expected);
         });
     });
 

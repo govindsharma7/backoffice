@@ -1,17 +1,19 @@
+const euroRound       = require('./euroRound');
 const {
   getCheckinPrice,
   getCheckoutPrice,
 }                     = require('./getCheckinoutPrice');
 const getPackPrice    = require('./getPackPrice');
-const getPeriodCoef   = require('./getPeriodCoef');
+const getPeriodPrice   = require('./getPeriodPrice');
 const getServiceFees  = require('./getServiceFees');
 const logAndSend      = require('./logAndSend');
 
 module.exports = {
+  euroRound,
   getCheckinPrice,
   getCheckoutPrice,
   getPackPrice,
-  getPeriodCoef,
+  getPeriodPrice,
   getServiceFees,
   logAndSend,
 };

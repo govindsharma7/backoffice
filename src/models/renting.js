@@ -86,8 +86,8 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     return {
-      price: Math.round(( this.price / daysInMonth ) * daysStayed),
-      serviceFees: Math.round(( this.serviceFees / daysInMonth ) * daysStayed),
+      price: Utils.euroRound(( this.price / daysInMonth ) * daysStayed),
+      serviceFees: Utils.euroRound(( this.serviceFees / daysInMonth ) * daysStayed),
     };
   };
 
@@ -209,10 +209,7 @@ module.exports = (sequelize, DataTypes) => {
         .then(() => {
           return res.status(200).send({success: 'Renting Order Created'});
         })
-        .catch((err) =>{
-          console.error(err);
-          res.status(400).send({error: err.message});
-        });
+        .catch(Utils.logAndSend(res));
 
       return null;
     });
@@ -245,10 +242,7 @@ module.exports = (sequelize, DataTypes) => {
         .then(() => {
           return res.status(200).send({success: 'Housing Pack created'});
         })
-        .catch((err) =>{
-          console.error(err);
-          res.status(400).send({error: err.message});
-        });
+        .catch(Utils.logAndSend(res));
 
       return null;
     });

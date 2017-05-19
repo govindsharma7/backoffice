@@ -1,5 +1,7 @@
-const Liana   = require('forest-express-sequelize');
-const payline = require('../vendor/payline');
+const Promise        = require('bluebird');
+const Liana          = require('forest-express-sequelize');
+const payline        = require('../vendor/payline');
+const Utils          = require('../utils');
 const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
@@ -68,23 +70,23 @@ module.exports = (sequelize, DataTypes) => {
     app.post('/forest/actions/refund', LEA, (req, res) => {
       var {values, ids} = req.body.data.attributes;
 
-      if (!values.amount) {
-        return res.status(400).send({error:'Please specify an amount'});
-      }
-      if (ids.length > 1) {
-        return res.status(400).send({error:'Can\'t refund multiple payments'});
-      }
+      Promise.resolve()
+        .then(() => {
+          if (!values.amount) {
+            throw new Error('Please specify an amount');
+          }
+          if (ids.length > 1) {
+            throw new Error('Can\'t refund multiple payments');
+          }
 
-      values.amount *= 100;
+          values.amount *= 100;
 
-      return Payment.doRefund(ids[0], values)
+          return Payment.doRefund(ids[0], values);
+        })
         .then(() => {
           return res.send({success: 'Refund ok'});
         })
-        .catch((err) => {
-          console.error(err);
-          return res.status(400).send({error: err.message || err.longMessage});
-        });
+        .catch(Utils.logAndSend(res));
     });
   };
 

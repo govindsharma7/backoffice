@@ -1,6 +1,7 @@
 const Promise          = require('bluebird');
 const Liana            = require('forest-express-sequelize');
-const {TRASH_SCOPES} = require('../const');
+const Utils            = require('../utils');
+const {TRASH_SCOPES}   = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const OrderItem = sequelize.define('OrderItem', {
@@ -87,24 +88,21 @@ module.exports = (sequelize, DataTypes) => {
     app.post('/forest/actions/add-discount', LEA, (req, res) => {
       const {ids, values} = req.body.data.attributes;
 
-      if ( ids.length > 1 ) {
-        return res.status(400).send({error:'Can\'t create multiple discounts'});
-      }
+      Promise.resolve()
+        .then(() => {
+          if ( ids.length > 1 ) {
+            throw new Error('Can\'t create multiple discounts');
+          }
 
-      OrderItem
-        .findById(ids[0])
+          return OrderItem.findById(ids[0]);
+        })
         .then((orderItem) => {
           return orderItem.createDiscount(100 * values.amount);
         })
         .then(() => {
           return res.status(200).send({success: 'Discount created'});
         })
-        .catch((err) =>{
-          console.error(err);
-          res.status(400).send({error: err.message});
-        });
-
-      return null;
+        .catch(Utils.logAndSend(res));
     });
   };
 

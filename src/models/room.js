@@ -75,15 +75,9 @@ module.exports = (sequelize, DataTypes) => {
   // calculate periodPrice and serviceFees for the room
   Room.prototype.getCalculatedProps = function(date = Date.now()) {
     return Promise.all([
-        Utils.getPeriodCoef(date),
-        this.get('roomCount'),
+        Utils.getPeriodPrice(this.basePrice, date),
+        Utils.getServiceFees(this.get('roomCount')),
       ])
-      .then(([coef, roomCount]) => {
-        return Promise.all([
-          this.basePrice * coef,
-          Utils.getServiceFees(roomCount),
-        ]);
-      })
       .then(([periodPrice, serviceFees]) => {
         return { periodPrice, serviceFees };
       });
