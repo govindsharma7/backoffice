@@ -55,15 +55,28 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Room.id'],
     });
+
+    Room.addScope('roomCount', {
+      attributes: { include: [
+        [sequelize.fn('count', sequelize.col('Apartment->Rooms.id')), 'roomCount'],
+      ]},
+      include: [{
+        model: models.Apartment,
+        attributes: [],
+        include: [{
+          model: models.Room,
+          attributes: [],
+        }],
+      }],
+      group: ['Room.id'],
+    });
   };
 
   // calculate periodPrice and serviceFees for the room
   Room.prototype.getCalculatedProps = function(date = Date.now()) {
     return Promise.all([
         Utils.getPeriodCoef(date),
-        models.Room.count({
-          where: { ApartmentId: this.ApartmentId },
-        }),
+        this.get('roomCount'),
       ])
       .then(([coef, roomCount]) => {
         return Promise.all([

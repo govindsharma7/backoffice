@@ -4,7 +4,6 @@ const Promise = require('bluebird');
 const D       = require('date-fns');
 const models  = require('../src/models');
 
-// const {Client, Order} = models;
 const {Client} = models;
 const month = D.addMonths(Date.now(), 1);
 
@@ -33,20 +32,33 @@ return Client.findAll()
   })
   // Filter-out clients with no active rentings
   .then((tuples) => {
-    return Promise.filter(tuples, ([, rentings]) => {
+    return Promise.filter(tuples, ([client, rentings]) => {
+      console.log(`${client.id} has ${rentings.length} rentings`);
       return rentings.length > 0;
     });
   })
-  .then((tuples) => {
-    return Promise.map(tuples, ([client, rentings]) => {
-      return client.createRentingsOrder(rentings, month);
-    });
+  .tap((tuples) => {
+    // rentings-orders should be created one after the other, otherwise they all
+    // pick the same receiptNumber
+    return Promise.reduce(tuples, (prev, [client, rentings]) => {
+      return client
+        .createRentingsOrder(rentings, month)
+        .tap((order) => {
+          return order.pickReceiptNumber();
+        })
+        .then((order) => {
+          return order.ninjaCreate();
+        })
+        .catch((err) => {
+          console.log(err);
+          console.log(client);
+          console.log(rentings);
+          throw err;
+        });
+    }, false);
   })
-  // .then((orders) => {
-  //   return Order.generateInvoices(orders);
-  // })
-  .then((orders) => {
-    return console.log(`${orders.length} RENT ORDERS GENERATED!`);
+  .then((tuples) => {
+    return console.log(`${tuples.length} RENT ORDERS GENERATED!`);
   })
   .catch((err) => {
     console.error(err);

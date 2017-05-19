@@ -30,33 +30,29 @@ function create({models, data, unique, instances: ins, options}) {
     }
   }
 
-  return deptree.resolve()
-    .map((uid) => {
-      return () => {
-        const {modelName, record} = u2record[uid];
-        const instanceId = unique.u2l[uid] || uid;
+  return Promise.reduce(deptree.resolve(), (prev, uid) => {
+    const {modelName, record} = u2record[uid];
+    const instanceId = unique.u2l[uid] || uid;
 
-        return models[modelName][options.method || 'create'](record, options)
-          .then((result) => {
-            if (typeof result === 'object') {
-              return instances[instanceId] = result;
-            }
+    return models[modelName][options.method || 'create'](record, options)
+      .then((result) => {
+        if (typeof result === 'object') {
+          return instances[instanceId] = result;
+        }
 
-            // In case of upsert, the instance isn't returned
-            // here we can use a query-less alternative to findById
-            const instance = models[modelName].build(record);
+        // In case of upsert, the instance isn't returned
+        // here we can use a query-less alternative to findById
+        const instance = models[modelName].build(record);
 
-            instance.isNewRecord = false;
-            return instances[instanceId] = instance;
-          });
-      };
-    })
-    .reduce((prev, curr) => {
-      return prev.then(curr);
-    }, Promise.resolve(true))
-    .then(() => {
-      return {instances, unique};
-    });
+        instance.isNewRecord = false;
+        return instances[instanceId] = instance;
+      });
+  // records should be loaded in the right order to avoid foreignKey constraints
+  // errors
+}, false)
+  .then(() => {
+    return {instances, unique};
+  });
 }
 
 function Unique(parent = { l2u: {}, u2l: {} }) {

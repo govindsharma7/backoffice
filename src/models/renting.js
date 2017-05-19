@@ -177,8 +177,8 @@ module.exports = (sequelize, DataTypes) => {
       return renting;
     }
 
-    return renting
-      .getRoom()
+    return models.Room.scope('roomCount')
+      .findById(renting.RoomId)
       .then((room) => {
         return room.getCalculatedProps(renting.bookingDate);
       })

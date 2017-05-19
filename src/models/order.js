@@ -267,22 +267,23 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Order.ninjaCreateInvoices = (orders) => {
-    return Promise.all(
-      orders
-        .filter((order) => {
-          return order.ninjaId == null;
-        })
-        .map((order) => {
-          return ( order.receiptNumber ?
-              Promise.resolve(order) :
-              order.pickReceiptNumber()
-            ).then(() => {
-              return order.ninjaCreate();
-            });
-        })
-    );
-  };
+  // We don't batch create invoices anymore
+  // Order.ninjaCreateInvoices = (orders) => {
+  //   return Promise.all(
+  //     orders
+  //       .filter((order) => {
+  //         return order.ninjaId == null;
+  //       })
+  //       .map((order) => {
+  //         return ( order.receiptNumber ?
+  //             Promise.resolve(order) :
+  //             order.pickReceiptNumber()
+  //           ).then(() => {
+  //             return order.ninjaCreate();
+  //           });
+  //       })
+  //   );
+  // };
 
   Order.afterUpdate = (order) => {
     if ( order.ninjaId != null ) {

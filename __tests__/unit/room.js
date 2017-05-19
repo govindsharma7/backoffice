@@ -51,6 +51,8 @@ describe('Room', () => {
   });
 
   describe('#getCalculatedProps()', () => {
+    const scoped = models.Room.scope('roomCount');
+
     test('it calculates the period price using Utils.getPeriodCoef', () => {
       return Promise.all([
           Utils.getPeriodCoef(now),
@@ -64,7 +66,11 @@ describe('Room', () => {
     test('it calculates correct serviceFees using Utils.getServiceFees', () => {
       return Promise.all([
           Utils.getServiceFees(2),
-          room1.getCalculatedProps(now),
+          scoped
+            .findById(room1.id)
+            .then((room) => {
+              return room.getCalculatedProps(now);
+            }),
         ])
         .then(([expected, { serviceFees }]) => {
           return expect(serviceFees).toEqual(expected);

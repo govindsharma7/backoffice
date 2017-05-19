@@ -40,8 +40,8 @@ module.exports = {
     `${env.prod} node scripts/extractInvoiceninja.js > data/clients.json`,
   'extract:portfolio':
     `${env.prod} node scripts/extractWordpress.js > tmp/portfolio.json`,
-  'generate:rentorders':
-    `${env.dev} node scripts/generateRentingInvoices.js`,
+  'generate:invoices':
+    `${env.prod} node scripts/generateRentingInvoices.js`,
 
   'dev:start': `${env.dev} ${nodemonInspect}`,
   'dev:sql:migration:create':
