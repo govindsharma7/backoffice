@@ -1,3 +1,4 @@
+const path       = require('path');
 const Express    = require('express');
 const Jwt        = require('express-jwt');
 const Cors       = require('express-cors');
@@ -49,7 +50,7 @@ parentApp.use(app);
  * Forest middleware
  */
 parentApp.use(Liana.init({
-  modelsDir: __dirname + '/models', // models directory.
+  modelsDir: path.join(__dirname, '/models'), // models directory.
   envSecret: config.FOREST_ENV_SECRET,
   authSecret: config.FOREST_AUTH_SECRET,
   sequelize: models.sequelize, // sequelize database connection.

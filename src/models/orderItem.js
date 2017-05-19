@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('0', '0.2'),
       required: true,
       defaultValue: '0',
-      get: function() {
+      get() {
         return parseFloat(this.getDataValue('vatRate'));
       },
     },

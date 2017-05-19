@@ -92,7 +92,7 @@ function parseProperties(properties) {
 
     // fix entirely borked names
     if ( apartmentName in fixedNames ) {
-      apartmentName = fixedNames[apartmentName];
+      ({apartmentName} = fixedNames);
     }
     // Fix apartment names that don't include the street number
     if ( !/^\d/.test(apartmentName) ) {
@@ -140,9 +140,9 @@ function parseProperties(properties) {
         id: apartmentRef,
         reference: apartmentRef,
         name: apartmentName,
-        addressStreet: addressStreet,
-        addressZip: addressZip,
-        addressCity: addressCity,
+        addressStreet,
+        addressZip,
+        addressCity,
         addressCountry: 'france',
         latLng: `${address[2]},${address[3]}`,
         floorArea: parseFloat(property.meta.estate_property_size[0]),

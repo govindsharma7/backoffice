@@ -9,7 +9,7 @@ const Utils   = require('../src/utils');
 // Object.entries polyfill
 Object.entries = typeof Object.entries === 'function' ?
   Object.entries :
-  (obj) => Object.keys(obj).map(k => [k, obj[k]]);
+  (obj) => { return Object.keys(obj).map((k) => { return [k, obj[k]]; }); };
 
 if (
   process.env.NODE_ENV !== 'test' &&

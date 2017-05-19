@@ -205,7 +205,7 @@ module.exports = (sequelize, DataTypes) => {
       .then(([client, totalPaid, [amount, items]]) => {
         return Object.assign({
           'client_id': client.ninjaId,
-          'amount': amount,
+          amount,
           'balance': totalPaid - amount,
           'invoice_items': items,
           'invoice_number': this.receiptNumber,

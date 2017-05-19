@@ -35,10 +35,10 @@ return Ininja.client
         emails[email] = true;
 
         return {
-          id: id,
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
+          id,
+          firstName,
+          lastName,
+          email,
           ninjaId: client.id,
         };
       });

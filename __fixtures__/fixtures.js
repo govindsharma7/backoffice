@@ -7,7 +7,7 @@ const rUUID = /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i;
 // Object.entries polyfill
 Object.entries = typeof Object.entries === 'function' ?
   Object.entries :
-  (obj) => Object.keys(obj).map(k => [k, obj[k]]);
+  (obj) => { return Object.keys(obj).map((k) => { return [k, obj[k]]; }); };
 
 function create({models, data, unique, instances: ins, options}) {
   const u2record = {};
@@ -15,7 +15,7 @@ function create({models, data, unique, instances: ins, options}) {
   const deptree = new DeptTree();
 
   for (let [modelName, records] of Object.entries(data)) {
-    const primaryKey = Object.keys(models[modelName].primaryKeys)[0];
+    const [primaryKey] = Object.keys(models[modelName].primaryKeys);
 
     for (let record of records) {
       let deps = [];
@@ -98,7 +98,7 @@ Unique.prototype = {
       return this.l2u[lid];
     }
 
-    this.l2u[lid] = uuid().split('-')[0];
+    this.l2u[lid] = uuid().split('-').shift();
     this.u2l[this.l2u[lid]] = lid;
     return this.l2u[lid];
   },

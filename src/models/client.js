@@ -257,7 +257,7 @@ module.exports = (sequelize, DataTypes) => {
 
           return Client.doCredit(ids[0], values, idCredit);
         })
-        .then(() =>{
+        .then(() => {
           return res.status(200).send({success: 'Credit ok'});
         })
         .catch(Utils.logAndSend(res));

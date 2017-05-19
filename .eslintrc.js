@@ -1,5 +1,4 @@
 module.exports = {
-  root: true,
   parser: 'babel-eslint',
   parserOptions: {
     'ecmaVersion': 6,
@@ -35,7 +34,7 @@ module.exports = {
     // Possibe errors
     'no-await-in-loop': 'error',
     'no-compare-neg-zero': 'error',
-    'no-console': 'warn',
+    'no-console': ['warn', { allow: ['error'] }],
     'no-template-curly-in-string': 'error',
 
     // Best practices
@@ -128,6 +127,16 @@ module.exports = {
     //'no-underscore-dangle': ['warn'],
     'no-trailing-spaces': ['error'],
 
+    // ECMAScript 6
+    'arrow-body-style': ['error', 'always'],
+    'arrow-parens': ['error', 'always'],
+    'arrow-spacing': ['error'],
+    'object-shorthand': ['error', 'always'],
+    'prefer-destructuring': ['error', { array: false }],
+    'prefer-rest-params': 'error',
+    'prefer-spread': 'error',
+    'prefer-template': 'error',
+
     // React
     'react/jsx-uses-react': 1,
     'react/jsx-uses-vars': 1,
@@ -159,6 +168,7 @@ module.exports = {
 
     // Promise
     'promise/no-native': 'error',
+    'promise/avoid-new': 'error',
   },
   'globals': {
     expect: false,
