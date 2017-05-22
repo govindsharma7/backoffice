@@ -12,7 +12,7 @@ describe('Payline integration', () => {
       });
   });
 
-  describe('Client.DoCredit', () => {
+  describe('Client.paylineCredit', () => {
     test('it should creat an order with negative amount', () => {
       const values = {
         cardNumber: '4111111111111111',
@@ -27,7 +27,7 @@ describe('Payline integration', () => {
       };
       const idCredit = uuid();
 
-      return Client.doCredit(client.id, values, idCredit)
+      return Client.paylineCredit(client.id, values, idCredit)
         .then((order) => {
           expect(order).toBeDefined();
           expect(order.Credits).toBeDefined();

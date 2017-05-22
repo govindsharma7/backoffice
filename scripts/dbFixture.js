@@ -83,7 +83,6 @@ return models.sequelize.sync({ force: true })
               })
               .then((serviceFees) => {
                 record.serviceFees = serviceFees;
-                record.price -= serviceFees;
                 return record;
               });
           });

@@ -8,15 +8,6 @@ describe('OrderItem', () => {
     vatRate: 0.2,
   });
 
-  describe('#getAmount()', () => {
-    test('it should calculate the amount for one item', () => {
-      return item.getAmount()
-        .then((amount) => {
-          return expect(amount).toEqual(360);
-        });
-    });
-  });
-
   describe('#ninjaSerialize()', () => {
     test('it should serialize the item for InvoiceNinja', () => {
       return item.ninjaSerialize()

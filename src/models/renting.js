@@ -42,18 +42,50 @@ module.exports = (sequelize, DataTypes) => {
     Renting.belongsTo(models.Client);
     Renting.belongsTo(models.Room);
     Renting.hasMany(models.OrderItem);
-
     Renting.hasMany(models.Event, {
-    foreignKey: 'eventableId',
-    constraints: false,
-    scope: {
-      eventable: 'Renting',
-      },
+      foreignKey: 'EventableId',
+      constraints: false,
+      scope: { eventable: 'Renting' },
     });
+
+    const checkinoutDateScope = (type) => {
+      return {
+        attributes: [
+          [sequelize.col('Events.startDate'), `${type}Date`],
+        ],
+        include: [{
+          model: models.Event,
+          required: false,
+          include: [{
+            model: models.Term,
+            where: {
+              taxonomy: 'event-category',
+              name: type,
+            },
+          }],
+        }],
+      };
+    };
+
     Renting.addScope('events', {
       include: [{
         model: models.Event,
         required: false,
+        include: [{
+          model: models.Term,
+        }],
+      }],
+    });
+    Renting.addScope('checkinDate', checkinoutDateScope('checkin'));
+    Renting.addScope('checkoutDate', checkinoutDateScope('checkout'));
+    Renting.addScope('eventableRenting', {
+      include: [{
+        model: models.Room,
+        include: [{
+          model: models.Apartment,
+        }],
+      }, {
+        model: models.Client,
       }],
     });
     Renting.addScope('client', {
@@ -70,7 +102,7 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
-    Renting.addScope('room-apartment', {
+    Renting.addScope('room+apartment', {
       include: [{
         model: models.Room,
         include: [{
@@ -84,6 +116,7 @@ module.exports = (sequelize, DataTypes) => {
         required: false,
       }],
     });
+
   };
 
   // Prorate the price and service fees of a renting for a given month
@@ -114,58 +147,10 @@ module.exports = (sequelize, DataTypes) => {
     };
   };
 
-  Renting.getCheckinoutDate = function({Events}, type) {
-    var result;
-
-    if ( !Events ) {
-      return null;
-    }
-    result = Events.filter((event) => {
-        return event.type === type;
-    });
-    console.log(result);
-    return result.length ? result[0].startDate : null;
-  };
-
-  Renting.prototype.getCheckinDate = function() {
-    return Renting.getCheckinoutDate(this, 'checkin');
-  };
-
-  Renting.prototype.getCheckoutDate = function() {
-    return Renting.getCheckinoutDate(this, 'checkout');
-  };
-
   Renting.prototype.getComfortLevel = function() {
-    const {OrderItems} = this;
-    var result;
-
-    if ( !OrderItems ) {
-      return null;
-    }
-    result = OrderItems.filter((orderItem) => {
-      return orderItem.ProductId === 'basic-pack' ||
-        orderItem.ProductId === 'comfort-pack' ||
-        orderItem.ProductId === 'privilege-pack';
-    });
-
-    return result.length ? result[0].ProductId : null;
-  };
-
-  Renting.prototype.getRoomSwitchCount = function() {
-    const {Orders} = this.Client;
-    var result = 0;
-
-    if ( !Orders ) {
-      return result;
-    }
-    Orders.filter((order) => {
-      if ( order.label === 'Room Switch' ) {
-        result++;
-        return false;
-      }
-      return true;
-    });
-    return result;
+    return ( ( ( this.OrderItems || [] ).find((orderItem) => {
+      return /-pack$/.test(orderItem.ProductId);
+    }) || {} ).ProductId || '' ).split('-')[0] || null;
   };
 
   Renting.prototype.toOrderItems = function(date = Date.now()) {
@@ -175,12 +160,12 @@ module.exports = (sequelize, DataTypes) => {
     const month = D.format(date, 'MMMM');
 
     return [{
-      label: `${month} Rent - Room #${room.reference}`,
+      label: `Loyer ${month} - Chambre #${room.reference}`,
       unitPrice: prorated.price,
       RentingId: this.id,
       ProductId: 'rent',
     }, {
-      label: `${month} Service Fees - Apt #${apartment.reference}`,
+      label: `Charges ${month} - Apt #${apartment.reference}`,
       unitPrice: prorated.serviceFees,
       RentingId: this.id,
       ProductId: 'service-fees',
@@ -202,14 +187,12 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Renting.prototype.getOrCreatePackOrder = function({comfortLevel, discount}, number) {
-
-    const {Order, OrderItem} = models;
+  Renting.prototype.findOrCreatePackOrder = function({comfortLevel, discount}, number) {
     const {addressCity} = this.Room.Apartment;
 
     return Promise.all([
         Utils.getPackPrice(addressCity, comfortLevel),
-        Utils.getCheckinPrice(this.getCheckinDate(), comfortLevel),
+        Utils.getCheckinPrice(this.get('checkinDate'), comfortLevel),
       ])
       .then(([packPrice, checkinPrice]) => {
         const items = [{
@@ -236,7 +219,7 @@ module.exports = (sequelize, DataTypes) => {
           });
         }
 
-        return Order
+        return models.Order
           .findOrCreate({
             where: {
               ClientId: this.ClientId,
@@ -250,27 +233,25 @@ module.exports = (sequelize, DataTypes) => {
               OrderItems: items,
               number,
             },
-            include: [OrderItem],
+            include: [models.OrderItem],
           });
-      })
-      .then((result) =>{
-        if ( !result[1] ) {
-          throw new Error('Housing pack order already exists');
-        }
-
-        return true;
-      });
+        });
   };
 
   Renting.prototype.createRoomSwitchOrder = function({discount}, number) {
-    const {Order, OrderItem} = models;
+    const comfortLevel = this.getComfortLevel();
 
-    return Utils.getRoomSwitchPrice(
-      this.getRoomSwitchCount(),
-      this.getComfortLevel().split('-')[0])
+    return models.Client.scope('roomSwitchCount')
+      .findById(this.ClientId)
+      .then((client) => {
+        return Utils.getRoomSwitchPrice(
+          client.get('roomSwitchCount'),
+          comfortLevel
+        );
+      })
       .then((price) => {
         const items = [{
-          label: `Room switch ${this.getComfortLevel()}`,
+          label: `Room switch ${comfortLevel}`,
           unitPrice: price,
           ProductId: 'room-switch',
         }];
@@ -283,29 +264,32 @@ module.exports = (sequelize, DataTypes) => {
           });
         }
 
-        return Order.create({
+        return models.Order.create({
           type: 'debit',
           label: 'Room Switch',
           ClientId: this.ClientId,
           OrderItems: items,
           number,
         }, {
-          include: [OrderItem],
+          include: [models.OrderItem],
         });
       });
   };
 
-  Renting.prototype.getOrCreateCheckoutOrder = function(number) {
+  Renting.prototype.findOrCreateCheckoutOrder = function(number) {
     const {Order, OrderItem} = models;
     const {name} = this.Room;
 
     return Promise.all([
-      Utils.getCheckoutPrice(
-        this.getCheckoutDate(),
-        this.getComfortLevel().split('-')[0]),
-      Utils.getCheckoutLateNotice(
-        this.getCheckoutDate())])
-      .then(([checkoutPrice, lateNotice]) => {
+        Utils.getCheckoutPrice(
+          this.get('checkoutDate'),
+          this.getComfortLevel()
+        ),
+        Utils.getLateNoticeFees(
+          this.get('checkoutDate')
+        ),
+      ])
+      .then(([checkoutPrice, lateNoticeFees]) => {
         const items = [];
 
         if ( checkoutPrice !== 0 ) {
@@ -315,50 +299,45 @@ module.exports = (sequelize, DataTypes) => {
             ProductId: 'special-checkinout',
           });
         }
-        if ( lateNotice !== 0 ) {
+        if ( lateNoticeFees !== 0 ) {
           items.push({
             label: `Late notice ${name}`,
-            unitPrice: lateNotice,
+            unitPrice: lateNoticeFees,
             ProductId: 'late-notice',
           });
         }
-        if (items.length) {
-          return Order
-            .findOrCreate({
-              where: {
-                ClientId: this.ClientId,
-                label: 'Checkout',
-              },
-              default: {
-                type: 'debit',
-                label: 'Checkout',
-                ClientId: this.ClientId,
-                OrderItems: items,
-                number,
-              },
-              include: [OrderItem],
-            });
+        if (items.length === 0) {
+          throw new Error('This checkout is free, no order was created.');
         }
 
-        throw new Error('No need to create an Order!');
-      })
-      .then((result) => {
-        if ( !result[1] ) {
-          throw new Error('Checkout order already exists');
-        }
-
-        return true;
+        return Order
+          .findOrCreate({
+            where: {
+              ClientId: this.ClientId,
+              label: 'Checkout',
+            },
+            default: {
+              type: 'debit',
+              label: 'Checkout',
+              ClientId: this.ClientId,
+              OrderItems: items,
+              number,
+            },
+            include: [OrderItem],
+          });
       });
   };
 
-  Renting.prototype.getOrAddCheckoutDate = function({plannedDate}) {
+  // TODO: this broken!
+  // Write tests, fix and refactor with #findOrCreateCheckin
+  Renting.prototype.findOrCreateCheckout = function({plannedDate}) {
     const {Event} = models;
     const {firstName, lastName, phoneNumber} = this.Client;
 
     return Event
       .findOrCreate({
         where: {
-          eventableId: this.id,
+          EventableId: this.id,
           type: 'checkout',
         },
         defaults: {
@@ -368,28 +347,24 @@ module.exports = (sequelize, DataTypes) => {
           description: `${firstName} ${lastName},
 ${this.Room.name},
 tel: ${phoneNumber}`,
-          type: 'checkout',
           eventable: 'Renting',
-          eventableId: this.id,
+          EventableId: this.id,
+          Terms: [{
+            name: 'checkout',
+            taxonomy: 'event-category',
+          }],
         },
-      })
-      .then((result) => {
-        if ( !result[1] ) {
-          throw new Error('Checkout already exists');
-        }
-        return true;
-    });
+      });
   };
 
-  Renting.prototype.getOrAddCheckinDate = function({plannedDate}) {
+  Renting.prototype.findOrCreateCheckin = function({plannedDate}) {
     const {Event} = models;
     const {firstName, lastName, phoneNumber} = this.Client;
 
     return Event
       .findOrCreate({
         where: {
-          eventableId: this.id,
-          type: 'checkin',
+          EventableId: this.id,
         },
         defaults: {
           startDate: plannedDate,
@@ -398,17 +373,10 @@ tel: ${phoneNumber}`,
           description: `${firstName} ${lastName},
 ${this.Room.name},
 tel: ${phoneNumber}`,
-          type: 'checkin',
           eventable: 'Renting',
-          eventableId: this.id,
+          EventableId: this.id,
         },
-      })
-      .then((result) => {
-        if ( !result[1] ) {
-          throw new Error('Checkin already exists');
-        }
-        return true;
-    });
+      });
   };
 
   Renting.hook('beforeValidate', (renting) => {
@@ -441,14 +409,12 @@ tel: ${phoneNumber}`,
             throw new Error('Can\'t create multiple rent orders');
           }
 
-          return Renting.scope('room-apartment').findById(ids[0]);
+          return Renting.scope('room+apartment').findById(ids[0]);
         })
         .then((renting) => {
           return renting.createOrder();
         })
-        .then(() => {
-          return res.status(200).send({success: 'Renting Order Created'});
-        })
+        .then(Utils.createSuccessHandler(res, 'Renting Order'))
         .catch(Utils.logAndSend(res));
 
       return null;
@@ -470,18 +436,16 @@ tel: ${phoneNumber}`,
             throw new Error('Can\'t create multiple housing-pack orders');
           }
 
-          return Renting.scope('room-apartment', 'events').findById(ids[0]);
+          return Renting.scope('room+apartment', 'checkinDate').findById(ids[0]);
         })
         .then((renting) => {
-          if ( !renting.getCheckinDate() ) {
+          if ( !renting.get('checkinDate') ) {
             throw new Error('Checkin date is required to create the housing-pack order');
           }
 
-          return renting.getOrCreatePackOrder(values);
+          return renting.findOrCreatePackOrder(values);
         })
-        .then(() => {
-          return res.status(200).send({success: 'Housing Pack created'});
-        })
+        .then(Utils.findOrCreateSuccessHandler(res, 'Housing pack order'))
         .catch(Utils.logAndSend(res));
 
       return null;
@@ -491,7 +455,7 @@ tel: ${phoneNumber}`,
       const {values, ids} = req.body.data.attributes;
 
       Promise.resolve()
-      .then(() =>{
+      .then(() => {
         if ( !values.plannedDate ) {
           throw new Error('Please select a planned date');
         }
@@ -499,18 +463,13 @@ tel: ${phoneNumber}`,
           throw new Error('Can\'t create multiple checkout events');
         }
 
-        return Renting.scope('room-apartment', 'events', 'client').findById(ids[0]);
+        return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
       })
       .then((renting) => {
-        return renting.getOrAddCheckoutDate(values);
+        return renting.findOrCreateCheckout(values);
       })
-      .then(() => {
-        return res.status(200).send({success: 'Checkout event created'});
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(400).send({error: err.message});
-      });
+      .then(Utils.findOrCreateSuccessHandler(res, 'Checkout event'))
+      .catch(Utils.logAndSend(res));
 
       return null;
     });
@@ -519,25 +478,20 @@ tel: ${phoneNumber}`,
       const {values, ids} = req.body.data.attributes;
 
       Promise.resolve()
-      .then(() =>{
+      .then(() => {
         if ( !values.plannedDate ) {
           throw new Error('Please select a planned date');
         }
         if ( ids.length > 1 ) {
           throw new Error('Can\'t create multiple checkin events');
         }
-        return Renting.scope('room-apartment', 'events', 'client').findById(ids[0]);
+        return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
       })
       .then((renting) => {
-        return renting.getOrAddCheckinDate(values);
+        return renting.findOrCreateCheckin(values);
       })
-      .then(() => {
-        return res.status(200).send({success: 'Checkin event created'});
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(400).send({error: err.message});
-      });
+      .then(Utils.findOrCreateSuccessHandler(res, 'Checkin event'))
+      .catch(Utils.logAndSend(res));
 
       return null;
     });
@@ -546,33 +500,29 @@ tel: ${phoneNumber}`,
       const {ids} = req.body.data.attributes;
 
       Promise.resolve()
-      .then(() =>{
+      .then(() => {
         if ( ids.length > 1 ) {
           throw new Error('Can\'t create multiple checkout orders');
         }
         return Renting
-                .scope('orderItems', 'events', 'room-apartment')
+                .scope('orderItems', 'events', 'room+apartment')
                 .findById(ids[0]);
       })
       .then((renting) => {
         if ( !renting.getCheckoutDate() || !renting.getComfortLevel() ) {
-          throw new Error(`Checkout and housing pack are
- required to create checkout order`);
+          throw new Error(
+            'Checkout and housing pack are required to create checkout order'
+          );
         }
-        return renting.getOrCreateCheckoutOrder();
+        return renting.findOrCreateCheckoutOrder();
       })
-      .then(() => {
-        return res.status(200).send({success: 'Checkout order created'});
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(400).send({error: err.message});
-      });
+      .then(Utils.findOrCreateSuccessHandler(res, 'Checkout order'))
+      .catch(Utils.logAndSend(res));
 
       return null;
     });
 
-    app.post('/forest/actions/room-switch-order', LEA, (req, res) =>{
+    app.post('/forest/actions/room-switch-order', LEA, (req, res) => {
       const {ids, values} = req.body.data.attributes;
 
       if ( values.discount != null ) {
@@ -592,13 +542,8 @@ tel: ${phoneNumber}`,
         }
         return renting.createRoomSwitchOrder(values);
       })
-      .then(() => {
-        return res.status(200).send({success: 'Room switch order created'});
-      })
-      .catch((err) =>{
-        console.error(err);
-        res.status(400).send({error: err.message});
-      });
+      .then(Utils.createSuccessHandler(res, 'Room switch order'))
+      .catch(Utils.logAndSend(res));
 
       return null;
     });

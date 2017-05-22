@@ -21,6 +21,16 @@ describe('Client', () => {
       });
   });
 
+  describe('scopes', () => {
+    test('roomSwitchCount scope counts the time a client switched room', () => {
+      return models.Client.scope('roomSwitchCount')
+        .findById(client.id)
+        .then((client) => {
+          return expect(client.get('roomSwitchCount')).toEqual(1);
+        });
+    });
+  });
+
   describe('#getRentingOrdersFor()', () => {
     test('it should find the renting order for a specific month', () => {
       return client.getRentingOrdersFor(D.parse('2016-01 Z'))
@@ -43,7 +53,7 @@ describe('Client', () => {
 
   describe('#createRentingsOrder', () => {
     test('it should create an order with appropriate orderitems', () => {
-      const _Renting = models.Renting.scope('room-apartment');
+      const _Renting = models.Renting.scope('room+apartment');
 
       return Promise.all([
           _Renting.findById(renting2.id),

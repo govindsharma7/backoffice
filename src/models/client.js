@@ -56,8 +56,26 @@ module.exports = (sequelize, DataTypes) => {
    * Associations
    */
   Client.associate = () => {
+    const {fn, col} = sequelize;
+
     Client.hasMany(models.Renting);
     Client.hasMany(models.Order);
+
+    Client.addScope('roomSwitchCount', {
+      attributes: [
+        [fn('count', col('Orders.id')), 'roomSwitchCount'],
+      ],
+      include: [{
+        model: models.Order,
+        attributes: ['id'],
+        include: [{
+          model: models.OrderItem,
+          where: { ProductId: 'room-switch' },
+          attributes: ['id', 'productId'],
+        }],
+      }],
+      group: ['Client.id'],
+    });
   };
 
   Client.prototype.getRentingOrdersFor = function(date = Date.now()) {
@@ -74,16 +92,15 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.prototype.getRentingsFor = function(date = Date.now()) {
-    return models.Renting.scope('room-apartment').findAll({
+    const startOfMonth = D.format(D.startOfMonth(date));
+
+    return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
       where: {
         ClientId: this.id,
         bookingDate: { $lte: D.endOfMonth(date) },
-        checkoutDate: {
-          $or: {
-            $eq: null,
-            $gte: D.startOfMonth(date),
-          },
-        },
+        $and: sequelize.literal(
+          `(Events.id IS NULL OR Events.startDate >= '${startOfMonth}')`
+        ),
       },
     });
   };
@@ -169,7 +186,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
- Client.doCredit = (clientId, values, idCredit) => {
+ Client.paylineCredit = (clientId, values, idCredit) => {
     const {Order, OrderItem, Credit} = models;
     const card = {
       number: values.cardNumber,
@@ -255,11 +272,9 @@ module.exports = (sequelize, DataTypes) => {
 
           values.amount *= 100;
 
-          return Client.doCredit(ids[0], values, idCredit);
+          return Client.paylineCredit(ids[0], values, idCredit);
         })
-        .then(() => {
-          return res.status(200).send({success: 'Credit ok'});
-        })
+        .then(Utils.createSuccessHandler(res, 'Payline credit'))
         .catch(Utils.logAndSend(res));
     });
 

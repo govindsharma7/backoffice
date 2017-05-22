@@ -1,10 +1,10 @@
-const calendar        = require('googleapis').calendar('v3');
-const Promise         = require('bluebird');
+const Calendar              = require('googleapis').calendar('v3');
+const Promise               = require('bluebird');
+const {TRASH_SCOPES}        = require('../const');
+const jwtClient             = require('../vendor/googlecalendar');
 
-const Utils           = require('../utils');
-const {TRASH_SCOPES}  = require('../const');
-const config          = require('../config');
-const jwtClient       = require('../vendor/googlecalendar');
+const eventsInsert = Promise.promisify(Calendar.events.insert);
+const eventsUpdate = Promise.promisify(Calendar.events.update);
 
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       type:                     DataTypes.UUID,
       defaultValue:             DataTypes.UUIDV4,
+    },
+    summary: {
+      type:                     DataTypes.STRING,
+      required: true,
     },
     startDate: {
       type:                     DataTypes.DATE,
@@ -26,10 +30,6 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.STRING,
       required: false,
     },
-    type: {
-      type:                     DataTypes.ENUM('checkin', 'checkout'),
-      required: true,
-    },
     googleEventId: {
       type:                     DataTypes.STRING,
       required: true,
@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.STRING,
       required: true,
     },
-    eventableId: {
+    EventableId: {
       type:                     DataTypes.STRING,
       required: true,
     },
@@ -54,11 +54,17 @@ module.exports = (sequelize, DataTypes) => {
 
   Event.associate = () => {
     Event.belongsTo(models.Renting, {
-      foreignKey: 'eventableId',
+      foreignKey: 'EventableId',
       constraints: false,
       as: 'Renting',
     });
-    Event.addScope('roomApartment', {
+    Event.hasMany(models.Term, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      scope: { termable: 'Event' },
+    });
+
+    Event.addScope('client+apartment', {
       include:[{
         model: models.Renting,
         as: 'Renting',
@@ -72,121 +78,101 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
-  };
 
-
-  Event.prototype.getItem = function() {
-  return this['get' + this.get('eventable').substr(0, 1).toUpperCase()
-             + this.get('eventable').substr(1)]();
+    Event.addScope('event-terms', {
+      include: [{
+        model: models.Term,
+      }],
+    });
   };
 
   Event.prototype.googleSerialize = function() {
-    const {Apartment} = this.Renting.Room;
-    const {Client} = this.Renting;
+    const {eventable} = this;
 
-    return Utils.getCheckinoutDuration(this.startDate, this.type)
-      .then((endDate) => {
+    return models[eventable].scope(`eventable${eventable}`)
+      .findById(this.EventableId)
+      .then((eventableItem) => {
+        return eventableItem.googleSerialize(this);
+      })
+      .then(({calendarId, resource}) => {
         return {
           auth: jwtClient,
           eventId : this.googleEventId,
-          calendarId: config.GOOGLE_CALENDAR_IDS[Apartment.addressCity],
-          resource: {
-            location: `${Apartment.addressStreet}
-, ${Apartment.addressZip} ${Apartment.addressCity},
-${Apartment.addressCountry}`,
-            summary: `${this.type} ${Client.firstName} ${Client.lastName}`,
-            start: {
-              dateTime: this.startDate,
-            },
-            end: {
-              dateTime: endDate,
-            },
+          calendarId,
+          resource: Object.assign({
+            summary: this.summary,
+            start: { dateTime: this.startDate },
+            end: { dateTime: this.endDate },
             description: this.description,
-          },
+          }, resource),
         };
-    });
+      });
   };
 
-  Event.prototype.createCalendarEvent = function() {
-    /* eslint-disable promise/avoid-new */
-    return new Promise((resolve, reject) => {
-    /* eslint-enable promise/avoid-new */
-      this.googleSerialize()
-        .then((googleEvent) => {
-          return calendar.events.insert(
-            googleEvent,
-            (err, calendarEvent) => {
-              if ( err ) {
-                return reject(err);
-              }
-              this
-              .set('googleEventId', calendarEvent.id)
-              .save({hooks: false});
-              return resolve(calendarEvent);
-            });
-        })
-        .catch((err) =>{
-          console.error(err);
-        });
-    });
+//     return Utils
+//       .getCheckinoutDuration(this.startDate, this.type)
+//       .then((endDate) => {
+//         return {
+//           auth: jwtClient,
+//           eventId : this.googleEventId,
+//           calendarId: GOOGLE_CALENDAR_IDS[Apartment.addressCity],
+//           resource: {
+//             location: `${Apartment.addressStreet}
+// , ${Apartment.addressZip} ${Apartment.addressCity},
+// ${Apartment.addressCountry}`,
+//             summary: `${this.type} ${Client.firstName} ${Client.lastName}`,
+//             start: { dateTime: this.startDate },
+//             end: { dateTime: endDate },
+//             description: this.description,
+//           },
+//         };
+//     });
+
+  Event.prototype.googleCreate = function() {
+    return this
+      .googleSerialize()
+      .then((serialized) => {
+        return eventsInsert(serialized);
+      })
+      .tap((googleEvent) => {
+        return this
+          .set('googleEventId', googleEvent.id)
+          .save({hooks: false});
+      });
   };
 
-  Event.prototype.updateCalendarEvent = function () {
-    /* eslint-disable promise/avoid-new */
-    return new Promise((resolve, reject) => {
-    /* eslint-enable promise/avoid-new */
-      this.googleSerialize()
-        .then((googleEvent) =>{
-          return calendar.events.update(
-            googleEvent,
-            (err, calendarEvent) => {
-              if ( err ) {
-                return reject(err);
-              }
-              return resolve(calendarEvent);
-            });
-        })
-        .catch((err) =>{
-          console.error(err);
-        });
-    });
+  Event.prototype.googleUpdate = function () {
+    return this
+      .googleSerialize()
+      .then((serialized) => {
+        return eventsUpdate(serialized);
+      })
+      .tap((googleEvent) => {
+        return this
+          .set('googleEventId', googleEvent.id)
+          .save({hooks: false});
+      });
   };
 
-  Event.afterCreate = function(event) {
-    if ( event.id ) {
-      Event
-        .scope('roomApartment')
-        .findById(event.id)
-        .then((result) => {
-          return result.createCalendarEvent();
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+  Event.hook('afterCreate', (event) => {
+    return Event.scope('client+apartment')
+      .findById(event.id)
+      .then((result) => {
+        return result.googleCreate();
+      });
+  });
+
+  Event.hook('afterUpdate', (event) => {
+    if ( event.googleEventId == null ) {
+      return true;
     }
 
-    return true;
-  };
-
-  Event.afterUpdate = function(event) {
-    if ( event.googleEventId ) {
-      Event
-        .scope('roomApartment')
-        .findById(event.id)
-        .then((result) => {
-          return result.updateCalendarEvent();
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    }
-
-    return true;
-  };
-
-  Event.hook('afterCreate', Event.afterCreate);
-  Event.hook('afterUpdate', Event.afterUpdate);
+    return Event.scope('client+apartment')
+      .findById(event.id)
+      .then((result) => {
+        return result.googleUpdate();
+      });
+  });
 
   return Event;
-
 };

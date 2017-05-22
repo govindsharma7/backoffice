@@ -60,11 +60,10 @@ module.exports = {
   CHECKIN_DURATION: 30,
   CHECKOUT_DURATION: 60,
 
-  LATE_NOTICE_CHECKOUT: {
-    veryLate: 67900,
-    late: 47900,
-    bitLate: 27900,
-    good: 0,
+  LATE_NOTICE_FEES: {
+    '0-9days': 67900,
+    '10-19days': 47900,
+    '20-29days': 27900,
   },
 
   ROOM_SWITCH_PRICES: {

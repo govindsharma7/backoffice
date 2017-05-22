@@ -50,12 +50,11 @@ module.exports = (sequelize, DataTypes) => {
     OrderItem.belongsTo(models.Product, {
       constraints: false,
     });
-  };
-
-  OrderItem.prototype.getAmount = function() {
-    return Promise.resolve(
-        this.unitPrice * this.quantity * ( 1 + this.vatRate )
-    );
+    OrderItem.hasMany(models.Term, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      scope: { termable: 'OrderItem' },
+    });
   };
 
   OrderItem.prototype.createDiscount = function(amount) {

@@ -1,67 +1,37 @@
-const calendar = require('googleapis').calendar('v3');
+#!/usr/bin/env node
 
+const Promise   = require('bluebird');
+const Calendar  = require('googleapis').calendar('v3');
 const jwtClient = require('../src/vendor/googlecalendar');
 
-calendar.calendars.insert({
-  auth: jwtClient,
-  resource: {
-    summary: 'Checkin/Checkout Lyon',
-  },
-}, (err, Calendar) => {
-  calendar.acl.insert({
-    auth: jwtClient,
-    calendarId: Calendar.id,
-    resource: {
-      role: 'writer',
-      scope: {
-        type: 'domain',
-        value: 'chez-nestor.com',
-      },
-    },
-  }, () => {
-    console.log('Lyon:', Calendar.id);
-  });
-});
+const calendarsInsert = Promise.promisify(Calendar.calendars.insert);
+const aclInsert = Promise.promisify(Calendar.acl.insert);
 
-calendar.calendars.insert({
-  auth: jwtClient,
-  resource: {
-    summary: 'Checkin/Checkout Montpellier',
-  },
-}, (err, Calendar) => {
-  calendar.acl.insert({
-    auth: jwtClient,
-    calendarId: Calendar.id,
-    resource: {
-      role: 'writer',
-      scope: {
-        type: 'domain',
-        value: 'chez-nestor.com',
+return Promise.map([
+  'Lyon',
+  'Montpellier',
+  'Paris',
+], (city) => {
+  return calendarsInsert({
+      auth: jwtClient,
+      resource: {
+        summary: `Checkin/Checkout ${city}`,
       },
-    },
-  }, () => {
-    console.log('Montpellier:', Calendar.id);
-  });
-});
-
-calendar.calendars.insert({
-  auth: jwtClient,
-  resource: {
-    summary: 'Checkin/Checkout Paris',
-    timeZone: 'Europe/Paris',
-  },
-}, (err, Calendar) => {
-  calendar.acl.insert({
-    auth: jwtClient,
-    calendarId: Calendar.id,
-    resource: {
-      role: 'writer',
-      scope: {
-        type: 'domain',
-        value: 'chez-nestor.com',
-      },
-    },
-  }, () => {
-    console.log('Paris:', Calendar.id);
-  });
+    })
+    .tap((calendar) => {
+      return aclInsert({
+        auth: jwtClient,
+        calendarId: calendar.id,
+        resource: {
+          role: 'writer',
+          scope: {
+            type: 'domain',
+            value: 'chez-nestor.com',
+          },
+        },
+      });
+    })
+    .then((calendar) => {
+      return console.log(`Lyon: ${calendar.id}`);
+    });
 });

@@ -42,24 +42,23 @@ describe('Renting', () => {
     });
   });
 
-  describe('#getCheckinDate()', () => {
-    test('it should return the checkinDate', () => {
-      return Renting
-        .scope('events')
+  describe('scopes', () => {
+    test('checkinDate should include the checkin date', () => {
+      return Renting.scope('checkinDate')
         .findById(renting1.id)
         .then((renting) => {
-          return renting.getCheckinDate();
+          return renting.get('checkinDate');
         })
         .then((checkinDate) => {
           return expect(checkinDate).toEqual(D.parse('2017-05-14 Z'));
         });
     });
+
     test('checkinDate should be null when there is no checkin event', () => {
-      return Renting
-        .scope('events')
+      return Renting.scope('checkinDate')
         .findById(renting2.id)
         .then((renting) => {
-          return renting.getCheckinDate();
+          return renting.get('checkinDate');
         })
         .then((checkinDate) => {
           return expect(checkinDate).toBeNull();
