@@ -5,6 +5,7 @@ const jwtClient             = require('../vendor/googlecalendar');
 
 const eventsInsert = Promise.promisify(Calendar.events.insert);
 const eventsUpdate = Promise.promisify(Calendar.events.update);
+const eventsDelete = Promise.promisify(Calendar.events.delete);
 
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
@@ -64,24 +65,13 @@ module.exports = (sequelize, DataTypes) => {
       scope: { termable: 'Event' },
     });
 
-    Event.addScope('client+apartment', {
-      include:[{
-        model: models.Renting,
-        as: 'Renting',
-        include: [{
-          model: models.Room,
-          include: [{
-            model: models.Apartment,
-          }],
-        }, {
-          model: models.Client,
-        }],
-      }],
-    });
-
-    Event.addScope('event-terms', {
+    Event.addScope('event-category', {
+      attributes: { include: [
+        [sequelize.col('Terms.name'), 'category'],
+      ]},
       include: [{
         model: models.Term,
+        where: { taxonomy: 'event-category' },
       }],
     });
   };
@@ -89,10 +79,12 @@ module.exports = (sequelize, DataTypes) => {
   Event.prototype.googleSerialize = function() {
     const {eventable} = this;
 
-    return models[eventable].scope(`eventable${eventable}`)
-      .findById(this.EventableId)
-      .then((eventableItem) => {
-        return eventableItem.googleSerialize(this);
+    return Promise.all([
+        models[eventable].scope(`eventable${eventable}`).findById(this.EventableId),
+        Event.scope('event-category').findById(this.id),
+      ])
+      .then(([eventableInstance, event]) => {
+        return eventableInstance.googleSerialize(event);
       })
       .then(({calendarId, resource}) => {
         return {
@@ -109,25 +101,6 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-//     return Utils
-//       .getCheckinoutDuration(this.startDate, this.type)
-//       .then((endDate) => {
-//         return {
-//           auth: jwtClient,
-//           eventId : this.googleEventId,
-//           calendarId: GOOGLE_CALENDAR_IDS[Apartment.addressCity],
-//           resource: {
-//             location: `${Apartment.addressStreet}
-// , ${Apartment.addressZip} ${Apartment.addressCity},
-// ${Apartment.addressCountry}`,
-//             summary: `${this.type} ${Client.firstName} ${Client.lastName}`,
-//             start: { dateTime: this.startDate },
-//             end: { dateTime: endDate },
-//             description: this.description,
-//           },
-//         };
-//     });
-
   Event.prototype.googleCreate = function() {
     return this
       .googleSerialize()
@@ -141,27 +114,24 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Event.prototype.googleUpdate = function () {
+  Event.prototype.googleUpdate = function() {
     return this
       .googleSerialize()
       .then((serialized) => {
         return eventsUpdate(serialized);
-      })
-      .tap((googleEvent) => {
-        return this
-          .set('googleEventId', googleEvent.id)
-          .save({hooks: false});
+      });
+  };
+
+  Event.prototype.googleDelete = function() {
+    return this
+      .googleSerialize()
+      .then((serialized) => {
+        return eventsDelete(serialized);
       });
   };
 
   Event.hook('afterCreate', (event) => {
-    console.log(event.id);
-    return Event.scope('client+apartment')
-      .findById(event.id)
-      .then((result) => {
-      console.log(result);
-        return result.googleCreate();
-      });
+    return event.googleCreate();
   });
 
   Event.hook('afterUpdate', (event) => {
@@ -169,11 +139,15 @@ module.exports = (sequelize, DataTypes) => {
       return true;
     }
 
-    return Event.scope('client+apartment')
-      .findById(event.id)
-      .then((result) => {
-        return result.googleUpdate();
-      });
+    return event.googleUpdate();
+  });
+
+  Event.hook('afterDelete', (event) => {
+    if ( event.googleEventId == null ) {
+      return true;
+    }
+
+    return event.googleDelete();
   });
 
   return Event;

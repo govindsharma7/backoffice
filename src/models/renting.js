@@ -2,9 +2,14 @@ const Promise        = require('bluebird');
 const D              = require('date-fns');
 const Liana          = require('forest-express-sequelize');
 const Utils          = require('../utils');
-const {TRASH_SCOPES,
-      CHECKIN_DURATION,
-      CHECKOUT_DURATION} = require('../const');
+const {
+  TRASH_SCOPES,
+  CHECKIN_DURATION,
+  CHECKOUT_DURATION,
+}                    = require('../const');
+const {
+  GOOGLE_CALENDAR_IDS,
+}                    = require('../config');
 
 function checkinoutDateGetter(type) {
   return function() {
@@ -390,6 +395,21 @@ tel: ${phoneNumber}`,
   Renting.prototype.findOrCreateCheckout = Renting.findOrCreateCheckinout('checkout');
 
   Renting.prototype.findOrCreateCheckin = Renting.findOrCreateCheckinout('checkin');
+
+  Renting.prototype.googleSerialize = function(event) {
+    return {
+      calendarId: GOOGLE_CALENDAR_IDS[this.Apartment.addressCity],
+      resource: {
+        location: `${this.Apartment.addressStreet}
+, ${this.Apartment.addressZip} ${this.Apartment.addressCity},
+${this.Apartment.addressCountry}`,
+        summary: `${event.category} ${this.Client.firstName} ${this.Client.lastName}`,
+        start: { dateTime: this.startDate },
+        end: { dateTime: this.endDate },
+        description: this.description,
+      },
+    };
+  };
 
   Renting.hook('beforeValidate', (renting) => {
     // Only calculate the price and fees once!
