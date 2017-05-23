@@ -48,6 +48,25 @@ describe('Room', () => {
         ]);
       });
     });
+
+    describe('roomCount', () => {
+      test('count all rooms from an apartment', () => {
+        const scoped = models.Room.scope('roomCount');
+
+        return Promise.all([
+          scoped
+            .findById(room1.id)
+            .then((room) => {
+              return expect(room.get('roomCount')).toEqual(2);
+            }),
+          scoped
+            .findById(room2.id)
+            .then((room) => {
+              return expect(room.get('roomCount')).toEqual(2);
+            }),
+        ]);
+      });
+    });
   });
 
   describe('#getCalculatedProps()', () => {
