@@ -56,6 +56,11 @@ module.exports = (sequelize, DataTypes) => {
     Order.belongsTo(models.Client);
     Order.hasMany(models.Payment);
     Order.hasMany(models.Credit);
+    Order.hasMany(models.Term, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      scope: { termable: 'Order' },
+    });
 
     Order.addScope('amount', {
       attributes: [
@@ -187,22 +192,17 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.prototype.ninjaSerialize = function(props) {
-    // We don't #getCalculatedProps as we want to avoid getOrderItems to be
-    // called twice
     return Promise.all([
         this.getClient(),
-        this.getTotalPaid(),
+        this.getCalculatedProps(),
         this.getOrderItems()
           .then((orderItems) => {
-            return Promise.all([
-              this.getAmount(orderItems),
-              Promise.map(orderItems, (item) => {
-                return item.ninjaSerialize();
-              }),
-            ]);
+            return Promise.map(orderItems, (item) => {
+              return item.ninjaSerialize();
+            });
           }),
       ])
-      .then(([client, totalPaid, [amount, items]]) => {
+      .then(([client, {totalPaid, amount}, items]) => {
         return Object.assign({
           'client_id': client.ninjaId,
           amount,
@@ -267,23 +267,22 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  // We don't batch create invoices anymore
-  // Order.ninjaCreateInvoices = (orders) => {
-  //   return Promise.all(
-  //     orders
-  //       .filter((order) => {
-  //         return order.ninjaId == null;
-  //       })
-  //       .map((order) => {
-  //         return ( order.receiptNumber ?
-  //             Promise.resolve(order) :
-  //             order.pickReceiptNumber()
-  //           ).then(() => {
-  //             return order.ninjaCreate();
-  //           });
-  //       })
-  //   );
-  // };
+  Order.ninjaCreateInvoices = (orders) => {
+    return Promise.all(
+      orders
+        .filter((order) => {
+          return order.ninjaId == null;
+        })
+        .map((order) => {
+          return ( order.receiptNumber ?
+              Promise.resolve(order) :
+              order.pickReceiptNumber()
+            ).then(() => {
+              return order.ninjaCreate();
+            });
+        })
+    );
+  };
 
   Order.afterUpdate = (order) => {
     if ( order.ninjaId != null ) {
@@ -306,9 +305,7 @@ module.exports = (sequelize, DataTypes) => {
         .then((orders) => {
           return Order.ninjaCreateInvoices(orders);
         })
-        .then(() => {
-          return res.send({success: 'Invoice successfully generated'});
-        })
+        .then(Utils.createSuccessHandler(res, 'Ninja invocies'))
         .catch(Utils.logAndSend(res));
     });
 

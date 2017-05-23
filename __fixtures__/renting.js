@@ -1,3 +1,4 @@
+const D        = require('date-fns');
 const fixtures = require('./index');
 
 module.exports = fixtures((u) => {
@@ -9,23 +10,6 @@ module.exports = fixtures((u) => {
       email: u.str('john@doe.com'),
       phoneNumber: '0033612345678',
       status: 'active',
-    }],
-    Renting: [{
-      id: u.id('renting-1'),
-      bookingDate: '2015-01-20',
-      checkoutDate: '2015-02-10',
-      price: 20000,
-      serviceFees: 3000,
-      ClientId: u.id('client-1'),
-      RoomId: u.id('room-1'),
-    }, {
-      id: u.id('renting-2'),
-      bookingDate: '2015-03-03',
-      checkoutDate: '2015-03-28',
-      price: 20000,
-      serviceFees: 3000,
-      ClientId: u.id('client-1'),
-      RoomId: u.id('room-1'),
     }],
     Apartment: [{
       id: u.id('apartment-1'),
@@ -45,6 +29,61 @@ module.exports = fixtures((u) => {
       floorArea: 16,
       basePrice: 598,
       ApartmentId: u.id('apartment-1'),
+    }],
+    Renting: [{
+      id: u.id('renting-1'),
+      bookingDate: '2015-01-20',
+      price: 20000,
+      serviceFees: 3000,
+      ClientId: u.id('client-1'),
+      RoomId: u.id('room-1'),
+    }, {
+      id: u.id('renting-2'),
+      bookingDate: '2015-03-03',
+      price: 20000,
+      serviceFees: 3000,
+      ClientId: u.id('client-1'),
+      RoomId: u.id('room-1'),
+    }],
+    Event: [{
+      id: u.id('event-1'),
+      startDate: D.parse('2017-05-14 Z'),
+      endDate: '2017-05-16',
+      eventable: 'Renting',
+      EventableId: u.id('renting-1'),
+    }, {
+      id: u.id('event-2'),
+      startDate: D.parse('2015-02-10 Z'),
+      eventable: 'Renting',
+      EventableId: u.id('renting-1'),
+    }, {
+      id: u.id('event-3'),
+      startDate: D.parse('2015-03-28 Z'),
+      endDate: '2017-05-16',
+      eventable: 'Renting',
+      EventableId: u.id('renting-2'),
+    }],
+    Term: [{
+      name: 'checkin',
+      taxonomy: 'event-category',
+      termable: 'Event',
+      TermableId: u.id('event-1'),
+    }, {
+      name: 'checkout',
+      taxonomy: 'event-category',
+      termable: 'Event',
+      TermableId: u.id('event-2'),
+    }, {
+      name: 'checkout',
+      taxonomy: 'event-category',
+      termable: 'Event',
+      TermableId: u.id('event-3'),
+    }],
+    OrderItem: [{
+      id: u.id('orderItem-1'),
+      label: 'Housing pack',
+      ProductId: 'privilege-pack',
+      RentingId: u.id('renting-1'),
     }],
   };
 });

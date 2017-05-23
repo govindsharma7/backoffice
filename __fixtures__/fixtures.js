@@ -1,78 +1,16 @@
 const Promise   = require('bluebird');
-const DeptTree  = require('deptree');
 const uuid      = require('uuid/v4');
-
-const rUUID = /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i;
 
 // Object.entries polyfill
 Object.entries = typeof Object.entries === 'function' ?
   Object.entries :
   (obj) => { return Object.keys(obj).map((k) => { return [k, obj[k]]; }); };
 
-function create({models, data, unique, instances: ins, options}) {
-  const u2record = {};
-  const instances = Object.assign({}, ins);
-  const deptree = new DeptTree();
-
-  for (let [modelName, records] of Object.entries(data)) {
-    const [primaryKey] = Object.keys(models[modelName].primaryKeys);
-
-    for (let record of records) {
-      let deps = [];
-
-      for (let [key, value] of Object.entries(record)) {
-        if ( key !== primaryKey && rUUID.test(value) && !(value in unique.parent.u2l) ) {
-          deps.push(value);
-        }
-      }
-      u2record[record[primaryKey]] = { modelName, record };
-      deptree.add(record[primaryKey], deps);
-    }
-  }
-
-  return Promise.reduce(deptree.resolve(), (prev, uid) => {
-    const {modelName, record} = u2record[uid];
-    const instanceId = unique.u2l[uid] || uid;
-
-    return models[modelName][options.method || 'create'](record, options)
-      .then((result) => {
-        if (typeof result === 'object') {
-          return instances[instanceId] = result;
-        }
-
-        // In case of upsert, the instance isn't returned
-        // here we can use a query-less alternative to findById
-        const instance = models[modelName].build(record);
-
-        instance.isNewRecord = false;
-        return instances[instanceId] = instance;
-      });
-  // records should be loaded in the right order to avoid foreignKey constraints
-  // errors
-}, false)
-  .then(() => {
-    return {instances, unique};
-  });
-}
-
 function Unique(parent = { l2u: {}, u2l: {} }) {
   this.parent = parent;
   this.l2u = Object.assign({}, parent.l2u);
   this.u2l = Object.assign({}, parent.u2l);
 }
-
-Unique.hashCode = function() {
-	let hash = 0;
-
-	for (let i = 0; i < this.length; i++) {
-		let char = this.charCodeAt(i);
-
-		hash = ((hash << 5) - hash) + char;
-		hash = hash & hash; // Convert to 32bit integer
-	}
-
-	return hash;
-};
 
 Unique.prototype = {
   id(lid) {
@@ -106,24 +44,62 @@ Unique.prototype = {
 
 function fixtures({models, common = Promise.resolve({}), options: opts}) {
   const options = Object.assign({
+    method: 'create',
     hooks: false,
   }, opts || {});
+  const instances = {};
+  let unique;
+  let data;
 
   return function(callback) {
     return function() {
       return common
-        .then(({instances, unique: u}) => {
-          const unique = new Unique(u);
+        .then(({ instances: ins, unique: u }) => {
+          Object.assign(instances, ins);
+          unique = new Unique(u);
+          /* eslint-disable promise/no-callback-in-promise */
+          data = Object.entries(callback(unique));
+          /* eslint-enable promise/no-callback-in-promise */
 
-          return create({
-            models,
-            /* eslint-disable promise/no-callback-in-promise */
-            data: callback(unique),
-            /* eslint-enable promise/no-callback-in-promise */
-            unique,
-            instances,
-            options,
-          });
+          return Promise.reduce(data, (prev, [modelName, records]) => {
+            const model = models[modelName];
+            const primaryKeys = Object.keys(model.primaryKeys);
+
+            return Promise.resolve()
+              .then(() => {
+                return options.method === 'create' ?
+                  model.bulkCreate(records, options) :
+                  Promise.map(records, (record) => {
+                    return model[options.method](record, options)
+                      .then((result) => {
+                        if (typeof result === 'object') {
+                          return result;
+                        }
+
+                        const instance = model.build(record);
+
+                        instance.isNewRecord = false;
+                        return instance;
+                      });
+                  });
+              })
+              .then((results) => {
+                if (primaryKeys.length !== 1) {
+                  return null;
+                }
+
+                results.forEach((result) => {
+                  const id = result[primaryKeys[0]];
+
+                  instances[unique.u2l[id] || id] = result;
+                });
+
+                return null;
+              });
+          }, false);
+        })
+        .then(() => {
+          return {instances, unique};
         });
     };
   };

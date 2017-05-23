@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                   DataTypes.STRING,
       unique: true,
     },
+    name:                     DataTypes.STRING,
     addressStreet:            DataTypes.STRING,
     addressZip:               DataTypes.STRING,
     addressCity:              DataTypes.ENUM('lyon', 'montpellier', 'paris'),

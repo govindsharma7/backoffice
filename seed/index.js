@@ -11,10 +11,22 @@ module.exports = {
     id: 'rent',
     name: 'Rent',
   }, {
-    id: 'pack',
-    name: 'Housing Pack',
+    id: 'basic-pack',
+    name: 'Basic Pack',
+  }, {
+    id: 'comfort-pack',
+    name: 'Comfort Pack',
+  }, {
+    id: 'privilege-pack',
+    name: 'Privilege Pack',
   }, {
     id: 'special-checkinout',
     name: 'Special Checkin/Checkout',
+  }, {
+    id: 'late-notice',
+    name: 'Late Notice',
+  }, {
+    id: 'room-switch',
+    name: 'Room Switch',
   }],
 };

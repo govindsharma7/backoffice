@@ -19,6 +19,7 @@
     "express-jwt": "^5.1.0",
     "forest-express": "^1.1.0",
     "forest-express-sequelize": "^1.1.0",
+    "googleapis": "^19.0.0",
     "jsonapi-serializer": "^3.4.2",
     "lodash": "^4.17.4",
     "mysql2": "^1.2.0",

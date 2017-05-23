@@ -32,8 +32,7 @@ return Client.findAll()
   })
   // Filter-out clients with no active rentings
   .then((tuples) => {
-    return Promise.filter(tuples, ([client, rentings]) => {
-      console.log(`${client.id} has ${rentings.length} rentings`);
+    return Promise.filter(tuples, ([rentings]) => {
       return rentings.length > 0;
     });
   })

@@ -1,8 +1,19 @@
-const Promise        = require('bluebird');
-const D              = require('date-fns');
-const Liana          = require('forest-express-sequelize');
-const Utils          = require('../utils');
-const {TRASH_SCOPES} = require('../const');
+const Promise               = require('bluebird');
+const D                     = require('date-fns');
+const Liana                 = require('forest-express-sequelize');
+const Utils                 = require('../utils');
+const {TRASH_SCOPES}        = require('../const');
+const {GOOGLE_CALENDAR_IDS} = require('../config');
+
+function checkinoutDateGetter(type) {
+  return function() {
+    /* eslint-disable no-invalid-this */
+    const date = this.dataValues[`${type}Date`];
+    /* eslint-enable no-invalid-this */
+
+    return date != null ? Utils.parseDBDate(date) : date;
+  };
+}
 
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
@@ -20,14 +31,6 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.DATE,
       required: true,
     },
-    checkinDate: {
-      type:                     DataTypes.DATE,
-      required: false,
-    },
-    checkoutDate:  {
-      type:                     DataTypes.DATE,
-      required: false,
-    },
     price: {
       type:                     DataTypes.INTEGER,
       required: true,
@@ -37,9 +40,17 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
     },
     status: {
-      type:                   DataTypes.ENUM('draft', 'active'),
+      type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+    },
+    checkinDate: {
+      type:                     DataTypes.VIRTUAL,
+      get: checkinoutDateGetter('checkin'),
+    },
+    checkoutDate: {
+      type:                     DataTypes.VIRTUAL,
+      get: checkinoutDateGetter('checkout'),
     },
   }, {
     paranoid: true,
@@ -50,17 +61,81 @@ module.exports = (sequelize, DataTypes) => {
     Renting.belongsTo(models.Client);
     Renting.belongsTo(models.Room);
     Renting.hasMany(models.OrderItem);
+    Renting.hasMany(models.Event, {
+      foreignKey: 'EventableId',
+      constraints: false,
+      scope: { eventable: 'Renting' },
+    });
 
-    Renting.addScope('room-apartment', {
-      include: [{
-        model: models.Room,
-        attributes: ['reference'],
+    const checkinoutDateScope = (type) => {
+      return {
+        attributes: { include: [
+          [sequelize.col('Events.startDate'), `${type}Date`],
+        ]},
         include: [{
-          model: models.Apartment,
-          attributes: ['reference', 'addressCity'],
+          model: models.Event,
+          required: false,
+          include: [{
+            model: models.Term,
+            where: {
+              taxonomy: 'event-category',
+              name: type,
+            },
+          }],
+        }],
+      };
+    };
+
+    Renting.addScope('events', {
+      include: [{
+        model: models.Event,
+        required: false,
+        include: [{
+          model: models.Term,
         }],
       }],
     });
+    Renting.addScope('checkinDate', checkinoutDateScope('checkin'));
+    Renting.addScope('checkoutDate', checkinoutDateScope('checkout'));
+    Renting.addScope('eventableRenting', {
+      include: [{
+        model: models.Room,
+        include: [{
+          model: models.Apartment,
+        }],
+      }, {
+        model: models.Client,
+      }],
+    });
+    Renting.addScope('client', {
+      include: [{
+        model: models.Client,
+      }],
+    });
+    Renting.addScope('orders', {
+      include: [{
+        model: models.Client,
+        include: [{
+          model: models.Order,
+          required: false,
+        }],
+      }],
+    });
+    Renting.addScope('room+apartment', {
+      include: [{
+        model: models.Room,
+        include: [{
+          model: models.Apartment,
+        }],
+      }],
+    });
+    Renting.addScope('orderItems', {
+      include: [{
+        model: models.OrderItem,
+        required: false,
+      }],
+    });
+
   };
 
   // Prorate the price and service fees of a renting for a given month
@@ -68,7 +143,7 @@ module.exports = (sequelize, DataTypes) => {
     const daysInMonth = D.getDaysInMonth(date);
     const startOfMonth = D.startOfMonth(date);
     const endOfMonth = D.endOfMonth(date);
-    var daysStayed = daysInMonth;
+    let daysStayed = daysInMonth;
 
     if (
       this.bookingDate > endOfMonth ||
@@ -91,6 +166,12 @@ module.exports = (sequelize, DataTypes) => {
     };
   };
 
+  Renting.prototype.getComfortLevel = function() {
+    return ( ( ( this.OrderItems || [] ).find((orderItem) => {
+      return /-pack$/.test(orderItem.ProductId);
+    }) || {} ).ProductId || '' ).split('-')[0] || null;
+  };
+
   Renting.prototype.toOrderItems = function(date = Date.now()) {
     const prorated = this.prorate(date);
     const room = this.Room;
@@ -98,12 +179,12 @@ module.exports = (sequelize, DataTypes) => {
     const month = D.format(date, 'MMMM');
 
     return [{
-      label: `${month} Rent - Room #${room.reference}`,
+      label: `Loyer ${month} - Chambre #${room.reference}`,
       unitPrice: prorated.price,
       RentingId: this.id,
       ProductId: 'rent',
     }, {
-      label: `${month} Service Fees - Apt #${apartment.reference}`,
+      label: `Charges ${month} - Apt #${apartment.reference}`,
       unitPrice: prorated.serviceFees,
       RentingId: this.id,
       ProductId: 'service-fees',
@@ -125,20 +206,19 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Renting.prototype.createPackOrder = function({comfortLevel, discount}, number) {
-    const {Order, OrderItem} = models;
+  Renting.prototype.findOrCreatePackOrder = function({comfortLevel, discount}, number) {
     const {addressCity} = this.Room.Apartment;
 
     return Promise.all([
         Utils.getPackPrice(addressCity, comfortLevel),
-        Utils.getCheckinPrice(this.checkinDate, comfortLevel),
+        Utils.getCheckinPrice(this.get('checkinDate'), comfortLevel),
       ])
       .then(([packPrice, checkinPrice]) => {
         const items = [{
           label: `Housing Pack ${addressCity} ${comfortLevel}`,
           unitPrice: packPrice,
           RentingId: this.id,
-          ProductId: 'pack',
+          ProductId: `${comfortLevel}-pack`,
         }];
 
         if ( checkinPrice !== 0 ) {
@@ -154,21 +234,173 @@ module.exports = (sequelize, DataTypes) => {
             label: 'Discount',
             unitPrice: -1 * discount,
             RentingId: this.id,
-            ProductId: 'pack',
+            ProductId: `${comfortLevel}-pack`,
           });
         }
 
-        return Order.create({
+        return models.Order
+          .findOrCreate({
+            where: {
+              ClientId: this.ClientId,
+              label: 'Housing Pack',
+            },
+            defaults: {
+              type: 'debit',
+              label: 'Housing Pack',
+              dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
+              ClientId: this.ClientId,
+              OrderItems: items,
+              number,
+            },
+            include: [models.OrderItem],
+          });
+        });
+  };
+
+  Renting.prototype.createRoomSwitchOrder = function({discount}, number) {
+    const comfortLevel = this.getComfortLevel();
+
+    return models.Client.scope('roomSwitchCount')
+      .findById(this.ClientId)
+      .then((client) => {
+        return Utils.getRoomSwitchPrice(
+          client.get('roomSwitchCount'),
+          comfortLevel
+        );
+      })
+      .then((price) => {
+        const items = [{
+          label: `Room switch ${comfortLevel}`,
+          unitPrice: price,
+          ProductId: 'room-switch',
+        }];
+
+        if (discount != null && discount !== 0 ) {
+          items.push({
+            label: 'Discount',
+            unitPrice: -1 * discount,
+            ProductId: 'room-switch',
+          });
+        }
+
+        return models.Order.create({
           type: 'debit',
-          label: 'Housing Pack',
-          dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
+          label: 'Room Switch',
           ClientId: this.ClientId,
           OrderItems: items,
           number,
         }, {
-          include: [OrderItem],
+          include: [models.OrderItem],
         });
       });
+  };
+
+  Renting.prototype.findOrCreateCheckoutOrder = function(number) {
+    const {Order, OrderItem} = models;
+    const {name} = this.Room;
+
+    return Promise.all([
+        Utils.getCheckoutPrice(
+          this.get('checkoutDate'),
+          this.getComfortLevel()
+        ),
+        Utils.getLateNoticeFees(
+          this.get('checkoutDate')
+        ),
+      ])
+      .then(([checkoutPrice, lateNoticeFees]) => {
+        const items = [];
+
+        if ( checkoutPrice !== 0 ) {
+          items.push({
+            label: 'Special checkout',
+            unitPrice: checkoutPrice,
+            ProductId: 'special-checkinout',
+          });
+        }
+        if ( lateNoticeFees !== 0 ) {
+          items.push({
+            label: `Late notice ${name}`,
+            unitPrice: lateNoticeFees,
+            ProductId: 'late-notice',
+          });
+        }
+        if (items.length === 0) {
+          throw new Error('This checkout is free, no order was created.');
+        }
+
+        return Order
+          .findOrCreate({
+            where: {
+              ClientId: this.ClientId,
+              label: 'Checkout',
+            },
+            default: {
+              type: 'debit',
+              label: 'Checkout',
+              ClientId: this.ClientId,
+              OrderItems: items,
+              number,
+            },
+            include: [OrderItem],
+          });
+      });
+  };
+
+  Renting.findOrCreateCheckinout = function (type) {
+    return function(startDate, options) {
+      const {Event, Term} = models;
+      /*eslint-disable no-invalid-this */
+      const {firstName, lastName, phoneNumber} = this.Client;
+
+      return Utils[`getC${type.substr(1)}EndDate`](startDate, type)
+        .then((endDate) => {
+          return Event.findOrCreate(Object.assign({
+            where: {
+              EventableId: this.id,
+            },
+            include: [{
+              model: Term,
+              where: {
+                name: type,
+              },
+            }],
+            defaults: {
+              startDate,
+              endDate,
+              description: `${firstName} ${lastName},
+  ${this.Room.name},
+  tel: ${phoneNumber}`,
+              eventable: 'Renting',
+              EventableId: this.id,
+              Terms: [{
+                name: 'checkout',
+                taxonomy: 'event-category',
+              }],
+            },
+          }, options));
+        });
+      /*eslint-enable no-invalid-this */
+    };
+  };
+
+  Renting.prototype.findOrCreateCheckout = Renting.findOrCreateCheckinout('checkout');
+
+  Renting.prototype.findOrCreateCheckin = Renting.findOrCreateCheckinout('checkin');
+
+  Renting.prototype.googleSerialize = function(event) {
+    return {
+      calendarId: GOOGLE_CALENDAR_IDS[this.Apartment.addressCity],
+      resource: {
+        location: `${this.Apartment.addressStreet}
+, ${this.Apartment.addressZip} ${this.Apartment.addressCity},
+${this.Apartment.addressCountry}`,
+        summary: `${event.category} ${this.Client.firstName} ${this.Client.lastName}`,
+        start: { dateTime: this.startDate },
+        end: { dateTime: this.endDate },
+        description: this.description,
+      },
+    };
   };
 
   Renting.hook('beforeValidate', (renting) => {
@@ -201,14 +433,12 @@ module.exports = (sequelize, DataTypes) => {
             throw new Error('Can\'t create multiple rent orders');
           }
 
-          return Renting.scope('room-apartment').findById(ids[0]);
+          return Renting.scope('room+apartment', 'checkoutDate').findById(ids[0]);
         })
         .then((renting) => {
           return renting.createOrder();
         })
-        .then(() => {
-          return res.status(200).send({success: 'Renting Order Created'});
-        })
+        .then(Utils.createSuccessHandler(res, 'Renting Order'))
         .catch(Utils.logAndSend(res));
 
       return null;
@@ -230,19 +460,114 @@ module.exports = (sequelize, DataTypes) => {
             throw new Error('Can\'t create multiple housing-pack orders');
           }
 
-          return Renting.scope('room-apartment').findById(ids[0]);
+          return Renting.scope('room+apartment', 'checkinDate').findById(ids[0]);
         })
         .then((renting) => {
-          if ( renting.checkinDate == null ) {
+          if ( !renting.get('checkinDate') ) {
             throw new Error('Checkin date is required to create the housing-pack order');
           }
 
-          return renting.createPackOrder(values);
+          return renting.findOrCreatePackOrder(values);
         })
-        .then(() => {
-          return res.status(200).send({success: 'Housing Pack created'});
-        })
+        .then(Utils.findOrCreateSuccessHandler(res, 'Housing pack order'))
         .catch(Utils.logAndSend(res));
+
+      return null;
+    });
+
+    app.post('/forest/actions/add-checkout-date', LEA, (req, res) => {
+      const {values, ids} = req.body.data.attributes;
+
+      Promise.resolve()
+      .then(() => {
+        if ( !values.plannedDate ) {
+          throw new Error('Please select a planned date');
+        }
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple checkout events');
+        }
+
+        return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.findOrCreateCheckout(values.plannedDate);
+      })
+      .then(Utils.findOrCreateSuccessHandler(res, 'Checkout event'))
+      .catch(Utils.logAndSend(res));
+
+      return null;
+    });
+
+    app.post('/forest/actions/add-checkin-date', LEA, (req, res) => {
+      const {values, ids} = req.body.data.attributes;
+
+      Promise.resolve()
+      .then(() => {
+        if ( !values.plannedDate ) {
+          throw new Error('Please select a planned date');
+        }
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple checkin events');
+        }
+        return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.findOrCreateCheckin(values.plannedDate);
+      })
+      .then(Utils.findOrCreateSuccessHandler(res, 'Checkin event'))
+      .catch(Utils.logAndSend(res));
+
+      return null;
+    });
+
+    app.post('/forest/actions/create-checkout-order', LEA, (req, res) => {
+      const {ids} = req.body.data.attributes;
+
+      Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple checkout orders');
+        }
+        return Renting
+                .scope('orderItems', 'events', 'room+apartment')
+                .findById(ids[0]);
+      })
+      .then((renting) => {
+        if ( !renting.getCheckoutDate() || !renting.getComfortLevel() ) {
+          throw new Error(
+            'Checkout and housing pack are required to create checkout order'
+          );
+        }
+        return renting.findOrCreateCheckoutOrder();
+      })
+      .then(Utils.findOrCreateSuccessHandler(res, 'Checkout order'))
+      .catch(Utils.logAndSend(res));
+
+      return null;
+    });
+
+    app.post('/forest/actions/room-switch-order', LEA, (req, res) => {
+      const {ids, values} = req.body.data.attributes;
+
+      if ( values.discount != null ) {
+        values.discount *= 100;
+      }
+
+      Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple room switch orders');
+        }
+        return Renting.scope('orders', 'orderItems').findById(ids[0]);
+      })
+      .then((renting) => {
+        if ( !renting.getComfortLevel() ) {
+          throw new Error('Housing pack is required to create room switch order');
+        }
+        return renting.createRoomSwitchOrder(values);
+      })
+      .then(Utils.createSuccessHandler(res, 'Room switch order'))
+      .catch(Utils.logAndSend(res));
 
       return null;
     });

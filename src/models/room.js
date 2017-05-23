@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.STRING,
       unique: true,
     },
+    name:                       DataTypes.STRING,
     floorArea:                  DataTypes.FLOAT,
     basePrice:                  DataTypes.FLOAT,
     status: {
@@ -46,12 +47,25 @@ module.exports = (sequelize, DataTypes) => {
     Room.addScope('latestRenting', {
       attributes: { include: [
         [sequelize.col('Rentings.id'), 'latestRentingId'],
-        [sequelize.col('Rentings.checkoutDate'), 'latestCheckoutDate'],
+        [sequelize.col('Rentings->Events.startDate'), 'latestCheckoutDate'],
         [sequelize.fn('max', sequelize.col('Rentings.bookingDate')), 'latestBookingDate'],
       ]},
       include: [{
         model: models.Renting,
         attributes: [],
+        include: [{
+          model: models.Event,
+          attributes: [],
+          required: false,
+          include: [{
+            model: models.Term,
+            attributes: [],
+            where: {
+              taxonomy: 'event-category',
+              name: 'checkout',
+            },
+          }],
+        }],
       }],
       group: ['Room.id'],
     });

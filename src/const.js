@@ -1,4 +1,4 @@
-const config = require('./config');
+const config   = require('./config');
 
 module.exports = {
   TRASH_SEGMENTS: [{
@@ -49,12 +49,27 @@ module.exports = {
     },
   },
 
-  SPECIAL_CHECKIN_PRICE: 7500,
+  SPECIAL_CHECKIN_PRICE: 7900,
 
   SERVICE_FEES: {
     1: 5000, // 1 room
     2: 4000, // 2 rooms
     default: 3000, // 3 or more rooms
+  },
+
+  CHECKIN_DURATION: 30,
+  CHECKOUT_DURATION: 60,
+
+  LATE_NOTICE_FEES: {
+    '0-9days': 67900,
+    '10-19days': 47900,
+    '20-29days': 27900,
+  },
+
+  ROOM_SWITCH_PRICES: {
+    privilege: 0,
+    comfort: 19000,
+    basic: 29000,
   },
 
   RENT_COEFS: [

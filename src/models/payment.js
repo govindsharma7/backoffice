@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Payment.doRefund = (id, values) => {
+  Payment.paylineRefund = (id, values) => {
     const {Credit} = models;
 
     return Payment
@@ -81,7 +81,7 @@ module.exports = (sequelize, DataTypes) => {
 
           values.amount *= 100;
 
-          return Payment.doRefund(ids[0], values);
+          return Payment.paylineRefund(ids[0], values);
         })
         .then(() => {
           return res.send({success: 'Refund ok'});

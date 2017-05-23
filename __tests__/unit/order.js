@@ -36,6 +36,16 @@ describe('Order', () => {
     });
   });
 
+  describe('#getTotalRefund()', () => {
+    test('it should calculate the refund for one item', () => {
+      return order
+        .getTotalRefund()
+        .then((totalRefund) => {
+          return expect(totalRefund).toEqual(100);
+      });
+    });
+  });
+
   describe('#getCalculatedProps()', () => {
     test('it should calculate amount totalPaid and balance properties', () => {
       return order
