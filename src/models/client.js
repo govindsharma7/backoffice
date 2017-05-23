@@ -62,16 +62,16 @@ module.exports = (sequelize, DataTypes) => {
     Client.hasMany(models.Order);
 
     Client.addScope('roomSwitchCount', {
-      attributes: [
+      attributes: { include: [
         [fn('count', col('Orders.id')), 'roomSwitchCount'],
-      ],
+      ]},
       include: [{
         model: models.Order,
         attributes: ['id'],
         include: [{
           model: models.OrderItem,
           where: { ProductId: 'room-switch' },
-          attributes: ['id', 'productId'],
+          attributes: [],
         }],
       }],
       group: ['Client.id'],

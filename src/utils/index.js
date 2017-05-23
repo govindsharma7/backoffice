@@ -8,10 +8,11 @@ const {
 const getPackPrice                = require('./getPackPrice');
 const getPeriodPrice              = require('./getPeriodPrice');
 const getServiceFees              = require('./getServiceFees');
-const logAndSend                  = require('./logAndSend');
 const getCheckinoutDuration       = require('./getCheckinoutDuration');
 const getLateNoticeFees           = require('./getLateNoticeFees');
 const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
+const logAndSend                  = require('./logAndSend');
+const parseDBDate                 = require('./parseDBDate');
 
 module.exports = {
   createSuccessHandler,
@@ -22,8 +23,9 @@ module.exports = {
   getPackPrice,
   getPeriodPrice,
   getServiceFees,
-  logAndSend,
   getCheckinoutDuration,
   getLateNoticeFees,
   getRoomSwitchPrice,
+  logAndSend,
+  parseDBDate,
 };

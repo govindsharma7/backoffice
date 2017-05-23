@@ -1,3 +1,4 @@
+const D        = require('date-fns');
 const fixtures = require('./index');
 
 module.exports = fixtures((u) => {
@@ -32,7 +33,6 @@ module.exports = fixtures((u) => {
     Renting: [{
       id: u.id('renting-1'),
       bookingDate: '2015-01-20',
-      // checkoutDate: '2015-02-10',
       price: 20000,
       serviceFees: 3000,
       ClientId: u.id('client-1'),
@@ -48,15 +48,20 @@ module.exports = fixtures((u) => {
     }],
     Event: [{
       id: u.id('event-1'),
-      startDate: '2017-05-14',
+      startDate: D.parse('2017-05-14 Z'),
       endDate: '2017-05-16',
-      eventable: 'renting',
+      eventable: 'Renting',
       EventableId: u.id('renting-1'),
     }, {
       id: u.id('event-2'),
-      startDate: '2017-05-16',
+      startDate: D.parse('2015-02-10 Z'),
+      eventable: 'Renting',
+      EventableId: u.id('renting-1'),
+    }, {
+      id: u.id('event-3'),
+      startDate: D.parse('2015-03-28 Z'),
       endDate: '2017-05-16',
-      eventable: 'renting',
+      eventable: 'Renting',
       EventableId: u.id('renting-2'),
     }],
     Term: [{
@@ -69,6 +74,11 @@ module.exports = fixtures((u) => {
       taxonomy: 'event-category',
       termable: 'Event',
       TermableId: u.id('event-2'),
+    }, {
+      name: 'checkout',
+      taxonomy: 'event-category',
+      termable: 'Event',
+      TermableId: u.id('event-3'),
     }],
   };
 });

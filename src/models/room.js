@@ -55,9 +55,11 @@ module.exports = (sequelize, DataTypes) => {
         attributes: [],
         include: [{
           model: models.Event,
+          attributes: [],
           required: false,
           include: [{
             model: models.Term,
+            attributes: [],
             where: {
               taxonomy: 'event-category',
               name: 'checkout',

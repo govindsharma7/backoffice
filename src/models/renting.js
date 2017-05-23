@@ -4,6 +4,16 @@ const Liana          = require('forest-express-sequelize');
 const Utils          = require('../utils');
 const {TRASH_SCOPES} = require('../const');
 
+function checkinoutDateGetter(type) {
+  return function() {
+    /* eslint-disable no-invalid-this */
+    const date = this.dataValues[`${type}Date`];
+    /* eslint-enable no-invalid-this */
+
+    return date != null ? Utils.parseDBDate(date) : date;
+  };
+}
+
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
   const Renting = sequelize.define('Renting', {
@@ -29,9 +39,17 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
     },
     status: {
-      type:                   DataTypes.ENUM('draft', 'active'),
+      type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+    },
+    checkinDate: {
+      type:                     DataTypes.VIRTUAL,
+      get: checkinoutDateGetter('checkin'),
+    },
+    checkoutDate: {
+      type:                     DataTypes.VIRTUAL,
+      get: checkinoutDateGetter('checkout'),
     },
   }, {
     paranoid: true,
@@ -50,9 +68,9 @@ module.exports = (sequelize, DataTypes) => {
 
     const checkinoutDateScope = (type) => {
       return {
-        attributes: [
+        attributes: { include: [
           [sequelize.col('Events.startDate'), `${type}Date`],
-        ],
+        ]},
         include: [{
           model: models.Event,
           required: false,
@@ -124,7 +142,7 @@ module.exports = (sequelize, DataTypes) => {
     const daysInMonth = D.getDaysInMonth(date);
     const startOfMonth = D.startOfMonth(date);
     const endOfMonth = D.endOfMonth(date);
-    var daysStayed = daysInMonth;
+    let daysStayed = daysInMonth;
 
     if (
       this.bookingDate > endOfMonth ||
@@ -409,7 +427,7 @@ tel: ${phoneNumber}`,
             throw new Error('Can\'t create multiple rent orders');
           }
 
-          return Renting.scope('room+apartment').findById(ids[0]);
+          return Renting.scope('room+apartment', 'checkoutDate').findById(ids[0]);
         })
         .then((renting) => {
           return renting.createOrder();

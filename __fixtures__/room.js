@@ -73,27 +73,27 @@ module.exports = fixtures((u) => {
     Event: [{
       id: u.id('event-1'),
       startDate: '2016-01-20',
-      eventable: 'renting',
+      eventable: 'Renting',
       EventableId: u.id('renting-1'),
     }, {
       id: u.id('event-2'),
       startDate: '2015-01-20',
-      eventable: 'renting',
+      eventable: 'Renting',
       EventableId: u.id('renting-2'),
     }, {
       id: u.id('event-3'),
       startDate: '2017-01-20',
-      eventable: 'renting',
+      eventable: 'Renting',
       EventableId: u.id('renting-3'),
     }, {
       id: u.id('event-4'),
       startDate: '2016-02-20',
-      eventable: 'renting',
+      eventable: 'Renting',
       EventableId: u.id('renting-4'),
     }, {
       id: u.id('event-5'),
       startDate: '2015-01-20',
-      eventable: 'renting',
+      eventable: 'Renting',
       EventableId: u.id('renting-5'),
     }],
     Term: [{
