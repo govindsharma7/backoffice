@@ -15,10 +15,6 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.UUID,
       defaultValue:             DataTypes.UUIDV4,
     },
-    summary: {
-      type:                     DataTypes.STRING,
-      required: true,
-    },
     startDate: {
       type:                     DataTypes.DATE,
       required: true,
@@ -27,13 +23,17 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.DATE,
       required: false,
     },
+    summary: {
+      type:                     DataTypes.STRING,
+      required: false,
+    },
     description:  {
       type:                     DataTypes.STRING,
       required: false,
     },
     googleEventId: {
       type:                     DataTypes.STRING,
-      required: true,
+      required: false,
     },
     eventable: {
       type:                     DataTypes.STRING,

@@ -68,6 +68,43 @@ return models.sequelize.sync({ force: true })
       return {model, records};
     });
 
+    const eventsTuple = {
+      model: 'Event',
+      records: [],
+    };
+    const termsTuple = {
+      model: 'Term',
+      records: [],
+    };
+
+    (tuples.find(({model}) => {
+      return model === 'Renting';
+    })).records.forEach((record) => {
+      record.id = `${record.ClientId}-${record.RoomId}`;
+
+      if ( record.checkoutDate == null ) {
+        return;
+      }
+
+      const eventId = `${record.id}>checkout`;
+
+      eventsTuple.records.push({
+        id: eventId,
+        startDate: record.checkoutDate,
+        eventable: 'Renting',
+        EventableId: record.id,
+      });
+
+      termsTuple.records.push({
+        taxonomy: 'event-category',
+        name: 'checkout',
+        TermableId: eventId,
+        termable: 'Event',
+      });
+    });
+
+    tuples.push(eventsTuple, termsTuple);
+
     return Promise.reduce(tuples, (prev, {model, records}) => {
       return Promise.resolve(records)
         .then((records) => {

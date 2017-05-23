@@ -5,13 +5,16 @@ const Utils                 = require('../utils');
 const {TRASH_SCOPES}        = require('../const');
 const {GOOGLE_CALENDAR_IDS} = require('../config');
 
+// TODO: for some reason sqlite seems to return a date in a strange format
+// find out why and fix this.
 function checkinoutDateGetter(type) {
   return function() {
     /* eslint-disable no-invalid-this */
     const date = this.dataValues[`${type}Date`];
     /* eslint-enable no-invalid-this */
 
-    return date != null ? Utils.parseDBDate(date) : date;
+    return date == null || typeof date == 'object' ?
+      date : Utils.parseDBDate(date);
   };
 }
 

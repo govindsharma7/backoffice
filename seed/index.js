@@ -2,7 +2,7 @@ module.exports = {
   Setting: [{
     id: 'invoice-counter',
     type: 'int',
-    value: 0,
+    value: 3773,
   }],
   Product: [{
     id: 'service-fees',
