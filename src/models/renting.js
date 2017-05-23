@@ -1,15 +1,9 @@
-const Promise        = require('bluebird');
-const D              = require('date-fns');
-const Liana          = require('forest-express-sequelize');
-const Utils          = require('../utils');
-const {
-  TRASH_SCOPES,
-  CHECKIN_DURATION,
-  CHECKOUT_DURATION,
-}                    = require('../const');
-const {
-  GOOGLE_CALENDAR_IDS,
-}                    = require('../config');
+const Promise               = require('bluebird');
+const D                     = require('date-fns');
+const Liana                 = require('forest-express-sequelize');
+const Utils                 = require('../utils');
+const {TRASH_SCOPES}        = require('../const');
+const {GOOGLE_CALENDAR_IDS} = require('../config');
 
 function checkinoutDateGetter(type) {
   return function() {
@@ -354,41 +348,39 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Renting.findOrCreateCheckinout = function (type) {
-    const duration = type === 'checkin' ? CHECKIN_DURATION : CHECKOUT_DURATION;
-
-    return function(date, options) {
+    return function(startDate, options) {
       const {Event, Term} = models;
       /*eslint-disable no-invalid-this */
       const {firstName, lastName, phoneNumber} = this.Client;
 
-      return Event
-        .findOrCreate(Object.assign({
-          where: {
-            EventableId: this.id,
-          },
-          include: [{
-            model: Term,
+      return Utils[`getC${type.substr(1)}EndDate`](startDate, type)
+        .then((endDate) => {
+          return Event.findOrCreate(Object.assign({
             where: {
-              name: type,
+              EventableId: this.id,
             },
-          }],
-          defaults: {
-            startDate: date,
-            //a checkout average a time of  1 hour
-            endDate: D.addMinutes(date, duration),
-            description: `${firstName} ${lastName},
-${this.Room.name},
-tel: ${phoneNumber}`,
-            eventable: 'Renting',
-            EventableId: this.id,
-            Terms: [{
-              name: 'checkout',
-              taxonomy: 'event-category',
+            include: [{
+              model: Term,
+              where: {
+                name: type,
+              },
             }],
-          },
-        }, options));
+            defaults: {
+              startDate,
+              endDate,
+              description: `${firstName} ${lastName},
+  ${this.Room.name},
+  tel: ${phoneNumber}`,
+              eventable: 'Renting',
+              EventableId: this.id,
+              Terms: [{
+                name: 'checkout',
+                taxonomy: 'event-category',
+              }],
+            },
+          }, options));
+        });
       /*eslint-enable no-invalid-this */
-
     };
   };
 

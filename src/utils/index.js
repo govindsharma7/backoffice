@@ -8,7 +8,10 @@ const {
 const getPackPrice                = require('./getPackPrice');
 const getPeriodPrice              = require('./getPeriodPrice');
 const getServiceFees              = require('./getServiceFees');
-const getCheckinoutDuration       = require('./getCheckinoutDuration');
+const {
+  getCheckinEndDate,
+  getCheckoutEndDate,
+}                                 = require('./getCheckinoutEndDate');
 const getLateNoticeFees           = require('./getLateNoticeFees');
 const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
 const logAndSend                  = require('./logAndSend');
@@ -23,7 +26,8 @@ module.exports = {
   getPackPrice,
   getPeriodPrice,
   getServiceFees,
-  getCheckinoutDuration,
+  getCheckinEndDate,
+  getCheckoutEndDate,
   getLateNoticeFees,
   getRoomSwitchPrice,
   logAndSend,
