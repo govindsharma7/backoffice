@@ -42,6 +42,54 @@ describe('Renting', () => {
     });
   });
 
+  describe('#getComfortLevel()', () => {
+    test('it should return the comfort level of the housing pack', () => {
+      return Renting.scope('orderItems', 'events', 'room+apartment')
+        .findById(renting1.id)
+        .then((renting) => {
+          return renting.getComfortLevel();
+        })
+        .then((comfortLevel) => {
+          return expect(comfortLevel).toEqual('privilege');
+        });
+    });
+
+    test('it should return null when there is no housing pack', () => {
+      return Renting.scope('orderItems', 'events', 'room+apartment')
+        .findById(renting2.id)
+        .then((renting) => {
+          return renting.getComfortLevel();
+        })
+        .then((comfortLevel) => {
+          return expect(comfortLevel).toBeNull();
+        });
+    });
+  });
+
+  describe('#findOrCreateCheckin()', () => {
+    test('It should\'nt create a checkin event as it already exists', () => {
+      return Renting.scope('room+apartment', 'events', 'client')
+        .findById(renting1.id)
+        .then((renting) => {
+          return renting.findOrCreateCheckin('2017-05-16 Z', {hooks:false});
+        })
+        .then((result) => {
+          return expect(result[1]).toEqual(false);
+        });
+    });
+
+    test('It should create a checkin event', () => {
+      return Renting.scope('room+apartment', 'events', 'client')
+        .findById(renting2.id)
+        .then((renting) => {
+          return renting.findOrCreateCheckin('2017-05-16 Z', {hooks:false});
+        })
+        .then((result) => {
+          return expect(result[1]).toEqual(true);
+        });
+    });
+  });
+
   describe('#prorate()', () => {
     test('it calculates the prorated price and service fees', () => {
       const scoped = Renting.scope('checkoutDate');
@@ -76,4 +124,5 @@ describe('Renting', () => {
         });
     });
   });
+
 });

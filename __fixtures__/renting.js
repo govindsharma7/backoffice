@@ -80,5 +80,11 @@ module.exports = fixtures((u) => {
       termable: 'Event',
       TermableId: u.id('event-3'),
     }],
+    OrderItem: [{
+      id: u.id('orderItem-1'),
+      label: 'Housing pack',
+      ProductId: 'privilege-pack',
+      RentingId: u.id('renting-1'),
+    }],
   };
 });

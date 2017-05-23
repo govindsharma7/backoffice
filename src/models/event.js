@@ -155,9 +155,11 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Event.hook('afterCreate', (event) => {
+    console.log(event.id);
     return Event.scope('client+apartment')
       .findById(event.id)
       .then((result) => {
+      console.log(result);
         return result.googleCreate();
       });
   });

@@ -2,7 +2,9 @@ const Promise        = require('bluebird');
 const D              = require('date-fns');
 const Liana          = require('forest-express-sequelize');
 const Utils          = require('../utils');
-const {TRASH_SCOPES} = require('../const');
+const {TRASH_SCOPES,
+      CHECKIN_DURATION,
+      CHECKOUT_DURATION} = require('../const');
 
 function checkinoutDateGetter(type) {
   return function() {
@@ -346,56 +348,48 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  // TODO: this broken!
-  // Write tests, fix and refactor with #findOrCreateCheckin
-  Renting.prototype.findOrCreateCheckout = function({plannedDate}) {
-    const {Event} = models;
-    const {firstName, lastName, phoneNumber} = this.Client;
+  Renting.findOrCreateCheckinout = function (type) {
+    const duration = type === 'checkin' ? CHECKIN_DURATION : CHECKOUT_DURATION;
 
-    return Event
-      .findOrCreate({
-        where: {
-          EventableId: this.id,
-          type: 'checkout',
-        },
-        defaults: {
-          startDate: plannedDate,
-          //a checkout average a time of  1 hour
-          endDate: D.addHours(plannedDate, 1),
-          description: `${firstName} ${lastName},
-${this.Room.name},
-tel: ${phoneNumber}`,
-          eventable: 'Renting',
-          EventableId: this.id,
-          Terms: [{
-            name: 'checkout',
-            taxonomy: 'event-category',
+    return function(date, options) {
+      const {Event, Term} = models;
+      /*eslint-disable no-invalid-this */
+      const {firstName, lastName, phoneNumber} = this.Client;
+
+      return Event
+        .findOrCreate(Object.assign({
+          where: {
+            EventableId: this.id,
+          },
+          include: [{
+            model: Term,
+            where: {
+              name: type,
+            },
           }],
-        },
-      });
-  };
-
-  Renting.prototype.findOrCreateCheckin = function({plannedDate}) {
-    const {Event} = models;
-    const {firstName, lastName, phoneNumber} = this.Client;
-
-    return Event
-      .findOrCreate({
-        where: {
-          EventableId: this.id,
-        },
-        defaults: {
-          startDate: plannedDate,
-          //a checkin average a time of 30 minutes
-          endDate: D.addMinutes(plannedDate, 30),
-          description: `${firstName} ${lastName},
+          defaults: {
+            startDate: date,
+            //a checkout average a time of  1 hour
+            endDate: D.addMinutes(date, duration),
+            description: `${firstName} ${lastName},
 ${this.Room.name},
 tel: ${phoneNumber}`,
-          eventable: 'Renting',
-          EventableId: this.id,
-        },
-      });
+            eventable: 'Renting',
+            EventableId: this.id,
+            Terms: [{
+              name: 'checkout',
+              taxonomy: 'event-category',
+            }],
+          },
+        }, options));
+      /*eslint-enable no-invalid-this */
+
+    };
   };
+
+  Renting.prototype.findOrCreateCheckout = Renting.findOrCreateCheckinout('checkout');
+
+  Renting.prototype.findOrCreateCheckin = Renting.findOrCreateCheckinout('checkin');
 
   Renting.hook('beforeValidate', (renting) => {
     // Only calculate the price and fees once!
@@ -484,7 +478,7 @@ tel: ${phoneNumber}`,
         return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
       })
       .then((renting) => {
-        return renting.findOrCreateCheckout(values);
+        return renting.findOrCreateCheckout(values.plannedDate);
       })
       .then(Utils.findOrCreateSuccessHandler(res, 'Checkout event'))
       .catch(Utils.logAndSend(res));
@@ -506,7 +500,7 @@ tel: ${phoneNumber}`,
         return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
       })
       .then((renting) => {
-        return renting.findOrCreateCheckin(values);
+        return renting.findOrCreateCheckin(values.plannedDate);
       })
       .then(Utils.findOrCreateSuccessHandler(res, 'Checkin event'))
       .catch(Utils.logAndSend(res));
