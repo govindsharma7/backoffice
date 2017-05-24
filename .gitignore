@@ -31,3 +31,4 @@ node_modules
 
 # secrets
 .env-cmdrc
+.env-cmdrc.js
