@@ -30,5 +30,4 @@ build/Release
 node_modules
 
 # secrets
-.env-cmdrc
-.env-cmdrc.js
+.env.js

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-travis encrypt-file .env-cmdrc.js --force \
-  && git add .env-cmdrc.js.enc;
+travis encrypt-file .env.js --force \
+  && git add .env.js.enc;

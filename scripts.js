@@ -1,10 +1,3 @@
-const env = {
-  test: 'env-cmd test',
-  dev: 'env-cmd development',
-  prod: 'env-cmd production',
-  staging: 'env-cmd staging',
-};
-
 const flags = process.argv.filter((flag) => {
   return /^--?\w/.test(flag);
 }).join(' ');
@@ -12,56 +5,72 @@ const flags = process.argv.filter((flag) => {
 const sequelizeFlags =
   '--config src/cli-config --models-path src/models';
 const sequelizeMigrationCreate =
-  `sequelize migration:create ${sequelizeFlags}`;
+  `sequelize migration:create ${sequelizeFlags} --env $NODE_ENV`;
 
-const entryPoint = 'src/index.js';
-const nodemonInspect =
-  `nodemon --watch src --watch forest --watch __tests__ --inspect ${entryPoint}`;
+const watched = '--watch src --watch forest --watch __tests__';
+const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
 
 const dbSync = 'node scripts/dbSync.js';
 const dbSeed = 'node scripts/dbSeed.js';
 const dbReset = 'node scripts/dbReset.js';
 const dbFixture = 'node scripts/dbFixture.js';
 const createCalendar = 'node scripts/createCalendar.js';
+const extractClients = 'node scripts/extractInvoiceninja.js > data/clients.json';
+const extractPortfolio = 'node scripts/extractWordpress.js > tmp/portfolio.json';
+const generateInvoices = 'node scripts/generateRentingInvoices.js';
 
 const lint = 'eslint .';
 const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
-const claudiaUpdate = 'claudia update --use-local-dependencies';
+const claudiaUpdate =
+  'claudia update --use-local-dependencies --config claudia.$NODE_ENV.json';
 
-module.exports = {
-  'lint': `${lint} ${flags}`,
-  'test': `${lint} && ${env.test} ${dbReset} && ${env.test} ${unitTest}`,
-  'test:watch': `${env.test} ${dbReset} && ${env.test} ${unitTest} --watch`,
-  'test:integration': `${env.test} ${dbReset} && ${env.test} ${intTest}`,
-  'test:full': `${lint} && ${env.test} ${dbReset} && ${env.test} jest`,
-
-  'extract:clients':
-    `${env.prod} node scripts/extractInvoiceninja.js > data/clients.json`,
-  'extract:portfolio':
-    `${env.prod} node scripts/extractWordpress.js > tmp/portfolio.json`,
-  'generate:invoices':
-    `${env.prod} node scripts/generateRentingInvoices.js`,
-
-  'dev:start': `${env.dev} ${nodemonInspect}`,
-  'dev:sql:migration:create':
-    `${env.dev} ${sequelizeMigrationCreate} --env devlopment`,
-  'dev:db:sync': `${env.dev} ${dbSync}`,
-  'dev:db:seed': `${env.dev} ${dbSeed}`,
-  'dev:db:fixture': `${env.dev} ${dbFixture}`,
-  'dev:create:calendar': `${env.dev} ${createCalendar}`,
-
-  'stag:start': `${env.staging} ${nodemonInspect}`,
-  'stag:sql:migration:create':
-    `${env.staging} ${sequelizeMigrationCreate} --env staging`,
-  'stag:db:sync': `${env.staging} ${dbSync}`,
-  'stag:db:fixture': `${env.staging} ${dbFixture} ${flags}`,
-  'stag:deploy': `${env.staging} ${claudiaUpdate} --config claudia.stag.json`,
-
-  'prod:db:fixture': `${env.prod} ${dbFixture} ${flags}`,
-  'prod:deploy': `${env.prod} ${claudiaUpdate}`,
+const common = {
+  'start': nodemonInspect,
+  'sql:migration:create': sequelizeMigrationCreate,
+  'db:sync': dbSync,
+  'db:seed': dbSeed,
+  'db:fixture': dbFixture,
+  'deploy': claudiaUpdate,
+  'create:calendar': createCalendar,
+  'extract:clients': extractClients,
+  'extract:portfolio': extractPortfolio,
+  'generate:invoices': generateInvoices,
 };
+
+const tests = {
+  'lint': [lint],
+  'test': [lint, dbReset, unitTest],
+  'test:watch': [dbReset, `${unitTest} --watch`],
+  'test:integration': [dbReset, intTest],
+  'test:full': [lint, dbReset, 'jest'],
+};
+
+module.exports = Object.assign(
+  {},
+  envify(tests, 'test'),
+  envify(common, 'development', 'dev'),
+  envify(common, 'staging', 'stag'),
+  envify(common, 'production', 'prod')
+);
+
+function envify(scripts, NODE_ENV, prefix) {
+  const results = {};
+
+  for (let scriptName in scripts) {
+    let cmds = scripts[scriptName];
+    let result = [];
+
+    (Array.isArray(cmds) ? cmds : [cmds]).forEach((cmd) => {
+      result.push(`cross-env NODE_ENV=${NODE_ENV} env-cmd ./.env.js ${cmd} ${flags}`);
+    });
+
+    results[prefix ? `${prefix}:${scriptName}` : scriptName] = result.join(' && ');
+  }
+
+  return results;
+}
 
 // To create a new deploying environment, run:
 // claudia create --handler=src/lambda.handler --role=chez-nestor_com-executor \
