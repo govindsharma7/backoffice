@@ -4,8 +4,9 @@ const flags = process.argv.filter((flag) => {
 
 const sequelizeFlags =
   '--config src/cli-config --models-path src/models';
+// TODO: that --env flag doesn't work
 const sequelizeMigrationCreate =
-  `sequelize migration:create ${sequelizeFlags} --env $NODE_ENV`;
+  `sequelize migration:create ${sequelizeFlags} --env \${NODE_ENV}`;
 
 const watched = '--watch src --watch forest --watch __tests__';
 const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
@@ -23,8 +24,7 @@ const lint = 'eslint .';
 const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
-const claudiaUpdate =
-  'claudia update --use-local-dependencies --config claudia.$NODE_ENV.json';
+const claudiaUpdate = 'claudia update --use-local-dependencies';
 
 const common = {
   'start': nodemonInspect,
@@ -55,7 +55,7 @@ module.exports = Object.assign(
   envify(common, 'production', 'prod')
 );
 
-function envify(scripts, NODE_ENV, prefix) {
+function envify(scripts, targetEnv, prefix) {
   const results = {};
 
   for (let scriptName in scripts) {
@@ -63,7 +63,7 @@ function envify(scripts, NODE_ENV, prefix) {
     let result = [];
 
     (Array.isArray(cmds) ? cmds : [cmds]).forEach((cmd) => {
-      result.push(`cross-env NODE_ENV=${NODE_ENV} env-cmd ./.env.js ${cmd} ${flags}`);
+      result.push(`cross-env NODE_ENV=${targetEnv} env-cmd ./.env.js ${cmd} ${flags}`);
     });
 
     results[prefix ? `${prefix}:${scriptName}` : scriptName] = result.join(' && ');
