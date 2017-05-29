@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     termable: {
       type:                     DataTypes.STRING,
       required: true,
+      allowNull: false,
     },
   });
   const {models} = sequelize;

@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+      allowNull: false,
     },
     latestBookingDate: {
       type:                     DataTypes.VIRTUAL,

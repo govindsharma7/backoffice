@@ -1,0 +1,256 @@
+<!--HTML TEMPLATE-->
+<style>
+  #container {
+    width: inherit;
+    position: absolute;
+    margin-left: 3%;
+    margin-top: 3%;
+  }
+
+  #bold {
+    font-weight: bold;
+  }
+
+  #phoneNumber {
+    width: 400px;
+  }
+
+  #bodysms {
+    width: 400px;
+    height: 140px;
+    color: #536579;
+  }
+
+  #send {
+    background: #425060;
+    color: white;
+    border-radius: 25px;
+    border: 0;
+    outline: none;
+    width: 65px;
+    height: 20px;
+  }
+
+  #send:active {
+    background: #3ea065;
+  }
+
+  .sending.success {
+    color: #3ea065;
+  }
+
+  .error.Message,
+  .sending.error {
+    color: rgba(217, 19, 19, 0.94);
+  }
+
+  #remainingChar {
+    color: #8798AC;
+    font-size: 12px;
+    font-weight: bolder;
+    text-align: right;
+    margin-top: 1px;
+  }
+
+  .sending {
+    margin-top: 5px;
+  }
+
+  #field {
+    text-decoration: underline;
+  }
+
+</style>
+
+<div id="container">
+  <h1 class="c-clr-1-1 l-dmr">Message</h1>
+  <br/>
+  <textarea name="body" id="bodysms" placeholder="The body of the message. Up to 160 characters." value="totot"></textarea><br/>
+  <p id="remainingChar">
+    Remaining characters : <span id="charLeft">160</span>
+  </p>
+  <input type="submit" id="send" value="Send SMS" />
+
+</div>
+
+<div style='display:none'>
+  {{#each records as |record|}}
+  <div>{{record.forest-id}}</div>
+  {{/each}}
+</div>
+
+
+<!--END OF HTML TEMPLATE-->
+
+
+<script>
+  //START OF JAVASCRIPT
+  'use strict';
+  import Ember from 'ember';
+  export default Ember.Component.extend({
+    router: Ember.inject.service('-routing'),
+    lianaSession: Ember.inject.service('liana-session'),
+    loaded: false,
+    loadPlugin: function() {
+      $('#container').height($('.l-content').height() - 40);
+      var that = this;
+      Ember.run.scheduleOnce('afterRender', this, function() {
+        Ember.$.getScript('https://code.jquery.com/jquery-3.2.1.min.js', function() {
+          that.set('loaded', true);
+        });
+      });
+    }.on('init'),
+    sendSms: function() {
+      var that = this;
+      (function($) {
+        function isGSM(text) {
+
+          var invalidChar = [];
+          var i = 0;
+          //Code of GSM char encoded on 1 Byte
+          const gsmCharCodes = [
+            10, 13, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44,
+            45, 46, 47, 48, 49, 50, 51, 52,
+            53, 54, 55, 56, 57, 58, 59, 60,
+            61, 62, 63, 64, 65, 66, 67, 68,
+            69, 70, 71, 72, 73, 74, 75, 76,
+            77, 78, 79, 80, 81, 82, 83, 84,
+            85, 86, 87, 88, 89, 90, 95, 97,
+            98, 99, 100, 101, 102, 103, 104,
+            105, 106, 107, 108, 109, 110, 111,
+            112, 113, 114, 115, 116, 117, 118,
+            119, 120, 121, 122, 161, 163, 164,
+            165, 167, 191, 196, 197, 198, 199,
+            201, 209, 214, 216, 220, 223, 224,
+            228, 229, 230, 232, 233, 236, 241,
+            242, 246, 248, 249, 252, 915, 916,
+            920, 923, 926, 928, 931, 934, 936,
+            937
+          ];
+          //Code of GSM char encoded on 2 Bytes
+          const gsmExtendCharCodes = [12, 91, 92, 93, 94, 123, 124, 125, 126, 8364];
+
+
+
+          while (text[i]) {
+            // Get code of each characters
+            let code = (text[i].charCodeAt(0));
+            //Check if a 1 byte encoded character
+
+
+            if (gsmCharCodes.indexOf(code) !== -1) {
+              $('#charLeft').text(Number($('#charLeft').text()) - 1);
+              if (Number($('#charLeft').text()) < 0) {
+                text = text.slice(0, i);
+                $('#bodysms').val(text);
+                $('#charLeft').text(Number($('#charLeft').text()) + 1);
+                break;
+              }
+              i++;
+            }
+            //Check if a 2 bytes encoded character
+            else if (gsmExtendCharCodes.indexOf(code) !== -1) {
+              $('#charLeft').text(Number($('#charLeft').text()) - 2);
+              //Decrease maxlength because special character encoded on 2 bytes
+              $('#bodysms').attr('maxlength', $('#bodysms').attr('maxlength') - 1);
+              if (Number($('#charLeft').text()) < 0) {
+
+                text = text.slice(0, i);
+                console.log(text);
+                $('#bodysms').val(text);
+                console.log(Number($('#charLeft').text()));
+                $('#charLeft').text(Number($('#charLeft').text()) + 2);
+                console.log(Number($('#charLeft').text()));
+                break;
+              }
+              i++;
+            }
+            //Non GSM character
+            else {
+              invalidChar.push({
+                character: text[i],
+                position: i + 1,
+              });
+              i++;
+            }
+          }
+          if ($('.error.Message')) {
+            $('.error.Message').remove();
+          }
+          //Display an error message whith invalid character and its position in the message
+          invalidChar.forEach((character) => {
+            $('#container')
+              .append(`<p class='error Message'>Invalid <span id='field'>GSM character
+</span> <span id='bold'>${character.character}</span> at position: <span id='bold'>
+${character.position}</span></p>`);
+          });
+        }
+        $(document).ready(() => {
+          var apartmentId = [];
+          that.get('records').forEach(function(record) {
+            if (record.isSelected === true) {
+              apartmentId.push(record.get('id'));
+            }
+          })
+          if (apartmentId.length != 1) {
+            $('#send').after('<p class=\'sending error\'>You have to select one apartment!</p>');
+            $("#send").attr("disabled", true);
+            throw new Error("You have to select one apartment!");
+          }
+          $('#bodysms').on('input', function() {
+            $('.sending').remove();
+            $('#charLeft').text(160);
+            $('#bodysms').attr('maxlength', 160);
+            isGSM($('#bodysms').val());
+          });
+          $('#send').on('click', function() {
+            $("#send").attr("disabled", true);
+            if ($('.error.Message').length) {
+              $('.sending').remove();
+              $('#send').after('<p class=\'sending error\'>' +
+                'Unable to send this message due to an error</p>');
+              $("#send").attr("disabled", false);
+
+            } else if (!$('#bodysms').val().trim()) {
+              $('.sending').remove();
+              $('#send').after('<p class=\'sending error\'>Canno\'t send an empty SMS!</p>');
+              $("#send").attr("disabled", false);
+
+            } else {
+              var url = `${that.get('collection.rendering.environment.apiEndpoint')}/forest/actions/send-sms`;
+              var auth = that.get('lianaSession.authToken');
+
+              $.post({
+                url: url,
+                headers: {
+                  'Authorization': `Bearer ${auth}`,
+                },
+                data: {
+                  data: {
+                    attributes: {
+                      collection_name: 'Apartment',
+                      ids: apartmentId,
+                      values: {
+                        bodySms: $('#bodysms').val()
+                      }
+                    },
+                  },
+                  type: 'custom-action-requests'
+                },
+                success: function(response) {
+                  $('#send').after(`<p class='sending success'>${response.success}</p>`);
+                },
+                error: function() {
+                  $('#send').after('<p class=\'sending error\'>Internal Server Error</p>');
+                }
+              });
+            }
+          })
+        })
+      })(jQuery);
+    }.observes('loaded')
+  });
+  //  END OF JAVASCRIPT TEMPLATE
+
+</script>

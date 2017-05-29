@@ -2,6 +2,7 @@ const Calendar              = require('googleapis').calendar('v3');
 const Promise               = require('bluebird');
 const {TRASH_SCOPES}        = require('../const');
 const jwtClient             = require('../vendor/googlecalendar');
+const Utils                 = require('../utils');
 
 const eventsInsert = Promise.promisify(Calendar.events.insert);
 const eventsUpdate = Promise.promisify(Calendar.events.update);
@@ -18,10 +19,12 @@ module.exports = (sequelize, DataTypes) => {
     startDate: {
       type:                     DataTypes.DATE,
       required: true,
+      allowNull: false,
     },
     endDate: {
       type:                     DataTypes.DATE,
-      required: false,
+      required: true,
+      allowNull: false,
     },
     summary: {
       type:                     DataTypes.STRING,
@@ -38,14 +41,17 @@ module.exports = (sequelize, DataTypes) => {
     eventable: {
       type:                     DataTypes.STRING,
       required: true,
+      allowNull: false,
     },
     EventableId: {
       type:                     DataTypes.STRING,
       required: true,
+      allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
+      allowNull: false,
       defaultValue: 'active',
     },
   }, {
@@ -76,12 +82,12 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Event.prototype.googleSerialize = function() {
+  Event.prototype.googleSerialize = function(options) {
     const {eventable} = this;
 
     return Promise.all([
         models[eventable].scope(`eventable${eventable}`).findById(this.EventableId),
-        Event.scope('event-category').findById(this.id),
+        Event.scope('event-category').findById(this.id, options),
       ])
       .then(([eventableInstance, event]) => {
         return eventableInstance.googleSerialize(event);
@@ -101,16 +107,16 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Event.prototype.googleCreate = function() {
+  Event.prototype.googleCreate = function(options) {
     return this
-      .googleSerialize()
+      .googleSerialize(options)
       .then((serialized) => {
         return eventsInsert(serialized);
       })
-      .tap((googleEvent) => {
+      .then((googleEvent) => {
         return this
           .set('googleEventId', googleEvent.id)
-          .save({hooks: false});
+          .save(Object.assign({}, options, {hooks: false}));
       });
   };
 
@@ -130,24 +136,24 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Event.hook('afterCreate', (event) => {
-    return event.googleCreate();
+  Event.hook('afterCreate', (event, options) => {
+    return Utils.wrapHookPromise(event.googleCreate(options));
   });
 
   Event.hook('afterUpdate', (event) => {
-    if ( event.googleEventId == null ) {
-      return true;
+    if ( event.googleEventId != null ) {
+      return Utils.wrapHookPromise(event.googleUpdate());
     }
 
-    return event.googleUpdate();
+    return true;
   });
 
   Event.hook('afterDelete', (event) => {
-    if ( event.googleEventId == null ) {
-      return true;
+    if ( event.googleEventId != null ) {
+    return Utils.wrapHookPromise(event.googleDelete());
     }
 
-    return event.googleDelete();
+    return true;
   });
 
   return Event;

@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('str', 'int'),
       required: true,
       defaultValue: 'str',
+      allowNull: false,
     },
     value: {
       type:                     DataTypes.VIRTUAL,

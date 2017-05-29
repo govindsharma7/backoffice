@@ -1,4 +1,4 @@
-<!--EMBER HTML TEMPLATE-->
+<!--HTML TEMPLATE-->
 
   <style>
   #canvas { width: 100%; }
@@ -22,11 +22,11 @@ numberOfPages=numberOfPages fetchRecords="fetchRecords"}}
 
 <!--END OF HTML TEMPLATE-->
 
-<!--JAVASCRIPT TO DISPLAY APARTMENT ON GOOGLE MAP-->
+<script>
 
+  //JAVASCRIPT TO DISPLAY APARTMENT ON GOOGLE MAP
 'use strict';
 import Ember from 'ember';
-
 export default Ember.Component.extend({
   tagName: '',
   router: Ember.inject.service('-routing'),
@@ -35,28 +35,23 @@ export default Ember.Component.extend({
     var markers = [];
     $('#canvas').height($('.l-content').height() - 40);
 		var bound = new google.maps.LatLngBounds();
-
     this.get('records').forEach(function (record) {
       var split = record.get('forest-latLng').split(',');
       markers.push([split[0], split[1], record.get('id')]);
       bound.extend(new window.google.maps.LatLng(split[0], split[1]));
     });
-
     var geocoder = new window.google.maps.Geocoder();
     var myOptions = {
       zoom: 8,
       center: bound.getCenter(),
       mapTypeId: 'roadmap'
     };
-
     this.map = new window.google.maps.Map(
       window.document.getElementById('canvas'), myOptions);
-
     this.addMarker(markers);
   }.observes('records.[]').on('didInsertElement'),
   addMarker: function (markers) {
     var that = this;
-
     markers.forEach(function (marker) {
       var lat = parseFloat(marker[0]);
       var lng = parseFloat(marker[1]);
@@ -67,7 +62,6 @@ export default Ember.Component.extend({
         that.get('collection.displayFieldWithNamespace'))
       	|| record.get('forest-name')
       	|| record.get('id');
-
       var infowindow = new window.google.maps.InfoWindow({
         content: '<strong>' + that.get('collection.displayName') +
           '</strong><p>' + displayValue + '</p>'
@@ -76,17 +70,14 @@ export default Ember.Component.extend({
         position: myLatlng,
         map: that.get('map')
       });
-
       markerObj.addListener('click', function () {
         that.get('router')
           .transitionTo('rendering.data.collection.list.viewEdit.details',
             [that.get('collection.id'), recordId]);
       });
-
       markerObj.addListener('mouseover', function () {
         infowindow.open(that.get('map'), this);
       });
-
       markerObj.addListener('mouseout', function () {
         infowindow.close();
       });
@@ -103,5 +94,5 @@ export default Ember.Component.extend({
     }
   }
 });
-
-<!--END OF JAVACRIPT-->
+//END OF JAVACRIPT
+</script>

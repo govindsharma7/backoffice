@@ -12,7 +12,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     label: {
       type:                     DataTypes.STRING,
-      required:                 true,
+      required: true,
+      allowNull: false,
     },
     quantity: {
       type:                     DataTypes.FLOAT, // can be a fraction
@@ -27,6 +28,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('0', '0.2'),
       required: true,
       defaultValue: '0',
+      allowNull: false,
       get() {
         return parseFloat(this.getDataValue('vatRate'));
       },
@@ -35,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+      allowNull: false,
     },
   }, {
     paranoid: true,
@@ -96,7 +99,7 @@ module.exports = (sequelize, DataTypes) => {
           return OrderItem.findById(ids[0]);
         })
         .then((orderItem) => {
-          return orderItem.createDiscount(100 * values.amount);
+          return orderItem.createDiscount(100 * values.discount);
         })
         .then(() => {
           return res.status(200).send({success: 'Discount created'});

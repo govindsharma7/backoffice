@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type:                     DataTypes.STRING,
       required: true,
+      allowNull: false,
     },
     price: {
       type:                     DataTypes.INTEGER,
@@ -19,6 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+      allowNull: false,
     },
   }, {
     paranoid: true,

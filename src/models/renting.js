@@ -28,24 +28,27 @@ module.exports = (sequelize, DataTypes) => {
     },
     bookingDate: {
       type:                     DataTypes.DATE,
-      required: true,
+      required: false,
     },
     expectedCheckoutDate:  {
       type:                     DataTypes.DATE,
-      required: true,
+      required: false,
     },
     price: {
       type:                     DataTypes.INTEGER,
       required: true,
+      allowNull: false,
     },
     serviceFees: {
       type:                     DataTypes.INTEGER,
       required: true,
+      allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+      allowNull: false,
     },
     checkinDate: {
       type:                     DataTypes.VIRTUAL,
@@ -211,6 +214,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Renting.prototype.findOrCreatePackOrder = function({comfortLevel, discount}, number) {
     const {addressCity} = this.Room.Apartment;
+    const {Order, OrderItem} = models;
 
     return Promise.all([
         Utils.getPackPrice(addressCity, comfortLevel),
@@ -240,8 +244,7 @@ module.exports = (sequelize, DataTypes) => {
             ProductId: `${comfortLevel}-pack`,
           });
         }
-
-        return models.Order
+        return Order
           .findOrCreate({
             where: {
               ClientId: this.ClientId,
@@ -255,15 +258,16 @@ module.exports = (sequelize, DataTypes) => {
               OrderItems: items,
               number,
             },
-            include: [models.OrderItem],
+            include: [OrderItem],
           });
         });
   };
 
   Renting.prototype.createRoomSwitchOrder = function({discount}, number) {
     const comfortLevel = this.getComfortLevel();
+    const {Client, Order, OrderItem} = models;
 
-    return models.Client.scope('roomSwitchCount')
+    return Client.scope('roomSwitchCount')
       .findById(this.ClientId)
       .then((client) => {
         return Utils.getRoomSwitchPrice(
@@ -272,13 +276,17 @@ module.exports = (sequelize, DataTypes) => {
         );
       })
       .then((price) => {
-        const items = [{
-          label: `Room switch ${comfortLevel}`,
-          unitPrice: price,
-          ProductId: 'room-switch',
-        }];
+        const items = [];
 
-        if (discount != null && discount !== 0 ) {
+        if ( price !== 0 ) {
+          items.push({
+            label: `Room switch ${comfortLevel}`,
+            unitPrice: price,
+            ProductId: 'room-switch',
+          });
+        }
+
+        if ( discount != null && discount !== 0 ) {
           items.push({
             label: 'Discount',
             unitPrice: -1 * discount,
@@ -286,14 +294,17 @@ module.exports = (sequelize, DataTypes) => {
           });
         }
 
-        return models.Order.create({
+        if ( items.length === 0 ) {
+          throw new Error('This room switch is free, no order was created.');
+        }
+        return Order.create({
           type: 'debit',
           label: 'Room Switch',
           ClientId: this.ClientId,
           OrderItems: items,
           number,
         }, {
-          include: [models.OrderItem],
+          include: [OrderItem],
         });
       });
   };
@@ -331,14 +342,13 @@ module.exports = (sequelize, DataTypes) => {
         if (items.length === 0) {
           throw new Error('This checkout is free, no order was created.');
         }
-
         return Order
           .findOrCreate({
             where: {
               ClientId: this.ClientId,
               label: 'Checkout',
             },
-            default: {
+            defaults: {
               type: 'debit',
               label: 'Checkout',
               ClientId: this.ClientId,
@@ -371,14 +381,16 @@ module.exports = (sequelize, DataTypes) => {
             defaults: {
               startDate,
               endDate,
+              summary: `${type} ${firstName} ${lastName}`,
               description: `${firstName} ${lastName},
   ${this.Room.name},
   tel: ${phoneNumber}`,
               eventable: 'Renting',
               EventableId: this.id,
               Terms: [{
-                name: 'checkout',
+                name: type,
                 taxonomy: 'event-category',
+                termable: 'Event',
               }],
             },
           }, options));
@@ -392,16 +404,19 @@ module.exports = (sequelize, DataTypes) => {
   Renting.prototype.findOrCreateCheckin = Renting.findOrCreateCheckinout('checkin');
 
   Renting.prototype.googleSerialize = function(event) {
+    const {Apartment} = this.Room;
+    const {firstName, lastName} = this.Client;
+
     return {
-      calendarId: GOOGLE_CALENDAR_IDS[this.Apartment.addressCity],
+      calendarId: GOOGLE_CALENDAR_IDS[Apartment.addressCity],
       resource: {
-        location: `${this.Apartment.addressStreet}
-, ${this.Apartment.addressZip} ${this.Apartment.addressCity},
-${this.Apartment.addressCountry}`,
-        summary: `${event.category} ${this.Client.firstName} ${this.Client.lastName}`,
-        start: { dateTime: this.startDate },
-        end: { dateTime: this.endDate },
-        description: this.description,
+        location: `${Apartment.addressStreet}
+, ${Apartment.addressZip} ${Apartment.addressCity},
+${Apartment.addressCountry}`,
+        summary: `${event.get('category')} ${firstName} ${lastName}`,
+        start: { dateTime: event.startDate },
+        end: { dateTime: event.endDate },
+        description: event.description,
       },
     };
   };
@@ -532,11 +547,11 @@ ${this.Apartment.addressCountry}`,
           throw new Error('Can\'t create multiple checkout orders');
         }
         return Renting
-                .scope('orderItems', 'events', 'room+apartment')
+                .scope('orderItems', 'events', 'room+apartment', 'checkoutDate')
                 .findById(ids[0]);
       })
       .then((renting) => {
-        if ( !renting.getCheckoutDate() || !renting.getComfortLevel() ) {
+        if ( !renting.get('checkoutDate') || !renting.getComfortLevel() ) {
           throw new Error(
             'Checkout and housing pack are required to create checkout order'
           );

@@ -21,15 +21,18 @@ module.exports = (sequelize, DataTypes) => {
     firstName: {
       type:                     DataTypes.STRING,
       required: true,
+      allowNull: false,
     },
     lastName: {
       type:                     DataTypes.STRING,
       required: true,
+      allowNull: false,
     },
     email: {
       type:                     DataTypes.STRING,
       required: true,
       unique: true,
+      allowNull: false,
     },
     secondaryEmail:             DataTypes.STRING,
     phoneNumber: {
@@ -45,6 +48,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+      allowNull: false,
     },
   }, {
     paranoid: true,
@@ -227,8 +231,7 @@ module.exports = (sequelize, DataTypes) => {
    */
   Client.hook('afterCreate', (client) => {
     if ( !client.ninjaId ) {
-      client.ninjaCreate()
-        .tapCatch(console.error);
+      return Utils.wrapHookPromise(client.ninjaCreate());
     }
 
     return true;
@@ -242,8 +245,7 @@ module.exports = (sequelize, DataTypes) => {
         client.changed('email')
       )
     ) {
-      client.ninjaUpdate()
-        .tapCatch(console.error);
+    return Utils.wrapHookPromise(client.ninjaUpdate());
     }
 
     return true;

@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
     amount: {
       type:                     DataTypes.INTEGER,
       required: true,
+      allowNull: false,
     },
     reason: {
       type:                     DataTypes.STRING,
@@ -18,11 +19,13 @@ module.exports = (sequelize, DataTypes) => {
     paylineId: {
       type:                     DataTypes.STRING,
       require: true,
+      allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+      allowNull: false,
     },
   }, {
     paranoid: true,

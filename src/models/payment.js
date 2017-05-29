@@ -15,19 +15,23 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('card', 'sepa', 'manual'),
       required: true,
       defaultValue: 'card',
+      allowNull: false,
     },
     amount: {
       type:                     DataTypes.INTEGER,
       required: true,
+      allowNull: false,
     },
     paylineId: {
       type:                     DataTypes.STRING,
       required: true,
+      allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+      allowNull: false,
     },
   }, {
     paranoid: true,

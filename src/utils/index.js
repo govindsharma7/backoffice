@@ -17,6 +17,7 @@ const getLateNoticeFees           = require('./getLateNoticeFees');
 const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
 const logAndSend                  = require('./logAndSend');
 const parseDBDate                 = require('./parseDBDate');
+const wrapHookPromise             = require('./wrapHookPromise');
 
 module.exports = {
   calculatedPropsMemoizer,
@@ -34,4 +35,5 @@ module.exports = {
   getRoomSwitchPrice,
   logAndSend,
   parseDBDate,
+  wrapHookPromise,
 };

@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('debit', 'credit', 'deposit'),
       required: true,
       defaultValue: 'debit',
+      allowNull: false,
     },
     receiptNumber: {
       type:                     DataTypes.STRING,
@@ -27,6 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     label: {
       type:                     DataTypes.STRING,
       required: true,
+      allowNull: false,
     },
     ninjaId: {
       type:                     DataTypes.INTEGER,
@@ -34,12 +36,14 @@ module.exports = (sequelize, DataTypes) => {
     dueDate: {
       type:                     DataTypes.DATEONLY,
       required: true,
-      default: Date.now(),
+      defaultValue: Date.now(),
+      allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
+      allowNull: false,
     },
   }, {
     paranoid: true,
@@ -286,7 +290,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Order.afterUpdate = (order) => {
     if ( order.ninjaId != null ) {
-      return order.ninjaUpdate();
+      return Utils.wrapHookPromise(order.ninjaUpdate());
     }
 
     return true;
