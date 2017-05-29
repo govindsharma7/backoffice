@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "files": [
     "src",
-    ".env-cmdrc"
+    ".env.js"
   ],
   "dependencies": {
     "aws-serverless-express": "^2.2.0",
@@ -55,7 +55,6 @@
     "gulp": "gulp",
     "help": "gulp --tasks",
     "start": "gulp dev:start",
-    "//TODO": "Fix `gulp test` so that it runs on Travis",
     "test": "gulp test"
   },
   "author": "@louis_remi",

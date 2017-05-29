@@ -8,10 +8,10 @@ deploy:
   - provider: script
     on:
       branch: master
-    script: npm run gulp -- stag:deploy --config claudia.staging.json
+    script: npm run gulp -- stag:deploy
     skip_cleanup: true
   - provider: script
     on:
       branch: release
-    script: npm run gulp -- prod:deploy --config claudia.json
+    script: npm run gulp -- prod:deploy
     skip_cleanup: true

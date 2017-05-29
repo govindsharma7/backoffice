@@ -24,7 +24,8 @@ const lint = 'eslint .';
 const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
-const claudiaUpdate = 'claudia update --use-local-dependencies';
+const env2json = 'node .env.js --log > .env.json';
+const claudiaUpdate = 'claudia update --use-local-dependencies --config .env.json';
 
 const common = {
   'start': nodemonInspect,
@@ -32,7 +33,7 @@ const common = {
   'db:sync': dbSync,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
-  'deploy': claudiaUpdate,
+  'deploy': [env2json, claudiaUpdate],
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
   'extract:portfolio': extractPortfolio,
@@ -78,5 +79,7 @@ function envify(scripts, targetEnv, prefix) {
 // claudia create --handler=src/lambda.handler --role=chez-nestor_com-executor \
 // --name=chez-nestor-<new env>_com --config=claudia.<new env>.json \
 // --region=eu-west-1 --memory=256 --deploy-proxy-api
-// But set AWS env variables thrugh 'export' first, as env-cmd doesn't help here
+// But set AWS env variables through 'export' first, as env-cmd doesn't help here
 // then create an env variable in lambda console set to <new env>
+// after the creation succeeded, transfer the content of claudia.<new env>.json
+// to env.js
