@@ -25,7 +25,7 @@ const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
 const env2json = 'node .env.js --log > .env.json';
-const claudiaUpdate = 'claudia update --use-local-dependencies --config .env.json';
+const claudiaUpdate = 'claudia update --config .env.json';
 
 const common = {
   'start': nodemonInspect,
