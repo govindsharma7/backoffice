@@ -1,6 +1,6 @@
-const flags = process.argv.filter((flag) => {
-  return /^--?\w/.test(flag);
-}).join(' ');
+// the first three args are node, gulp and the name of the script to execute.
+// pass the rest of argv to that script
+const argv = process.argv.slice(3);
 
 const sequelizeFlags =
   '--config src/cli-config --models-path src/models';
@@ -63,7 +63,9 @@ function envify(scripts, targetEnv, prefix) {
     let result = [];
 
     (Array.isArray(cmds) ? cmds : [cmds]).forEach((cmd) => {
-      result.push(`cross-env NODE_ENV=${targetEnv} env-cmd ./.env.js ${cmd} ${flags}`);
+      result.push(
+        `cross-env NODE_ENV=${targetEnv} env-cmd ./.env.js ${cmd} ${argv.join(' ')}`
+      );
     });
 
     results[prefix ? `${prefix}:${scriptName}` : scriptName] = result.join(' && ');
