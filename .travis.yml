@@ -6,10 +6,12 @@ before_install:
   -in .env.js.enc -out .env.js -d
 deploy:
   - provider: script
-    script: npm run gulp -- stag:deploy --config claudia.staging.json
     on:
       branch: master
+    script: npm run gulp -- stag:deploy --config claudia.staging.json
+    skip_cleanup: true
   - provider: script
-    script: npm run gulp -- prod:deploy --config claudia.json
     on:
       branch: release
+    script: npm run gulp -- prod:deploy --config claudia.json
+    skip_cleanup: true
