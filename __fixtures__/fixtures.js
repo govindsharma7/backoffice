@@ -65,6 +65,7 @@ function fixtures({models, common = Promise.resolve({}), options: opts}) {
             const model = models[modelName];
             const primaryKeys = Object.keys(model.primaryKeys);
 
+            /* eslint-disable promise/no-nesting */
             return Promise.resolve()
               .then(() => {
                 return options.method === 'create' ?
@@ -83,6 +84,7 @@ function fixtures({models, common = Promise.resolve({}), options: opts}) {
                       });
                   });
               })
+              /* eslint-enable promise/no-nesting */
               .then((results) => {
                 if (primaryKeys.length !== 1) {
                   return null;
