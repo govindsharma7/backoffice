@@ -1,7 +1,7 @@
 const path       = require('path');
 const Express    = require('express');
 const Jwt        = require('express-jwt');
-const Cors       = require('express-cors');
+const Cors       = require('cors');
 const BodyParser = require('body-parser');
 const Liana      = require('forest-express-sequelize');
 const config     = require('./config');
@@ -24,9 +24,10 @@ app.use(Jwt({
 app.use(checkToken);
 
 // CORS
+
 app.use(Cors({
-  allowedOrigins: ['localhost:*', '*.forestadmin.com'],
-  headers: [
+  origin: [/^http:\/\/127\.0\.0\.1:/, /^http:\/\/localhost:/, /\.forestadmin\.com$/],
+  allowedHeaders: [
     'Authorization',
     'X-Requested-With',
     'Content-Type',
