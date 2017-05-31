@@ -1,38 +1,19 @@
 const Liana   = require('forest-express');
 const {Order} = require('../src/models');
+const Utils   = require('../src/utils');
 const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
 } = require('../src/const');
 
-const cache = new WeakMap();
-
-// #getCalculatedProps with a WeakMap cache
-function getCalculatedProps(object) {
-  // It seems sometimes object isn't an Order instance
-  if ( !('dataValues' in object) ) {
-    return Order.findById(object.id)
-      .then((order) => {
-        return getCalculatedProps(order);
-      });
-  }
-
-  if ( cache.has(object) ) {
-    return cache.get(object);
-  }
-
-  const promise = object.getCalculatedProps();
-
-  cache.set(object, promise);
-  return promise;
-}
+const memoizer = new Utils.calculatedPropsMemoizer(Order);
 
 Liana.collection('Order', {
   fields: [{
     field: 'amount',
     type: 'Number',
     get(object) {
-      return getCalculatedProps(object)
+      return memoizer.getCalculatedProps(object)
         .then((result) => {
           return result.amount / 100;
         });
@@ -41,7 +22,7 @@ Liana.collection('Order', {
     field: 'totalPaid',
     type: 'Number',
     get(object) {
-      return getCalculatedProps(object)
+      return memoizer.getCalculatedProps(object)
         .then((result) => {
           return result.totalPaid / 100;
         });
@@ -50,7 +31,7 @@ Liana.collection('Order', {
     field: 'balance',
     type: 'Number',
     get(object) {
-      return getCalculatedProps(object)
+      return memoizer.getCalculatedProps(object)
         .then((result) => {
           return result.balance / 100;
         });
@@ -59,7 +40,7 @@ Liana.collection('Order', {
     field: 'refund',
     type: 'Number',
     get(object) {
-      return getCalculatedProps(object)
+      return memoizer.getCalculatedProps(object)
         .then((result) => {
           return result.refunds / 100;
       });

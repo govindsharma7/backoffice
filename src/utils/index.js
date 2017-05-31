@@ -1,3 +1,4 @@
+const calculatedPropsMemoizer     = require('./calculatedPropsMemoizer');
 const createSuccessHandler        = require('./createSuccessHandler');
 const euroRound                   = require('./euroRound');
 const findOrCreateSuccessHandler  = require('./findOrCreateSuccessHandler');
@@ -18,6 +19,7 @@ const logAndSend                  = require('./logAndSend');
 const parseDBDate                 = require('./parseDBDate');
 
 module.exports = {
+  calculatedPropsMemoizer,
   createSuccessHandler,
   euroRound,
   findOrCreateSuccessHandler,
