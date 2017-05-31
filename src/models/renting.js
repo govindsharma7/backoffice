@@ -408,7 +408,7 @@ ${this.Apartment.addressCountry}`,
 
   Renting.hook('beforeValidate', (renting) => {
     // Only calculate the price and fees once!
-    if ( renting.price != null ) {
+    if ( renting.price != null && !isNaN(renting.price) ) {
       return renting;
     }
 
