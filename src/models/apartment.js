@@ -1,3 +1,4 @@
+const geocoder       = require('../vendor/geocoder');
 const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
@@ -44,6 +45,22 @@ module.exports = (sequelize, DataTypes) => {
     }, TRASH_SCOPES),
   });
   const {models} = sequelize;
+
+  Apartment.setLatLong = (apartment) => {
+
+    return geocoder(apartment)
+    .then((res) => {
+      return res.json();
+    })
+    .then((json) => {
+      const {lat, lng} = json.results[0].geometry.location;
+
+      apartment.set('latLng', `${lat},${lng}`);
+      return apartment;
+    });
+  };
+
+  Apartment.hook('beforeValidate', Apartment.setLatLong);
 
   Apartment.associate = () => {
     Apartment.hasMany(models.Room);
