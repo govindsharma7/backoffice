@@ -17,7 +17,7 @@ const dbReset = 'node scripts/dbReset.js';
 const dbFixture = 'node scripts/dbFixture.js';
 const createCalendar = 'node scripts/createCalendar.js';
 const extractClients = 'node scripts/extractInvoiceninja.js > data/clients.json';
-const extractPortfolio = 'node scripts/extractWordpress.js > tmp/portfolio.json';
+const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
 
 const lint = 'eslint .';
@@ -25,7 +25,7 @@ const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
 const env2json = 'node .env.js --log > .env.json';
-const claudiaUpdate = 'claudia update --config .env.json > ./tmp/claudia.log';
+const claudiaUpdate = 'claudia update --config .env.json > /tmp/claudia.log';
 
 const common = {
   'start': nodemonInspect,
