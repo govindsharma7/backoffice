@@ -24,8 +24,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     paylineId: {
       type:                     DataTypes.STRING,
-      required: true,
-      allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),

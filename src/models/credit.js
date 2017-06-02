@@ -18,8 +18,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     paylineId: {
       type:                     DataTypes.STRING,
-      require: true,
-      allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
