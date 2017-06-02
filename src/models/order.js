@@ -292,11 +292,10 @@ module.exports = (sequelize, DataTypes) => {
     );
   };
 
-  Order.prototype.calculateLateFees = function() {
-
-    if (this.dueDate < Date.now()) {
-      let lateFees = D.differenceInDays(Date.now(), this.dueDate) * LATE_FEES;
-
+  // the date arg is only used in unitTests
+  Order.prototype.calculateLateFees = function(date = Date.now()) {
+    if ( this.dueDate < D.format(date) ) {
+      let lateFees = D.differenceInDays(date, this.dueDate) * LATE_FEES;
       return lateFees;
     }
 

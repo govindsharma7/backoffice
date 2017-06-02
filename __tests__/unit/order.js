@@ -114,10 +114,14 @@ describe('Order', () => {
 
   describe('#calculateLateFees()', () => {
     test('it should calculate late fee for a renting', () => {
-      return order2.calculateLateFees()
-        .then((result) => {
-          console.log(result);
-        });
+      const lateFees = order2.calculateLateFees(Date.now());
+
+      expect(lateFees).toEqual(2000);
+    });
+    test('it should return null as duteDate is after the given date', () => {
+      const lateFees = order2.calculateLateFees('2017-05-30');
+
+      expect(lateFees).toBeNull();
     });
   });
 });
