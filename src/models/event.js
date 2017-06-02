@@ -113,7 +113,7 @@ module.exports = (sequelize, DataTypes) => {
       .then((serialized) => {
         return eventsInsert(serialized);
       })
-      .then((googleEvent) => {
+      .tap((googleEvent) => {
         return this
           .set('googleEventId', googleEvent.id)
           .save(Object.assign({}, options, {hooks: false}));
@@ -150,7 +150,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Event.hook('afterDelete', (event) => {
     if ( event.googleEventId != null ) {
-    return Utils.wrapHookPromise(event.googleDelete());
+      return Utils.wrapHookPromise(event.googleDelete());
     }
 
     return true;

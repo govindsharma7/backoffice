@@ -52,7 +52,6 @@ module.exports = (sequelize, DataTypes) => {
       },
     }, TRASH_SCOPES),
   });
-
   const {models} = sequelize;
 
   Apartment.associate = () => {
@@ -85,7 +84,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Apartment.prototype.getCurrentClientsPhoneNumber = function() {
+  Apartment.prototype.getCurrentClientsPhoneNumbers = function() {
     const phoneNumbers = [];
 
     this.Rooms.forEach((room) => {
@@ -115,18 +114,17 @@ module.exports = (sequelize, DataTypes) => {
           let params = {
             phoneNumber: number, /* required */
           };
-          var checkIfPhoneNumberIsOptedOut =
-              sns.checkIfPhoneNumberIsOptedOut(params).promise();
 
           /* eslint-disable promise/no-nesting */
-          return checkIfPhoneNumberIsOptedOut.then((phoneNumber) => {
-            return !phoneNumber.isOptedOut;
-          })
+          return  sns.checkIfPhoneNumberIsOptedOut(params).promise()
+            .then((phoneNumber) => {
+              return !phoneNumber.isOptedOut;
+            })
           /* eslint-enable promise/no-nesting */
-          .catch((err) => {
-            console.log(err, err.stack);
-            return false;
-          });
+            .catch((err) => {
+              console.log(err, err.stack);
+              return false;
+            });
         });
       })
       .then((validNumbers) => {
@@ -138,12 +136,12 @@ module.exports = (sequelize, DataTypes) => {
             /* required */
             Endpoint: number,
           };
-          var subscribe = sns.subscribe(params).promise();
 
           /* eslint-disable promise/no-nesting */
-          return subscribe.then(() => {
-            return true;
-          });
+          return sns.subscribe(params).promise()
+            .then(() => {
+              return true;
+            });
           /* eslint-enable promise/no-nesting */
         });
       })
@@ -152,10 +150,14 @@ module.exports = (sequelize, DataTypes) => {
           Message: text,
           /* required */
           MessageAttributes: {
-          //MonthlySpendLimit: {
-          //  DataType: 'Number',
-          //  StringValue: '30'
-          //},
+          /* MonthlySpendLimit could be usefull if we want to
+            limit sms cost each month
+
+            MonthlySpendLimit: {
+              DataType: 'Number',
+              StringValue: '30'
+            },
+          */
             DefaultSenderID: {
               DataType: 'String',
               /* required */
@@ -188,22 +190,22 @@ module.exports = (sequelize, DataTypes) => {
       const {values, ids} = req.body.data.attributes;
 
       Promise.resolve()
-      .then(() => {
-        if (!ids || ids.length > 1 ) {
-          throw new Error('You have to select one apartment');
-        }
-        return Apartment.scope('currentClient').findById(ids[0]);
-      })
-      .then((apartment) => {
-          return Promise.all([apartment.getCurrentClientsPhoneNumber(), apartment]);
-      })
-      .then(([phoneNumbers, apartment]) => {
-        return apartment.sendSms(phoneNumbers, values.bodySms);
-      })
-      .then(() => {
-        return res.status(200).send({success: 'SMS successfully sended !'});
-      })
-      .catch(Utils.logAndSend(res));
+        .then(() => {
+          if (!ids || ids.length > 1 ) {
+            throw new Error('You have to select one apartment');
+          }
+          return Apartment.scope('currentClient').findById(ids[0]);
+        })
+        .then((apartment) => {
+          return Promise.all([apartment.getCurrentClientsPhoneNumbers(), apartment]);
+        })
+        .then(([phoneNumbers, apartment]) => {
+          return apartment.sendSms(phoneNumbers, values.bodySms);
+        })
+        .then(() => {
+          return res.status(200).send({success: 'SMS successfully sended !'});
+        })
+        .catch(Utils.logAndSend(res));
     });
   };
 
