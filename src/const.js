@@ -66,6 +66,8 @@ module.exports = {
     '20-29days': 27900,
   },
 
+  LATE_FEES: 1000,
+
   ROOM_SWITCH_PRICES: {
     privilege: 0,
     comfort: 19000,

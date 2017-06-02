@@ -3,6 +3,7 @@ const fixtures = require('../../__fixtures__/order');
 const {Order}  = require('../../src/models');
 
 var order;
+var order2;
 var invoiceCounter;
 
 describe('Order', () => {
@@ -11,6 +12,7 @@ describe('Order', () => {
       .then(({instances}) => {
         return (
           order = instances['order-1'],
+          order2 = instances['order-2'],
           invoiceCounter = instances['invoice-counter']
         );
       });
@@ -106,6 +108,15 @@ describe('Order', () => {
               'qty': 1,
             }],
           });
+        });
+    });
+  });
+
+  describe('#calculateLateFees()', () => {
+    test('it should calculate late fee for a renting', () => {
+      return order2.calculateLateFees()
+        .then((result) => {
+          console.log(result);
         });
     });
   });

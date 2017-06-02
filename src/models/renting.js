@@ -197,13 +197,14 @@ module.exports = (sequelize, DataTypes) => {
     }];
   };
 
+  //USELESS
   Renting.prototype.createOrder = function(date = Date.now(), number) {
     const {Order, OrderItem} = models;
 
     return Order.create({
       type: 'debit',
       label: `${D.format(date, 'MMMM')} Invoice`,
-      dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
+      dueDate: Math.max(Date.now(), D.startOfMonth(date)),
       ClientId: this.ClientId,
       OrderItems: this.toOrderItems(date),
       number,
@@ -270,6 +271,7 @@ module.exports = (sequelize, DataTypes) => {
     return Client.scope('roomSwitchCount')
       .findById(this.ClientId)
       .then((client) => {
+        console.log(client);
         return Utils.getRoomSwitchPrice(
           client.get('roomSwitchCount'),
           comfortLevel
@@ -295,6 +297,18 @@ module.exports = (sequelize, DataTypes) => {
         }
 
         if ( items.length === 0 ) {
+          Order.create({
+            label: 'Free Room switch',
+            ClientId: this.ClientId,
+            number,
+            OrderItems: [{
+              label: `Room switch ${comfortLevel})`,
+              price: 0,
+              ProductId: 'room-switch',
+            }],
+          }, {
+            include: [OrderItem],
+          });
           throw new Error('This room switch is free, no order was created.');
         }
         return Order.create({
@@ -442,6 +456,7 @@ ${Apartment.addressCountry}`,
   Renting.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
+    // NORMALLY THIS IS USELESS BECAUSE RENT ORDERS ARE GENERATE BY A SCRIPT
     app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
       const {ids} = req.body.data.attributes;
 

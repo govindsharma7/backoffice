@@ -1,14 +1,19 @@
 const Promise    = require('bluebird');
+const D          = require('date-fns');
 const Liana      = require('forest-express-sequelize');
 const Ninja      = require('../vendor/invoiceninja');
 const makePublic = require('../middlewares/makePublic');
 const Utils      = require('../utils');
-const {TRASH_SCOPES} = require('../const');
+const {
+  TRASH_SCOPES,
+  LATE_FEES,
+      } = require('../const');
 
 const Serializer = Liana.ResourceSerializer;
 
 module.exports = (sequelize, DataTypes) => {
 
+  const {models} = sequelize;
   const Order = sequelize.define('Order', {
     id: {
       primaryKey: true,
@@ -49,7 +54,6 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
   Order.associate = () => {
     const oic = (col) => {
@@ -275,7 +279,7 @@ module.exports = (sequelize, DataTypes) => {
     return Promise.all(
       orders
         .filter((order) => {
-          return order.ninjaId == null;
+          return order.ninjaId == null && order.price !== 0;
         })
         .map((order) => {
           return ( order.receiptNumber ?
@@ -286,6 +290,17 @@ module.exports = (sequelize, DataTypes) => {
             });
         })
     );
+  };
+
+  Order.prototype.calculateLateFees = function() {
+
+    if (this.dueDate < Date.now()) {
+      let lateFees = D.differenceInDays(Date.now(), this.dueDate) * LATE_FEES;
+
+      return lateFees;
+    }
+
+    return null;
   };
 
   Order.afterUpdate = (order) => {
