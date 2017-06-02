@@ -116,20 +116,20 @@ module.exports = (sequelize, DataTypes) => {
           };
 
           /* eslint-disable promise/no-nesting */
-          return  sns.checkIfPhoneNumberIsOptedOut(params).promise()
+          return sns.checkIfPhoneNumberIsOptedOut(params).promise()
             .then((phoneNumber) => {
               return !phoneNumber.isOptedOut;
             })
           /* eslint-enable promise/no-nesting */
-            .catch((err) => {
-              console.log(err, err.stack);
+            .catch((error) => {
+              console.error(error);
               return false;
             });
         });
       })
       .then((validNumbers) => {
         return Promise.map(validNumbers, (number) => {
-          var params = {
+          let params = {
             Protocol: 'sms',
             /* required */
             TopicArn: topic,
@@ -146,7 +146,7 @@ module.exports = (sequelize, DataTypes) => {
         });
       })
       .then(() => {
-        var params = {
+        let params = {
           Message: text,
           /* required */
           MessageAttributes: {
@@ -184,7 +184,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Apartment.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
-    var urlencodedParser = bodyParser.urlencoded({ extended: true });
+    let urlencodedParser = bodyParser.urlencoded({ extended: true });
 
     app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
       const {values, ids} = req.body.data.attributes;
