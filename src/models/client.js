@@ -82,16 +82,49 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Client.id'],
     });
 
-    Client.addScope('rentOrders', {
-      include: [{
-        model : models.Order,
+    Client.addScope('roomCurrentClient', function(date = D.format(Date.now())) {
+      return {
         include: [{
-          model: models.OrderItem,
-          where: { ProductId: 'rent' },
+          model: models.Renting,
+          where: sequelize.literal(`(\`Rentings->Events\`.id IS NULL OR
+\`Rentings->Events\`.startDate >= '${date}')`),
+          include: [{
+            model: models.Event,
+            required: false,
+            include: [{
+              model: models.Term,
+              where: {
+                taxonomy: 'event-category',
+                name: 'checkout',
+              },
+            }],
+          }],
         }],
-      }],
+      };
     });
 
+    Client.addScope('apartmentCurrentClients', function(date = D.format(Date.now())) {
+      return {
+        include: [{
+          model: models.Renting,
+          where: sequelize.literal(`(\`Rentings->Events\`.id IS NULL OR
+\`Rentings->Events\`.startDate >= '${date}')`),
+          include: [{
+            model: models.Event,
+            required: false,
+            include: [{
+              model: models.Term,
+              where: {
+                taxonomy: 'event-category',
+                name: 'checkout',
+              },
+            }],
+          }, {
+            model: models.Room,
+          }],
+        }],
+      };
+    });
   };
 
   Client.prototype.getRentingOrdersFor = function(date = Date.now()) {

@@ -1,6 +1,6 @@
 const Promise        = require('bluebird');
 const bodyParser     = require('body-parser');
-const Liana          = require('forest-express');
+const Liana          = require('forest-express-sequelize');
 const D              = require('date-fns');
 const Geocode        = require('../vendor/geocode');
 const sns            = require('../vendor/aws');
@@ -57,7 +57,7 @@ module.exports = (sequelize, DataTypes) => {
   Apartment.associate = () => {
     Apartment.hasMany(models.Room);
 
-    Apartment.addScope('currentClient', function(date = D.format(Date.now())) {
+    Apartment.addScope('currentClients', function(date = D.format(Date.now())) {
       return {
         include: [{
           model: models.Room,
@@ -194,7 +194,7 @@ module.exports = (sequelize, DataTypes) => {
           if (!ids || ids.length > 1 ) {
             throw new Error('You have to select one apartment');
           }
-          return Apartment.scope('currentClient').findById(ids[0]);
+          return Apartment.scope('currentClients').findById(ids[0]);
         })
         .then((apartment) => {
           return Promise.all([apartment.getCurrentClientsPhoneNumbers(), apartment]);
@@ -229,6 +229,28 @@ module.exports = (sequelize, DataTypes) => {
         return apartment;
       });
   });
+
+  Apartment.beforeLianaInit = (app) => {
+    const LEA = Liana.ensureAuthenticated;
+    const Serializer = Liana.ResourceSerializer;
+
+    app.get(
+      '/forest/Apartment/:recordId/relationships/currentClients',
+      LEA,
+      (req, res) => {
+        models.Client.scope('apartmentCurrentClients')
+          .findAll({ where: { '$Rentings->Room.ApartmentId$': req.params.recordId} })
+          .then((client) => {
+            return new Serializer(Liana, models.Client, client, {}, {
+              count: client.length,
+            }).perform();
+          })
+          .then((result) => {
+            return res.send(result);
+          })
+          .catch(Utils.logAndSend(res));
+      });
+  };
 
   return Apartment;
 };

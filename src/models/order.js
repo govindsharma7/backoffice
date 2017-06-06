@@ -315,13 +315,14 @@ module.exports = (sequelize, DataTypes) => {
 
     app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) => {
       models.Credit.scope('order')
-        .findAll({ where: { 'Payment.OrderId': req.params.orderId } })
+        .findAll({ where: { '$Payment.OrderId$': req.params.orderId } })
         .then((credits) => {
           return new Serializer(Liana, models.Credit, credits, {}, {
             count: credits.length,
           }).perform();
         })
         .then((result) => {
+        console.log(result);
           return res.send(result);
         })
         .catch(Utils.logAndSend(res));

@@ -36,6 +36,10 @@ Liana.collection('Room', {
         })
         .tapCatch(console.error);
     },
+  }, {
+    field: 'currentClient',
+    type: ['String'],
+    reference: 'Client.id',
   }],
   segments: TRASH_SEGMENTS,
 });

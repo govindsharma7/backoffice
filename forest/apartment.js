@@ -12,4 +12,9 @@ Liana.collection('Apartment', {
     name: 'Paris',
     scope: 'paris',
   }]),
+  fields: [{
+    field: 'currentClients',
+    type: ['String'],
+    reference: 'Client.id',
+  }],
 });

@@ -1,5 +1,6 @@
 const Promise          = require('bluebird');
 const D                = require('date-fns');
+const Liana            = require('forest-express-sequelize');
 const Utils            = require('../utils');
 const {TRASH_SCOPES}   = require('../const');
 
@@ -96,6 +97,25 @@ module.exports = (sequelize, DataTypes) => {
       .then(([periodPrice, serviceFees]) => {
         return { periodPrice, serviceFees };
       });
+  };
+
+  Room.beforeLianaInit = (app) => {
+    const LEA = Liana.ensureAuthenticated;
+    const Serializer = Liana.ResourceSerializer;
+
+    app.get('/forest/Room/:recordId/relationships/currentClient', LEA, (req, res) => {
+      models.Client.scope('roomCurrentClient')
+        .findAll({ where: { '$Rentings.RoomId$': req.params.recordId} })
+        .then((client) => {
+          return new Serializer(Liana, models.Client, client, {}, {
+            count: client.length,
+          }).perform();
+        })
+        .then((result) => {
+          return res.send(result);
+        })
+        .catch(Utils.logAndSend(res));
+    });
   };
 
   return Room;
