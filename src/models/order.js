@@ -1,13 +1,9 @@
-const Promise    = require('bluebird');
-const D          = require('date-fns');
-const Liana      = require('forest-express-sequelize');
-const Ninja      = require('../vendor/invoiceninja');
-const makePublic = require('../middlewares/makePublic');
-const Utils      = require('../utils');
-const {
-  TRASH_SCOPES,
-  LATE_FEES,
-      } = require('../const');
+const Promise        = require('bluebird');
+const Liana          = require('forest-express-sequelize');
+const Ninja          = require('../vendor/invoiceninja');
+const makePublic     = require('../middlewares/makePublic');
+const Utils          = require('../utils');
+const {TRASH_SCOPES} = require('../const');
 
 const Serializer = Liana.ResourceSerializer;
 
@@ -290,16 +286,6 @@ module.exports = (sequelize, DataTypes) => {
             });
         })
     );
-  };
-
-  // the date arg is only used in unitTests
-  Order.prototype.calculateLateFees = function(date = Date.now()) {
-    if ( this.dueDate < D.format(date) ) {
-      let lateFees = D.differenceInDays(date, this.dueDate) * LATE_FEES;
-      return lateFees;
-    }
-
-    return null;
   };
 
   Order.afterUpdate = (order) => {

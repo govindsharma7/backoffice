@@ -4,6 +4,7 @@ const models           = require('../../src/models');
 const fixtures         = require('../../__fixtures__/client');
 
 var client;
+var client2;
 var renting2;
 var renting3;
 var u;
@@ -14,6 +15,7 @@ describe('Client', () => {
       .then(({instances, unique}) => {
         return (
           client = instances['client-1'],
+          client2 = instances['client-2'],
           renting2 = instances['renting-2'],
           renting3 = instances['renting-3'],
           u = unique
@@ -50,6 +52,8 @@ describe('Client', () => {
         });
     });
   });
+
+
 
   describe('#createRentingsOrder', () => {
     test('it should create an order with appropriate orderitems', () => {
@@ -89,6 +93,49 @@ describe('Client', () => {
           });
         });
     });
+  });
+
+  describe('#claculateTodayLateFees()', () => {
+    test('it should return late fee amount for a client', () => {
+      return models.Client.scope('rentOrders')
+        .findById(client2.id)
+        .then((client) => {
+            return client.calculateTodayLateFees();
+        })
+        .then((lateFees) => {
+          expect(lateFees).toEqual(1000);
+          return true;
+        });
+    });
+  });
+
+  describe('#applyLateFees()', () => {
+    test('it should create a draft order with late fees', () => {
+      return models.Client.scope('rentOrders')
+        .findById(client2.id)
+        .then((client) => {
+          return client.applyLateFees();
+        })
+        .then((result) => {
+          expect(result.OrderItems[0].unitPrice).toEqual(1000);
+          return true;
+        });
+    });
+
+    test('it shouldn\'t increment late fees as it has been update today', () => {
+      return models.Client.scope('rentOrders')
+        .findById(client2.id)
+        .then((client) => {
+          return client.applyLateFees();
+        })
+        .then((order) => {
+          return order.reload({paranoid: false});
+        })
+        .then((order) => {
+          expect(order.OrderItems[0].unitPrice).toEqual(1000);
+          return true;
+        });
+      });
   });
 
 });

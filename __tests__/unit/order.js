@@ -3,7 +3,6 @@ const fixtures = require('../../__fixtures__/order');
 const {Order}  = require('../../src/models');
 
 var order;
-var order2;
 var invoiceCounter;
 
 describe('Order', () => {
@@ -12,7 +11,6 @@ describe('Order', () => {
       .then(({instances}) => {
         return (
           order = instances['order-1'],
-          order2 = instances['order-2'],
           invoiceCounter = instances['invoice-counter']
         );
       });
@@ -112,16 +110,4 @@ describe('Order', () => {
     });
   });
 
-  describe('#calculateLateFees()', () => {
-    test('it should calculate late fee for a renting', () => {
-      const lateFees = order2.calculateLateFees(Date.now());
-
-      expect(lateFees).toEqual(2000);
-    });
-    test('it should return null as duteDate is after the given date', () => {
-      const lateFees = order2.calculateLateFees('2017-05-30');
-
-      expect(lateFees).toBeNull();
-    });
-  });
 });

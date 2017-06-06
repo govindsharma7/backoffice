@@ -9,6 +9,7 @@ const Utils      = require('../utils');
 const {
   TRASH_SCOPES,
   INVOICENINJA_URL,
+  LATE_FEES,
 }                = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
@@ -80,6 +81,17 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Client.id'],
     });
+
+    Client.addScope('rentOrders', {
+      include: [{
+        model : models.Order,
+        include: [{
+          model: models.OrderItem,
+          where: { ProductId: 'rent' },
+        }],
+      }],
+    });
+
   };
 
   Client.prototype.getRentingOrdersFor = function(date = Date.now()) {
@@ -223,6 +235,97 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Client.prototype.calculateTodayLateFees = function() {
+    const {Orders} = this;
+    var lateFees;
+
+    return Promise.filter(Orders, (order) => {
+      /*eslint-disable promise/no-nesting */
+      return order.getCalculatedProps()
+        .then(({balance}) => {
+          return balance < 0;
+        });
+      /*eslint-enable promise/no-nesting */
+      })
+      .then((unpaidOrders) => {
+        if ( unpaidOrders.length > 0 ) {
+          lateFees = unpaidOrders.length * LATE_FEES;
+
+          return lateFees;
+        }
+
+        return 0;
+      });
+  };
+
+  Client.prototype.findOrCreateCurrentOrder = function (item) {
+    const {Order, OrderItem} = models;
+
+     return Order
+        .findOrCreate({
+          where: {
+            ClientId: this.id,
+            status: 'draft',
+            deletedAt: {$ne: null},
+          },
+          paranoid: false,
+          defaults: {
+            ClientId: this.id,
+            status: 'draft',
+            label: 'test',
+            OrderItems: item,
+            deletedAt: D.format(Date.now()),
+          },
+          include: [OrderItem],
+        });
+  };
+
+  Client.prototype.applyLateFees = function() {
+
+    return this.calculateTodayLateFees()
+      .then((lateFees) => {
+        if ( lateFees === 0 ) {
+          throw new Error('No late fees');
+        }
+
+        return Promise.all([
+          this.findOrCreateCurrentOrder([{
+            label: 'Late fees',
+            unitPrice: lateFees,
+            quantity: 1,
+            ProductId: 'late-fees',
+          }]),
+          lateFees,
+        ]);
+      })
+      .then(([[order, isCreated], lateFees]) => {
+        const orderItem = order.OrderItems
+          .find((item) => {
+            return item.ProductId === 'late-fees';
+          });
+
+        /*
+          Check if an order item already exists and hasn't been updated today
+          to avoid to increment its unitprice twice or more per day
+        */
+        if ( isCreated || orderItem.updatedAt >= D.startOfDay(Date.now()) ) {
+          return order;
+        }
+        /*eslint-disable promise/no-nesting */
+        return orderItem.increment('unitPrice', {by: lateFees})
+          .then(() => {
+            return order;
+          });
+        /*eslint-enable promise/no-nesting */
+      })
+      .catch((error) => {
+        if (error.message === 'No late fees') {
+          return true;
+        }
+
+        return error;
+      });
+  };
   /*
    * CRUD hooks
    *

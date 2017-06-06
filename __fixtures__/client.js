@@ -10,6 +10,13 @@ module.exports = fixtures((u) => {
       email: u.str('john@doe.com'),
       phoneNumber: '0033612345678',
       status: 'active',
+    }, {
+      id: u.id('client-2'),
+      firstName: 'Joy',
+      lastName: 'Boulé',
+      email: u.str('joy@boule.com'),
+      phoneNumber: '0033654321678',
+      status: 'active',
     }],
     Order: [{
       id: u.id('order-1'),
@@ -24,6 +31,20 @@ module.exports = fixtures((u) => {
       receiptNumber: u.int(2),
       label: 'Room switch order',
       ClientId: u.id('client-1'),
+      dueDate: D.parse('2016-01-01 Z'),
+    }, {
+      id: u.id('order-3'),
+      type: 'debit',
+      receiptNumber: u.int(3),
+      label: 'June Invoice',
+      ClientId: u.id('client-2'),
+      dueDate: D.parse('2016-01-01 Z'),
+    }, {
+      id: u.id('order-4'),
+      type: 'debit',
+      receiptNumber: u.int(4),
+      label: 'March Invoice',
+      ClientId: u.id('client-2'),
       dueDate: D.parse('2016-01-01 Z'),
     }],
     Apartment: [{
@@ -83,6 +104,22 @@ module.exports = fixtures((u) => {
       vatRate: 0,
       OrderId: u.id('order-1'),
       ProductId: 'room-switch',
+    }, {
+      id: u.id('orderitem-3'),
+      label: 'test item 3',
+      quantity: 1,
+      unitPrice: 20000,
+      vatRate: 0,
+      OrderId: u.id('order-3'),
+      ProductId: 'rent',
+    }, {
+      id: u.id('orderitem-4'),
+      label: 'test item 4',
+      quantity: 1,
+      unitPrice: 250,
+      vatRate: 0,
+      OrderId: u.id('order-4'),
+      ProductId: 'rent',
     }],
     Event: [{
       id: u.id('event-1'),
@@ -109,6 +146,12 @@ module.exports = fixtures((u) => {
       taxonomy: 'event-category',
       termable: 'Event',
       TermableId: u.id('event-2'),
+    }],
+     Payment: [{
+      id: u.id('payment-1'),
+      type: 'manual',
+      amount: 20000,
+      OrderId: u.id('order-3'),
     }],
   };
 });

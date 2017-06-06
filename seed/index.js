@@ -28,5 +28,8 @@ module.exports = {
   }, {
     id: 'room-switch',
     name: 'Room Switch',
+  }, {
+    id: 'late-fees',
+    name: 'Late fees',
   }],
 };
