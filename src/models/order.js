@@ -8,7 +8,7 @@ const {TRASH_SCOPES} = require('../const');
 const Serializer = Liana.ResourceSerializer;
 
 module.exports = (sequelize, DataTypes) => {
-
+  const {models} = sequelize;
   const Order = sequelize.define('Order', {
     id: {
       primaryKey: true,
@@ -49,22 +49,23 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
-  Order.associate = () => {
-    const oic = (col) => {
-      return `\`OrderItems\`.\`${col}\``;
-    };
-
-    Order.hasMany(models.OrderItem);
-    Order.belongsTo(models.Client);
-    Order.hasMany(models.Payment);
-    Order.hasMany(models.Credit);
-    Order.hasMany(models.Term, {
+  Order.rawAssociations = [
+    { hasMany:   'OrderItem' },
+    { belongsTo: 'Client' },
+    { hasMany:   'Payment' },
+    { hasMany:   'Credit' },
+    { hasMany:   'Term', options: {
       foreignKey: 'TermableId',
       constraints: false,
       scope: { termable: 'Order' },
-    });
+    }},
+  ];
+
+  Order.afterModelsDefinition = () => {
+    const oic = (col) => {
+      return `\`OrderItems\`.\`${col}\``;
+    };
 
     Order.addScope('amount', {
       attributes: [
@@ -298,10 +299,12 @@ module.exports = (sequelize, DataTypes) => {
   Order.hook('afterUpdate', Order.afterUpdate);
 
   Order.beforeLianaInit = (app) => {
-    const LEA = Liana.ensureAuthenticated;
-
     // Make this route completely public
     app.get('/forest/Order/:orderId', makePublic);
+  };
+
+  Order.afterLianaInit = (app) => {
+    const LEA = Liana.ensureAuthenticated;
 
     app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
       Order

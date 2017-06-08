@@ -38,6 +38,8 @@ module.exports = (sequelize, DataTypes) => {
     intVal:                     DataTypes.INTEGER,
   });
 
+  Setting.excludeFromSchema = true;
+
   Setting.prototype._increment = Setting.prototype.increment;
 
   Setting.prototype.increment = function(options) {

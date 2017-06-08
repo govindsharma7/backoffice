@@ -1,17 +1,18 @@
 const Promise          = require('bluebird');
-const D          = require('date-fns');
-const Liana      = require('forest-express');
-const Payline    = require('payline');
-const uuid       = require('uuid/v4');
-const Ninja      = require('../vendor/invoiceninja');
-const payline    = require('../vendor/payline');
-const Utils      = require('../utils');
+const D                = require('date-fns');
+const Liana            = require('forest-express');
+const Payline          = require('payline');
+const uuid             = require('uuid/v4');
+const Ninja            = require('../vendor/invoiceninja');
+const payline          = require('../vendor/payline');
+const Utils            = require('../utils');
 const {
   TRASH_SCOPES,
   INVOICENINJA_URL,
-}                = require('../const');
+}                      = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
+  const {models} = sequelize;
   const Client = sequelize.define('Client', {
     id: {
       primaryKey: true,
@@ -54,16 +55,16 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
-  /*
-   * Associations
-   */
-  Client.associate = () => {
+  Client.rawAssociations = [
+    { hasMany: 'Renting' },
+    { hasMany: 'Order' },
+  ];
+
+  Client.afterModelsDefinition = () => {
     const {fn, col} = sequelize;
 
-    Client.hasMany(models.Renting);
-    Client.hasMany(models.Order);
+
 
     Client.addScope('roomSwitchCount', {
       attributes: { include: [
@@ -251,7 +252,7 @@ module.exports = (sequelize, DataTypes) => {
     return true;
   });
 
-  Client.beforeLianaInit = (app) => {
+  Client.afterLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
     app.post('/forest/actions/credit-client', LEA, (req, res) => {

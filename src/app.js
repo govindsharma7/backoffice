@@ -1,15 +1,18 @@
-const path       = require('path');
-const Express    = require('express');
-const Jwt        = require('express-jwt');
-const Cors       = require('cors');
-const BodyParser = require('body-parser');
-const Liana      = require('forest-express-sequelize');
-const config     = require('./config');
-const models     = require('./models');
-const checkToken = require('./middlewares/checkToken');
+const path         = require('path');
+const Express      = require('express');
+const Jwt          = require('express-jwt');
+const Cors         = require('cors');
+const BodyParser   = require('body-parser');
+const Liana        = require('forest-express-sequelize');
+const GraphQLHTTP  = require('express-graphql');
+const config       = require('./config');
+const models       = require('./models');
+const checkToken   = require('./middlewares/checkToken');
+const Utils        = require('./utils');
 
 const parentApp = Express();
 const app = Express();
+const graphqlApp = Express();
 
 /*
  * Middleware that will handle our custom Forest routes
@@ -38,7 +41,7 @@ app.use(Cors({
 // Mime type
 app.use(BodyParser.json());
 
-// This hook and all app.use above are currently useless
+// This hook is for routes that need to override Forest-generated routes
 Object.keys(models).forEach(function(modelName) {
   if ('beforeLianaInit' in models[modelName]) {
     models[modelName].beforeLianaInit(app);
@@ -63,5 +66,15 @@ Object.keys(models).forEach(function(modelName) {
     models[modelName].afterLianaInit(parentApp);
   }
 });
+
+/*
+ * GraphQL middleware
+ */
+graphqlApp.use(GraphQLHTTP({
+  schema: Utils.sequelizeSchema(models),
+  graphiql: true,
+}));
+
+parentApp.use('/graphql', graphqlApp);
 
 module.exports = parentApp;

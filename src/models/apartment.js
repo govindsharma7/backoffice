@@ -1,14 +1,15 @@
-const Promise        = require('bluebird');
-const bodyParser     = require('body-parser');
-const Liana          = require('forest-express');
-const D              = require('date-fns');
-const Geocode        = require('../vendor/geocode');
-const sns            = require('../vendor/aws');
-const config         = require('../config');
-const Utils          = require('../utils');
-const {TRASH_SCOPES} = require('../const');
+const Promise             = require('bluebird');
+const bodyParser          = require('body-parser');
+const Liana               = require('forest-express');
+const D                   = require('date-fns');
+const Geocode             = require('../vendor/geocode');
+const sns                 = require('../vendor/aws');
+const config              = require('../config');
+const Utils               = require('../utils');
+const {TRASH_SCOPES}      = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
+  const {models} = sequelize;
   const Apartment = sequelize.define('Apartment', {
     id: {
       primaryKey: true,
@@ -34,29 +35,14 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     paranoid: true,
-    scopes: Object.assign({
-      lyon: {
-        where: {
-          addressCity: 'lyon',
-        },
-      },
-      paris: {
-        where: {
-          addressCity: 'paris',
-        },
-      },
-      montpellier: {
-        where: {
-          addressCity: 'montpellier',
-        },
-      },
-    }, TRASH_SCOPES),
+    scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
-  Apartment.associate = () => {
-    Apartment.hasMany(models.Room);
+  Apartment.rawAssociations = [
+    { hasMany: 'Room' },
+  ];
 
+  Apartment.afterModelsDefinition = () => {
     Apartment.addScope('currentClient', function(date = D.format(Date.now())) {
       return {
         include: [{
@@ -81,6 +67,12 @@ module.exports = (sequelize, DataTypes) => {
           }],
         }],
       };
+    });
+
+    ['lyon', 'paris', 'montpellier'].forEach((city) => {
+      Apartment.addScope(city, {
+        where: { addressCity: city },
+      });
     });
   };
 
@@ -182,7 +174,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Apartment.beforeLianaInit = (app) => {
+  Apartment.afterLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
     let urlencodedParser = bodyParser.urlencoded({ extended: true });
 

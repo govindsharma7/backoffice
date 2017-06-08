@@ -1,6 +1,7 @@
 const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
+  // const {models} = sequelize;
   const Product = sequelize.define('Product', {
     id: {
       primaryKey: true,
@@ -26,11 +27,10 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
-  Product.associate = () => {
-    Product.hasMany(models.OrderItem);
-  };
+  Product.rawAssociations = [
+    { hasMany: 'OrderItem' },
+  ];
 
   return Product;
 };

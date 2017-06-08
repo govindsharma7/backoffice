@@ -4,6 +4,7 @@ const Utils            = require('../utils');
 const {TRASH_SCOPES}   = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
+  const {models} = sequelize;
   const Room = sequelize.define('Room', {
     id: {
       primaryKey: true,
@@ -24,13 +25,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     latestBookingDate: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get() {
         return D.parse(this.dataValues.latestBookingDate);
       },
     },
     latestCheckoutDate: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get() {
         return D.parse(this.dataValues.latestCheckoutDate);
       },
@@ -39,12 +40,13 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
-  Room.associate = () => {
-    Room.belongsTo(models.Apartment);
-    Room.hasMany(models.Renting);
+  Room.rawAssociations = [
+    { belongsTo: 'Apartment' },
+    { hasMany: 'Renting' },
+  ];
 
+  Room.afterModelsDefinition = () => {
     Room.addScope('latestRenting', {
       attributes: { include: [
         [sequelize.col('Rentings.id'), 'latestRentingId'],

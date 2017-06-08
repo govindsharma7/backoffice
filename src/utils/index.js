@@ -15,8 +15,10 @@ const {
 }                                 = require('./getCheckinoutEndDate');
 const getLateNoticeFees           = require('./getLateNoticeFees');
 const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
+const isModel                     = require('./isModel');
 const logAndSend                  = require('./logAndSend');
 const parseDBDate                 = require('./parseDBDate');
+const sequelizeSchema             = require('./sequelizeSchema');
 const wrapHookPromise             = require('./wrapHookPromise');
 
 module.exports = {
@@ -33,7 +35,9 @@ module.exports = {
   getCheckoutEndDate,
   getLateNoticeFees,
   getRoomSwitchPrice,
+  isModel,
   logAndSend,
   parseDBDate,
+  sequelizeSchema,
   wrapHookPromise,
 };

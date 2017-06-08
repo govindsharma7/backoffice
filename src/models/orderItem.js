@@ -1,9 +1,11 @@
-const Promise          = require('bluebird');
-const Liana            = require('forest-express-sequelize');
-const Utils            = require('../utils');
-const {TRASH_SCOPES}   = require('../const');
+const Promise             = require('bluebird');
+const Liana               = require('forest-express-sequelize');
+const {GraphQLEnumType}   = require('graphql');
+const Utils               = require('../utils');
+const {TRASH_SCOPES}      = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
+  const {models} = sequelize;
   const OrderItem = sequelize.define('OrderItem', {
     id: {
       primaryKey: true,
@@ -43,22 +45,33 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
-  OrderItem.associate = () => {
-    OrderItem.belongsTo(models.Order);
-    OrderItem.belongsTo(models.Renting, {
+  OrderItem.rawAssociations = [
+    { belongsTo: 'Order' },
+    { belongsTo: 'Renting', options: {
       constraints: false,
-    });
-    OrderItem.belongsTo(models.Product, {
+    }},
+    { belongsTo: 'Product', options: {
       constraints: false,
-    });
-    OrderItem.hasMany(models.Term, {
+    }},
+    { hasMany: 'Term', options: {
       foreignKey: 'TermableId',
       constraints: false,
       scope: { termable: 'OrderItem' },
-    });
+    }},
+  ];
+
+  OrderItem.specialAttributeFields = {
+    vatRate: { type: new GraphQLEnumType({
+      name: 'OrderItemVatRateEnumType',
+      values: {
+        ZERO: { value: '0' },
+        TWENTY: { value: '0.2' },
+      },
+    })},
   };
+
+  OrderItem.excludeFromSchema = true;
 
   OrderItem.prototype.createDiscount = function(amount) {
     return OrderItem.create({
@@ -84,7 +97,7 @@ module.exports = (sequelize, DataTypes) => {
       .then(models.Order.afterUpdate);
   });
 
-  OrderItem.beforeLianaInit = (app) => {
+  OrderItem.afterLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
     app.post('/forest/actions/add-discount', LEA, (req, res) => {

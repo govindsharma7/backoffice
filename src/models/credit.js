@@ -1,6 +1,7 @@
 const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
+  // const {models} = sequelize;
   const Credit = sequelize.define('Credit', {
     id: {
       primaryKey: true,
@@ -31,16 +32,15 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
-  Credit.associate = () => {
-    Credit.belongsTo(models.Payment, {
+  Credit.rawAssociations = [
+    { belongsTo: 'Payment', options:  {
       constraints: false,
-    });
-    Credit.belongsTo(models.Order, {
+    }},
+    { belongsTo: 'Order', options:  {
       constraints: false,
-    });
-  };
+    }},
+  ];
 
   return Credit;
 };

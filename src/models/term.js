@@ -1,4 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
+  //const {models} = sequelize;
   const Term = sequelize.define('Term', {
     name: {
       primaryKey: true,
@@ -18,26 +19,28 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
   });
-  const {models} = sequelize;
+
+  Term.excludeFromSchema = true;
+
   // const taxonomies = {};
 
-  Term.associate = () => {
-    Term.belongsTo(models.OrderItem, {
+  Term.rawAssociations = [
+    { belongsTo: 'OrderItem', options: {
       foreignKey: 'TermableId',
       constraints: false,
       as: 'OrderItem',
-    });
-    Term.belongsTo(models.Order, {
+    }},
+    { belongsTo: 'Order', options: {
       foreignKey: 'TermableId',
       constraints: false,
       as: 'Order',
-    });
-    Term.belongsTo(models.Event, {
+    }},
+    { belongsTo: 'Event', options: {
       foreignKey: 'TermableId',
       constraints: false,
       as: 'Event',
-    });
-  };
+    }},
+  ];
 
   // Term.addTaxonomy = function(options) {
   //   const {name} = options;

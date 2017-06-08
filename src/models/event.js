@@ -59,18 +59,20 @@ module.exports = (sequelize, DataTypes) => {
     scopes: TRASH_SCOPES,
   });
 
-  Event.associate = () => {
-    Event.belongsTo(models.Renting, {
+  Event.rawAssociations = [
+    { belongsTo: 'Renting', options: {
       foreignKey: 'EventableId',
       constraints: false,
       as: 'Renting',
-    });
-    Event.hasMany(models.Term, {
+    }},
+    { hasMany: 'Term', options: {
       foreignKey: 'TermableId',
       constraints: false,
       scope: { termable: 'Event' },
-    });
+    }},
+  ];
 
+  Event.afterModelsDefinition = () => {
     Event.addScope('event-category', {
       attributes: { include: [
         [sequelize.col('Terms.name'), 'category'],

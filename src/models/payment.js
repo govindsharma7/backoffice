@@ -5,6 +5,7 @@ const Utils          = require('../utils');
 const {TRASH_SCOPES} = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
+  const {models} = sequelize;
   const Payment = sequelize.define('Payment', {
     id: {
       primaryKey: true,
@@ -37,14 +38,13 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
-  Payment.associate = () => {
-    Payment.belongsTo(models.Order);
-    Payment.hasMany(models.Credit, {
+  Payment.rawAssociations = [
+    { belongsTo: 'Order' },
+    { hasMany: 'Credit', options: {
       as: 'Refunds',
-    });
-  };
+    }},
+  ];
 
   Payment.paylineRefund = (id, values) => {
     const {Credit} = models;
@@ -68,7 +68,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Payment.beforeLianaInit = (app) => {
+  Payment.afterLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
     app.post('/forest/actions/refund', LEA, (req, res) => {

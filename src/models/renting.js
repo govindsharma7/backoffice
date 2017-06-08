@@ -51,11 +51,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     checkinDate: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get: checkinoutDateGetter('checkin'),
     },
     checkoutDate: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get: checkinoutDateGetter('checkout'),
     },
   }, {
@@ -63,16 +63,18 @@ module.exports = (sequelize, DataTypes) => {
     scopes: TRASH_SCOPES,
   });
 
-  Renting.associate = () => {
-    Renting.belongsTo(models.Client);
-    Renting.belongsTo(models.Room);
-    Renting.hasMany(models.OrderItem);
-    Renting.hasMany(models.Event, {
+  Renting.rawAssociations = [
+    { belongsTo: 'Client' },
+    { belongsTo: 'Room' },
+    { hasMany: 'OrderItem' },
+    { hasMany: 'Event', options: {
       foreignKey: 'EventableId',
       constraints: false,
       scope: { eventable: 'Renting' },
-    });
+    }},
+  ];
 
+  Renting.afterModelsDefinition = () => {
     const checkinoutDateScope = (type) => {
       return {
         attributes: { include: [
@@ -439,7 +441,7 @@ ${Apartment.addressCountry}`,
       });
   });
 
-  Renting.beforeLianaInit = (app) => {
+  Renting.afterLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
     app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
