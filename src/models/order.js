@@ -322,7 +322,6 @@ module.exports = (sequelize, DataTypes) => {
           }).perform();
         })
         .then((result) => {
-        console.log(result);
           return res.send(result);
         })
         .catch(Utils.logAndSend(res));

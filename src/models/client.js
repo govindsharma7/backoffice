@@ -1,8 +1,11 @@
-const Promise          = require('bluebird');
+const Promise    = require('bluebird');
+const bodyParser = require('body-parser');
 const D          = require('date-fns');
 const Liana      = require('forest-express');
+const _          = require('lodash');
 const Payline    = require('payline');
 const uuid       = require('uuid/v4');
+const webMerge   = require('../vendor/webmerge');
 const Ninja      = require('../vendor/invoiceninja');
 const payline    = require('../vendor/payline');
 const Utils      = require('../utils');
@@ -10,6 +13,7 @@ const {
   TRASH_SCOPES,
   INVOICENINJA_URL,
   LATE_FEES,
+  DEPOSIT_PRICES,
 }                = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
@@ -65,6 +69,12 @@ module.exports = (sequelize, DataTypes) => {
 
     Client.hasMany(models.Renting);
     Client.hasMany(models.Order);
+    Client.hasMany(models.Metadata, {
+      foreignKey: 'MetadatableId',
+      constraints: false,
+      scope: { metadatable: 'Client' },
+    });
+
 
     Client.addScope('roomSwitchCount', {
       attributes: { include: [
@@ -124,6 +134,29 @@ module.exports = (sequelize, DataTypes) => {
           }],
         }],
       };
+    });
+
+    Client.addScope('lease', {
+      include: [{
+        model: models.Renting,
+        include: [{
+          model: models.OrderItem,
+        }, {
+          model: models.Room,
+          include: [{
+            model: models.Apartment,
+            include: [{
+              model: models.Room,
+            }],
+          }],
+        }],
+      }],
+    });
+
+    Client.addScope('metadata', {
+      include: [{
+        model: models.Metadata,
+      }],
     });
   };
 
@@ -235,7 +268,70 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
- Client.paylineCredit = (clientId, values, idCredit) => {
+  Client.prototype.createMetadata = function(values) {
+    const {address} = values;
+    const {birthDate} = values;
+    const common = {
+      metadatable: 'Client',
+      MetadatableId: this.id,
+    };
+
+    if ( address[1] ) {
+      address[1] = ` ${address[1]}`;
+    }
+    let clientAddress = `${address[0]}${address[1]}, \
+${address[2]}, ${address[4]}, ${address[5]}`;
+    let metadata = [{
+      name: 'fullAddress',
+      value: clientAddress,
+    }, {
+      name: 'birthDate',
+      value: `${birthDate[0]}/${birthDate[1]}/${birthDate[2]}`,
+    }, {
+      name: 'birthPlace',
+      value: `${values.birthPlace}`,
+    }, {
+      name: 'nationality',
+      value: `${values.nationality}`,
+    }].map((data) => {
+      return Object.assign(data, common);
+    });
+
+    return models.Metadata
+      .bulkCreate(metadata);
+  };
+
+  Client.prototype.generateLease = function () {
+    const {Metadata, Rentings} = this;
+    const {Apartment} = Rentings[0].Room;
+    const data = {};
+
+    data.fullName = `${this.firstName} ${this.lastName}`;
+    data.fullAddress = _.find(Metadata, {name: 'fullAddress'}).value;
+    data.birthDate = _.find(Metadata, {name: 'birthDate'}).value;
+    data.birthPlace = _.find(Metadata, {name: 'birthPlace'}).value;
+    data.nationality = _.find(Metadata, {name: 'nationality'}).value;
+    data.floorArea = Apartment.floorArea;
+    data.address = `${Apartment.addressStreet}, ${Apartment.addressZip}, \
+${Apartment.addressCity}`;
+    data.floor = Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor;
+    data.code = Apartment.code ? Apartment.code : 'néant';
+    data.rent = Rentings[0].price / 100;
+    data.serviceFees = Rentings[0].serviceFees / 100;
+    data.bookingDate = Rentings[0].bookingDate ?
+      Rentings[0].bookingDate : D.format(Date.now());
+    data.endDate = D.addYears(D.subDays(data.bookingDate, 1), 1);
+    data.deposit = DEPOSIT_PRICES[Apartment.addressCity] / 100;
+    data.packLevel = this.Rentings[0].getComfortLevel();
+    data.roomFloorArea = Rentings[0].Room.floorArea;
+    data.apartmentRoomNumber = Apartment.Rooms.length;
+    data.roomNumber = Rentings[0].Room.reference.slice(-1);
+    data.email = this.email;
+console.log(data);
+    return webMerge.mergeDocument(90942, 'rzyitr', data, true);
+    };
+
+  Client.paylineCredit = (clientId, values, idCredit) => {
     const {Order, OrderItem, Credit} = models;
     const card = {
       number: values.cardNumber,
@@ -416,6 +512,34 @@ module.exports = (sequelize, DataTypes) => {
         .catch(Utils.logAndSend(res));
     });
 
+    app.post('/forest/actions/generate-lease', LEA, (req, res) => {
+      const {ids} = req.body.data.attributes;
+
+      Promise.resolve()
+        .then(() => {
+          if ( ids.length > 1) {
+            throw new Error('Can\'t create multiple leases');
+          }
+          return Client.scope('lease', 'metadata')
+            .findById(ids[0]);
+        })
+        .then((client) => {
+        console.log(client);
+          if ( !client.Metadata.length ) {
+            throw new Error('Missing information on this client');
+          }
+          if ( !client.Rentings.length ) {
+            throw new Error('This client hasn\'t renting yet');
+          }
+          if ( !client.Rentings[0].getComfortLevel() ) {
+            throw new Error('Housing pack is required to generate lease');
+          }
+          return client.generateLease();
+        })
+        .then(Utils.createSuccessHandler(res, 'Lease'))
+        .catch(Utils.logAndSend(res));
+    });
+
     app.get('/forest/Client/:recordId/relationships/Invoices', LEA, (req, res) => {
       Client
         .findById(req.params.recordId)
@@ -440,6 +564,31 @@ module.exports = (sequelize, DataTypes) => {
             meta: {count: data.length},
           });
         })
+        .catch(Utils.logAndSend(res));
+    });
+
+    let urlencodedParser = bodyParser.urlencoded({ extended: true });
+
+    //Handle JotForm data
+    app.post('/forest/actions/clientIdentity', urlencodedParser, LEA, (req, res) => {
+      const values = _.reduce(req.body, function(result, value, key) {
+        let newKey = key.replace(/(q[\d]*_)/g, '');
+
+        result[newKey] = value;
+        return result;
+      }, {});
+
+      Client
+        .findById(values.clientId)
+        .tap((client) => {
+            return client
+              .set('phoneNumber', `${values.phoneNumber[0]}${values.phoneNumber[1]}`)
+              .save();
+        })
+       .then((client) => {
+          return client.createMetadata(values);
+        })
+        .then(Utils.createSuccessHandler(res, 'Client metadata created'))
         .catch(Utils.logAndSend(res));
     });
   };

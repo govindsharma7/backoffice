@@ -157,11 +157,8 @@
               if (Number($('#charLeft').text()) < 0) {
 
                 text = text.slice(0, i);
-                console.log(text);
                 $('#bodysms').val(text);
-                console.log(Number($('#charLeft').text()));
                 $('#charLeft').text(Number($('#charLeft').text()) + 2);
-                console.log(Number($('#charLeft').text()));
                 break;
               }
               i++;

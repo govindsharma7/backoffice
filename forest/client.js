@@ -61,6 +61,8 @@ Liana.collection('Client', {
         type: 'String',
       },
     ],
+  }, {
+    name: 'Generate Lease',
   }],
   segments: TRASH_SEGMENTS,
 });

@@ -74,6 +74,12 @@ module.exports = {
     basic: 29000,
   },
 
+  DEPOSIT_PRICES: {
+    lyon: 69000,
+    paris: 89000,
+    montpellier: 49000,
+  },
+
   RENT_COEFS: [
     null, // D.format returns '1' for the first day of the year, not 0.
     0.95,

@@ -24,6 +24,8 @@ module.exports = (sequelize, DataTypes) => {
     addressZip:               DataTypes.STRING,
     addressCity:              DataTypes.ENUM('lyon', 'montpellier', 'paris'),
     addressCountry:           DataTypes.ENUM('france'),
+    code:                     DataTypes.STRING,
+    floor:                    DataTypes.INTEGER,
     latLng:                   DataTypes.STRING,
     floorArea:                DataTypes.FLOAT,
     status: {
