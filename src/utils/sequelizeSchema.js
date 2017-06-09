@@ -1,17 +1,19 @@
-const reduce         = require('lodash/reduce');
+const reduce            = require('lodash/reduce');
 const {
   GraphQLSchema,
   GraphQLList,
   GraphQLObjectType,
-}                    = require('graphql');
+  GraphQLString,
+}                       = require('graphql');
 const {
   attributeFields,
   resolver,
   defaultArgs,
   defaultListArgs,
   // relay,
-}                    = require('graphql-sequelize');
-const isModel        = require('./isModel');
+}                       = require('graphql-sequelize');
+const ResourcesGetter = require('forest-express-sequelize/services/resources-getter');
+const isModel           = require('./isModel');
 
 const _ = {reduce};
 const Utils = {isModel};
@@ -57,15 +59,42 @@ module.exports = function(models) {
           return fields;
         }
 
+        const resolve = resolver(model);
+
         fields[name] = {
           type: types[name],
           args: defaultArgs(model),
-          resolve: resolver(model),
+          resolve,
         };
         fields[`${name}s`] = {
           type: new GraphQLList(types[name]),
-          args: defaultListArgs(model),
-          resolve: resolver(model),
+          args: Object.assign({
+            search: { type: GraphQLString },
+          },
+          defaultListArgs(model)),
+          resolve: (source, args, context, info) => {
+            // if a search argument is present, use forest-express-sequelize
+            // search feature instead of sequelize-graphql querying
+            if ( args.search ) {
+              args.fields = {
+                [model.name]:
+                  info.fieldNodes[0].selectionSet.selections.map((selection) => {
+                    return selection.name.value;
+                  }).join(','),
+              };
+
+              return new ResourcesGetter(model, models, args)
+                .perform()
+                .then(([, records]) => {
+                  return records;
+                });
+            }
+
+            return resolve(source, args, context, info)
+              .then((result) => {
+                return result;
+              });
+          },
         };
 
         return fields;

@@ -5,6 +5,7 @@ const Cors         = require('cors');
 const BodyParser   = require('body-parser');
 const Liana        = require('forest-express-sequelize');
 const GraphQLHTTP  = require('express-graphql');
+const {maskErrors} = require('graphql-errors');
 const config       = require('./config');
 const models       = require('./models');
 const checkToken   = require('./middlewares/checkToken');
@@ -60,18 +61,23 @@ parentApp.use(Liana.init({
   sequelize: models.sequelize, // sequelize database connection.
 }));
 
-// This hook is currently useless
+// This hook is for additional routes
 Object.keys(models).forEach(function(modelName) {
   if ('afterLianaInit' in models[modelName]) {
     models[modelName].afterLianaInit(parentApp);
   }
 });
 
+const schema = Utils.sequelizeSchema(models);
+
+if ( config.NODE_ENV ) {
+  maskErrors(schema);
+}
 /*
  * GraphQL middleware
  */
 graphqlApp.use(GraphQLHTTP({
-  schema: Utils.sequelizeSchema(models),
+  schema,
   graphiql: true,
 }));
 
