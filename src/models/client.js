@@ -327,7 +327,7 @@ ${Apartment.addressCity}`;
     data.apartmentRoomNumber = Apartment.Rooms.length;
     data.roomNumber = Rentings[0].Room.reference.slice(-1);
     data.email = this.email;
-console.log(data);
+
     return webMerge.mergeDocument(90942, 'rzyitr', data, true);
     };
 
@@ -524,7 +524,6 @@ console.log(data);
             .findById(ids[0]);
         })
         .then((client) => {
-        console.log(client);
           if ( !client.Metadata.length ) {
             throw new Error('Missing information on this client');
           }
