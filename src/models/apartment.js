@@ -228,7 +228,6 @@ module.exports = (sequelize, DataTypes) => {
           return Apartment.scope('currentClients').findById(ids[0]);
         })
         .then((apartment) => {
-          console.log(apartment);
           return Promise.all([apartment.getCurrentClientsPhoneNumbers(), apartment]);
         })
         .then(([phoneNumbers, apartment]) => {
@@ -239,6 +238,7 @@ module.exports = (sequelize, DataTypes) => {
         })
         .catch(Utils.logAndSend(res));
     });
+
     app.get(
       '/forest/Apartment/:recordId/relationships/currentClients',
       LEA,
