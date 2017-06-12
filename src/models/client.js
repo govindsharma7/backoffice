@@ -235,7 +235,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Client.prototype.calculateTodayLateFees = function() {
+  Client.prototype.calculateTodaysLateFees = function() {
     const {Orders} = this;
     var lateFees;
 
@@ -282,7 +282,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Client.prototype.applyLateFees = function() {
 
-    return this.calculateTodayLateFees()
+    return this.calculateTodaysLateFees()
       .then((lateFees) => {
         if ( lateFees === 0 ) {
           throw new Error('No late fees');
@@ -306,7 +306,7 @@ module.exports = (sequelize, DataTypes) => {
 
         /*
           Check if an order item already exists and hasn't been updated today
-          to avoid to increment its unitprice twice or more per day
+          to avoid incrementing its unitprice twice or more per day
         */
         if ( isCreated || orderItem.updatedAt >= D.startOfDay(Date.now()) ) {
           return order;

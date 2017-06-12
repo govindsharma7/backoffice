@@ -271,7 +271,6 @@ module.exports = (sequelize, DataTypes) => {
     return Client.scope('roomSwitchCount')
       .findById(this.ClientId)
       .then((client) => {
-        console.log(client);
         return Utils.getRoomSwitchPrice(
           client.get('roomSwitchCount'),
           comfortLevel

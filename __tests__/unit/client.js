@@ -95,12 +95,12 @@ describe('Client', () => {
     });
   });
 
-  describe('#claculateTodayLateFees()', () => {
+  describe('#claculateTodaysLateFees()', () => {
     test('it should return late fee amount for a client', () => {
       return models.Client.scope('rentOrders')
         .findById(client2.id)
         .then((client) => {
-            return client.calculateTodayLateFees();
+            return client.calculateTodaysLateFees();
         })
         .then((lateFees) => {
           expect(lateFees).toEqual(1000);
