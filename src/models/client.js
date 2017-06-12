@@ -96,8 +96,15 @@ module.exports = (sequelize, DataTypes) => {
       return {
         include: [{
           model: models.Renting,
-          where: sequelize.literal(`(\`Rentings->Events\`.id IS NULL OR
-\`Rentings->Events\`.startDate >= '${date}')`),
+          where: {
+            $or: [{
+              '$Rentings->Events.id$': null,
+            }, {
+              '$Rentings->Events.startDate$': {
+                $gte: date,
+              },
+            }],
+          },
           include: [{
             model: models.Event,
             required: false,
@@ -117,8 +124,15 @@ module.exports = (sequelize, DataTypes) => {
       return {
         include: [{
           model: models.Renting,
-          where: sequelize.literal(`(\`Rentings->Events\`.id IS NULL OR
-\`Rentings->Events\`.startDate >= '${date}')`),
+          where: {
+            $or: [{
+              '$Rentings->Events.id$': null,
+            }, {
+              '$Rentings->Events.startDate$': {
+                $gte: date,
+              },
+            }],
+          },
           include: [{
             model: models.Event,
             required: false,
@@ -304,32 +318,34 @@ ${address[2]}, ${address[4]}, ${address[5]}`;
   Client.prototype.generateLease = function () {
     const {Metadata, Rentings} = this;
     const {Apartment} = Rentings[0].Room;
-    const data = {};
+    const data = {
+      fullName: `${this.firstName} ${this.lastName}`,
+      fullAddress: _.find(Metadata, {name: 'fullAddress'}).value,
+      birthDate: _.find(Metadata, {name: 'birthDate'}).value,
+      birthPlace: _.find(Metadata, {name: 'birthPlace'}).value,
+      nationality: _.find(Metadata, {name: 'nationality'}).value,
+      floorArea: Apartment.floorArea,
+      address: `${Apartment.addressStreet}, ${Apartment.addressZip}, \
+${Apartment.addressCity}`,
+      floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
+      code: Apartment.code ? Apartment.code : 'néant',
+      rent: Rentings[0].price / 100,
+      serviceFees: Rentings[0].serviceFees / 100,
+      bookingDate: Rentings[0].bookingDate ?
+Rentings[0].bookingDate : D.format(Date.now()),
 
-    data.fullName = `${this.firstName} ${this.lastName}`;
-    data.fullAddress = _.find(Metadata, {name: 'fullAddress'}).value;
-    data.birthDate = _.find(Metadata, {name: 'birthDate'}).value;
-    data.birthPlace = _.find(Metadata, {name: 'birthPlace'}).value;
-    data.nationality = _.find(Metadata, {name: 'nationality'}).value;
-    data.floorArea = Apartment.floorArea;
-    data.address = `${Apartment.addressStreet}, ${Apartment.addressZip}, \
-${Apartment.addressCity}`;
-    data.floor = Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor;
-    data.code = Apartment.code ? Apartment.code : 'néant';
-    data.rent = Rentings[0].price / 100;
-    data.serviceFees = Rentings[0].serviceFees / 100;
-    data.bookingDate = Rentings[0].bookingDate ?
-      Rentings[0].bookingDate : D.format(Date.now());
+      deposit: DEPOSIT_PRICES[Apartment.addressCity] / 100,
+      packLevel: this.Rentings[0].getComfortLevel(),
+      roomFloorArea: Rentings[0].Room.floorArea,
+      apartmentRoomNumber: Apartment.Rooms.length,
+      roomNumber: Rentings[0].Room.reference.slice(-1),
+      email: this.email,
+    };
+
     data.endDate = D.addYears(D.subDays(data.bookingDate, 1), 1);
-    data.deposit = DEPOSIT_PRICES[Apartment.addressCity] / 100;
-    data.packLevel = this.Rentings[0].getComfortLevel();
-    data.roomFloorArea = Rentings[0].Room.floorArea;
-    data.apartmentRoomNumber = Apartment.Rooms.length;
-    data.roomNumber = Rentings[0].Room.reference.slice(-1);
-    data.email = this.email;
 
     return webMerge.mergeDocument(90942, 'rzyitr', data, true);
-    };
+  };
 
   Client.paylineCredit = (clientId, values, idCredit) => {
     const {Order, OrderItem, Credit} = models;
@@ -525,10 +541,10 @@ ${Apartment.addressCity}`;
         })
         .then((client) => {
           if ( !client.Metadata.length ) {
-            throw new Error('Missing information on this client');
+            throw new Error('Metadata are missing for this client');
           }
           if ( !client.Rentings.length ) {
-            throw new Error('This client hasn\'t renting yet');
+            throw new Error('This client has no renting yet');
           }
           if ( !client.Rentings[0].getComfortLevel() ) {
             throw new Error('Housing pack is required to generate lease');
@@ -568,7 +584,10 @@ ${Apartment.addressCity}`;
 
     let urlencodedParser = bodyParser.urlencoded({ extended: true });
 
-    //Handle JotForm data
+    /*
+      Handle JotForm data (Identity - New Member)
+      in order to collect more information for a new client
+    */
     app.post('/forest/actions/clientIdentity', urlencodedParser, LEA, (req, res) => {
       const values = _.reduce(req.body, function(result, value, key) {
         let newKey = key.replace(/(q[\d]*_)/g, '');

@@ -65,8 +65,15 @@ module.exports = (sequelize, DataTypes) => {
           model: models.Room,
           include: [{
             model: models.Renting,
-            where: sequelize.literal(`(\`Rooms->Rentings->Events\`.id IS NULL OR
-\`Rooms->Rentings->Events\`.startDate >= '${date}')`),
+            where: {
+              $or: [{
+                '$Rooms->Rentings->Events.id$': null,
+              }, {
+                '$Rooms->Rentings->Events.startDate$': {
+                  $gte: date,
+                },
+              }],
+            },
             include: [{
               model: models.Client,
             }, {
