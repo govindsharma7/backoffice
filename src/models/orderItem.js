@@ -66,6 +66,7 @@ module.exports = (sequelize, DataTypes) => {
       unitPrice: -1 * amount,
       RentingId: this.RentingId,
       ProductId: this.ProductId,
+      OrderId: this.OrderId,
     });
   };
 
