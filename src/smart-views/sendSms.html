@@ -238,7 +238,8 @@ ${character.position}</span></p>`);
                 success: function(response) {
                   $('#send').after(`<p class='sending success'>${response.success}</p>`);
                 },
-                error: function() {
+                error: function(err) {
+                  console.log(err);
                   $('#send').after('<p class=\'sending error\'>Internal Server Error</p>');
                 }
               });

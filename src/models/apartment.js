@@ -191,33 +191,6 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Apartment.beforeLianaInit = (app) => {
-    const LEA = Liana.ensureAuthenticated;
-    let urlencodedParser = bodyParser.urlencoded({ extended: true });
-
-    app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
-      const {values, ids} = req.body.data.attributes;
-
-      Promise.resolve()
-        .then(() => {
-          if (!ids || ids.length > 1 ) {
-            throw new Error('You have to select one apartment');
-          }
-          return Apartment.scope('currentClients').findById(ids[0]);
-        })
-        .then((apartment) => {
-          return Promise.all([apartment.getCurrentClientsPhoneNumbers(), apartment]);
-        })
-        .then(([phoneNumbers, apartment]) => {
-          return apartment.sendSms(phoneNumbers, values.bodySms);
-        })
-        .then(() => {
-          return res.status(200).send({success: 'SMS successfully sended !'});
-        })
-        .catch(Utils.logAndSend(res));
-    });
-  };
-
   Apartment.hook('beforeValidate', (apartment) => {
     if ( apartment.latLng != null ) {
       return apartment;
@@ -242,7 +215,30 @@ module.exports = (sequelize, DataTypes) => {
   Apartment.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
     const Serializer = Liana.ResourceSerializer;
+    let urlencodedParser = bodyParser.urlencoded({ extended: true });
 
+    app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
+      const {values, ids} = req.body.data.attributes;
+
+      Promise.resolve()
+        .then(() => {
+          if (!ids || ids.length > 1 ) {
+            throw new Error('You have to select one apartment');
+          }
+          return Apartment.scope('currentClients').findById(ids[0]);
+        })
+        .then((apartment) => {
+          console.log(apartment);
+          return Promise.all([apartment.getCurrentClientsPhoneNumbers(), apartment]);
+        })
+        .then(([phoneNumbers, apartment]) => {
+          return apartment.sendSms(phoneNumbers, values.bodySms);
+        })
+        .then(() => {
+          return res.status(200).send({success: 'SMS successfully sended !'});
+        })
+        .catch(Utils.logAndSend(res));
+    });
     app.get(
       '/forest/Apartment/:recordId/relationships/currentClients',
       LEA,
