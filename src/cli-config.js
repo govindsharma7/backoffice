@@ -1,8 +1,11 @@
 // The config must be exposed differently for sequelize-cli
 const config = require('./config');
 
+// We always return a config file with only the 'development' environment
+// (the default value for sequelize-cli), as environment selection happens
+// automatically in config.js for us.
 module.exports = {
-  [config.NODE_ENV]: {
+  development: {
     username: config.SEQUELIZE_USERNAME,
     password: config.SEQUELIZE_PASSWORD,
     database: config.SEQUELIZE_DATABASE,

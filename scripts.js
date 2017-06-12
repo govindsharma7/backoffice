@@ -3,10 +3,13 @@
 const argv = process.argv.slice(3);
 
 const sequelizeFlags =
-  '--config src/cli-config --models-path src/models';
-// TODO: that --env flag doesn't work
+  '--config src/cli-config.js --models-path src/models/';
 const sequelizeMigrationCreate =
-  `sequelize migration:create ${sequelizeFlags} --env \${NODE_ENV}`;
+  `sequelize migration:create ${sequelizeFlags}`;
+const sequelizeMigrationDo =
+  `sequelize db:migrate ${sequelizeFlags}`;
+const sequelizeMigrationUndo =
+  `sequelize db:migrate:undo ${sequelizeFlags}`;
 
 const watched = '--watch src --watch forest --watch __tests__';
 const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
@@ -29,7 +32,9 @@ const claudiaUpdate = 'claudia update --config .env.json > /tmp/claudia.log';
 
 const common = {
   'start': nodemonInspect,
-  'sql:migration:create': sequelizeMigrationCreate,
+  'migration:create': sequelizeMigrationCreate,
+  'migration:do': sequelizeMigrationDo,
+  'migration:undo': sequelizeMigrationUndo,
   'db:sync': dbSync,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
