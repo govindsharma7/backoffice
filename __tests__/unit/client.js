@@ -60,12 +60,16 @@ describe('Client', () => {
       const _Renting = models.Renting.scope('room+apartment');
 
       return Promise.all([
+        Promise.all([
           _Renting.findById(renting2.id),
           _Renting.findById(renting3.id),
+        ]),
+        client.hasUncashedDeposit(),
         ])
-        .then((rentings) => {
+        .then(([rentings, uncashedDeposit]) => {
           return client.createRentingsOrder(
             rentings,
+            uncashedDeposit,
             D.parse('2017-02 Z'),
             Math.round(Math.random() * 1E12)
           );
@@ -74,7 +78,7 @@ describe('Client', () => {
           return order.getOrderItems();
         })
         .then((orderItems) => {
-          return expect(orderItems.length).toEqual(4);
+          return expect(orderItems.length).toEqual(5);
         });
     });
   });
@@ -106,6 +110,23 @@ describe('Client', () => {
           expect(lateFees).toEqual(1000);
           return true;
         });
+    });
+  });
+
+  describe('#hasUncashedDeposit', () => {
+    test('it should return true if client have an uncashed deposit', () => {
+      return client.hasUncashedDeposit()
+        .then((result) => {
+          expect(result).toEqual(true);
+          return true;
+      });
+    });
+    test('it should return false as client2 didn\'t pay his deposit', () => {
+      return client2.hasUncashedDeposit()
+        .then((result) => {
+          expect(result).toEqual(false);
+          return true;
+      });
     });
   });
 

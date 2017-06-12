@@ -96,8 +96,39 @@ module.exports = (sequelize, DataTypes) => {
 
   Order.INVOICE_STATUS_DRAFT = 1;
 
+  Order.prototype.getAmount = function() {
+    const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
+
+    return Order.scope('amount')
+      .findById(this.id, option)
+      .then((order) => {
+
+        return order.get('amount');
+      });
+  };
+
+  Order.prototype.getTotalPaid = function() {
+    const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
+
+    return Order.scope('totalPaid')
+      .findById(this.id, option)
+      .then((order) => {
+        return order.get('totalPaid');
+      });
+  };
+
+  Order.prototype.getTotalRefund = function() {
+    const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
+
+    return Order.scope('totalRefund')
+      .findById(this.id, option)
+      .then((order) => {
+        return order.get('totalRefund');
+      });
+  };
+
   // Return all calculated props (amount, totalPaid, balance)
-  Order.prototype.getCalculatedProps = function() {
+    Order.prototype.getCalculatedProps = function() {
     return Order.scope('calculatedProps')
       .findById(this.id)
       .then((order) => {

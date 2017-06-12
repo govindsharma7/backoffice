@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 module.exports = (sequelize, DataTypes) => {
   const Term = sequelize.define('Term', {
     name: {
@@ -52,6 +54,20 @@ module.exports = (sequelize, DataTypes) => {
   // Term.hook('beforeCreate', (term) => {
   //
   // });
+
+  Term.prototype.changeName = function(name) {
+    return sequelize.transaction((t) => {
+      return Promise.all([
+        this.destroy({transaction: t}),
+        Term.create({
+          name,
+          taxonomy: this.taxonomy,
+          TermableId: this.TermableId,
+          termable: this.termable,
+        }, {transaction: t}),
+      ]);
+    });
+  };
 
   return Term;
 };

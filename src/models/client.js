@@ -14,6 +14,7 @@ const {
   INVOICENINJA_URL,
   LATE_FEES,
   DEPOSIT_PRICES,
+  UNCASHED_DEPOSIT,
 }                = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
@@ -101,6 +102,16 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Client.id'],
     });
 
+    Client.addScope('rentOrders', {
+      include: [{
+        model : models.Order,
+        include: [{
+          model: models.OrderItem,
+          where: { ProductId: 'rent' },
+        }],
+      }],
+    });
+
     Client.addScope('roomCurrentClient', function(date = D.format(Date.now())) {
       return {
         include: [{
@@ -159,27 +170,94 @@ module.exports = (sequelize, DataTypes) => {
       };
     });
 
-    Client.addScope('lease', {
-      include: [{
-        model: models.Renting,
+    Client.addScope('lease', function(date = D.format(Date.now())) {
+      return {
         include: [{
-          model: models.OrderItem,
-        }, {
-          model: models.Room,
+          model: models.Renting,
+          required: false,
+          where: {
+            $or: [{
+              '$Rentings->Events.id$': null,
+            }, {
+              '$Rentings->Events.startDate$': {
+                $gte: date,
+              },
+            }],
+          },
           include: [{
-            model: models.Apartment,
+            model: models.Event,
+            required: false,
             include: [{
-              model: models.Room,
+              model: models.Term,
+              where: {
+                taxonomy: 'event-category',
+                name: 'checkout',
+              },
+            }],
+          }, {
+            model: models.OrderItem,
+          }, {
+            model: models.Room,
+            include: [{
+              model: models.Apartment,
+              include: [{
+                model: models.Room,
+              }],
             }],
           }],
         }],
-      }],
+      };
     });
 
     Client.addScope('metadata', {
       include: [{
         model: models.Metadata,
       }],
+    });
+
+    Client.addScope('depositOrder', function(date = D.format(Date.now())) {
+      return {
+        include: [{
+          model: models.Renting,
+          required: false,
+            where: {
+              $or: [{
+                '$Rentings->Events.id$': null,
+              }, {
+                '$Rentings->Events.startDate$': {
+                  $gte: date,
+                },
+              }],
+            },
+            include: [{
+              model: models.Event,
+              required: false,
+              include: [{
+                model: models.Term,
+                where: {
+                  taxonomy: 'event-category',
+                  name: 'checkout',
+                },
+              }],
+            }, {
+              model: models.Room,
+              include: [{
+                model: models.Apartment,
+              }],
+            }],
+          }, {
+          model: models.Order,
+          required: false,
+          where: {
+            type: 'deposit',
+            label: 'Deposit',
+          },
+          include: [{
+            model: models.Term,
+            required: false,
+          }],
+        }],
+      };
     });
   };
 
@@ -196,6 +274,27 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Client.prototype.hasUncashedDeposit = function() {
+    return this.getOrders({
+      where: {
+        type: 'deposit',
+      },
+      include: [{
+        model: models.Term,
+        where: {
+          taxonomy: 'do-not-cash',
+          name: 'true',
+        },
+      }],
+    })
+    .then((result) => {
+      if ( result.length ) {
+        return true;
+      }
+      return false;
+    });
+  };
+
   Client.prototype.getRentingsFor = function(date = Date.now()) {
     const startOfMonth = D.format(D.startOfMonth(date));
 
@@ -210,11 +309,20 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Client.prototype.createRentingsOrder = function(rentings, date = Date.now(), number) {
+  Client.prototype.createRentingsOrder =
+    function(rentings, hasUncashedDeposit, date = Date.now(), number) {
     const {Order, OrderItem} = models;
     const items = rentings.reduce((all, renting) => {
       return all.concat(renting.toOrderItems(date));
     }, []);
+
+    if ( hasUncashedDeposit ) {
+      items.push({
+        label: 'Caution',
+        unitPrice: UNCASHED_DEPOSIT,
+        quantity: 1,
+      });
+    }
 
     return Order.create({
       type: 'debit',
@@ -480,6 +588,57 @@ Rentings[0].bookingDate : D.format(Date.now()),
         return error;
       });
   };
+
+  Client.prototype.createDepositOrder = function() {
+    const {OrderItem} = models;
+    const {Orders, Rentings} = this;
+    const {Apartment} = Rentings[0].Room;
+
+    if ( Orders.length ) {
+      throw new Error('This client already have a deposit order');
+    }
+
+    return models.Order
+      .create({
+        label: 'Deposit',
+        type: 'deposit',
+        ClientId: this.id,
+        OrderItems: [{
+          label: 'Deposit',
+          unitPrice: DEPOSIT_PRICES[Apartment.addressCity],
+        }],
+      }, {
+        include: [OrderItem],
+    });
+  };
+
+  Client.prototype.changeDepositOption = function(option) {
+    const {Orders} = this;
+
+    let name = 'true';
+
+    if ( option === 'cash deposit' ) {
+      name = 'false';
+    }
+    return Orders[0]
+      .getTerms({where: {taxonomy: 'do-not-cash'} })
+      .then((terms) => {
+        if ( terms.length ) {
+          return terms[0].changeName(name);
+        }
+        return models.Term
+          .create({
+            name,
+            taxonomy: 'do-not-cash',
+            termable: 'Order',
+            TermableId: Orders[0].id,
+          });
+      })
+      .then(() => {
+        return true;
+    });
+  };
+
   /*
    * CRUD hooks
    *
@@ -615,7 +774,56 @@ Rentings[0].bookingDate : D.format(Date.now()),
        .then((client) => {
           return client.createMetadata(values);
         })
-        .then(Utils.createSuccessHandler(res, 'Client metadata created'))
+        .then(Utils.createSuccessHandler(res, 'Client metadata'))
+        .catch(Utils.logAndSend(res));
+    });
+
+    app.post(
+      '/forest/actions/create-deposit-order',
+      LEA,
+      (req, res) => {
+        const {ids} = req.body.data.attributes;
+
+        Promise.resolve()
+          .then(() => {
+            if ( ids.length > 1 ) {
+              throw new Error('Can\'t create multiple deposit order');
+            }
+            return Client.scope('depositOrder').findById(ids[0]);
+          })
+          .then((client) => {
+            if ( !client.Rentings.length ) {
+              throw new Error('This client has no renting yet');
+            }
+            return client.createDepositOrder();
+          })
+          .then(Utils.createSuccessHandler(res, 'Deposit order'))
+          .catch(Utils.logAndSend(res));
+      });
+
+    app.post('/forest/actions/change-do-not-cash-deposit-option', LEA, (req, res) => {
+      const {ids, values} = req.body.data.attributes;
+
+      Promise.resolve()
+        .then(() => {
+          if ( ids.length > 1 ) {
+            throw new Error('Can\'t create multiple deposit order');
+          }
+          if ( !values.option ) {
+            throw new Error('Option field is required');
+          }
+          return Client.scope('depositOrder').findById(ids[0]);
+        })
+        .then((client) => {
+          if ( !client.Rentings.length ) {
+            throw new Error('This client has no renting yet');
+          }
+          if ( !client.Orders.length ) {
+            throw new Error('This client has no deposit order yet');
+          }
+          return client.changeDepositOption(values.option);
+        })
+        .then(Utils.createSuccessHandler(res, 'Deposit change option'))
         .catch(Utils.logAndSend(res));
     });
   };

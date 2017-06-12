@@ -46,6 +46,20 @@ module.exports = fixtures((u) => {
       label: 'March Invoice',
       ClientId: u.id('client-2'),
       dueDate: D.parse('2016-01-01 Z'),
+    }, {
+      id: u.id('order-5'),
+      type: 'deposit',
+      receiptNumber: u.int(5),
+      label: 'test order 5',
+      ClientId: u.id('client-1'),
+      dueDate: D.parse('2016-01-01 Z'),
+    }, {
+      id: u.id('order-6'),
+      type: 'deposit',
+      receiptNumber: u.int(6),
+      label: 'test order 6',
+      ClientId: u.id('client-2'),
+      dueDate: D.parse('2016-01-01 Z'),
     }],
     Apartment: [{
       id: u.id('apartment-1'),
@@ -146,6 +160,11 @@ module.exports = fixtures((u) => {
       taxonomy: 'event-category',
       termable: 'Event',
       TermableId: u.id('event-2'),
+    }, {
+      name: 'true',
+      taxonomy: 'do-not-cash',
+      termable: 'Order',
+      TermableId: u.id('order-5'),
     }],
      Payment: [{
       id: u.id('payment-1'),

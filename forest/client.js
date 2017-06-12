@@ -63,6 +63,16 @@ Liana.collection('Client', {
     ],
   }, {
     name: 'Generate Lease',
+  }, {
+    name: 'Create deposit Order',
+  }, {
+    name: 'Change "do not cash deposit" option',
+    fields: [{
+      field: 'option',
+      description: 'required',
+      type: 'Enum',
+      enums: ['cash deposit', 'do not cash deposit'],
+    }],
   }],
   segments: TRASH_SEGMENTS,
 });

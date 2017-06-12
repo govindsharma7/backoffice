@@ -27,6 +27,7 @@ return Client.findAll()
       return Promise.all([
         client,
         client.getRentingsFor(month),
+        client.hasUncashedDeposit(),
       ]);
     });
   })
@@ -40,9 +41,9 @@ return Client.findAll()
   .tap((tuples) => {
     // rentings-orders should be created one after the other, otherwise they all
     // pick the same receiptNumber
-    return Promise.reduce(tuples, (prev, [client, rentings]) => {
+    return Promise.reduce(tuples, (prev, [client, rentings, hasUncashedDeposit]) => {
       return client
-        .createRentingsOrder(rentings, month)
+        .createRentingsOrder(rentings, hasUncashedDeposit, month)
         .tap((order) => {
           return order.pickReceiptNumber();
         })
