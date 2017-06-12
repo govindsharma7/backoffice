@@ -75,6 +75,15 @@ module.exports = (sequelize, DataTypes) => {
       scope: { metadatable: 'Client' },
     });
 
+    Client.addScope('rentOrders', {
+      include: [{
+        model : models.Order,
+        include: [{
+          model: models.OrderItem,
+          where: { ProductId: 'rent' },
+        }],
+      }],
+    });
 
     Client.addScope('roomSwitchCount', {
       attributes: { include: [

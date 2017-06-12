@@ -22,7 +22,7 @@ describe('Apartment', () => {
 
   describe('scopes', () => {
     test('currentClient scope Should return all current clients for an apartment', () => {
-      return Apartment.scope('currentClient')
+      return Apartment.scope('currentClients')
         .findById(apartment1.id)
         .then((apartment) => {
           expect(apartment.Rooms[0].Rentings[0].Client.id)
@@ -37,7 +37,7 @@ describe('Apartment', () => {
 
   describe('#getCurrentClientsPhoneNumbers()', () => {
     test('it should return all current clients phone numbers', () => {
-      return Apartment.scope('currentClient')
+      return Apartment.scope('currentClients')
         .findById(apartment1.id)
         .then((apartment) => {
           return apartment.getCurrentClientsPhoneNumbers();
