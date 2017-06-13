@@ -37,12 +37,12 @@ Liana.collection('Order', {
         });
     },
   }, {
-    field: 'refund',
+    field: 'totalRefund',
     type: 'Number',
     get(object) {
       return memoizer.getCalculatedProps(object)
         .then((result) => {
-          return result.refunds / 100;
+          return result.totalRefund / 100;
       });
     },
   }, {

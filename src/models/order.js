@@ -66,33 +66,17 @@ module.exports = (sequelize, DataTypes) => {
       scope: { termable: 'Order' },
     });
 
-    Order.addScope('amount', {
+    Order.addScope('calculatedProps', {
       attributes: [
         [sequelize.fn('sum', sequelize.literal(
           `${oic('unitPrice')} * ${oic('quantity')} * ( 1 + ${oic('vatRate')} )`
         )), 'amount'],
-      ],
-      include: [{
-        model: models.OrderItem,
-        attributes: [],
-      }],
-      group: ['Order.id'],
-    });
-
-    Order.addScope('totalPaid', {
-      attributes: [
-        [sequelize.fn('sum', sequelize.col('Payments.amount')), 'totalPaid'],
-      ],
-      include: [{
-        model: models.Payment,
-        attributes: [],
-      }],
-      group: ['Order.id'],
-    });
-
-    Order.addScope('totalRefund', {
-      attributes: [
-        [sequelize.fn('sum', sequelize.col('Payments->Refunds.amount')), 'totalRefund'],
+        [sequelize.fn('sum', sequelize.literal(
+          'DISTINCT `Payments`.`amount`'
+        )), 'totalPaid'],
+        [sequelize.fn('sum', sequelize.literal(
+          'DISTINCT `Payments->Refunds`.`amount`'
+        )), 'totalRefund'],
       ],
       include: [{
         model: models.Payment,
@@ -102,60 +86,27 @@ module.exports = (sequelize, DataTypes) => {
           as: 'Refunds',
           attributes: [],
         }],
+      }, {
+        model: models.OrderItem,
+        attributes: [],
       }],
       group: ['Order.id'],
-    });
-
-    Order.addScope('refunds', {
-      include: [{
-        model: models.Payment,
-        include: [{
-          model: models.Credit,
-          as: 'Refunds',
-        }],
-      }],
     });
   };
 
   Order.INVOICE_STATUS_DRAFT = 1;
 
-  Order.prototype.getAmount = function() {
-    return Order.scope('amount')
-      .findById(this.id)
-      .then((order) => {
-        return order.get('amount');
-      });
-  };
-
-  Order.prototype.getTotalPaid = function() {
-    return Order.scope('totalPaid')
-      .findById(this.id)
-      .then((order) => {
-        return order.get('totalPaid');
-      });
-  };
-
-  Order.prototype.getTotalRefund = function() {
-    return Order.scope('totalRefund')
-      .findById(this.id)
-      .then((order) => {
-        return order.get('totalRefund');
-      });
-  };
-
   // Return all calculated props (amount, totalPaid, balance)
   Order.prototype.getCalculatedProps = function() {
-    return Promise.all([
-        this.getAmount(),
-        this.getTotalPaid(),
-        this.getTotalRefund(),
-      ])
-      .then(([amount, totalPaid, totalRefund]) => {
+    return Order.scope('calculatedProps')
+      .findById(this.id)
+      .then((order) => {
         return {
-          amount,
-          totalPaid,
-          balance: totalPaid - amount - totalRefund,
-          totalRefund,
+          amount: order.get('amount'),
+          totalPaid: order.get('totalPaid'),
+          totalRefund: order.get('totalRefund'),
+          balance:
+            order.get('totalPaid') - order.get('amount') - order.get('totalRefund'),
         };
       });
   };
@@ -206,11 +157,11 @@ module.exports = (sequelize, DataTypes) => {
             });
           }),
       ])
-      .then(([client, {totalPaid, amount}, items]) => {
+      .then(([client, {amount, balance}, items]) => {
         return Object.assign({
           'client_id': client.ninjaId,
           amount,
-          'balance': totalPaid - amount,
+          balance,
           'invoice_items': items,
           'invoice_number': this.receiptNumber,
         }, props);

@@ -16,6 +16,7 @@ const sequelize = new Sequelize(
     define: {
       freezeTableName: true,
     },
+    benchmark: true,
   }
 );
 const db = {};
