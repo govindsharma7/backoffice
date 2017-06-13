@@ -9,6 +9,7 @@
     ".env.js"
   ],
   "dependencies": {
+    "aws-sdk": "^2.68.0",
     "aws-serverless-express": "^2.2.0",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
@@ -27,7 +28,6 @@
     "node-fetch": "^1.7.0",
     "payline": "github:chez-nestor/payline#vquesnel",
     "sequelize": "github:louisremi/sequelize#fix_undefined_$parent",
-    "sqlite3": "^3.1.8",
     "swagger-client": "^2.1.32",
     "urlencode": "^1.1.0",
     "uuid": "^3.0.1",
@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "babel-eslint": "^7.2.0",
-    "claudia": "^2.12.1",
+    "claudia": "^2.13.0",
     "cross-env": "^5.0.0",
     "deptree": "^1.0.0",
     "env-cmd": "^5.1.0",
@@ -53,7 +53,8 @@
     "jest": "^19.0.2",
     "nodemon": "^1.11.0",
     "sequelize-cli": "^2.7.0",
-    "wpapi": "^1.0.3"
+    "wpapi": "^1.0.3",
+    "sqlite3": "^3.1.8"
   },
   "scripts": {
     "gulp": "gulp",
