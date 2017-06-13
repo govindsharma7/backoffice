@@ -291,7 +291,7 @@ module.exports = (sequelize, DataTypes) => {
         .then((orders) => {
           return Order.ninjaCreateInvoices(orders);
         })
-        .then(Utils.createSuccessHandler(res, 'Ninja invocies'))
+        .then(Utils.createSuccessHandler(res, 'Ninja invoices'))
         .catch(Utils.logAndSend(res));
     });
 

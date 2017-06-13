@@ -420,18 +420,24 @@ module.exports = (sequelize, DataTypes) => {
     const {Apartment} = this.Room;
     const {firstName, lastName} = this.Client;
 
-    return {
-      calendarId: GOOGLE_CALENDAR_IDS[Apartment.addressCity],
-      resource: {
-        location: `${Apartment.addressStreet}
-, ${Apartment.addressZip} ${Apartment.addressCity},
-${Apartment.addressCountry}`,
-        summary: `${event.get('category')} ${firstName} ${lastName}`,
-        start: { dateTime: event.startDate },
-        end: { dateTime: event.endDate },
-        description: event.description,
-      },
-    };
+    return Utils[`getC${event.get('category').substr(1)}EndDate`](
+        event.startDate,
+        event.get('category')
+      )
+      .then((endDate) => {
+        return {
+          calendarId: GOOGLE_CALENDAR_IDS[Apartment.addressCity],
+          resource: {
+            location: `${Apartment.addressStreet} \
+, ${Apartment.addressZip} ${Apartment.addressCity},\
+ ${Apartment.addressCountry}`,
+            summary: `${event.get('category')} ${firstName} ${lastName}`,
+            start: { dateTime: event.startDate },
+            end: { dateTime: endDate },
+            description: event.description,
+          },
+        };
+      });
   };
 
   Renting.hook('beforeValidate', (renting) => {
