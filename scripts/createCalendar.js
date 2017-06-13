@@ -32,6 +32,6 @@ return Promise.map([
       });
     })
     .then((calendar) => {
-      return console.log(`Lyon: ${calendar.id}`);
+      return console.log(`${city}: ${calendar.id}`);
     });
 });
