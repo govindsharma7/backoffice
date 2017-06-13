@@ -102,16 +102,6 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Client.id'],
     });
 
-    Client.addScope('rentOrders', {
-      include: [{
-        model : models.Order,
-        include: [{
-          model: models.OrderItem,
-          where: { ProductId: 'rent' },
-        }],
-      }],
-    });
-
     Client.addScope('roomCurrentClient', function(date = D.format(Date.now())) {
       return {
         include: [{
