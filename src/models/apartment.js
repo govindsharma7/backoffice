@@ -1,12 +1,11 @@
-const Promise        = require('bluebird');
-const bodyParser     = require('body-parser');
-const Liana          = require('forest-express-sequelize');
-const D              = require('date-fns');
-const Geocode        = require('../vendor/geocode');
-const sns            = require('../vendor/aws');
-const config         = require('../config');
-const Utils          = require('../utils');
-const {TRASH_SCOPES} = require('../const');
+const Promise                     = require('bluebird');
+const bodyParser                  = require('body-parser');
+const Liana                       = require('forest-express-sequelize');
+const D                           = require('date-fns');
+const Geocode                     = require('../vendor/geocode');
+const Aws                         = require('../vendor/aws');
+const Utils                       = require('../utils');
+const {TRASH_SCOPES}              = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
   const Apartment = sequelize.define('Apartment', {
@@ -95,101 +94,11 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Apartment.prototype.getCurrentClientsPhoneNumbers = function() {
-    const phoneNumbers = [];
-
-    this.Rooms.forEach((room) => {
-      const {Client} = room.Rentings[0];
-
-      if (Client.phoneNumber != null) {
-        phoneNumbers.push(Client.phoneNumber);
-      }
-    });
-    return phoneNumbers;
-  };
-
-  Apartment.prototype.sendSms = (phoneNumbers, text) => {
-    const date = D.format(Date.now(), 'YYYY-MM-DD');
-    const time = D.format(Date.now(), 'HH-mm-ss');
-    const topicName = {
-      Name: `DATE_${date}_TIME_${time}`, /* required */
-    };
-    const createTopic = sns.createTopic(topicName).promise();
-    let topic;
-
-    return createTopic
-      .then((data) => {
-        topic = data.TopicArn;
-
-        return Promise.filter(phoneNumbers, (number) => {
-          let params = {
-            phoneNumber: number, /* required */
-          };
-
-          /* eslint-disable promise/no-nesting */
-          return sns.checkIfPhoneNumberIsOptedOut(params).promise()
-            .then((phoneNumber) => {
-              return !phoneNumber.isOptedOut;
-            })
-          /* eslint-enable promise/no-nesting */
-            .catch((error) => {
-              console.error(error);
-              return false;
-            });
-        });
+    return this.Rooms
+      .map((room) => {
+        return room.Rentings[0].Client.phoneNumber;
       })
-      .then((validNumbers) => {
-        return Promise.map(validNumbers, (number) => {
-          let params = {
-            Protocol: 'sms',
-            /* required */
-            TopicArn: topic,
-            /* required */
-            Endpoint: number,
-          };
-
-          /* eslint-disable promise/no-nesting */
-          return sns.subscribe(params).promise()
-            .then(() => {
-              return true;
-            });
-          /* eslint-enable promise/no-nesting */
-        });
-      })
-      .then(() => {
-        let params = {
-          Message: text,
-          /* required */
-          MessageAttributes: {
-          /* MonthlySpendLimit could be usefull if we want to
-            limit sms cost each month
-
-            MonthlySpendLimit: {
-              DataType: 'Number',
-              StringValue: '30'
-            },
-          */
-            DefaultSenderID: {
-              DataType: 'String',
-              /* required */
-              StringValue: 'ChezNestor',
-            },
-            DefaultSMSType: {
-              DataType: 'String',
-              StringValue: 'Transactional',
-            },
-            DeliveryStatusIAMRole: {
-              DataType: 'String',
-              StringValue: config.AWS_SNS_Delivery_Status_IAM_Role,
-            },
-          },
-          TopicArn: topic,
-        };
-
-        return sns.publish(params).promise();
-      })
-      .then(() => {
-        return true;
-      });
+      .filter(Boolean); // remove empty/falsy values
   };
 
   Apartment.hook('beforeValidate', (apartment) => {
@@ -229,13 +138,13 @@ module.exports = (sequelize, DataTypes) => {
           return Apartment.scope('currentClients').findById(ids[0]);
         })
         .then((apartment) => {
-          return Promise.all([apartment.getCurrentClientsPhoneNumbers(), apartment]);
+          return apartment.getCurrentClientsPhoneNumbers();
         })
-        .then(([phoneNumbers, apartment]) => {
-          return apartment.sendSms(phoneNumbers, values.bodySms);
+        .then((phoneNumbers) => {
+          return Aws.sendSms(phoneNumbers, values.bodySms);
         })
         .then(() => {
-          return res.status(200).send({success: 'SMS successfully sended !'});
+          return res.status(200).send({success: 'SMS successfully sent!'});
         })
         .catch(Utils.logAndSend(res));
     });
