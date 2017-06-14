@@ -3,6 +3,8 @@ const Promise = require('bluebird');
 const D       = require('date-fns');
 const config  = require('../../config');
 
+// Use bluebird Promises, not native ones
+AWS.config.setPromisesDependency(Promise);
 
 const sns = new AWS.SNS({
   apiVersion: config.AWS_SNS_API_VERSION,

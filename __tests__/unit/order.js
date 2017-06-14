@@ -1,7 +1,8 @@
 const Promise  = require('bluebird');
 const fixtures = require('../../__fixtures__/order');
-const {Order}  = require('../../src/models');
+const models   = require('../../src/models');
 
+const {Order} = models;
 var order;
 var invoiceCounter;
 

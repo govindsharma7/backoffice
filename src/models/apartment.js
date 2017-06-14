@@ -25,7 +25,11 @@ module.exports = (sequelize, DataTypes) => {
     addressCountry:           DataTypes.ENUM('france'),
     code:                     DataTypes.STRING,
     floor:                    DataTypes.INTEGER,
-    roomCount:                DataTypes.INTEGER,
+    roomCount: {
+      type:                   DataTypes.INTEGER,
+      required: true,
+      allowNull: false,
+    },
     latLng:                   DataTypes.STRING,
     floorArea:                DataTypes.FLOAT,
     status: {
@@ -58,6 +62,19 @@ module.exports = (sequelize, DataTypes) => {
 
   Apartment.associate = () => {
     Apartment.hasMany(models.Room);
+
+    Apartment.addScope('_roomCount', {
+      attributes: { include: [
+        [sequelize.fn('count', sequelize.col('Rooms.id')), '_roomCount'],
+      ]},
+      include: [{
+        include: [{
+          model: models.Room,
+          attributes: [],
+        }],
+      }],
+      group: ['Apartment.id'],
+    });
 
     Apartment.addScope('currentClients', function(date = D.format(Date.now())) {
       return {

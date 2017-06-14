@@ -16,7 +16,6 @@ const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
 
 const dbSync = 'node scripts/dbSync.js';
 const dbSeed = 'node scripts/dbSeed.js';
-const dbReset = 'node scripts/dbReset.js';
 const dbFixture = 'node scripts/dbFixture.js';
 const createCalendar = 'node scripts/createCalendar.js';
 const extractClients = 'node scripts/extractInvoiceninja.js > data/clients.json';
@@ -47,10 +46,10 @@ const common = {
 
 const tests = {
   'lint': [lint],
-  'test': [lint, dbReset, unitTest],
-  'test:watch': [dbReset, `${unitTest} --watch`],
-  'test:integration': [dbReset, intTest],
-  'test:full': [lint, dbReset, 'jest'],
+  'test': [lint, unitTest],
+  'test:watch': [`${unitTest} --watch`],
+  'test:integration': [intTest],
+  'test:full': [lint, 'jest'],
 };
 
 module.exports = Object.assign(

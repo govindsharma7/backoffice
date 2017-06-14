@@ -52,58 +52,56 @@ function fixtures({models, common = Promise.resolve({}), options: opts}) {
   let data;
 
   return function(callback) {
-    return function() {
-      return common
-        .then(({ instances: ins, unique: u }) => {
-          Object.assign(instances, ins);
-          unique = new Unique(u);
-          /* eslint-disable promise/no-callback-in-promise */
-          data = Object.entries(callback(unique));
-          /* eslint-enable promise/no-callback-in-promise */
+    return common
+      .then(({ instances: ins, unique: u }) => {
+        Object.assign(instances, ins);
+        unique = new Unique(u);
+        /* eslint-disable promise/no-callback-in-promise */
+        data = Object.entries(callback(unique));
+        /* eslint-enable promise/no-callback-in-promise */
 
-          return Promise.reduce(data, (prev, [modelName, records]) => {
-            const model = models[modelName];
-            const primaryKeys = Object.keys(model.primaryKeys);
+        return Promise.reduce(data, (prev, [modelName, records]) => {
+          const model = models[modelName];
+          const primaryKeys = Object.keys(model.primaryKeys);
 
-            /* eslint-disable promise/no-nesting */
-            return Promise.resolve()
-              .then(() => {
-                return options.method === 'create' ?
-                  model.bulkCreate(records, options) :
-                  Promise.map(records, (record) => {
-                    return model[options.method](record, options)
-                      .then((result) => {
-                        if (typeof result === 'object') {
-                          return result;
-                        }
+          /* eslint-disable promise/no-nesting */
+          return Promise.resolve()
+            .then(() => {
+              return options.method === 'create' ?
+                model.bulkCreate(records, options) :
+                Promise.map(records, (record) => {
+                  return model[options.method](record, options)
+                    .then((result) => {
+                      if (typeof result === 'object') {
+                        return result;
+                      }
 
-                        const instance = model.build(record);
+                      const instance = model.build(record);
 
-                        instance.isNewRecord = false;
-                        return instance;
-                      });
-                  });
-              })
-              /* eslint-enable promise/no-nesting */
-              .then((results) => {
-                if (primaryKeys.length !== 1) {
-                  return null;
-                }
-
-                results.forEach((result) => {
-                  const id = result[primaryKeys[0]];
-
-                  instances[unique.u2l[id] || id] = result;
+                      instance.isNewRecord = false;
+                      return instance;
+                    });
                 });
-
+            })
+            /* eslint-enable promise/no-nesting */
+            .then((results) => {
+              if (primaryKeys.length !== 1) {
                 return null;
+              }
+
+              results.forEach((result) => {
+                const id = result[primaryKeys[0]];
+
+                instances[unique.u2l[id] || id] = result;
               });
-          }, false);
-        })
-        .then(() => {
-          return {instances, unique};
-        });
-    };
+
+              return null;
+            });
+        }, false);
+      })
+      .then(() => {
+        return {instances, unique};
+      });
   };
 }
 

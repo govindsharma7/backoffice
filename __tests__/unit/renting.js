@@ -2,8 +2,9 @@ const D         = require('date-fns');
 const Promise   = require('bluebird');
 const fixtures  = require('../../__fixtures__/renting');
 const Utils     = require('../../src/utils');
-const {Renting} = require('../../src/models');
+const models    = require('../../src/models');
 
+const {Renting} = models;
 var renting1;
 var renting2;
 

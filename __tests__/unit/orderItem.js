@@ -1,7 +1,7 @@
-const {OrderItem} = require('../../src/models');
+const models = require('../../src/models');
 
 describe('OrderItem', () => {
-  const item = OrderItem.build({
+  const item = models.OrderItem.build({
     label: 'test item',
     quantity: 3,
     unitPrice: 100,
