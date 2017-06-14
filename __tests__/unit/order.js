@@ -16,6 +16,27 @@ describe('Order', () => {
       });
   });
 
+  describe('#getAmount()', () => {
+    test('it should calculate the amount for one item', () => {
+      return order
+        .getAmount()
+        .then((amount) => {
+          return expect(amount).toEqual(300 + 200);
+        });
+    });
+  });
+
+  describe('#getTotalPaidAndRefund', () => {
+    test('it should calculate the totalpaid and refund for one item', () => {
+      return order
+        .getTotalPaidAndRefund()
+        .then(({totalPaid, totalRefund}) => {
+          expect(totalPaid).toEqual(100 + 100);
+          return expect(totalRefund).toEqual(100);
+        });
+    });
+  });
+
   describe('#getCalculatedProps()', () => {
     test('it should calculate amount totalPaid and balance properties', () => {
       return order
