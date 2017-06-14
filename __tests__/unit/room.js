@@ -48,30 +48,9 @@ describe('Room', () => {
         ]);
       });
     });
-
-    describe('roomCount', () => {
-      test('count all rooms from an apartment', () => {
-        const scoped = models.Room.scope('roomCount');
-
-        return Promise.all([
-          scoped
-            .findById(room1.id)
-            .then((room) => {
-              return expect(room.get('roomCount')).toEqual(2);
-            }),
-          scoped
-            .findById(room2.id)
-            .then((room) => {
-              return expect(room.get('roomCount')).toEqual(2);
-            }),
-        ]);
-      });
-    });
   });
 
   describe('#getCalculatedProps()', () => {
-    const scoped = models.Room.scope('roomCount');
-
     test('it calculates the period price using Utils.getPeriodPrice', () => {
       return Promise.all([
           Utils.getPeriodPrice(room1.basePrice, now),
@@ -85,11 +64,7 @@ describe('Room', () => {
     test('it calculates correct serviceFees using Utils.getServiceFees', () => {
       return Promise.all([
           Utils.getServiceFees(2),
-          scoped
-            .findById(room1.id)
-            .then((room) => {
-              return room.getCalculatedProps(now);
-            }),
+          room1.getCalculatedProps(now),
         ])
         .then(([expected, { serviceFees }]) => {
           return expect(serviceFees).toEqual(expected);

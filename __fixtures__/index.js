@@ -11,8 +11,6 @@ if (
   throw new Error('Requiring this file will erase all your data!');
 }
 
-console.log('HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE');
-
 const common = models.sequelize
   .sync()
   .then(() => {
@@ -21,7 +19,7 @@ const common = models.sequelize
       options: { method: 'upsert' },
     })(() => {
       return seed;
-    });
+    })();
   });
 
-module.exports = () => { return fixtures({models, common}); };
+module.exports = fixtures({models, common});

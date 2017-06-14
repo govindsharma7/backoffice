@@ -21,6 +21,7 @@ module.exports = fixtures((u) => {
       addressCountry: 'france',
       latLng: '43.626936,3.8689535999999407',
       floorArea: 60,
+      roomCount: 3, // this value shouldn't matter
     }],
     Room: [{
       id: u.id('room-1'),
