@@ -3,11 +3,8 @@ const {TRASH_SEGMENTS} = require('../src/const');
 
 Liana.collection('Credit', {
   fields: [{
-    field: 'amount euro',
+    field: 'amount',
     type: 'Number',
-    get(item) {
-      return item.amount / 100;
-    },
     set(item, value) {
       item.amount = Math.round(value * 100);
       return item;

@@ -16,6 +16,27 @@ describe('Order', () => {
       });
   });
 
+  describe('#getAmount()', () => {
+    test('it should calculate the amount for one item', () => {
+      return order
+        .getAmount()
+        .then((amount) => {
+          return expect(amount).toEqual(300 + 200);
+        });
+    });
+  });
+
+  describe('#getTotalPaidAndRefund', () => {
+    test('it should calculate the totalpaid and refund for one item', () => {
+      return order
+        .getTotalPaidAndRefund()
+        .then(({totalPaid, totalRefund}) => {
+          expect(totalPaid).toEqual(100 + 100);
+          return expect(totalRefund).toEqual(100);
+        });
+    });
+  });
+
   describe('#getCalculatedProps()', () => {
     test('it should calculate amount totalPaid and balance properties', () => {
       return order
@@ -23,9 +44,9 @@ describe('Order', () => {
         .then((result) => {
           return expect(result).toEqual({
             amount: 500,
-            totalPaid: 100,
+            totalPaid: 200,
             totalRefund: 100,
-            balance: -500,
+            balance: -400,
           });
         });
     });
@@ -65,7 +86,7 @@ describe('Order', () => {
             'client_id': null,
             'invoice_number': '1234',
             'amount': 300 + 200,
-            'balance': 100 - (300 + 200) - 100,
+            'balance': (100 + 100) - (300 + 200) - 100,
             'invoice_items': [{
               'product_key': 'test item 1',
               'cost': 1,

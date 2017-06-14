@@ -53,6 +53,12 @@ module.exports = fixtures((u) => {
       amount: 100,
       paylineId: u.str('1'),
       OrderId: u.id('order-1'),
+    }, {
+      id: u.id('payment-2'),
+      type: 'manual',
+      amount: 100,
+      paylineId: u.str('2'),
+      OrderId: u.id('order-1'),
     }],
     Credit: [{
       id: u.id('credit-1'),
