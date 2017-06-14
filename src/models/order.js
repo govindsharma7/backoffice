@@ -102,7 +102,6 @@ module.exports = (sequelize, DataTypes) => {
     return Order.scope('amount')
       .findById(this.id, option)
       .then((order) => {
-
         return order.get('amount');
       });
   };

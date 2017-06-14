@@ -14,7 +14,7 @@ const {
   INVOICENINJA_URL,
   LATE_FEES,
   DEPOSIT_PRICES,
-  UNCASHED_DEPOSIT,
+  UNCASHED_DEPOSIT_FEE,
 }                = require('../const');
 
 module.exports = (sequelize, DataTypes) => {
@@ -102,7 +102,7 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Client.id'],
     });
 
-    Client.addScope('roomCurrentClient', function(date = D.format(Date.now())) {
+    Client.addScope('roomCurrentClient', function(date = Date.now()) {
       return {
         include: [{
           model: models.Renting,
@@ -111,7 +111,7 @@ module.exports = (sequelize, DataTypes) => {
               '$Rentings->Events.id$': null,
             }, {
               '$Rentings->Events.startDate$': {
-                $gte: date,
+                $gte: D.format(date),
               },
             }],
           },
@@ -130,7 +130,7 @@ module.exports = (sequelize, DataTypes) => {
       };
     });
 
-    Client.addScope('apartmentCurrentClients', function(date = D.format(Date.now())) {
+    Client.addScope('apartmentCurrentClients', function(date = Date.now()) {
       return {
         include: [{
           model: models.Renting,
@@ -139,7 +139,7 @@ module.exports = (sequelize, DataTypes) => {
               '$Rentings->Events.id$': null,
             }, {
               '$Rentings->Events.startDate$': {
-                $gte: date,
+                $gte: D.format(date),
               },
             }],
           },
@@ -160,7 +160,7 @@ module.exports = (sequelize, DataTypes) => {
       };
     });
 
-    Client.addScope('lease', function(date = D.format(Date.now())) {
+    Client.addScope('lease', function(date = Date.now()) {
       return {
         include: [{
           model: models.Renting,
@@ -170,7 +170,7 @@ module.exports = (sequelize, DataTypes) => {
               '$Rentings->Events.id$': null,
             }, {
               '$Rentings->Events.startDate$': {
-                $gte: date,
+                $gte: D.format(date),
               },
             }],
           },
@@ -205,7 +205,7 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Client.addScope('depositOrder', function(date = D.format(Date.now())) {
+    Client.addScope('depositOrder', function(date = Date.now()) {
       return {
         include: [{
           model: models.Renting,
@@ -215,7 +215,7 @@ module.exports = (sequelize, DataTypes) => {
                 '$Rentings->Events.id$': null,
               }, {
                 '$Rentings->Events.startDate$': {
-                  $gte: date,
+                  $gte: D.format(date),
                 },
               }],
             },
@@ -309,7 +309,7 @@ module.exports = (sequelize, DataTypes) => {
     if ( hasUncashedDeposit ) {
       items.push({
         label: 'Caution',
-        unitPrice: UNCASHED_DEPOSIT,
+        unitPrice: UNCASHED_DEPOSIT_FEE,
         quantity: 1,
       });
     }
@@ -585,7 +585,7 @@ Rentings[0].bookingDate : D.format(Date.now()),
     const {Apartment} = Rentings[0].Room;
 
     if ( Orders.length ) {
-      throw new Error('This client already have a deposit order');
+      throw new Error('This client already has a deposit order');
     }
 
     return models.Order
@@ -604,12 +604,8 @@ Rentings[0].bookingDate : D.format(Date.now()),
 
   Client.prototype.changeDepositOption = function(option) {
     const {Orders} = this;
+    let name = option === 'cash deposit' ? 'false' : 'true';
 
-    let name = 'true';
-
-    if ( option === 'cash deposit' ) {
-      name = 'false';
-    }
     return Orders[0]
       .getTerms({where: {taxonomy: 'do-not-cash'} })
       .then((terms) => {
@@ -623,10 +619,7 @@ Rentings[0].bookingDate : D.format(Date.now()),
             termable: 'Order',
             TermableId: Orders[0].id,
           });
-      })
-      .then(() => {
-        return true;
-    });
+      });
   };
 
   /*

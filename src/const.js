@@ -80,7 +80,7 @@ module.exports = {
     montpellier: 49000,
   },
 
-  UNCASHED_DEPOSIT: 2900,
+  UNCASHED_DEPOSIT_FEE: 2900,
 
   RENT_COEFS: [
     null, // D.format returns '1' for the first day of the year, not 0.
