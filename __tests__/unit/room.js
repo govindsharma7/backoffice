@@ -52,20 +52,28 @@ describe('Room', () => {
 
   describe('#getCalculatedProps()', () => {
     test('it calculates the period price using Utils.getPeriodPrice', () => {
-      return Promise.all([
-          Utils.getPeriodPrice(room1.basePrice, now),
-          room1.getCalculatedProps(now),
-        ])
+      return models.Room.scope('Room.Apartment')
+        .findById(room1.id)
+        .then((room) => {
+          return Promise.all([
+            Utils.getPeriodPrice(room1.basePrice, now),
+            room.getCalculatedProps(now),
+          ]);
+        })
         .then(([expected, { periodPrice }]) => {
           return expect(periodPrice).toEqual(expected);
         });
     });
 
     test('it calculates correct serviceFees using Utils.getServiceFees', () => {
-      return Promise.all([
-          Utils.getServiceFees(2),
-          room1.getCalculatedProps(now),
-        ])
+      return models.Room.scope('Room.Apartment')
+        .findById(room1.id)
+        .then((room) => {
+          return Promise.all([
+            Utils.getServiceFees(2),
+            room.getCalculatedProps(now),
+          ]);
+        })
         .then(([expected, { serviceFees }]) => {
           return expect(serviceFees).toEqual(expected);
         });

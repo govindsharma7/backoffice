@@ -63,19 +63,6 @@ module.exports = (sequelize, DataTypes) => {
   Apartment.associate = () => {
     Apartment.hasMany(models.Room);
 
-    Apartment.addScope('_roomCount', {
-      attributes: { include: [
-        [sequelize.fn('count', sequelize.col('Rooms.id')), '_roomCount'],
-      ]},
-      include: [{
-        include: [{
-          model: models.Room,
-          attributes: [],
-        }],
-      }],
-      group: ['Apartment.id'],
-    });
-
     Apartment.addScope('currentClients', function(date = D.format(Date.now())) {
       return {
         include: [{
@@ -118,24 +105,45 @@ module.exports = (sequelize, DataTypes) => {
       .filter(Boolean); // remove empty/falsy values
   };
 
-  Apartment.hook('beforeValidate', (apartment) => {
+  Apartment.prototype.calculateLatLng = function(addressValues = this.dataValues) {
+    return Geocode([
+        addressValues.addressStreet,
+        addressValues.addressZip,
+        addressValues.addressCountry,
+      ].join(','))
+      .then(({lat, lng}) => {
+        this.set('latLng', `${lat},${lng}`);
+        return this;
+      });
+  };
+
+  Apartment.hook('beforeCreate', (apartment) => {
     if ( apartment.latLng != null ) {
       return apartment;
     }
 
-    return Geocode([
-        apartment.addressStreet,
-        apartment.addressZip,
-        apartment.addressCountry,
-      ].join(','))
-      .then((res) => {
-        return res.json();
-      })
-      .then((json) => {
-        const {lat, lng} = json.results[0].geometry.location;
+    return apartment.calculateLatLng();
+  });
 
-        apartment.set('latLng', `${lat},${lng}`);
-        return apartment;
+  Apartment.hook('beforeUpdate', (apartment) => {
+    // if no address field has been updated…
+    if (
+      Object.keys(apartment.changed).every((name) => {
+        return !/^address/.test(name);
+      })
+    ) {
+      return apartment;
+    }
+
+    // We need to reload the existing apartment to make sure we have all address fields
+    return Apartment
+      .findById(apartment.id)
+      .then((previousApartment) => {
+        return apartment.calculateLatLng(Object.assign(
+          {},
+          previousApartment.dataValues,
+          apartment.dataValues
+        ));
       });
   });
 

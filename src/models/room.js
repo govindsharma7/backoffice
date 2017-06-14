@@ -71,17 +71,22 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Room.id'],
     });
+
+    Room.addScope('Room.Apartment', {
+      include: [{
+        model: models.Apartment,
+      }],
+    });
   };
 
   // calculate periodPrice and serviceFees for the room
   Room.prototype.getCalculatedProps = function(date = Date.now()) {
     return Promise.all([
         Utils.getPeriodPrice(this.basePrice, date),
-        models.Apartment
-          .findById(this.ApartmentId)
-          .then((apartment) => {
-            return Utils.getServiceFees(apartment.roomCount);
-          }),
+        // For some reason, Forest sometimes triggers calls to getCalculatedProps
+        // and doesn't load the appropriate scope.
+        // TODO: find when/why that happens and implement a real fix
+        this.Apartment ? Utils.getServiceFees(this.Apartment.roomCount) : 0,
       ])
       .then(([periodPrice, serviceFees]) => {
         return { periodPrice, serviceFees };

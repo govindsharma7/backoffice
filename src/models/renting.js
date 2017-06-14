@@ -441,12 +441,16 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Renting.hook('beforeValidate', (renting) => {
-    // Only calculate the price and fees once!
-    if ( renting.price != null && !isNaN(renting.price) ) {
+    // Only calculate the price and fees on creation
+    if (
+      !( 'RoomId' in renting.dataValues ) ||
+      !( 'bookingDate' in renting.dataValues ) ||
+      ( renting.price != null && !isNaN(renting.price) )
+    ) {
       return renting;
     }
 
-    return models.Room.scope('roomCount')
+    return models.Room.scope('Room.Apartment')
       .findById(renting.RoomId)
       .then((room) => {
         return room.getCalculatedProps(renting.bookingDate);
