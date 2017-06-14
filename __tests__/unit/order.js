@@ -23,9 +23,9 @@ describe('Order', () => {
         .then((result) => {
           return expect(result).toEqual({
             amount: 500,
-            totalPaid: 100,
+            totalPaid: 200,
             totalRefund: 100,
-            balance: -500,
+            balance: -400,
           });
         });
     });
@@ -65,7 +65,7 @@ describe('Order', () => {
             'client_id': null,
             'invoice_number': '1234',
             'amount': 300 + 200,
-            'balance': 100 - (300 + 200) - 100,
+            'balance': (100 + 100) - (300 + 200) - 100,
             'invoice_items': [{
               'product_key': 'test item 1',
               'cost': 1,

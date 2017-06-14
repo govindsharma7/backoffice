@@ -66,16 +66,13 @@ module.exports = (sequelize, DataTypes) => {
       scope: { termable: 'Order' },
     });
 
-    Order.addScope('calculatedProps', {
+    Order.addScope('totalPaidRefund', {
       attributes: [
         [sequelize.fn('sum', sequelize.literal(
-          `${oic('unitPrice')} * ${oic('quantity')} * ( 1 + ${oic('vatRate')} )`
-        )), 'amount'],
-        [sequelize.fn('sum', sequelize.literal(
-          'DISTINCT `Payments`.`amount`'
+        '`Payments`.`amount`'
         )), 'totalPaid'],
         [sequelize.fn('sum', sequelize.literal(
-          'DISTINCT `Payments->Refunds`.`amount`'
+        '`Payments->Refunds`.`amount`'
         )), 'totalRefund'],
       ],
       include: [{
@@ -86,8 +83,17 @@ module.exports = (sequelize, DataTypes) => {
           as: 'Refunds',
           attributes: [],
         }],
-      }, {
-        model: models.OrderItem,
+      }],
+    });
+
+    Order.addScope('amount', {
+      attributes: [
+        [sequelize.fn('sum', sequelize.literal(
+          `${oic('unitPrice')} * ${oic('quantity')} * ( 1 + ${oic('vatRate')} )`
+        )), 'amount'],
+      ],
+      include:[{
+         model: models.OrderItem,
         attributes: [],
       }],
       group: ['Order.id'],
@@ -96,47 +102,36 @@ module.exports = (sequelize, DataTypes) => {
 
   Order.INVOICE_STATUS_DRAFT = 1;
 
-  Order.prototype.getAmount = function() {
-    const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
-
-    return Order.scope('amount')
-      .findById(this.id, option)
-      .then((order) => {
-        return order.get('amount');
-      });
-  };
-
-  Order.prototype.getTotalPaid = function() {
-    const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
-
-    return Order.scope('totalPaid')
-      .findById(this.id, option)
-      .then((order) => {
-        return order.get('totalPaid');
-      });
-  };
-
-  Order.prototype.getTotalRefund = function() {
-    const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
-
-    return Order.scope('totalRefund')
-      .findById(this.id, option)
-      .then((order) => {
-        return order.get('totalRefund');
-      });
-  };
-
-  // Return all calculated props (amount, totalPaid, balance)
-    Order.prototype.getCalculatedProps = function() {
-    return Order.scope('calculatedProps')
+  Order.prototype.getTotalPaidAndRefund = function() {
+    return Order.scope('totalPaidRefund')
       .findById(this.id)
       .then((order) => {
         return {
-          amount: order.get('amount'),
           totalPaid: order.get('totalPaid'),
           totalRefund: order.get('totalRefund'),
-          balance:
-            order.get('totalPaid') - order.get('amount') - order.get('totalRefund'),
+        };
+      });
+  };
+
+  Order.prototype.getAmount = function() {
+    return Order.scope('amount')
+      .findById(this.id)
+      .then((order) => {
+        return order.get('amount');
+    });
+  };
+  // Return all calculated props (amount, totalPaid, balance)
+  Order.prototype.getCalculatedProps = function() {
+    return Promise.all([
+        this.getTotalPaidAndRefund(),
+        this.getAmount(),
+      ])
+      .then(([{totalPaid, totalRefund}, amount]) => {
+        return {
+          amount,
+          totalPaid,
+          totalRefund,
+          balance: totalPaid - amount - totalRefund,
         };
       });
   };

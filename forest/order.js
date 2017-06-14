@@ -15,7 +15,7 @@ Liana.collection('Order', {
     get(object) {
       return memoizer.getCalculatedProps(object)
         .then((result) => {
-          return result.amount / 100;
+          return result.amount;
         });
     },
   }, {
@@ -24,7 +24,7 @@ Liana.collection('Order', {
     get(object) {
       return memoizer.getCalculatedProps(object)
         .then((result) => {
-          return result.totalPaid / 100;
+          return result.totalPaid;
         });
     },
   }, {
@@ -33,7 +33,7 @@ Liana.collection('Order', {
     get(object) {
       return memoizer.getCalculatedProps(object)
         .then((result) => {
-          return result.balance / 100;
+          return result.balance;
         });
     },
   }, {
@@ -42,7 +42,7 @@ Liana.collection('Order', {
     get(object) {
       return memoizer.getCalculatedProps(object)
         .then((result) => {
-          return result.totalRefund / 100;
+          return result.totalRefund;
       });
     },
   }, {

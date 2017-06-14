@@ -7,32 +7,22 @@ const memoizer = new Utils.calculatedPropsMemoizer(Room);
 
 Liana.collection('Room', {
   fields: [{
-    field: 'base price euro',
-    type: 'Number',
-    get(item) {
-      return item.basePrice / 100;
-    },
-    set(item, value) {
-      item.basePrice = Math.round(value * 100);
-      return item;
-    },
-  }, {
-    field: 'current price euro',
+    field: 'current price',
     type: 'Number',
     get(object) {
       return memoizer.getCalculatedProps(object)
         .then((result) => {
-          return result.periodPrice / 100;
+          return result.periodPrice;
         })
         .tapCatch(console.error);
     },
   }, {
-    field: 'service fees euro',
+    field: 'service fees',
     type: 'Number',
     get(object) {
       return memoizer.getCalculatedProps(object)
         .then((result) => {
-          return result.serviceFees / 100;
+          return result.serviceFees;
         })
         .tapCatch(console.error);
     },
