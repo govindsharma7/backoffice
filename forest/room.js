@@ -3,11 +3,7 @@ const {Room}           = require('../src/models');
 const {TRASH_SEGMENTS} = require('../src/const');
 const Utils            = require('../src/utils');
 
-<<<<<<< ae30b71fc305f6db48de0cf6469e5ba07cc41b35
 const memoizer = new Utils.calculatedPropsMemoizer(Room.scope('Room.Apartment'));
-=======
-const memoizer = new Utils.calculatedPropsMemoizer(Room.scope('roomCount'));
->>>>>>> handle event update
 
 Liana.collection('Room', {
   fields: [{
