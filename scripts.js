@@ -42,6 +42,7 @@ const common = {
   'extract:clients': extractClients,
   'extract:portfolio': extractPortfolio,
   'generate:invoices': generateInvoices,
+  'fixRoomCount': 'node scripts/fixRoomCount.js',
 };
 
 const tests = {

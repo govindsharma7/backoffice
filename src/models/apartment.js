@@ -95,6 +95,17 @@ module.exports = (sequelize, DataTypes) => {
         }],
       };
     });
+
+    Apartment.addScope('_roomCount', {
+      attributes: { include: [
+        [sequelize.fn('count', sequelize.col('Rooms.id')), '_roomCount'],
+      ]},
+      include: [{
+        model: models.Room,
+        attributes: [],
+      }],
+      group: ['Apartment.id'],
+    });
   };
 
   Apartment.prototype.getCurrentClientsPhoneNumbers = function() {
