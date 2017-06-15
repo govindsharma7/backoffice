@@ -1,12 +1,20 @@
-const Liana   = require('forest-express-sequelize');
+const Liana       = require('forest-express-sequelize');
+const Utils       = require('../src/utils');
 const {
   BASIC_PACK,
   COMFORT_PACK,
   PRIVILEGE_PACK,
   TRASH_SEGMENTS,
-} = require('../src/const');
+}                 = require('../src/const');
 
 Liana.collection('Renting', {
+  fields: [{
+    field: 'booking date coef',
+    type: 'Number',
+    get(object) {
+      return Utils.getPeriodPrice(1, object.bookingDate);
+    },
+  }],
   actions:[{
     name: 'Create Pack Order',
     fields: [{
