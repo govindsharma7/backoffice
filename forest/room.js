@@ -7,13 +7,6 @@ const memoizer = new Utils.calculatedPropsMemoizer(Room.scope('Room.Apartment'))
 
 Liana.collection('Room', {
   fields: [{
-    field: 'basePrice',
-    type: 'Number',
-    set(item, value) {
-      item.basePrice = Math.round(value * 100);
-      return item;
-    },
-  }, {
     field: 'current price',
     type: 'Number',
     get(object) {
