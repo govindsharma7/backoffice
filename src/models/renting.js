@@ -141,6 +141,30 @@ module.exports = (sequelize, DataTypes) => {
         required: false,
       }],
     });
+    Renting.addScope('checkinOrderItem', {
+      include: [{
+        model: models.OrderItem,
+        attributes: ['ProductId'],
+        where: {
+          ProductId: {
+            $like: '%-pack',
+          },
+        },
+        include: [{
+          model: models.Order,
+          where: {
+            ninjaId: null,
+          },
+          include: [{
+            model: models.OrderItem,
+            required: false,
+            where: {
+              ProductId: 'special-checkinout',
+            },
+          }],
+        }],
+      }],
+    });
 
   };
 
@@ -437,6 +461,42 @@ module.exports = (sequelize, DataTypes) => {
             description: event.description,
           },
         };
+      });
+  };
+
+  Renting.prototype.handleEventUpdate = function(event) {
+    return Renting.scope('checkinOrderItem')
+      .findById(this.id)
+      .then((renting) => {
+      if ( !renting ) {
+          throw new Error('Client doesn\'t have a pack order yet');
+        }
+        const {id} = renting.OrderItems[0].Order;
+
+        return Promise.all([
+          Utils.getCheckinPrice(event.startDate, renting.getComfortLevel()),
+          id,
+          ]);
+      })
+      .then(([checkinPrice, OrderId]) => {
+        if ( !checkinPrice ) {
+          return models.OrderItem
+            .destroy({
+              where: {
+                ProductId: 'special-checkinout',
+                OrderId,
+              },
+          });
+        }
+        return models.OrderItem
+          .findOrCreate({
+            where: {
+              label: 'Special checkin',
+              unitPrice: checkinPrice,
+              ProductId: 'special-checkinout',
+              OrderId,
+            },
+        });
       });
   };
 

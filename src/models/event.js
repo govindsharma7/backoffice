@@ -41,12 +41,10 @@ module.exports = (sequelize, DataTypes) => {
     eventable: {
       type:                     DataTypes.STRING,
       required: true,
-      allowNull: false,
     },
     EventableId: {
       type:                     DataTypes.STRING,
       required: true,
-      allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
@@ -90,7 +88,8 @@ module.exports = (sequelize, DataTypes) => {
         Event.scope('event-category').findById(this.id, options),
       ])
       .then(([eventableInstance, event]) => {
-        return eventableInstance.googleSerialize(event);
+        return eventableInstance.googleSerialize ?
+          eventableInstance.googleSerialize(event) : event;
       })
       .then(({calendarId, resource}) => {
         return {
@@ -144,12 +143,19 @@ module.exports = (sequelize, DataTypes) => {
     return Utils.wrapHookPromise(event.googleCreate(options));
   });
 
-  Event.hook('afterUpdate', (event) => {
-    if ( event.googleEventId != null ) {
-      return Utils.wrapHookPromise(event.googleUpdate());
-    }
+  Event.hook('afterUpdate', (event, options) => {
+    const {eventable, EventableId} = event;
 
-    return true;
+    return Promise.all([
+        event.googleEventId != null && Utils.wrapHookPromise(event.googleUpdate()),
+        models[eventable].scope(`eventable${eventable}`).findById(EventableId),
+        Event.scope('event-category').findById(event.id, options),
+      ])
+      .then(([, eventableInstance, event]) => {
+        return eventableInstance.handleEventUpdate ?
+          eventableInstance.handleEventUpdate(event) : event;
+      })
+      .thenReturn(true);
   });
 
   Event.hook('afterDelete', (event) => {
