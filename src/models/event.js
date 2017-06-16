@@ -134,6 +134,10 @@ module.exports = (sequelize, DataTypes) => {
       .googleSerialize()
       .then((serialized) => {
         return eventsDelete(serialized);
+      })
+      .then(() => {
+        return this.set('googleEventId', null)
+          .save({hook: false});
       });
   };
 
@@ -155,6 +159,10 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     return true;
+  });
+
+  Event.hook('afterRestore', (event, options) => {
+    return Utils.wrapHookPromise(event.googleCreate(options));
   });
 
   Event.beforeLianaInit = (app) => {

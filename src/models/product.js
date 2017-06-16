@@ -2,8 +2,6 @@ const Liana          = require('forest-express');
 const {TRASH_SCOPES} = require('../const');
 const Utils          = require('../utils');
 
-
-
 module.exports = (sequelize, DataTypes) => {
   const Product = sequelize.define('Product', {
     id: {
