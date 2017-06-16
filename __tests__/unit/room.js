@@ -56,12 +56,14 @@ describe('Room', () => {
         .findById(room1.id)
         .then((room) => {
           return Promise.all([
-            Utils.getPeriodPrice(room1.basePrice, now),
+            Utils.getPeriodCoef(now),
             room.getCalculatedProps(now),
           ]);
         })
-        .then(([expected, { periodPrice }]) => {
-          return expect(periodPrice).toEqual(expected);
+        .then(([periodCoef, { periodPrice, serviceFees }]) => {
+          return expect(periodPrice).toEqual(
+            Utils.getPeriodPrice( room1.basePrice, periodCoef, serviceFees )
+          );
         });
     });
 

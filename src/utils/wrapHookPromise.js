@@ -3,5 +3,5 @@ module.exports = function(promise) {
     .then(() => {
       return true;
     })
-    .catch(console.error);
+    .tapCatch(console.error);
 };

@@ -183,8 +183,8 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     return {
-      price: Utils.euroRound(( this.price / daysInMonth ) * daysStayed),
-      serviceFees: Utils.euroRound(( this.serviceFees / daysInMonth ) * daysStayed),
+      price: Utils.roundBy100(( this.price / daysInMonth ) * daysStayed),
+      serviceFees: Utils.roundBy100(( this.serviceFees / daysInMonth ) * daysStayed),
     };
   };
 

@@ -1,12 +1,13 @@
 const calculatedPropsMemoizer     = require('./calculatedPropsMemoizer');
 const createSuccessHandler        = require('./createSuccessHandler');
-const euroRound                   = require('./euroRound');
+const roundBy100                  = require('./roundBy100');
 const findOrCreateSuccessHandler  = require('./findOrCreateSuccessHandler');
 const {
   getCheckinPrice,
   getCheckoutPrice,
 }                                 = require('./getCheckinoutPrice');
 const getPackPrice                = require('./getPackPrice');
+const getPeriodCoef              = require('./getPeriodCoef');
 const getPeriodPrice              = require('./getPeriodPrice');
 const getServiceFees              = require('./getServiceFees');
 const {
@@ -23,11 +24,12 @@ const restoreAndDestroyRoutes     = require('./restoreAndDestroyRoutes');
 module.exports = {
   calculatedPropsMemoizer,
   createSuccessHandler,
-  euroRound,
+  roundBy100,
   findOrCreateSuccessHandler,
   getCheckinPrice,
   getCheckoutPrice,
   getPackPrice,
+  getPeriodCoef,
   getPeriodPrice,
   getServiceFees,
   getCheckinEndDate,

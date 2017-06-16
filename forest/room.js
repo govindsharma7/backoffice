@@ -12,7 +12,7 @@ Liana.collection('Room', {
     get(object) {
       return memoizer.getCalculatedProps(object)
         .then((result) => {
-          return Utils.euroRound(result.periodPrice);
+          return result.periodPrice;
         })
         .tapCatch(console.error);
     },

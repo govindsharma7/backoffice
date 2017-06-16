@@ -103,22 +103,22 @@ describe('Renting', () => {
           const result1 = renting1.prorate(D.parse('2015-01 Z'));
 
           expect(result1).toEqual({
-            price: Utils.euroRound(20000 / 31 * 11),
-            serviceFees: Utils.euroRound(3000 / 31 * 11),
+            price: Utils.roundBy100(20000 / 31 * 11),
+            serviceFees: Utils.roundBy100(3000 / 31 * 11),
           });
 
           const result2 = renting1.prorate(D.parse('2015-02 Z'));
 
           expect(result2).toEqual({
-            price: Utils.euroRound(20000 / 28 * 10),
-            serviceFees: Utils.euroRound(3000 / 28 * 10),
+            price: Utils.roundBy100(20000 / 28 * 10),
+            serviceFees: Utils.roundBy100(3000 / 28 * 10),
           });
 
           const result3 = renting2.prorate(D.parse('2015-03 Z'));
 
           expect(result3).toEqual({
-            price: Utils.euroRound(20000 / 31 * (31 - 6)),
-            serviceFees: Utils.euroRound(3000 / 31 * (31 - 6)),
+            price: Utils.roundBy100(20000 / 31 * (31 - 6)),
+            serviceFees: Utils.roundBy100(3000 / 31 * (31 - 6)),
           });
 
           return null;
