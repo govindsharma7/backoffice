@@ -103,8 +103,10 @@ module.exports = (sequelize, DataTypes) => {
   Order.INVOICE_STATUS_DRAFT = 1;
 
   Order.prototype.getTotalPaidAndRefund = function() {
+    const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
+
     return Order.scope('totalPaidRefund')
-      .findById(this.id)
+      .findById(this.id, option)
       .then((order) => {
         return {
           totalPaid: order.get('totalPaid'),
@@ -114,8 +116,10 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.prototype.getAmount = function() {
+    const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
+
     return Order.scope('amount')
-      .findById(this.id)
+      .findById(this.id, option)
       .then((order) => {
         return order.get('amount');
     });
@@ -299,6 +303,36 @@ module.exports = (sequelize, DataTypes) => {
         })
         .then((result) => {
           return res.send(result);
+        })
+        .catch(Utils.logAndSend(res));
+    });
+
+    app.post('/forest/actions/restore-order', LEA, (req, res) => {
+      Order
+        .findAll({
+          where: { id: { $in: req.body.data.attributes.ids } },
+          paranoid: false,
+        })
+        .then((orders) => {
+          return Utils.restore(orders);
+        })
+        .then((value) => {
+          return Utils.restoreSuccessHandler(res, `${value} Orders`);
+        })
+        .catch(Utils.logAndSend(res));
+    });
+
+    app.post('/forest/actions/destroy-order', LEA, (req, res) => {
+      Order
+        .findAll({
+          where: { id: { $in: req.body.data.attributes.ids } },
+          paranoid: false,
+        })
+        .then((orders) => {
+          return Utils.destroy(orders);
+        })
+        .then((value) => {
+          return Utils.destroySuccessHandler(res, `${value} Orders`);
         })
         .catch(Utils.logAndSend(res));
     });

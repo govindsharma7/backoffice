@@ -613,6 +613,36 @@ module.exports = (sequelize, DataTypes) => {
 
       return null;
     });
+
+    app.post('/forest/actions/restore-renting', LEA, (req, res) => {
+      Renting
+        .findAll({
+          where: { id: { $in: req.body.data.attributes.ids } },
+          paranoid: false,
+        })
+        .then((rentings) => {
+          return Utils.restore(rentings);
+        })
+        .then((value) => {
+          return Utils.restoreSuccessHandler(res, `${value} Rentings`);
+        })
+        .catch(Utils.logAndSend(res));
+    });
+
+    app.post('/forest/actions/destroy-renting', LEA, (req, res) => {
+      Renting
+        .findAll({
+          where: { id: { $in: req.body.data.attributes.ids } },
+          paranoid: false,
+        })
+        .then((rentings) => {
+          return Utils.destroy(rentings);
+        })
+        .then((value) => {
+          return Utils.destroySuccessHandler(res, `${value} Rentings`);
+        })
+        .catch(Utils.logAndSend(res));
+    });
   };
 
   return Renting;

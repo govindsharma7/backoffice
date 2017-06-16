@@ -18,6 +18,14 @@ const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
 const logAndSend                  = require('./logAndSend');
 const parseDBDate                 = require('./parseDBDate');
 const wrapHookPromise             = require('./wrapHookPromise');
+const {
+  destroy,
+  restore,
+}                                 = require('./destroyOrRestore');
+const {
+  destroySuccessHandler,
+  restoreSuccessHandler,
+}                                 = require('./destroyAndRestoreSuccessHandler');
 
 module.exports = {
   calculatedPropsMemoizer,
@@ -36,4 +44,8 @@ module.exports = {
   logAndSend,
   parseDBDate,
   wrapHookPromise,
+  destroy,
+  restore,
+  destroySuccessHandler,
+  restoreSuccessHandler,
 };

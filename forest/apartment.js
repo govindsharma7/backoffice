@@ -17,4 +17,9 @@ Liana.collection('Apartment', {
     type: ['String'],
     reference: 'Client.id',
   }],
+  actions: [{
+    name: 'Restore Apartment',
+  }, {
+    name: 'Destroy Apartment',
+  }],
 });

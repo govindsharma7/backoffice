@@ -27,7 +27,7 @@ Liana.collection('Client', {
     },
   }],
   actions:[{
-    name: 'Credit client',
+    name: 'Credit Client',
     fields: [{
         field: 'cardHolder',
         type: 'String',
@@ -70,15 +70,19 @@ Liana.collection('Client', {
   }, {
     name: 'Generate Lease',
   }, {
-    name: 'Create deposit Order',
+    name: 'Create Deposit Order',
   }, {
-    name: 'Change "do not cash deposit" option',
+    name: 'Change "do not cash deposit" Option',
     fields: [{
       field: 'option',
       description: 'required',
       type: 'Enum',
       enums: ['cash deposit', 'do not cash deposit'],
     }],
+  }, {
+    name: 'Restore Client',
+  }, {
+    name: 'Destroy Client',
   }],
   segments: TRASH_SEGMENTS,
 });

@@ -12,6 +12,10 @@ Liana.collection('Payment', {
         field: 'reason',
         type: 'String',
       }],
+  }, {
+    name: 'Restore Payment',
+  }, {
+    name: 'Destroy Payment',
   }],
   segments: TRASH_SEGMENTS,
 });

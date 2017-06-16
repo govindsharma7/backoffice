@@ -90,6 +90,36 @@ module.exports = (sequelize, DataTypes) => {
         })
         .catch(Utils.logAndSend(res));
     });
+
+    app.post('/forest/actions/restore-payment', LEA, (req, res) => {
+      Payment
+        .findAll({
+          where: { id: { $in: req.body.data.attributes.ids } },
+          paranoid: false,
+        })
+        .then((payments) => {
+          return Utils.restore(payments);
+        })
+        .then((value) => {
+          return Utils.restoreSuccessHandler(res, `${value} Payments`);
+        })
+        .catch(Utils.logAndSend(res));
+    });
+
+    app.post('/forest/actions/destroy-payment', LEA, (req, res) => {
+      Payment
+        .findAll({
+          where: { id: { $in: req.body.data.attributes.ids } },
+          paranoid: false,
+        })
+        .then((payments) => {
+          return Utils.destroy(payments);
+        })
+        .then((value) => {
+          return Utils.destroySuccessHandler(res, `${value} Payments`);
+        })
+        .catch(Utils.logAndSend(res));
+    });
   };
 
   return Payment;

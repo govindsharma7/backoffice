@@ -31,5 +31,10 @@ Liana.collection('Room', {
     type: ['String'],
     reference: 'Client.id',
   }],
+  actions: [{
+    name: 'Restore Room',
+  }, {
+    name: 'Destroy Room',
+  }],
   segments: TRASH_SEGMENTS,
 });

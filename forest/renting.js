@@ -47,6 +47,10 @@ Liana.collection('Renting', {
       field: 'discount',
       type: 'Number',
     }],
+  }, {
+    name: 'Restore Renting',
+  }, {
+    name: 'Destroy Renting',
   }],
   segments : TRASH_SEGMENTS,
 });

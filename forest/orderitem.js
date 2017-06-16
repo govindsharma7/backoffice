@@ -8,6 +8,10 @@ Liana.collection('OrderItem', {
       field: 'discount',
       type: 'Number',
     }],
+  }, {
+    name: 'Restore OrderItem',
+  }, {
+    name: 'Destroy OrderItem',
   }],
   segments: TRASH_SEGMENTS,
 });

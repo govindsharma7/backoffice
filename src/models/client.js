@@ -779,6 +779,36 @@ Rentings[0].bookingDate : D.format(Date.now()),
         .then(Utils.createSuccessHandler(res, 'Deposit change option'))
         .catch(Utils.logAndSend(res));
     });
+
+    app.post('/forest/actions/restore-client', LEA, (req, res) => {
+      Client
+        .findAll({
+          where: { id: { $in: req.body.data.attributes.ids } },
+          paranoid: false,
+        })
+        .then((clients) => {
+          return Utils.restore(clients);
+        })
+        .then((value) => {
+          return Utils.restoreSuccessHandler(res, `${value} Clients`);
+        })
+        .catch(Utils.logAndSend(res));
+    });
+
+    app.post('/forest/actions/destroy-client', LEA, (req, res) => {
+      Client
+        .findAll({
+          where: { id: { $in: req.body.data.attributes.ids } },
+          paranoid: false,
+        })
+        .then((clients) => {
+          return Utils.destroy(clients);
+        })
+        .then((value) => {
+          return Utils.destroySuccessHandler(res, `${value} Clients`);
+        })
+        .catch(Utils.logAndSend(res));
+    });
   };
 
   return Client;
