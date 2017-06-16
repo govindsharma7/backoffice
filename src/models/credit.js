@@ -1,4 +1,3 @@
-const Liana          = require('forest-express');
 const {TRASH_SCOPES} = require('../const');
 const Utils          = require('../utils');
 
@@ -49,37 +48,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Credit.beforeLianaInit = (app) => {
-    const LEA = Liana.ensureAuthenticated;
-
-    app.post('/forest/actions/restore-credit', LEA, (req, res) => {
-      Credit
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((credits) => {
-          return Utils.restore(credits);
-        })
-        .then((value) => {
-          return Utils.restoreSuccessHandler(res, `${value} Credits`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    app.post('/forest/actions/destroy-credit', LEA, (req, res) => {
-      Credit
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((credits) => {
-          return Utils.destroy(credits);
-        })
-        .then((value) => {
-          return Utils.destroySuccessHandler(res, `${value} Credits`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
+    Utils.restoreAndDestroyRoutes(app, Credit);
   };
 
   return Credit;

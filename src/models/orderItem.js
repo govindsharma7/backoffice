@@ -108,35 +108,7 @@ module.exports = (sequelize, DataTypes) => {
         .catch(Utils.logAndSend(res));
     });
 
-    app.post('/forest/actions/restore-orderitem', LEA, (req, res) => {
-      OrderItem
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((orderItems) => {
-          return Utils.restore(orderItems);
-        })
-        .then((value) => {
-          return Utils.restoreSuccessHandler(res, `${value} OrderItems`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    app.post('/forest/actions/destroy-orderitem', LEA, (req, res) => {
-      OrderItem
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((orderItems) => {
-          return Utils.destroy(orderItems);
-        })
-        .then((value) => {
-          return Utils.destroySuccessHandler(res, `${value} OrderItems`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
+    Utils.restoreAndDestroyRoutes(app, OrderItem);
   };
 
   return OrderItem;

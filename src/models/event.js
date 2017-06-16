@@ -1,6 +1,5 @@
 const Calendar              = require('googleapis').calendar('v3');
 const Promise               = require('bluebird');
-const Liana                 = require('forest-express');
 const {TRASH_SCOPES}        = require('../const');
 const jwtClient             = require('../vendor/googlecalendar');
 const Utils                 = require('../utils');
@@ -166,37 +165,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Event.beforeLianaInit = (app) => {
-    const LEA = Liana.ensureAuthenticated;
-
-    app.post('/forest/actions/restore-event', LEA, (req, res) => {
-      Event
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((events) => {
-          return Utils.restore(events);
-        })
-        .then((value) => {
-          return Utils.restoreSuccessHandler(res, `${value} Events`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    app.post('/forest/actions/destroy-event', LEA, (req, res) => {
-      Event
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((events) => {
-          return Utils.destroy(events);
-        })
-        .then((value) => {
-          return Utils.destroySuccessHandler(res, `${value} Events`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
+    Utils.restoreAndDestroyRoutes(app, Event);
   };
 
   return Event;

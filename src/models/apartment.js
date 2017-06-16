@@ -161,35 +161,7 @@ module.exports = (sequelize, DataTypes) => {
           .catch(Utils.logAndSend(res));
       });
 
-      app.post('/forest/actions/restore-apartment', LEA, (req, res) => {
-      Apartment
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((apartments) => {
-          return Utils.restore(apartments);
-        })
-        .then((value) => {
-          return Utils.restoreSuccessHandler(res, `${value} Apartments`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    app.post('/forest/actions/destroy-apartment', LEA, (req, res) => {
-      Apartment
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((apartments) => {
-          return Utils.destroy(apartments);
-        })
-        .then((value) => {
-          return Utils.destroySuccessHandler(res, `${value} Apartments`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
+    Utils.restoreAndDestroyRoutes(app, Apartment);
   };
 
   return Apartment;

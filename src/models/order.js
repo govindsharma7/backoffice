@@ -307,35 +307,7 @@ module.exports = (sequelize, DataTypes) => {
         .catch(Utils.logAndSend(res));
     });
 
-    app.post('/forest/actions/restore-order', LEA, (req, res) => {
-      Order
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((orders) => {
-          return Utils.restore(orders);
-        })
-        .then((value) => {
-          return Utils.restoreSuccessHandler(res, `${value} Orders`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    app.post('/forest/actions/destroy-order', LEA, (req, res) => {
-      Order
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((orders) => {
-          return Utils.destroy(orders);
-        })
-        .then((value) => {
-          return Utils.destroySuccessHandler(res, `${value} Orders`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
+    Utils.restoreAndDestroyRoutes(app, Order);
   };
 
   return Order;

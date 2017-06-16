@@ -111,35 +111,7 @@ module.exports = (sequelize, DataTypes) => {
         .catch(Utils.logAndSend(res));
     });
 
-    app.post('/forest/actions/restore-room', LEA, (req, res) => {
-      Room
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((rooms) => {
-          return Utils.restore(rooms);
-        })
-        .then((value) => {
-          return Utils.restoreSuccessHandler(res, `${value} Rooms`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    app.post('/forest/actions/destroy-room', LEA, (req, res) => {
-      Room
-        .findAll({
-          where: { id: { $in: req.body.data.attributes.ids } },
-          paranoid: false,
-        })
-        .then((rooms) => {
-          return Utils.destroy(rooms);
-        })
-        .then((value) => {
-          return Utils.destroySuccessHandler(res, `${value} Rooms`);
-        })
-        .catch(Utils.logAndSend(res));
-    });
+    Utils.restoreAndDestroyRoutes(app, Room);
   };
 
   return Room;
