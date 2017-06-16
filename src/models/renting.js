@@ -145,22 +145,14 @@ module.exports = (sequelize, DataTypes) => {
       include: [{
         model: models.OrderItem,
         attributes: ['ProductId'],
-        where: {
-          ProductId: {
-            $like: '%-pack',
-          },
-        },
+        where: { ProductId: { $like: '%-pack' } },
         include: [{
           model: models.Order,
-          where: {
-            ninjaId: null,
-          },
+          where: { ninjaId: null },
           include: [{
             model: models.OrderItem,
             required: false,
-            where: {
-              ProductId: 'special-checkinout',
-            },
+            where: { ProductId: 'special-checkinout' },
           }],
         }],
       }],
@@ -468,15 +460,14 @@ module.exports = (sequelize, DataTypes) => {
     return Renting.scope('checkinOrderItem')
       .findById(this.id)
       .then((renting) => {
-      if ( !renting ) {
+        if ( !renting ) {
           throw new Error('Client doesn\'t have a pack order yet');
         }
-        const {id} = renting.OrderItems[0].Order;
 
         return Promise.all([
           Utils.getCheckinPrice(event.startDate, renting.getComfortLevel()),
-          id,
-          ]);
+          renting.OrderItems[0].Order.id,
+        ]);
       })
       .then(([checkinPrice, OrderId]) => {
         if ( !checkinPrice ) {
