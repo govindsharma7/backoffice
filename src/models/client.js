@@ -102,52 +102,21 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Client.id'],
     });
 
-    Client.addScope('roomCurrentClient', function(date = Date.now()) {
+    Client.addScope('Client.currentApartment', function(date = Date.now()) {
       return {
+        where: { $or: [
+            { '$Rentings.Events.id$': null },
+            { '$Rentings.Events.startDate$': { $gte: D.format(date) } },
+        ] },
         include: [{
           model: models.Renting,
-          where: {
-            $or: [{
-              '$Rentings->Events.id$': null,
-            }, {
-              '$Rentings->Events.startDate$': {
-                $gte: D.format(date),
-              },
-            }],
-          },
           include: [{
             model: models.Event,
+            attributes: ['id', 'startDate'],
             required: false,
             include: [{
               model: models.Term,
-              where: {
-                taxonomy: 'event-category',
-                name: 'checkout',
-              },
-            }],
-          }],
-        }],
-      };
-    });
-
-    Client.addScope('apartmentCurrentClients', function(date = Date.now()) {
-      return {
-        include: [{
-          model: models.Renting,
-          where: {
-            $or: [{
-              '$Rentings->Events.id$': null,
-            }, {
-              '$Rentings->Events.startDate$': {
-                $gte: D.format(date),
-              },
-            }],
-          },
-          include: [{
-            model: models.Event,
-            required: false,
-            include: [{
-              model: models.Term,
+              attributes: [],
               where: {
                 taxonomy: 'event-category',
                 name: 'checkout',
@@ -155,6 +124,7 @@ module.exports = (sequelize, DataTypes) => {
             }],
           }, {
             model: models.Room,
+            attributes: ['id', 'ApartmentId'],
           }],
         }],
       };

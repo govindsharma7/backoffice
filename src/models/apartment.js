@@ -1,7 +1,6 @@
 const Promise                     = require('bluebird');
 const bodyParser                  = require('body-parser');
 const Liana                       = require('forest-express-sequelize');
-const D                           = require('date-fns');
 const Geocode                     = require('../vendor/geocode');
 const Aws                         = require('../vendor/aws');
 const Utils                       = require('../utils');
@@ -63,39 +62,6 @@ module.exports = (sequelize, DataTypes) => {
   Apartment.associate = () => {
     Apartment.hasMany(models.Room);
 
-    Apartment.addScope('currentClients', function(date = D.format(Date.now())) {
-      return {
-        include: [{
-          model: models.Room,
-          include: [{
-            model: models.Renting,
-            where: {
-              $or: [{
-                '$Rooms->Rentings->Events.id$': null,
-              }, {
-                '$Rooms->Rentings->Events.startDate$': {
-                  $gte: date,
-                },
-              }],
-            },
-            include: [{
-              model: models.Client,
-            }, {
-              model: models.Event,
-              required: false,
-              include: [{
-                model: models.Term,
-                where: {
-                  taxonomy: 'event-category',
-                  name: 'checkout',
-                },
-              }],
-            }],
-          }],
-        }],
-      };
-    });
-
     Apartment.addScope('_roomCount', {
       attributes: { include: [
         [sequelize.fn('count', sequelize.col('Rooms.id')), '_roomCount'],
@@ -106,14 +72,6 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Apartment.id'],
     });
-  };
-
-  Apartment.prototype.getCurrentClientsPhoneNumbers = function() {
-    return this.Rooms
-      .map((room) => {
-        return room.Rentings[0].Client.phoneNumber;
-      })
-      .filter(Boolean); // remove empty/falsy values
   };
 
   Apartment.prototype.calculateLatLng = function(addressValues = this.dataValues) {
@@ -171,13 +129,14 @@ module.exports = (sequelize, DataTypes) => {
           if (!ids || ids.length > 1 ) {
             throw new Error('You have to select one apartment');
           }
-          return Apartment.scope('currentClients').findById(ids[0]);
+          return models.Client.scope('Client.currentApartment')
+            .findAll({ where: { '$Rentings->Room.ApartmentId$': req.params.recordId} });
         })
-        .then((apartment) => {
-          return apartment.getCurrentClientsPhoneNumbers();
-        })
-        .then((phoneNumbers) => {
-          return Aws.sendSms(phoneNumbers, values.bodySms);
+        .then((clients) => {
+          return Aws.sendSms(
+            clients.map((client) => { return client.phoneNumber; }),
+            values.bodySms
+          );
         })
         .then(() => {
           return res.status(200).send({success: 'SMS successfully sent!'});
@@ -189,7 +148,7 @@ module.exports = (sequelize, DataTypes) => {
       '/forest/Apartment/:recordId/relationships/currentClients',
       LEA,
       (req, res) => {
-        models.Client.scope('apartmentCurrentClients')
+        models.Client.scope('Client.currentApartment')
           .findAll({ where: { '$Rentings->Room.ApartmentId$': req.params.recordId} })
           .then((client) => {
             return new Serializer(Liana, models.Client, client, {}, {

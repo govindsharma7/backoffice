@@ -6,6 +6,12 @@ const {
 
 Liana.collection('Client', {
   fields: [{
+    field: 'Full Name',
+    type: 'String',
+    get(object) {
+      return `${object.firstName} ${object.lastName}`;
+    },
+  }, {
     field: 'Invoices',
     type: ['String'],
     reference: 'Invoice.id',

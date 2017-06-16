@@ -98,7 +98,7 @@ module.exports = (sequelize, DataTypes) => {
     const Serializer = Liana.ResourceSerializer;
 
     app.get('/forest/Room/:recordId/relationships/currentClient', LEA, (req, res) => {
-      models.Client.scope('roomCurrentClient')
+      models.Client.scope('Client.currentApartment')
         .findAll({ where: { '$Rentings.RoomId$': req.params.recordId} })
         .then((client) => {
           return new Serializer(Liana, models.Client, client, {}, {
