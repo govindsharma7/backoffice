@@ -59,7 +59,8 @@ return Client.findAll()
     }, false);
   })
   .then((tuples) => {
-    return console.log(`${tuples.length} RENT ORDERS GENERATED!`);
+    console.log(`${tuples.length} RENT ORDERS GENERATED!`);
+    return process.exit(0);
   })
   .catch((err) => {
     console.error(err);

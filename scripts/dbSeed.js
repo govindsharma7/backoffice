@@ -27,5 +27,6 @@ return models.sequelize.sync()
     return Promise.all(promises);
   })
   .then(() => {
-    return console.log('DATABASE SUCCESSFULLY SEEDED!');
+    console.log('DATABASE SUCCESSFULLY SEEDED!');
+    return process.exit(0);
   });

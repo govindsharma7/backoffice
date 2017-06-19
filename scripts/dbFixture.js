@@ -139,5 +139,6 @@ return models.sequelize.sync({ force: true })
     }, false);
   })
   .then(() => {
-    return console.log('DATABASE SUCCESSFULLY FIXTURED!');
+    console.log('DATABASE SUCCESSFULLY FIXTURED!');
+    return process.exit(0);
   });
