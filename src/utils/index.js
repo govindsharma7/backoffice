@@ -23,6 +23,7 @@ const parseDBDate                 = require('./parseDBDate');
 const wrapHookPromise             = require('./wrapHookPromise');
 const restoreAndDestroyRoutes     = require('./restoreAndDestroyRoutes');
 const checkinoutOrdersRoutes      = require('./checkinoutOrdersRoutes');
+const addCheckinoutDateRoutes     = require('./addCheckinoutDateRoutes');
 
 module.exports = {
   addInternalRelationshipRoute,
@@ -46,4 +47,5 @@ module.exports = {
   wrapHookPromise,
   restoreAndDestroyRoutes,
   checkinoutOrdersRoutes,
+  addCheckinoutDateRoutes,
 };

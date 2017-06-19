@@ -409,7 +409,7 @@ module.exports = (sequelize, DataTypes) => {
                 endDate: D.addDays(
                   this.get('checkoutDate'),
                   DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
-                summary: `Refund Deposit ${firstName} ${lastName}`,
+                summary: `refund deposit ${firstName} ${lastName}`,
                 description: `${name}`,
                 eventable: 'Client',
                 EventableId: this.ClientId,
@@ -678,8 +678,8 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Utils.addRestoreAndDestroyRoutes(app, Renting);
-    Utils.checkinoutOrdersRoutes(app, Renting, 'checkin');
-    Utils.checkinoutOrdersRoutes(app, Renting, 'checkout');
+    Utils.addCheckinoutDateRoutes(app, Renting, 'checkin');
+    Utils.addCheckinoutDateRoutes(app, Renting, 'checkout');
   };
 
   return Renting;
