@@ -79,6 +79,11 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { eventable: 'Renting' },
     });
+    Renting.addScope('client', {
+      include: [{
+        model: models.Client,
+      }],
+    });
 
     // checkinDate, checkoutDate, checkinEvent, checkoutEvent scopes
     ['checkin', 'checkout'].forEach((type) => {
@@ -99,6 +104,7 @@ module.exports = (sequelize, DataTypes) => {
         }],
       });
     });
+
     Renting.addScope('comfortLevel', {
       attributes: [
         [sequelize.fn('replace', sequelize.col('OrderItems.ProductId'), '-pack', ''),
@@ -633,8 +639,8 @@ module.exports = (sequelize, DataTypes) => {
 
     return renting;
   });
+
   Renting.beforeLianaInit = routes;
 
   return Renting;
-
 };
