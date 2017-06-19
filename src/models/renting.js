@@ -472,28 +472,18 @@ module.exports = (sequelize, DataTypes) => {
       };
   });
 
-  Renting.prototype.googleSerialize = function(event) {
+  Renting.prototype.googleSerialize = function() {
     const {Apartment} = this.Room;
 
-    return Utils[`get${_.capitalize(event.get('category'))}EndDate`](
-        event.startDate,
-        event.get('category')
-      )
-      .then((endDate) => {
-        return {
-          calendarId: GOOGLE_CALENDAR_IDS[Apartment.addressCity],
-          resource: {
-            location: stripIndent(`\
-              ${Apartment.addressStreet}, \
-              ${Apartment.addressZip} ${Apartment.addressCity}, \
-              ${Apartment.addressCountry}`),
-            summary: event.summary,
-            start: { dateTime: event.startDate },
-            end: { dateTime: endDate },
-            description: event.description,
-          },
-        };
-      });
+    return {
+      calendarId: GOOGLE_CALENDAR_IDS[Apartment.addressCity],
+      resource: {
+        location: stripIndent(`\
+          ${Apartment.addressStreet}, \
+          ${Apartment.addressZip} ${Apartment.addressCity}, \
+          ${Apartment.addressCountry}`),
+      },
+    };
   };
 
   Renting.prototype.handleEventUpdate = function(event) {

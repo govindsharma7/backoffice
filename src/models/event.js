@@ -86,16 +86,14 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Event.prototype.googleSerialize = function(options) {
+  Event.prototype.googleSerialize = function() {
     const {eventable} = this;
 
-    return Promise.all([
-        models[eventable].scope(`eventable${eventable}`).findById(this.EventableId),
-        Event.scope('event-category').findById(this.id, options),
-      ])
-      .then(([eventableInstance, event]) => {
+    return models[eventable].scope(`eventable${eventable}`)
+      .findById(this.EventableId)
+      .then((eventableInstance) => {
         return eventableInstance.googleSerialize ?
-          eventableInstance.googleSerialize(event) : event;
+          eventableInstance.googleSerialize(this) : this;
       })
       .then(({calendarId, resource}) => {
         return {
