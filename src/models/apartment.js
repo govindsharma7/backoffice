@@ -118,7 +118,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Apartment.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
-    const Serializer = Liana.ResourceSerializer;
     let urlencodedParser = bodyParser.urlencoded({ extended: true });
 
     app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
@@ -144,24 +143,18 @@ module.exports = (sequelize, DataTypes) => {
         .catch(Utils.logAndSend(res));
     });
 
-    app.get(
-      '/forest/Apartment/:recordId/relationships/currentClients',
-      LEA,
-      (req, res) => {
-        models.Client.scope('Client.currentApartment')
-          .findAll({ where: { '$Rentings->Room.ApartmentId$': req.params.recordId} })
-          .then((client) => {
-            return new Serializer(Liana, models.Client, client, {}, {
-              count: client.length,
-            }).perform();
-          })
-          .then((result) => {
-            return res.send(result);
-          })
-          .catch(Utils.logAndSend(res));
-      });
+    Utils.addInternalRelationshipRoute({
+      app,
+      sourceModel: Apartment,
+      associatedModel: models.Client,
+      routeName: 'current-clients',
+      scope: 'Client.currentApartment',
+      where: (req) => {
+        return { '$Rentings->Room.ApartmentId$': req.params.recordId };
+      },
+    });
 
-    Utils.restoreAndDestroyRoutes(app, Apartment);
+    Utils.addRestoreAndDestroyRoutes(app, Apartment);
   };
 
   return Apartment;

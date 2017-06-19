@@ -171,7 +171,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Event.beforeLianaInit = (app) => {
-    Utils.restoreAndDestroyRoutes(app, Event);
+    Utils.addRestoreAndDestroyRoutes(app, Event);
   };
 
   return Event;

@@ -1,6 +1,5 @@
 const Promise          = require('bluebird');
 const D                = require('date-fns');
-const Liana            = require('forest-express-sequelize');
 const Utils            = require('../utils');
 const {TRASH_SCOPES}   = require('../const');
 
@@ -97,24 +96,18 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Room.beforeLianaInit = (app) => {
-    const LEA = Liana.ensureAuthenticated;
-    const Serializer = Liana.ResourceSerializer;
-
-    app.get('/forest/Room/:recordId/relationships/currentClient', LEA, (req, res) => {
-      models.Client.scope('Client.currentApartment')
-        .findAll({ where: { '$Rentings.RoomId$': req.params.recordId} })
-        .then((client) => {
-          return new Serializer(Liana, models.Client, client, {}, {
-            count: client.length,
-          }).perform();
-        })
-        .then((result) => {
-          return res.send(result);
-        })
-        .catch(Utils.logAndSend(res));
+    Utils.addInternalRelationshipRoute({
+      app,
+      sourceModel: Room,
+      associatedModel: models.Client,
+      routeName: 'current-client',
+      scope: 'Client.currentApartment',
+      where: (req) => {
+        return { '$Rentings.RoomId$': req.params.recordId };
+      },
     });
 
-    Utils.restoreAndDestroyRoutes(app, Room);
+    Utils.addRestoreAndDestroyRoutes(app, Room);
   };
 
   return Room;

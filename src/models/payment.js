@@ -91,7 +91,7 @@ module.exports = (sequelize, DataTypes) => {
         .catch(Utils.logAndSend(res));
     });
 
-    Utils.restoreAndDestroyRoutes(app, Payment);
+    Utils.addRestoreAndDestroyRoutes(app, Payment);
   };
 
   return Payment;

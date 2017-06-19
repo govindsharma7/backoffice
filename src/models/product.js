@@ -34,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Product.beforeLianaInit = (app) => {
-    Utils.restoreAndDestroyRoutes(app, Product);
+    Utils.addRestoreAndDestroyRoutes(app, Product);
   };
   return Product;
 };

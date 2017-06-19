@@ -108,7 +108,7 @@ module.exports = (sequelize, DataTypes) => {
         .catch(Utils.logAndSend(res));
     });
 
-    Utils.restoreAndDestroyRoutes(app, OrderItem);
+    Utils.addRestoreAndDestroyRoutes(app, OrderItem);
   };
 
   return OrderItem;

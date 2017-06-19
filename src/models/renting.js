@@ -47,7 +47,7 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
       required: true,
-      defaultValue: 'active',
+      defaultValue: 'draft',
       allowNull: false,
     },
     checkinDate: {
@@ -157,7 +157,6 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
-
   };
 
   // Prorate the price and service fees of a renting for a given month
@@ -514,6 +513,17 @@ module.exports = (sequelize, DataTypes) => {
       });
   });
 
+  // We want rentings to be draft by default, but users shouldn't have
+  // to set the deletedAt value themselves
+  Renting.hook('beforeCreate', (renting) => {
+    console.log(renting.status);
+    if ( renting.status !== 'active' ) {
+      renting.setDataValue('deletedAt', Date.now());
+    }
+
+    return renting;
+  });
+
   Renting.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
@@ -666,7 +676,7 @@ module.exports = (sequelize, DataTypes) => {
       return null;
     });
 
-    Utils.restoreAndDestroyRoutes(app, Renting);
+    Utils.addRestoreAndDestroyRoutes(app, Renting);
   };
 
   return Renting;

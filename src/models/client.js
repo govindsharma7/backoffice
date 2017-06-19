@@ -1,7 +1,7 @@
 const Promise    = require('bluebird');
 const bodyParser = require('body-parser');
 const D          = require('date-fns');
-const Liana      = require('forest-express');
+const Liana      = require('forest-express-sequelize');
 const _          = require('lodash');
 const Payline    = require('payline');
 const uuid       = require('uuid/v4');
@@ -780,7 +780,18 @@ Rentings[0].bookingDate : D.format(Date.now()),
         .catch(Utils.logAndSend(res));
     });
 
-    Utils.restoreAndDestroyRoutes(app, Client);
+    Utils.addInternalRelationshipRoute({
+      app,
+      sourceModel: Client,
+      associatedModel: models.Renting,
+      routeName: 'draft-rentings',
+      scope: 'draft',
+      where: (req) => {
+        return { ClientId: req.params.recordId };
+      },
+    });
+
+    Utils.addRestoreAndDestroyRoutes(app, Client);
   };
 
   return Client;

@@ -13,7 +13,7 @@ Liana.collection('Apartment', {
     scope: 'paris',
   }]),
   fields: [{
-    field: 'currentClients',
+    field: 'current-clients',
     type: ['String'],
     reference: 'Client.id',
   }],

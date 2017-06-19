@@ -12,10 +12,6 @@ Liana.collection('Client', {
       return `${object.firstName} ${object.lastName}`;
     },
   }, {
-    field: 'Invoices',
-    type: ['String'],
-    reference: 'Invoice.id',
-  }, {
     field: 'ninja',
     type: 'String',
     get(object) {
@@ -25,6 +21,14 @@ Liana.collection('Client', {
 
       return null;
     },
+  }, {
+    field: 'Invoices',
+    type: ['String'],
+    reference: 'Invoice.id',
+  }, {
+    field: 'draft-rentings',
+    type: ['String'],
+    reference: 'Renting.id',
   }],
   actions:[{
     name: 'Credit Client',

@@ -1,3 +1,5 @@
+const addInternalRelationshipRoute        = require('./addInternalRelationshipRoute');
+const addRestoreAndDestroyRoutes  = require('./addRestoreAndDestroyRoutes');
 const calculatedPropsMemoizer     = require('./calculatedPropsMemoizer');
 const createSuccessHandler        = require('./createSuccessHandler');
 const roundBy100                  = require('./roundBy100');
@@ -19,9 +21,10 @@ const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
 const logAndSend                  = require('./logAndSend');
 const parseDBDate                 = require('./parseDBDate');
 const wrapHookPromise             = require('./wrapHookPromise');
-const restoreAndDestroyRoutes     = require('./restoreAndDestroyRoutes');
 
 module.exports = {
+  addInternalRelationshipRoute,
+  addRestoreAndDestroyRoutes,
   calculatedPropsMemoizer,
   createSuccessHandler,
   roundBy100,
@@ -39,5 +42,4 @@ module.exports = {
   logAndSend,
   parseDBDate,
   wrapHookPromise,
-  restoreAndDestroyRoutes,
 };

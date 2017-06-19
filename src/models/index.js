@@ -3,6 +3,7 @@ const path        = require('path');
 const Sequelize   = require('sequelize');
 const config      = require('../config');
 
+const db = {};
 const sequelize = new Sequelize(
   config.SEQUELIZE_DATABASE,
   config.SEQUELIZE_USERNAME,
@@ -19,7 +20,19 @@ const sequelize = new Sequelize(
     benchmark: true,
   }
 );
-const db = {};
+
+// When querying a specific record by its id, remove the default paranoid scope
+sequelize.addHook('beforeFind', (options) => {
+  if (
+    options.where &&
+    Object.keys(options.where).join() === 'id' &&
+    typeof options.where.id === 'string'
+  ) {
+    options.paranoid = false;
+  }
+
+  return true;
+});
 
 fs.readdirSync(__dirname)
   .filter(function(file) {

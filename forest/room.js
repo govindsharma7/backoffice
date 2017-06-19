@@ -27,7 +27,7 @@ Liana.collection('Room', {
         .tapCatch(console.error);
     },
   }, {
-    field: 'currentClient',
+    field: 'current-client',
     type: ['String'],
     reference: 'Client.id',
   }],
