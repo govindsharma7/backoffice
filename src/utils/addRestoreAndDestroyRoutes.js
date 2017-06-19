@@ -13,7 +13,9 @@ function restore(instances) {
         return instance.deletedAt != null;
       })
       .map((instance) => {
-          return instance.restore();
+          return instance
+            .set('status', 'active')
+            .restore();
       })
   )
   .then((filterInstances) => {
