@@ -68,12 +68,18 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { termable: 'Event' },
     });
+    Event.belongsTo(models.Client, {
+      foreignKey: 'EventableId',
+      constaints: false,
+      as: 'Client',
+    });
 
     Event.addScope('event-category', {
       attributes: { include: [
         [sequelize.col('Terms.name'), 'category'],
       ]},
       include: [{
+        required: false,
         model: models.Term,
         where: { taxonomy: 'event-category' },
       }],

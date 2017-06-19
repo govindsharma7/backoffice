@@ -7,6 +7,7 @@ const Utils                 = require('../utils');
 const {
   TRASH_SCOPES,
   DEPOSIT_PRICES,
+  DEPOSIT_REFUND_DELAYS,
 }                           = require('../const');
 const {GOOGLE_CALENDAR_IDS} = require('../config');
 
@@ -114,8 +115,6 @@ module.exports = (sequelize, DataTypes) => {
         include: [{
           model: models.Apartment,
         }],
-      }, {
-        model: models.Client,
       }],
     });
     Renting.addScope('client', {
@@ -351,8 +350,9 @@ module.exports = (sequelize, DataTypes) => {
 
   // TODO: simplify this using other findOrCreate<X>Order methods as examples
   Renting.prototype.findOrCreateCheckoutOrder = function(number) {
-    const {Order, OrderItem} = models;
+    const {Order, OrderItem, Event} = models;
     const {name} = this.Room;
+    const {firstName, lastName} = this.Client;
 
     return Promise.all([
         Utils.getCheckoutPrice( this.get('checkoutDate'), this.getComfortLevel() ),
@@ -393,6 +393,28 @@ module.exports = (sequelize, DataTypes) => {
             },
             include: [OrderItem],
           });
+      })
+      .tap(([, isCreated]) => {
+        if ( isCreated ) {
+          return Event
+            .create({
+              startDate: D.addDays(
+                this.get('checkoutDate'),
+                DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
+              endDate: D.addDays(
+                this.get('checkoutDate'),
+                DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
+              summary: `Refund Deposit ${firstName} ${lastName}`,
+              description: `${name}`,
+              eventable: 'Client',
+              EventableId: this.ClientId,
+            });
+        }
+
+        return true;
+      })
+      .then(([instance, isCreated]) => {
+        return [instance, isCreated];
       });
   };
 
@@ -438,7 +460,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Renting.prototype.googleSerialize = function(event) {
     const {Apartment} = this.Room;
-    const {firstName, lastName} = this.Client;
 
     return Utils[`get${_.capitalize(event.get('category'))}EndDate`](
         event.startDate,
@@ -452,7 +473,7 @@ module.exports = (sequelize, DataTypes) => {
               ${Apartment.addressStreet}, \
               ${Apartment.addressZip} ${Apartment.addressCity}, \
               ${Apartment.addressCountry}`),
-            summary: `${event.get('category')} ${firstName} ${lastName}`,
+            summary: event.summary,
             start: { dateTime: event.startDate },
             end: { dateTime: endDate },
             description: event.description,
@@ -631,7 +652,7 @@ module.exports = (sequelize, DataTypes) => {
           throw new Error('Can\'t create multiple checkout orders');
         }
         return Renting
-                .scope('orderItems', 'events', 'room+apartment', 'checkoutDate')
+                .scope('orderItems', 'events', 'room+apartment', 'checkoutDate', 'client')
                 .findById(ids[0]);
       })
       .then((renting) => {

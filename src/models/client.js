@@ -16,6 +16,8 @@ const {
   DEPOSIT_PRICES,
   UNCASHED_DEPOSIT_FEE,
 }                = require('../const');
+const {GOOGLE_CALENDAR_IDS} = require('../config');
+
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -72,6 +74,11 @@ module.exports = (sequelize, DataTypes) => {
     Client.hasMany(models.Order);
     Client.hasMany(models.Metadata, {
       foreignKey: 'MetadatableId',
+      constraints: false,
+      scope: { metadatable: 'Client' },
+    });
+    Client.hasMany(models.Event, {
+      foreignKey: 'EventableId',
       constraints: false,
       scope: { metadatable: 'Client' },
     });
@@ -340,6 +347,19 @@ ${address[2]}, ${address[4]}, ${address[5]}`;
       roomNumber: Rentings[0].Room.reference.slice(-1),
       email: this.email,
     }, true);
+  };
+
+  Client.prototype.googleSerialize = function(event) {
+
+    return {
+      calendarId: GOOGLE_CALENDAR_IDS.refund_deposit,
+      resource: {
+        summary: event.summary,
+        start: { dateTime: event.startDate },
+        end: { dateTime: event.endDate },
+        description: event.description,
+      },
+    };
   };
 
   Client.paylineCredit = (clientId, values, idCredit) => {

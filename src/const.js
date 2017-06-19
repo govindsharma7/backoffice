@@ -80,6 +80,12 @@ module.exports = {
     montpellier: 49000,
   },
 
+  DEPOSIT_REFUND_DELAYS: {
+    basic: '60',
+    comfort:'40',
+    privilege: '20',
+  },
+
   UNCASHED_DEPOSIT_FEE: 2900,
 
   RENT_COEFS: {
