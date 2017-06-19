@@ -2,7 +2,10 @@ const Promise               = require('bluebird');
 const D                     = require('date-fns');
 const Liana                 = require('forest-express-sequelize');
 const Utils                 = require('../utils');
-const {TRASH_SCOPES}        = require('../const');
+const {
+  TRASH_SCOPES,
+  DEPOSIT_PRICES,
+}                           = require('../const');
 const {GOOGLE_CALENDAR_IDS} = require('../config');
 
 // TODO: for some reason sqlite seems to return a date in a strange format
@@ -230,28 +233,16 @@ module.exports = (sequelize, DataTypes) => {
 
   Renting.prototype.findOrCreatePackOrder = function({comfortLevel, discount}, number) {
     const {addressCity} = this.Room.Apartment;
-    const {Order, OrderItem} = models;
 
-    return Promise.all([
-        Utils.getPackPrice(addressCity, comfortLevel),
-        this.get('checkinDate') ?
-          Utils.getCheckinPrice(this.get('checkinDate'), comfortLevel) : 0,
-      ])
-      .then(([packPrice, checkinPrice]) => {
+    return Utils
+      .getPackPrice(addressCity, comfortLevel)
+      .then((packPrice) => {
         const items = [{
           label: `Housing Pack ${addressCity} ${comfortLevel}`,
           unitPrice: packPrice,
           RentingId: this.id,
           ProductId: `${comfortLevel}-pack`,
         }];
-
-        if ( checkinPrice !== 0 ) {
-          items.push({
-            label: 'Special checkin',
-            unitPrice: checkinPrice,
-            ProductId: 'special-checkinout',
-          });
-        }
 
         if ( discount != null && discount !== 0 ) {
           items.push({
@@ -261,11 +252,15 @@ module.exports = (sequelize, DataTypes) => {
             ProductId: `${comfortLevel}-pack`,
           });
         }
-        return Order
+        // We should not add more items to this order. We want to keep the amount
+        // as low as possible to avoid turning down customers
+
+        return models.Order
           .findOrCreate({
             where: {
               ClientId: this.ClientId,
               label: 'Housing Pack',
+              '$OrderItems.RentingId': this.id,
             },
             defaults: {
               type: 'debit',
@@ -275,9 +270,33 @@ module.exports = (sequelize, DataTypes) => {
               OrderItems: items,
               number,
             },
-            include: [OrderItem],
+            include: [models.OrderItem],
           });
         });
+  };
+
+  Renting.prototype.findOrCreateDepositOrder = function() {
+    const {addressCity} = this.Room.Apartment;
+
+    return models.Order
+      .findOrCreate({
+        where: {
+          ClientId: this.ClientId,
+          label: 'Housing Pack',
+          '$OrderItems.RentingId': this.id,
+        },
+        defaults: {
+          label: 'Deposit',
+          type: 'deposit',
+          ClientId: this.id,
+          OrderItems: [{
+            label: 'Deposit',
+            unitPrice: DEPOSIT_PRICES[addressCity],
+          }],
+        },
+      }, {
+        include: [models.OrderItem],
+    });
   };
 
   Renting.prototype.createRoomSwitchOrder = function({discount}, number) {
@@ -516,7 +535,6 @@ module.exports = (sequelize, DataTypes) => {
   // We want rentings to be draft by default, but users shouldn't have
   // to set the deletedAt value themselves
   Renting.hook('beforeCreate', (renting) => {
-    console.log(renting.status);
     if ( renting.status !== 'active' ) {
       renting.setDataValue('deletedAt', Date.now());
     }
@@ -564,19 +582,33 @@ module.exports = (sequelize, DataTypes) => {
             throw new Error('Can\'t create multiple housing-pack orders');
           }
 
-          return Renting.scope('room+apartment', 'checkinDate').findById(ids[0]);
+          return Renting.scope('room+apartment').findById(ids[0]);
         })
         .then((renting) => {
-          //if ( !renting.get('checkinDate') ) {
-          //throw new Error('Checkin date is required to create the housing-pack order');
-          //}
-
           return renting.findOrCreatePackOrder(values);
         })
         .then(Utils.findOrCreateSuccessHandler(res, 'Housing pack order'))
         .catch(Utils.logAndSend(res));
 
       return null;
+    });
+
+    app.post('/forest/actions/create-deposit-order', LEA, (req, res) => {
+      const {ids} = req.body.data.attributes;
+
+      Promise.resolve()
+        .then(() => {
+          if ( ids.length > 1 ) {
+            throw new Error('Can\'t create multiple deposit order');
+          }
+
+          return Renting.scope('room+apartment').findById(ids[0]);
+        })
+        .then((renting) => {
+          return renting.findOrCreateDepositOrder();
+        })
+        .then(Utils.createSuccessHandler(res, 'Deposit order'))
+        .catch(Utils.logAndSend(res));
     });
 
     app.post('/forest/actions/add-checkout-date', LEA, (req, res) => {

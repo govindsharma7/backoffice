@@ -130,94 +130,10 @@ module.exports = (sequelize, DataTypes) => {
       };
     });
 
-    Client.addScope('lease', function(date = Date.now()) {
-      return {
-        include: [{
-          model: models.Renting,
-          required: false,
-          where: {
-            $or: [{
-              '$Rentings->Events.id$': null,
-            }, {
-              '$Rentings->Events.startDate$': {
-                $gte: D.format(date),
-              },
-            }],
-          },
-          include: [{
-            model: models.Event,
-            required: false,
-            include: [{
-              model: models.Term,
-              where: {
-                taxonomy: 'event-category',
-                name: 'checkout',
-              },
-            }],
-          }, {
-            model: models.OrderItem,
-          }, {
-            model: models.Room,
-            include: [{
-              model: models.Apartment,
-              include: [{
-                model: models.Room,
-              }],
-            }],
-          }],
-        }],
-      };
-    });
-
     Client.addScope('metadata', {
       include: [{
         model: models.Metadata,
       }],
-    });
-
-    Client.addScope('depositOrder', function(date = Date.now()) {
-      return {
-        include: [{
-          model: models.Renting,
-          required: false,
-            where: {
-              $or: [{
-                '$Rentings->Events.id$': null,
-              }, {
-                '$Rentings->Events.startDate$': {
-                  $gte: D.format(date),
-                },
-              }],
-            },
-            include: [{
-              model: models.Event,
-              required: false,
-              include: [{
-                model: models.Term,
-                where: {
-                  taxonomy: 'event-category',
-                  name: 'checkout',
-                },
-              }],
-            }, {
-              model: models.Room,
-              include: [{
-                model: models.Apartment,
-              }],
-            }],
-          }, {
-          model: models.Order,
-          required: false,
-          where: {
-            type: 'deposit',
-            label: 'Deposit',
-          },
-          include: [{
-            model: models.Term,
-            required: false,
-          }],
-        }],
-      };
     });
   };
 
@@ -395,33 +311,32 @@ ${address[2]}, ${address[4]}, ${address[5]}`;
   Client.prototype.generateLease = function () {
     const {Metadata, Rentings} = this;
     const {Apartment} = Rentings[0].Room;
-    const data = {
+    const {addressStreet, addressZip, addressCity} = Apartment;
+    const bookingDate = Rentings[0].bookingDate ?
+      Rentings[0].bookingDate : D.format(Date.now());
+
+    // TODO: the first two params of this method should be in env.js
+    return webMerge.mergeDocument(90942, 'rzyitr', {
       fullName: `${this.firstName} ${this.lastName}`,
       fullAddress: _.find(Metadata, {name: 'fullAddress'}).value,
       birthDate: _.find(Metadata, {name: 'birthDate'}).value,
       birthPlace: _.find(Metadata, {name: 'birthPlace'}).value,
       nationality: _.find(Metadata, {name: 'nationality'}).value,
       floorArea: Apartment.floorArea,
-      address: `${Apartment.addressStreet}, ${Apartment.addressZip}, \
-${Apartment.addressCity}`,
+      address: `${addressStreet}, ${addressZip}, ${addressCity}`,
       floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
       code: Apartment.code ? Apartment.code : 'néant',
       rent: Rentings[0].price / 100,
       serviceFees: Rentings[0].serviceFees / 100,
-      bookingDate: Rentings[0].bookingDate ?
-Rentings[0].bookingDate : D.format(Date.now()),
-
+      bookingDate,
+      endDate: D.addYears(D.subDays(bookingDate, 1), 1),
       deposit: DEPOSIT_PRICES[Apartment.addressCity] / 100,
       packLevel: this.Rentings[0].getComfortLevel(),
       roomFloorArea: Rentings[0].Room.floorArea,
       apartmentRoomNumber: Apartment.Rooms.length,
       roomNumber: Rentings[0].Room.reference.slice(-1),
       email: this.email,
-    };
-
-    data.endDate = D.addYears(D.subDays(data.bookingDate, 1), 1);
-
-    return webMerge.mergeDocument(90942, 'rzyitr', data, true);
+    }, true);
   };
 
   Client.paylineCredit = (clientId, values, idCredit) => {
@@ -549,29 +464,6 @@ Rentings[0].bookingDate : D.format(Date.now()),
       });
   };
 
-  Client.prototype.createDepositOrder = function() {
-    const {OrderItem} = models;
-    const {Orders, Rentings} = this;
-    const {Apartment} = Rentings[0].Room;
-
-    if ( Orders.length ) {
-      throw new Error('This client already has a deposit order');
-    }
-
-    return models.Order
-      .create({
-        label: 'Deposit',
-        type: 'deposit',
-        ClientId: this.id,
-        OrderItems: [{
-          label: 'Deposit',
-          unitPrice: DEPOSIT_PRICES[Apartment.addressCity],
-        }],
-      }, {
-        include: [OrderItem],
-    });
-  };
-
   Client.prototype.changeDepositOption = function(option) {
     const {Orders} = this;
     let name = option === 'cash deposit' ? 'false' : 'true';
@@ -657,7 +549,7 @@ Rentings[0].bookingDate : D.format(Date.now()),
           if ( ids.length > 1) {
             throw new Error('Can\'t create multiple leases');
           }
-          return Client.scope('lease', 'metadata')
+          return Client.scope('Client.currentApartment', 'metadata')
             .findById(ids[0]);
         })
         .then((client) => {
@@ -730,29 +622,6 @@ Rentings[0].bookingDate : D.format(Date.now()),
         .then(Utils.createSuccessHandler(res, 'Client metadata'))
         .catch(Utils.logAndSend(res));
     });
-
-    app.post(
-      '/forest/actions/create-deposit-order',
-      LEA,
-      (req, res) => {
-        const {ids} = req.body.data.attributes;
-
-        Promise.resolve()
-          .then(() => {
-            if ( ids.length > 1 ) {
-              throw new Error('Can\'t create multiple deposit order');
-            }
-            return Client.scope('depositOrder').findById(ids[0]);
-          })
-          .then((client) => {
-            if ( !client.Rentings.length ) {
-              throw new Error('This client has no renting yet');
-            }
-            return client.createDepositOrder();
-          })
-          .then(Utils.createSuccessHandler(res, 'Deposit order'))
-          .catch(Utils.logAndSend(res));
-      });
 
     app.post('/forest/actions/change-do-not-cash-deposit-option', LEA, (req, res) => {
       const {ids, values} = req.body.data.attributes;
