@@ -42,6 +42,8 @@ Liana.collection('Renting', {
       type: 'Date',
     }],
   }, {
+    name: 'Create Checkin Order',
+  }, {
     name: 'Create Checkout Order',
   }, {
     name: 'Room Switch Order',

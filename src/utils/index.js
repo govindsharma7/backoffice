@@ -21,6 +21,8 @@ const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
 const logAndSend                  = require('./logAndSend');
 const parseDBDate                 = require('./parseDBDate');
 const wrapHookPromise             = require('./wrapHookPromise');
+const restoreAndDestroyRoutes     = require('./restoreAndDestroyRoutes');
+const checkinoutOrdersRoutes      = require('./checkinoutOrdersRoutes');
 
 module.exports = {
   addInternalRelationshipRoute,
@@ -42,4 +44,6 @@ module.exports = {
   logAndSend,
   parseDBDate,
   wrapHookPromise,
+  restoreAndDestroyRoutes,
+  checkinoutOrdersRoutes,
 };
