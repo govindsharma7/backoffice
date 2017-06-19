@@ -11,11 +11,13 @@ return Promise.map([
   'Lyon',
   'Montpellier',
   'Paris',
+  'refund_deposit',
 ], (city) => {
   return calendarsInsert({
       auth: jwtClient,
       resource: {
-        summary: `Checkin/Checkout ${city}`,
+        summary: city === 'refund_deposit' ?
+        'Refund Deposit' : `Checkin/Checkout ${city}`,
       },
     })
     .tap((calendar) => {
