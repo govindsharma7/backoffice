@@ -100,10 +100,11 @@ module.exports = (sequelize, DataTypes) => {
       });
     });
     Renting.addScope('comfortLevel', {
-      attributes: [[
-        sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
-        'comfortLevel',
-      ]],
+      attributes: [
+        [sequelize.fn('replace', sequelize.col('OrderItems.ProductId'), '-pack', ''),
+        'comfortLevel'],
+        'id',
+        'ClientId'],
       include: [{
         model: models.OrderItem,
         required: false,
@@ -118,9 +119,19 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
-    Renting.addScope('client', {
+    Renting.addScope('eventableRenting', {
       include: [{
-        model : models.Client,
+        model: models.Room,
+        include: [{
+          model: models.Apartment,
+        }],
+      }, {
+        model: models.Client,
+      }],
+    });
+    Renting.addScope('room', {
+      include: [{
+        model: models.Room,
       }],
     });
   };
@@ -373,6 +384,76 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  // TODO: simplify this using other findOrCreate<X>Order methods as examples
+  Renting.prototype.findOrCreateCheckoutOrder = function(number) {
+    const {Order, OrderItem, Event} = models;
+    const {name} = this.Room;
+    const {firstName, lastName} = this.Client;
+
+    return Promise.all([
+        Utils.getCheckoutPrice( this.get('checkoutDate'), this.getComfortLevel() ),
+        Utils.getLateNoticeFees( this.get('checkoutDate') ),
+      ])
+      .then(([checkoutPrice, lateNoticeFees]) => {
+        const items = [];
+
+        if ( checkoutPrice !== 0 ) {
+          items.push({
+            label: 'Special checkout',
+            unitPrice: checkoutPrice,
+            ProductId: 'special-checkinout',
+          });
+        }
+        if ( lateNoticeFees !== 0 ) {
+          items.push({
+            label: `Late notice ${name}`,
+            unitPrice: lateNoticeFees,
+            ProductId: 'late-notice',
+          });
+        }
+        if (items.length === 0) {
+          throw new Error('This checkout is free, no order was created.');
+        }
+        return Order
+          .findOrCreate({
+            where: {
+              ClientId: this.ClientId,
+              label: 'Checkout',
+            },
+            defaults: {
+              type: 'debit',
+              label: 'Checkout',
+              ClientId: this.ClientId,
+              OrderItems: items,
+              number,
+            },
+            include: [OrderItem],
+          });
+      })
+      .tap(([, isCreated]) => {
+        if ( isCreated ) {
+          return Event
+            .create({
+              startDate: D.addDays(
+                this.get('checkoutDate'),
+                DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
+              endDate: D.addDays(
+                this.get('checkoutDate'),
+                DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
+              summary: `Refund Deposit ${firstName} ${lastName}`,
+              description: `${name}`,
+              eventable: 'Client',
+              EventableId: this.ClientId,
+            });
+        }
+
+        return true;
+      })
+      .then(([instance, isCreated]) => {
+        return [instance, isCreated];
+      });
+  };
+
   // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
   ['checkin', 'checkout'].forEach((type) => {
     Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
@@ -552,8 +633,8 @@ module.exports = (sequelize, DataTypes) => {
 
     return renting;
   });
-
   Renting.beforeLianaInit = routes;
 
   return Renting;
+
 };

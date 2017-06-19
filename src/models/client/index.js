@@ -78,6 +78,11 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { metadatable: 'Client' },
     });
+    Client.hasMany(models.Event, {
+      foreignKey: 'EventableId',
+      constraints: false,
+      scope: { metadatable: 'Client' },
+    });
 
     Client.addScope('rentOrders', {
       include: [{
