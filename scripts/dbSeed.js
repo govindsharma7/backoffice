@@ -10,18 +10,6 @@ Object.entries = typeof Object.entries === 'function' ?
   Object.entries :
   (obj) => { return Object.keys(obj).map((k) => { return [k, obj[k]]; }); };
 
-if (
-  process.env.NODE_ENV !== 'test' &&
-  process.env.NODE_ENV !== 'development' &&
-  !process.argv.includes('--force')
-) {
-  throw new Error(`
-/!\\ WARNING /!\\
-This script will reset seed data!
-Use "--force" if you're certain you want to do that.
-  `);
-}
-
 /* eslint-disable promise/no-nesting */
 return models.sequelize.sync()
   .then(() => {
@@ -29,7 +17,10 @@ return models.sequelize.sync()
 
     for (let [modelName, records] of Object.entries(seed)) {
       for (let record of records) {
-        promises.push(models[modelName].upsert(record));
+        promises.push(models[modelName].findOrCreate({
+          where: { id: record.id },
+          defaults: record,
+        }));
       }
     }
 

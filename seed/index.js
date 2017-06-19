@@ -1,3 +1,5 @@
+// /!\ Values in this file will be <findOrCreate>d on each deploy
+// All records in this file need an `id`
 module.exports = {
   Setting: [{
     id: 'invoice-counter',

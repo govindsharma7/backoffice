@@ -37,7 +37,7 @@ const common = {
   'db:sync': dbSync,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
-  'deploy': [env2json, claudiaUpdate],
+  'deploy': [env2json, dbSeed, claudiaUpdate],
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
   'extract:portfolio': extractPortfolio,
