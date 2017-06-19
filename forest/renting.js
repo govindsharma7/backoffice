@@ -12,7 +12,7 @@ Liana.collection('Renting', {
     field: 'booking date coef',
     type: 'Number',
     get(object) {
-      return Utils.getPeriodPrice(1, object.bookingDate);
+      return Utils.getPeriodCoef(object.bookingDate);
     },
   }],
   actions:[{

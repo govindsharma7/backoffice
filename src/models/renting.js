@@ -235,7 +235,8 @@ module.exports = (sequelize, DataTypes) => {
 
     return Promise.all([
         Utils.getPackPrice(addressCity, comfortLevel),
-        Utils.getCheckinPrice(this.get('checkinDate'), comfortLevel),
+        this.get('checkinDate') ?
+          Utils.getCheckinPrice(this.get('checkinDate'), comfortLevel) : 0,
       ])
       .then(([packPrice, checkinPrice]) => {
         const items = [{
@@ -556,9 +557,9 @@ module.exports = (sequelize, DataTypes) => {
           return Renting.scope('room+apartment', 'checkinDate').findById(ids[0]);
         })
         .then((renting) => {
-          if ( !renting.get('checkinDate') ) {
-            throw new Error('Checkin date is required to create the housing-pack order');
-          }
+          //if ( !renting.get('checkinDate') ) {
+          //throw new Error('Checkin date is required to create the housing-pack order');
+          //}
 
           return renting.findOrCreatePackOrder(values);
         })
