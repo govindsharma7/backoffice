@@ -26,6 +26,8 @@ Liana.collection('Renting', {
       type: 'Number',
     }],
   }, {
+    name: 'Create Deposit Order',
+  }, {
     name: 'Create Rent Order',
   }, {
     name: 'Add Checkin Date',

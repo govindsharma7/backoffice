@@ -71,7 +71,7 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Room.id'],
     });
 
-    Room.addScope('Room.Apartment', {
+    Room.addScope('Apartment', {
       include: [{
         model: models.Apartment,
       }],
@@ -101,7 +101,7 @@ module.exports = (sequelize, DataTypes) => {
       sourceModel: Room,
       associatedModel: models.Client,
       routeName: 'current-client',
-      scope: 'Client.currentApartment',
+      scope: 'currentApartment',
       where: (req) => {
         return { '$Rentings.RoomId$': req.params.recordId };
       },

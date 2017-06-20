@@ -74,8 +74,6 @@ Liana.collection('Client', {
   }, {
     name: 'Generate Lease',
   }, {
-    name: 'Create Deposit Order',
-  }, {
     name: 'Change "do not cash deposit" Option',
     fields: [{
       field: 'option',

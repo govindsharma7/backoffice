@@ -102,7 +102,7 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Client.id'],
     });
 
-    Client.addScope('Client.currentApartment', function(date = Date.now()) {
+    Client.addScope('currentApartment', function(date = Date.now()) {
       return {
         where: { $or: [
             { '$Rentings.Events.id$': null },
@@ -549,7 +549,7 @@ ${address[2]}, ${address[4]}, ${address[5]}`;
           if ( ids.length > 1) {
             throw new Error('Can\'t create multiple leases');
           }
-          return Client.scope('Client.currentApartment', 'metadata')
+          return Client.scope('currentApartment', 'metadata')
             .findById(ids[0]);
         })
         .then((client) => {

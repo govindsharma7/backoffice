@@ -52,10 +52,6 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Order.associate = () => {
-    const oic = (col) => {
-      return `\`OrderItems\`.\`${col}\``;
-    };
-
     Order.hasMany(models.OrderItem);
     Order.belongsTo(models.Client);
     Order.hasMany(models.Payment);
@@ -67,14 +63,13 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Order.addScope('totalPaidRefund', {
-      attributes: [
-        [sequelize.fn('sum', sequelize.literal(
-        '`Payments`.`amount`'
-        )), 'totalPaid'],
-        [sequelize.fn('sum', sequelize.literal(
-        '`Payments->Refunds`.`amount`'
-        )), 'totalRefund'],
-      ],
+      attributes: [[
+        sequelize.fn('sum', sequelize.literal('`Payments`.`amount`')),
+        'totalPaid',
+      ], [
+        sequelize.fn('sum', sequelize.literal('`Payments->Refunds`.`amount`')),
+        'totalRefund',
+      ]],
       include: [{
         model: models.Payment,
         attributes: [],
@@ -86,17 +81,39 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
+    const [
+      unitPrice,
+      quantity,
+      vatRate,
+    ] = 'unitPrice,quantity,vatRate'.split(',').map((col) => {
+      return `\`OrderItems\`.\`${col}\``;
+    });
+
     Order.addScope('amount', {
       attributes: [
         [sequelize.fn('sum', sequelize.literal(
-          `${oic('unitPrice')} * ${oic('quantity')} * ( 1 + ${oic('vatRate')} )`
+          `${unitPrice} * ${quantity} * ( 1 + IFNULL(${vatRate}, 0) )`
         )), 'amount'],
       ],
       include:[{
-         model: models.OrderItem,
-        attributes: [],
+        model: models.OrderItem,
+        attributes: { include: [] },
       }],
-      group: ['Order.id'],
+    });
+
+    Order.addScope('forRenting', (id) => {
+      return {
+        include: [{
+          attributes: { include: [
+            [sequelize.fn('count', 'OrderItems.id'), 'matchingItemsCount'],
+          ] },
+          model: models.OrderItem,
+          where: {
+            RentingId: id,
+            '$OrderItems.matchingItemsCount$': { $gte: 1 },
+          },
+        }],
+      };
     });
   };
 
@@ -266,6 +283,24 @@ module.exports = (sequelize, DataTypes) => {
             });
         })
     );
+  };
+
+  // This is an alternative to Order.findOrCreate, to use when the only thing
+  // we're interested in is the existence of the orderItem
+  Order.findItemOrCreate = function({where, defaults, include = [models.OrderItem] }) {
+    return sequelize.transaction((transaction) => {
+      return models.OrderItem
+        .findAll({
+          where,
+          transaction,
+        })
+        .then((orderItems) => {
+          return Promise.all( orderItems.length ?
+            [Order.findById(orderItems[0].OrderId), false] :
+            [Order.create(defaults, { include, transaction }), true],
+          );
+        });
+    });
   };
 
   Order.afterUpdate = (order) => {

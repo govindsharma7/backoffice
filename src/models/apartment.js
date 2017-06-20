@@ -128,7 +128,7 @@ module.exports = (sequelize, DataTypes) => {
           if (!ids || ids.length > 1 ) {
             throw new Error('You have to select one apartment');
           }
-          return models.Client.scope('Client.currentApartment')
+          return models.Client.scope('currentApartment')
             .findAll({ where: { '$Rentings->Room.ApartmentId$': req.params.recordId} });
         })
         .then((clients) => {
@@ -148,7 +148,7 @@ module.exports = (sequelize, DataTypes) => {
       sourceModel: Apartment,
       associatedModel: models.Client,
       routeName: 'current-clients',
-      scope: 'Client.currentApartment',
+      scope: 'currentApartment',
       where: (req) => {
         return { '$Rentings->Room.ApartmentId$': req.params.recordId };
       },

@@ -33,5 +33,14 @@ module.exports = {
   }, {
     id: 'late-fees',
     name: 'Late fees',
+  }, {
+    id: 'lyon-deposit',
+    name: 'Lyon deposit',
+  }, {
+    id: 'montpellier-deposit',
+    name: 'Montpellier deposit',
+  }, {
+    id: 'paris-deposit',
+    name: 'Paris deposit',
   }],
 };

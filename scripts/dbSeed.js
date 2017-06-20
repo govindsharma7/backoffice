@@ -24,7 +24,11 @@ return models.sequelize.sync()
       }
     }
 
-    return Promise.all(promises);
+    // use Promise.map instead of Promise.all, as .map limits paralellism
+    // (while .all results in "database is locked" sqlite errors)
+    return Promise.map(promises, (promise) => {
+      return promise;
+    });
   })
   .then(() => {
     console.log('DATABASE SUCCESSFULLY SEEDED!');
