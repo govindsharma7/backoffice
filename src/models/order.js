@@ -97,7 +97,7 @@ module.exports = (sequelize, DataTypes) => {
       ],
       include:[{
         model: models.OrderItem,
-        attributes: { include: [] },
+        attributes: [],
       }],
     });
 

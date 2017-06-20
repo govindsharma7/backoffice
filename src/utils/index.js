@@ -21,8 +21,8 @@ const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
 const logAndSend                  = require('./logAndSend');
 const parseDBDate                 = require('./parseDBDate');
 const wrapHookPromise             = require('./wrapHookPromise');
-const restoreAndDestroyRoutes     = require('./restoreAndDestroyRoutes');
-const checkinoutOrdersRoutes      = require('./checkinoutOrdersRoutes');
+const restoreAndDestroyRoutes     = require('./addrestoreAndDestroyRoutes');
+const checkinoutOrdersRoutes      = require('./addCheckinoutOrdersRoutes');
 const addCheckinoutDateRoutes     = require('./addCheckinoutDateRoutes');
 
 module.exports = {
