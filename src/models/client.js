@@ -15,8 +15,9 @@ const {
   LATE_FEES,
   DEPOSIT_PRICES,
   UNCASHED_DEPOSIT_FEE,
+  WEBMERGE_DOCUMENT_ID,
+  WEBMERGE_DOCUMENT_KEY,
 }                = require('../const');
-const {GOOGLE_CALENDAR_IDS} = require('../config');
 
 
 module.exports = (sequelize, DataTypes) => {
@@ -74,11 +75,6 @@ module.exports = (sequelize, DataTypes) => {
     Client.hasMany(models.Order);
     Client.hasMany(models.Metadata, {
       foreignKey: 'MetadatableId',
-      constraints: false,
-      scope: { metadatable: 'Client' },
-    });
-    Client.hasMany(models.Event, {
-      foreignKey: 'EventableId',
       constraints: false,
       scope: { metadatable: 'Client' },
     });
@@ -326,7 +322,7 @@ ${address[2]}, ${address[4]}, ${address[5]}`;
       Rentings[0].bookingDate : D.format(Date.now());
 
     // TODO: the first two params of this method should be in env.js
-    return webMerge.mergeDocument(90942, 'rzyitr', {
+    return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
       fullName: `${this.firstName} ${this.lastName}`,
       fullAddress: _.find(Metadata, {name: 'fullAddress'}).value,
       birthDate: _.find(Metadata, {name: 'birthDate'}).value,
@@ -347,19 +343,6 @@ ${address[2]}, ${address[4]}, ${address[5]}`;
       roomNumber: Rentings[0].Room.reference.slice(-1),
       email: this.email,
     }, true);
-  };
-
-  Client.prototype.googleSerialize = function(event) {
-
-    return {
-      calendarId: GOOGLE_CALENDAR_IDS.refund_deposit,
-      resource: {
-        summary: event.summary,
-        start: { dateTime: event.startDate },
-        end: { dateTime: event.endDate },
-        description: event.description,
-      },
-    };
   };
 
   Client.paylineCredit = (clientId, values, idCredit) => {

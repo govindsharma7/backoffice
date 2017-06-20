@@ -68,11 +68,6 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { termable: 'Event' },
     });
-    Event.belongsTo(models.Client, {
-      foreignKey: 'EventableId',
-      constaints: false,
-      as: 'Client',
-    });
 
     Event.addScope('event-category', {
       attributes: { include: [
@@ -152,12 +147,13 @@ module.exports = (sequelize, DataTypes) => {
 
     return Promise.all([
         event.googleEventId != null && Utils.wrapHookPromise(event.googleUpdate()),
-        models[eventable].scope(`eventable${eventable}`).findById(EventableId),
+        models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
+          .findById(EventableId),
         Event.scope('event-category').findById(event.id, options),
       ])
       .then(([, eventableInstance, event]) => {
         return eventableInstance.handleEventUpdate ?
-          eventableInstance.handleEventUpdate(event) : event;
+          eventableInstance.handleEventUpdate(event, event.get('category')) : event;
       })
       .thenReturn(true);
   });

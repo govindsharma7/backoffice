@@ -15,7 +15,7 @@ module.exports = function(app, Model, type) {
           throw new Error('Can\'t create multiple checkout orders');
         }
         return Model
-                .scope('orderItems', 'events', 'room+apartment', `${type}Date`, 'client')
+                .scope('events', 'room+apartment', `${type}Date`, 'client', 'orderItems')
                 .findById(ids[0]);
       })
       .then((renting) => {
