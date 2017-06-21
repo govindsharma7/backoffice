@@ -1,29 +1,27 @@
-const addInternalRelationshipRoute        = require('./addInternalRelationshipRoute');
-const addRestoreAndDestroyRoutes  = require('./addRestoreAndDestroyRoutes');
-const calculatedPropsMemoizer     = require('./calculatedPropsMemoizer');
-const createSuccessHandler        = require('./createSuccessHandler');
-const roundBy100                  = require('./roundBy100');
-const findOrCreateSuccessHandler  = require('./findOrCreateSuccessHandler');
+const stripIndent                  = require('stripIndent');
+const addInternalRelationshipRoute = require('./addInternalRelationshipRoute');
+const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
+const calculatedPropsMemoizer      = require('./calculatedPropsMemoizer');
+const createSuccessHandler         = require('./createSuccessHandler');
+const roundBy100                   = require('./roundBy100');
+const findOrCreateSuccessHandler   = require('./findOrCreateSuccessHandler');
 const {
   getCheckinPrice,
   getCheckoutPrice,
-}                                 = require('./getCheckinoutPrice');
-const getPackPrice                = require('./getPackPrice');
-const getPeriodCoef              = require('./getPeriodCoef');
-const getPeriodPrice              = require('./getPeriodPrice');
-const getServiceFees              = require('./getServiceFees');
+}                                  = require('./getCheckinoutPrice');
+const getPackPrice                 = require('./getPackPrice');
+const getPeriodCoef                = require('./getPeriodCoef');
+const getPeriodPrice               = require('./getPeriodPrice');
+const getServiceFees               = require('./getServiceFees');
 const {
   getCheckinEndDate,
   getCheckoutEndDate,
-}                                 = require('./getCheckinoutEndDate');
-const getLateNoticeFees           = require('./getLateNoticeFees');
-const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
-const logAndSend                  = require('./logAndSend');
-const parseDBDate                 = require('./parseDBDate');
-const wrapHookPromise             = require('./wrapHookPromise');
-const restoreAndDestroyRoutes     = require('./addrestoreAndDestroyRoutes');
-const checkinoutOrdersRoutes      = require('./addCheckinoutOrdersRoutes');
-const addCheckinoutDateRoutes     = require('./addCheckinoutDateRoutes');
+}                                  = require('./getCheckinoutEndDate');
+const getLateNoticeFees            = require('./getLateNoticeFees');
+const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
+const logAndSend                   = require('./logAndSend');
+const parseDBDate                  = require('./parseDBDate');
+const wrapHookPromise              = require('./wrapHookPromise');
 
 module.exports = {
   addInternalRelationshipRoute,
@@ -44,8 +42,6 @@ module.exports = {
   getRoomSwitchPrice,
   logAndSend,
   parseDBDate,
+  stripIndent,
   wrapHookPromise,
-  restoreAndDestroyRoutes,
-  checkinoutOrdersRoutes,
-  addCheckinoutDateRoutes,
 };

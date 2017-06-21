@@ -84,11 +84,10 @@ module.exports = (sequelize, DataTypes) => {
   Event.prototype.googleSerialize = function() {
     const {eventable} = this;
 
-    return Promise.allmodels[eventable].scope(`eventable${eventable}`)
+    return models[eventable].scope(`eventable${eventable}`)
       .findById(this.EventableId)
       .then((eventableInstance) => {
-        return eventableInstance.googleSerialize ?
-          eventableInstance.googleSerialize(this) : this;
+        return eventableInstance.googleSerialize(this);
       })
       .then(({calendarId, resource}) => {
         return {
@@ -154,18 +153,19 @@ module.exports = (sequelize, DataTypes) => {
     });
   });
 
-  Event.hook('afterUpdate', (event) => {
+  Event.hook('afterUpdate', (event, options) => {
     const {eventable, EventableId} = event;
 
     return wrapHookHandler(event, (event) => {
       return Promise.all([
+          // TODO: remove these non-generic scopes doing here??
           models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
             .findById(EventableId),
           event.googleEventId != null && event.googleUpdate(),
         ])
         .then(([eventableInstance]) => {
           return eventableInstance.handleEventUpdate &&
-            eventableInstance.handleEventUpdate(event);
+            eventableInstance.handleEventUpdate(event, options);
         });
     });
   });
