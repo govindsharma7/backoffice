@@ -26,8 +26,9 @@
     "mysql2": "^1.3.4",
     "node-fetch": "^1.7.1",
     "payline": "github:chez-nestor/payline#vquesnel",
-    "swagger-client": "^2.1.32",
     "sequelize": "^4.1.0",
+    "strip-indent": "^2.0.0",
+    "swagger-client": "^2.1.32",
     "urlencode": "^1.1.0",
     "uuid": "^3.0.1",
     "webmerge": "^1.0.1"

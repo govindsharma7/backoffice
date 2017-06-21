@@ -1,12 +1,16 @@
 const Promise               = require('bluebird');
 const D                     = require('date-fns');
+const capitalize            = require('lodash/capitalize');
 const Liana                 = require('forest-express-sequelize');
+const stripIndent           = require('strip-indent');
 const Utils                 = require('../utils');
 const {
   TRASH_SCOPES,
   DEPOSIT_PRICES,
 }                           = require('../const');
 const {GOOGLE_CALENDAR_IDS} = require('../config');
+
+const _ = { capitalize };
 
 // TODO: for some reason sqlite seems to return a date in a strange format
 // find out why and fix this.
@@ -76,8 +80,18 @@ module.exports = (sequelize, DataTypes) => {
       scope: { eventable: 'Renting' },
     });
 
-    const checkinoutDateScope = (type) => {
-      return {
+    Renting.addScope('events', {
+      include: [{
+        model: models.Event,
+        required: false,
+        include: [{
+          model: models.Term,
+        }],
+      }],
+    });
+    // checkinDate and checkoutDate scopes
+    ['checkin', 'checkout'].forEach((type) => {
+      Renting.addScope(`${type}Date`, {
         attributes: { include: [
           [sequelize.col('Events.startDate'), `${type}Date`],
         ]},
@@ -92,20 +106,8 @@ module.exports = (sequelize, DataTypes) => {
             },
           }],
         }],
-      };
-    };
-
-    Renting.addScope('events', {
-      include: [{
-        model: models.Event,
-        required: false,
-        include: [{
-          model: models.Term,
-        }],
-      }],
+      });
     });
-    Renting.addScope('checkinDate', checkinoutDateScope('checkin'));
-    Renting.addScope('checkoutDate', checkinoutDateScope('checkout'));
     Renting.addScope('eventableRenting', {
       include: [{
         model: models.Room,
@@ -238,24 +240,6 @@ module.exports = (sequelize, DataTypes) => {
     return Utils
       .getPackPrice(addressCity, comfortLevel)
       .then((packPrice) => {
-        const items = [{
-          label: `Housing Pack ${addressCity} ${comfortLevel}`,
-          unitPrice: packPrice,
-          RentingId: this.id,
-          ProductId,
-        }];
-
-        if ( discount != null && discount !== 0 ) {
-          items.push({
-            label: 'Discount',
-            unitPrice: -1 * discount,
-            RentingId: this.id,
-            ProductId,
-          });
-        }
-        // We should not add more items to this order. We want to keep the amount
-        // as low as possible to avoid turning down customers
-
         return models.Order
           .findItemOrCreate({
             where: {
@@ -267,7 +251,22 @@ module.exports = (sequelize, DataTypes) => {
               label: 'Housing Pack',
               dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
               ClientId: this.ClientId,
-              OrderItems: items,
+              OrderItems: [
+                {
+                  label: `Housing Pack ${addressCity} ${comfortLevel}`,
+                  unitPrice: packPrice,
+                  RentingId: this.id,
+                  ProductId,
+                },
+                discount != null && discount !== 0 && {
+                  label: 'Discount',
+                  unitPrice: -1 * discount,
+                  RentingId: this.id,
+                  ProductId,
+                },
+                // We should not add more items to this order. We want to keep the amount
+                // as low as possible to avoid turning down customers
+              ].filter(Boolean),
               number,
             },
           });
@@ -320,69 +319,44 @@ module.exports = (sequelize, DataTypes) => {
     return Client.scope('roomSwitchCount')
       .findById(this.ClientId)
       .then((client) => {
-        return Utils.getRoomSwitchPrice(
-          client.get('roomSwitchCount'),
-          comfortLevel
-        );
+        return Utils.getRoomSwitchPrice( client.get('roomSwitchCount'), comfortLevel );
       })
       .then((price) => {
-        const items = [];
-
-        if ( price !== 0 ) {
-          items.push({
+        const items = [
+          price !== 0 && {
             label: `Room switch ${comfortLevel}`,
             unitPrice: price,
             ProductId: 'room-switch',
-          });
-        }
-
-        if ( discount != null && discount !== 0 ) {
-          items.push({
+          },
+          discount != null && discount !== 0 && {
             label: 'Discount',
             unitPrice: -1 * discount,
             ProductId: 'room-switch',
-          });
-        }
+          },
+        ].filter(Boolean);
 
-        if ( items.length === 0 ) {
-          Order.create({
-            label: 'Free Room switch',
-            ClientId: this.ClientId,
-            number,
-            OrderItems: [{
-              label: `Room switch ${comfortLevel})`,
-              price: 0,
-              ProductId: 'room-switch',
-            }],
-          }, {
-            include: [OrderItem],
-          });
-          throw new Error('This room switch is free, no order was created.');
-        }
         return Order.create({
           type: 'debit',
-          label: 'Room Switch',
+          label: items.length > 0 ? 'Room switch' : 'Free Room switch',
           ClientId: this.ClientId,
-          OrderItems: items,
+          OrderItems: items.length > 0 ? items : [{
+            label: `Room switch ${comfortLevel})`,
+            unitPrice: 0,
+            ProductId: 'room-switch',
+          }],
           number,
-        }, {
-          include: [OrderItem],
-        });
+        }, { include: [OrderItem] });
       });
   };
 
+  // TODO: simplify this using other findOrCreate<X>Order methods as examples
   Renting.prototype.findOrCreateCheckoutOrder = function(number) {
     const {Order, OrderItem} = models;
     const {name} = this.Room;
 
     return Promise.all([
-        Utils.getCheckoutPrice(
-          this.get('checkoutDate'),
-          this.getComfortLevel()
-        ),
-        Utils.getLateNoticeFees(
-          this.get('checkoutDate')
-        ),
+        Utils.getCheckoutPrice( this.get('checkoutDate'), this.getComfortLevel() ),
+        Utils.getLateNoticeFees( this.get('checkoutDate') ),
       ])
       .then(([checkoutPrice, lateNoticeFees]) => {
         const items = [];
@@ -422,54 +396,51 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Renting.findOrCreateCheckinout = function (type) {
-    return function(startDate, options) {
-      const {Event, Term} = models;
-      /*eslint-disable no-invalid-this */
-      const {firstName, lastName, phoneNumber} = this.Client;
+  // #findOrCreateCheckin and #findOrCreateCheckout
+  ['checkin', 'checkout'].forEach((type) => {
+    Renting.prototype[`findOrCreate${_.capitalize(type)}`] =
+      function(startDate, options) {
+        const {Event, Term} = models;
+        const {firstName, lastName, phoneNumber} = this.Client;
 
-      return Utils[`getC${type.substr(1)}EndDate`](startDate, type)
-        .then((endDate) => {
-          return Event.findOrCreate(Object.assign({
-            where: {
-              EventableId: this.id,
-            },
-            include: [{
-              model: Term,
+        return Utils[`get${_.capitalize(type)}EndDate`](startDate)
+          .then((endDate) => {
+            return Event.findOrCreate(Object.assign({
               where: {
-                name: type,
+                EventableId: this.id,
               },
-            }],
-            defaults: {
-              startDate,
-              endDate,
-              summary: `${type} ${firstName} ${lastName}`,
-              description: `${firstName} ${lastName},
-  ${this.Room.name},
-  tel: ${phoneNumber}`,
-              eventable: 'Renting',
-              EventableId: this.id,
-              Terms: [{
-                name: type,
-                taxonomy: 'event-category',
-                termable: 'Event',
+              include: [{
+                model: Term,
+                where: {
+                  name: type,
+                },
               }],
-            },
-          }, options));
-        });
-      /*eslint-enable no-invalid-this */
-    };
-  };
-
-  Renting.prototype.findOrCreateCheckout = Renting.findOrCreateCheckinout('checkout');
-
-  Renting.prototype.findOrCreateCheckin = Renting.findOrCreateCheckinout('checkin');
+              defaults: {
+                startDate,
+                endDate,
+                summary: `${type} ${firstName} ${lastName}`,
+                description: stripIndent(`\
+                  ${firstName} ${lastName},
+                  ${this.Room.name},
+                  tel: ${phoneNumber}`),
+                eventable: 'Renting',
+                EventableId: this.id,
+                Terms: [{
+                  name: type,
+                  taxonomy: 'event-category',
+                  termable: 'Event',
+                }],
+              },
+            }, options));
+          });
+      };
+  });
 
   Renting.prototype.googleSerialize = function(event) {
     const {Apartment} = this.Room;
     const {firstName, lastName} = this.Client;
 
-    return Utils[`getC${event.get('category').substr(1)}EndDate`](
+    return Utils[`get${_.capitalize(event.get('category'))}EndDate`](
         event.startDate,
         event.get('category')
       )
@@ -477,9 +448,10 @@ module.exports = (sequelize, DataTypes) => {
         return {
           calendarId: GOOGLE_CALENDAR_IDS[Apartment.addressCity],
           resource: {
-            location: `${Apartment.addressStreet} \
-, ${Apartment.addressZip} ${Apartment.addressCity},\
- ${Apartment.addressCountry}`,
+            location: stripIndent(`\
+              ${Apartment.addressStreet}, \
+              ${Apartment.addressZip} ${Apartment.addressCity}, \
+              ${Apartment.addressCountry}`),
             summary: `${event.get('category')} ${firstName} ${lastName}`,
             start: { dateTime: event.startDate },
             end: { dateTime: endDate },
@@ -625,49 +597,29 @@ module.exports = (sequelize, DataTypes) => {
         .catch(Utils.logAndSend(res));
     });
 
-    app.post('/forest/actions/add-checkout-date', LEA, (req, res) => {
-      const {values, ids} = req.body.data.attributes;
+    // add-checkin-date and add-checkout-date routes
+    ['checkin', 'checkout'].forEach((type) => {
+      app.post(`/forest/actions/add-${type}-date`, LEA, (req, res) => {
+        const {values, ids} = req.body.data.attributes;
 
-      Promise.resolve()
-      .then(() => {
-        if ( !values.plannedDate ) {
-          throw new Error('Please select a planned date');
-        }
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple checkout events');
-        }
+        Promise.resolve()
+        .then(() => {
+          if ( !values.plannedDate ) {
+            throw new Error('Please select a planned date');
+          }
+          if ( ids.length > 1 ) {
+            throw new Error(`Can't create multiple ${type} events`);
+          }
+          return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
+        })
+        .then((renting) => {
+          return renting[`findOrCreate${_.capitalize(type)}`](values.plannedDate);
+        })
+        .then(Utils.findOrCreateSuccessHandler(res, `${type} event`))
+        .catch(Utils.logAndSend(res));
 
-        return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
-      })
-      .then((renting) => {
-        return renting.findOrCreateCheckout(values.plannedDate);
-      })
-      .then(Utils.findOrCreateSuccessHandler(res, 'Checkout event'))
-      .catch(Utils.logAndSend(res));
-
-      return null;
-    });
-
-    app.post('/forest/actions/add-checkin-date', LEA, (req, res) => {
-      const {values, ids} = req.body.data.attributes;
-
-      Promise.resolve()
-      .then(() => {
-        if ( !values.plannedDate ) {
-          throw new Error('Please select a planned date');
-        }
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple checkin events');
-        }
-        return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
-      })
-      .then((renting) => {
-        return renting.findOrCreateCheckin(values.plannedDate);
-      })
-      .then(Utils.findOrCreateSuccessHandler(res, 'Checkin event'))
-      .catch(Utils.logAndSend(res));
-
-      return null;
+        return null;
+      });
     });
 
     app.post('/forest/actions/create-checkout-order', LEA, (req, res) => {
