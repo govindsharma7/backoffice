@@ -321,7 +321,6 @@ ${address[2]}, ${address[4]}, ${address[5]}`;
     const bookingDate = Rentings[0].bookingDate ?
       Rentings[0].bookingDate : D.format(Date.now());
 
-    // TODO: the first two params of this method should be in env.js
     return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
       fullName: `${this.firstName} ${this.lastName}`,
       fullAddress: _.find(Metadata, {name: 'fullAddress'}).value,

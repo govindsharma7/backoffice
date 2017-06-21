@@ -28,23 +28,23 @@ module.exports = {
   INVOICENINJA_URL:
     `${config.INVOICENINJA_PROTOCOL || 'http'}://${config.INVOICENINJA_HOST}`,
 
-  BASIC_PACK: 'basic',
-  COMFORT_PACK: 'comfort',
+  BASIC_PACK:         'basic',
+  COMFORT_PACK:     'comfort',
   PRIVILEGE_PACK: 'privilege',
   PACK_PRICES: {
     lyon: {
-      basic: 59000,
-      comfort: 79000,
-      privilege: 99000,
+      basic:      59000,
+      comfort:    79000,
+      privilege:  99000,
     },
     montpellier: {
-      basic: 39000,
-      comfort: 59000,
-      privilege: 79000,
+      basic:      39000,
+      comfort:    59000,
+      privilege:  79000,
     },
     paris: {
-      basic: 79000,
-      comfort: 99000,
+      basic:      79000,
+      comfort:    99000,
       privilege: 119000,
     },
   },
@@ -52,16 +52,16 @@ module.exports = {
   SPECIAL_CHECKIN_PRICE: 7900,
 
   SERVICE_FEES: {
-    1: 5000, // 1 room
-    2: 4000, // 2 rooms
+    1:       5000, // 1 room
+    2:       4000, // 2 rooms
     default: 3000, // 3 or more rooms
   },
 
-  CHECKIN_DURATION: 30,
+  CHECKIN_DURATION:  30,
   CHECKOUT_DURATION: 60,
 
   LATE_NOTICE_FEES: {
-    '0-9days': 67900,
+    '0-9days':   67900,
     '10-19days': 47900,
     '20-29days': 27900,
   },
@@ -69,21 +69,21 @@ module.exports = {
   LATE_FEES: 1000,
 
   ROOM_SWITCH_PRICES: {
-    privilege: 0,
-    comfort: 19000,
-    basic: 29000,
+    privilege:     0,
+    comfort:   19000,
+    basic:     29000,
   },
 
   DEPOSIT_PRICES: {
-    lyon: 69000,
-    paris: 89000,
+    lyon:        69000,
+    paris:       89000,
     montpellier: 49000,
   },
 
   DEPOSIT_REFUND_DELAYS: {
-    basic: '60',
-    comfort:'40',
-    privilege: '20',
+    basic:     60,
+    comfort:   40,
+    privilege: 20,
   },
 
   UNCASHED_DEPOSIT_FEE: 2900,

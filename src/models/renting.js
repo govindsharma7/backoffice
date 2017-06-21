@@ -346,6 +346,7 @@ module.exports = (sequelize, DataTypes) => {
     const {Event, Term} = models;
     const {name} = this.Room;
     const {firstName, lastName} = this.Client;
+    const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]);
 
     return Event
       .findOrCreate(Object.assign({
@@ -359,12 +360,8 @@ module.exports = (sequelize, DataTypes) => {
           },
         }],
         defaults: {
-          startDate: D.addDays(
-            date,
-            DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
-          endDate: D.addDays(
-            date,
-            DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
+          startDate,
+          endDate: startDate,
           summary: `refund deposit ${firstName} ${lastName}`,
           description: `${name}`,
           eventable: 'Renting',
@@ -379,14 +376,11 @@ module.exports = (sequelize, DataTypes) => {
       .then(([model, isCreated]) => {
         if ( !isCreated ) {
           return model.update({
-            startDate: D.addDays(
-              date,
-              DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
-            endDate: D.addDays(
-              date,
-              DEPOSIT_REFUND_DELAYS[this.getComfortLevel()]),
-            });
+            startDate,
+            endDate: startDate,
+          });
         }
+
         return true;
       });
   };

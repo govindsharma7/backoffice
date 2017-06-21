@@ -146,14 +146,15 @@ module.exports = (sequelize, DataTypes) => {
     const {eventable, EventableId} = event;
 
     return Promise.all([
-        event.googleEventId != null && Utils.wrapHookPromise(event.googleUpdate()),
         models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
           .findById(EventableId),
         Event.scope('event-category').findById(event.id, options),
+        event.googleEventId != null && Utils.wrapHookPromise(event.googleUpdate()),
       ])
-      .then(([, eventableInstance, event]) => {
+      .then(([eventableInstance, event]) => {
         return eventableInstance.handleEventUpdate ?
-          eventableInstance.handleEventUpdate(event, event.get('category')) : event;
+          eventableInstance.handleEventUpdate(event, event.get('category')) :
+          event;
       })
       .thenReturn(true);
   });

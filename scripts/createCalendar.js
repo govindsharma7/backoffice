@@ -17,7 +17,7 @@ return Promise.map([
       auth: jwtClient,
       resource: {
         summary: city === 'refund_deposit' ?
-        'Refund Deposit' : `Checkin/Checkout ${city}`,
+          'Refund Deposit' : `Checkin/Checkout ${city}`,
       },
     })
     .tap((calendar) => {
