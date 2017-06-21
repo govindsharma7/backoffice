@@ -297,7 +297,7 @@ module.exports = (sequelize, DataTypes) => {
         .then((orderItems) => {
           return Promise.all( orderItems.length ?
             [Order.findById(orderItems[0].OrderId), false] :
-            [Order.create(defaults, { include, transaction }), true],
+            [Order.create(defaults, { include, transaction }), true]
           );
         });
     });
