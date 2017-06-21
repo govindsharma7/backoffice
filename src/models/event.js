@@ -84,7 +84,7 @@ module.exports = (sequelize, DataTypes) => {
   Event.prototype.googleSerialize = function() {
     const {eventable} = this;
 
-    return models[eventable].scope(`eventable${eventable}`)
+    return Promise.allmodels[eventable].scope(`eventable${eventable}`)
       .findById(this.EventableId)
       .then((eventableInstance) => {
         return eventableInstance.googleSerialize ?
@@ -138,37 +138,56 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  function wrapHookHandler(event, callback) {
+    /* eslint-disable promise/no-callback-in-promise */
+    return Event.scope('event-category')
+      .findById(event.id)
+      .then(callback)
+      .thenReturn(true)
+      .tapCatch(console.error);
+    /* eslint-enable promise/no-callback-in-promise */
+  }
+
   Event.hook('afterCreate', (event, options) => {
-    return Utils.wrapHookPromise(event.googleCreate(options));
+    return wrapHookHandler(event, (event) => {
+      return event.googleCreate(options);
+    });
   });
 
-  Event.hook('afterUpdate', (event, options) => {
+  Event.hook('afterUpdate', (event) => {
     const {eventable, EventableId} = event;
 
-    return Promise.all([
-        models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
-          .findById(EventableId),
-        Event.scope('event-category').findById(event.id, options),
-        event.googleEventId != null && Utils.wrapHookPromise(event.googleUpdate()),
-      ])
-      .then(([eventableInstance, event]) => {
-        return eventableInstance.handleEventUpdate ?
-          eventableInstance.handleEventUpdate(event, event.get('category')) :
-          event;
-      })
-      .thenReturn(true);
+    return wrapHookHandler(event, (event) => {
+      return Promise.all([
+          models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
+            .findById(EventableId),
+          event.googleEventId != null && event.googleUpdate(),
+        ])
+        .then(([eventableInstance]) => {
+          return eventableInstance.handleEventUpdate &&
+            eventableInstance.handleEventUpdate(event);
+        });
+    });
   });
 
   Event.hook('afterDelete', (event) => {
     if ( event.googleEventId != null ) {
-      return Utils.wrapHookPromise(event.googleDelete());
+      return wrapHookHandler(event, (event) => {
+        return event.googleDelete();
+      });
     }
 
     return true;
   });
 
   Event.hook('afterRestore', (event, options) => {
-    return Utils.wrapHookPromise(event.googleCreate(options));
+    if ( event.googleEventId != null ) {
+      return wrapHookHandler(event, (event) => {
+        return event.googleCreate(options);
+      });
+    }
+
+    return true;
   });
 
   Event.beforeLianaInit = (app) => {

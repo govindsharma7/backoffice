@@ -513,7 +513,9 @@ module.exports = (sequelize, DataTypes) => {
       is related to this event and create/update it
       Also update/create Refund Event if it's a 'Checkout' Event
   */
-  Renting.prototype.handleEventUpdate = function(event, type, options) {
+  Renting.prototype.handleEventUpdate = function(event, options) {
+    const type = event.get('category');
+
     return Renting.scope(type === 'refund_deposit' ? 'client' : `${type}Order`)
       .findById(this.id)
       .then((renting) => {

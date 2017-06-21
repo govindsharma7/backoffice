@@ -1,7 +1,5 @@
 module.exports = function(promise) {
   return promise
-    .then(() => {
-      return true;
-    })
+    .thenReturn(true)
     .tapCatch(console.error);
 };
