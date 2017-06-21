@@ -17,13 +17,11 @@ const {
   getCheckinEndDate,
   getCheckoutEndDate,
 }                                  = require('./getCheckinoutEndDate');
-const getLateNoticeFees           = require('./getLateNoticeFees');
-const getRoomSwitchPrice          = require('./getRoomSwitchPrice');
-const logAndSend                  = require('./logAndSend');
-const parseDBDate                 = require('./parseDBDate');
-const wrapHookPromise             = require('./wrapHookPromise');
-const restoreAndDestroyRoutes     = require('./restoreAndDestroyRoutes');
-const checkinoutOrdersRoutes      = require('./checkinoutOrdersRoutes');
+const getLateNoticeFees            = require('./getLateNoticeFees');
+const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
+const logAndSend                   = require('./logAndSend');
+const parseDBDate                  = require('./parseDBDate');
+const wrapHookPromise              = require('./wrapHookPromise');
 
 module.exports = {
   addInternalRelationshipRoute,
@@ -46,6 +44,4 @@ module.exports = {
   parseDBDate,
   stripIndent,
   wrapHookPromise,
-  restoreAndDestroyRoutes,
-  checkinoutOrdersRoutes,
 };

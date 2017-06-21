@@ -353,13 +353,13 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Renting.prototype.createOrUpdateRefundEvent = function(date) {
+  Renting.prototype.createOrUpdateRefundEvent = function(date, transaction) {
     const {name} = this.Room;
     const {firstName, lastName} = this.Client;
     const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.get('comfortLevel')]);
     const category = 'refund-deposit';
 
-    return sequelize.transaction((transaction) => {
+//    return sequelize.transaction((transaction) => {
       return models.Event.scope('event-category')
         .findOne({
           where: {
@@ -387,7 +387,7 @@ module.exports = (sequelize, DataTypes) => {
             }],
           }, { transaction });
         });
-    });
+//    });
   };
 
   // TODO: simplify this using other findOrCreate<X>Order methods as examples
@@ -460,6 +460,9 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  /*  this function find or create checkin and checkout Order,
+      if it's a checkout event, it also create a refund event
+  */
   // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
   ['checkin', 'checkout'].forEach((type) => {
     Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
