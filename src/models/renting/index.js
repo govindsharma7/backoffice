@@ -104,6 +104,7 @@ module.exports = (sequelize, DataTypes) => {
         }],
       });
     });
+
     Renting.addScope('comfortLevel', {
       attributes: [
         [sequelize.fn('replace', sequelize.col('OrderItems.ProductId'), '-pack', ''),
@@ -521,89 +522,103 @@ module.exports = (sequelize, DataTypes) => {
       Also update/create Refund Event if it's a 'Checkout' Event
   */
   // TODO: this can probably be improved as well
-  Renting.prototype.handleEventUpdate = function(event, options) {
+  Renting.handleEventUpdate = function(event, eventableId, options) {
     const type = event.get('category');
 
-    return Renting.scope(type === 'refund-deposit' ? 'client' : `${type}Order`)
-      .findById(this.id)
-      .then((renting) => {
-        if ( !renting ) {
-          throw new Error('Client doesn\'t have a pack order yet');
-        }
-        const {Orders} = renting.Client === undefined || null ? null : renting.Client;
-
+    return Promise.all([
+      Renting.scope(type === 'refund-deposit' ? 'client' : 'comfortLevel', 'eventableRenting')
+        .findById(eventableId),
+      type !== 'refund-deposit' && models.OrderItem
+        .findOne({ where: {
+          RentingId: eventableId,
+          ProductId: `special-${type}`,
+        } }),
+    ])
+    .then(([renting, orderItem]) => {
         return Promise.all([
-            type !== 'refund-deposit' ? Utils[`getC${type.substr(1)}Price`](
-              event.startDate,
-              this.getComfortLevel()) : 0,
-            Orders && Orders.length ? Orders[0].id : null,
-            Utils.getLateNoticeFees(type, event.startDate),
+          renting,
+          type !== 'refund-deposit' ? Utils[`get${_.capitalize(type)}EndDate`](
+            event.startDate) : event.endDate,
+          type !== 'refund-deposit' ? Utils[`get${_.capitalize(type)}Price`](
+            event.startDate,
+            renting.get('comfortLevel'))
+            : 0,
+          orderItem ? orderItem.OrderId : null,
+          Utils.getLateNoticeFees(type, event.startDate),
         ]);
-      })
-      .then(([price, OrderId, lateFees]) => {
-        if ( !price && !lateFees ) {
-          return models.Order
-            .destroy({
-              where: {
-                id: OrderId,
-              },
-          });
-        }
-        const items = [];
-
-        if ( price ) {
-          items.push({
-            label: `Special C${type.substr(1)}`,
-            unitPrice: price,
-            ProductId: 'special-checkinout',
-          });
-        }
-        else {
-          models.OrderItem
-            .destroy({
-              where: {
-                OrderId,
-                ProductId: 'special-checkinout',
-              },
-            });
-        }
-        if ( lateFees ) {
-          items.push({
-            label: `Late notice ${this.Room.name}`,
-            unitPrice: lateFees,
-            ProductId: 'late-notice',
-          });
-        }
-        else {
-          models.OrderItem
-            .destroy({
-              where: {
-                OrderId,
-                ProductId: 'late-notice',
-              },
-            });
-        }
-
+    })
+    .tap(([renting, endDate, price, OrderId, lateFees]) => {
+      console.log(renting, endDate, price, OrderId, lateFees);
+      console.log(renting);
+      if ( !price && !lateFees ) {
         return models.Order
-         .findOrCreate({
-              where: {
-                ClientId: this.ClientId,
-                label: `C${type.substr(1)}`,
-              },
-              defaults: {
-                type: 'debit',
-                label: `C${type.substr(1)}`,
-                ClientId: this.ClientId,
-                OrderItems: items,
-              },
-              include: [models.OrderItem],
-            });
-      })
-      .then(() => {
-        if ( type === 'checkout' ) {
-          return this.createOrUpdateRefundEvent(event.startDate, options);
-        }
-        return true;
+          .destroy({
+            where: {
+              id: OrderId,
+            },
+        });
+      }
+      const items = [];
+
+      if ( price !== 0 ) {
+        items.push({
+          label: `Special ${_.capitalize(type)}`,
+          unitPrice: price,
+          RentingId: renting.id,
+          ProductId: `special-${type}`,
+        });
+      }
+      else {
+        models.OrderItem
+          .destroy({
+            where: {
+              OrderId,
+              ProductId: `special-${type}`,
+            },
+          });
+      }
+      if ( lateFees !== 0 ) {
+        items.push({
+          label: `Late notice ${renting.Room.name}`,
+          unitPrice: lateFees,
+          RentingId: renting.id,
+          ProductId: 'late-notice',
+        });
+      }
+      else {
+        models.OrderItem
+          .destroy({
+            where: {
+              OrderId,
+              ProductId: 'late-notice',
+            },
+          });
+      }
+      return models.Order
+        .findOrCreate({
+          where: {
+            ClientId: renting.ClientId,
+            label: `${_.capitalize(type)}`,
+          },
+          defaults: {
+            type: 'debit',
+            label: `${_.capitalize(type)}`,
+            ClientId: renting.ClientId,
+            OrderItems: items,
+          },
+          include: [models.OrderItem],
+        });
+    })
+    .tap(([, endDate]) => {
+      return event
+        .set('endDate', endDate)
+        .save({hooks:false});
+    })
+    .then(([renting]) => {
+      if ( type === 'checkout' ) {
+        return renting.createOrUpdateRefundEvent(event.startDate, options);
+      }
+      return true;
     });
   };
 

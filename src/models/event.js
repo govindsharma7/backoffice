@@ -142,10 +142,10 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  function wrapHookHandler(event, callback) {
+  function wrapHookHandler(event, options, callback) {
     /* eslint-disable promise/no-callback-in-promise */
     return Event.scope('event-category')
-      .findById(event.id)
+      .findById(event.id, options)
       .then(callback)
       .thenReturn(true)
       .tapCatch(console.error);
@@ -153,7 +153,7 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   Event.hook('afterCreate', (event, options) => {
-    return wrapHookHandler(event, (event) => {
+    return wrapHookHandler(event, options, (event) => {
       return event.googleCreate(options);
     });
   });
@@ -161,23 +161,18 @@ module.exports = (sequelize, DataTypes) => {
   Event.hook('afterUpdate', (event, options) => {
     const {eventable, EventableId} = event;
 
-    return wrapHookHandler(event, (event) => {
-      return Promise.all([
-          // TODO: remove these non-generic scopes doing here??
-          models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
-            .findById(EventableId),
-          event.googleEventId != null && event.googleUpdate(),
-        ])
-        .then(([eventableInstance]) => {
-          return eventableInstance.handleEventUpdate &&
-            eventableInstance.handleEventUpdate(event, options);
+    return wrapHookHandler(event, options, (event) => {
+        return models[eventable].handleEventUpdate &&
+            models[eventable].handleEventUpdate(event, EventableId, options)
+        .then(() => {
+          return event.googleEventId != null && event.googleUpdate();
         });
-    });
+      });
   });
 
-  Event.hook('afterDelete', (event) => {
+  Event.hook('afterDelete', (event, options) => {
     if ( event.googleEventId != null ) {
-      return wrapHookHandler(event, (event) => {
+      return wrapHookHandler(event, options, (event) => {
         return event.googleDelete();
       });
     }
@@ -187,7 +182,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Event.hook('afterRestore', (event, options) => {
     if ( event.googleEventId != null ) {
-      return wrapHookHandler(event, (event) => {
+      return wrapHookHandler(event, options, (event) => {
         return event.googleCreate(options);
       });
     }
