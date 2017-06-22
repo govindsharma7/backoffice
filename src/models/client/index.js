@@ -79,14 +79,20 @@ module.exports = (sequelize, DataTypes) => {
       scope: { metadatable: 'Client' },
     });
 
-    Client.addScope('rentOrders', {
-      include: [{
-        model : models.Order,
+    Client.addScope('rentOrdersFor', (date = Date.now()) => {
+      return {
         include: [{
-          model: models.OrderItem,
-          where: { ProductId: 'rent' },
+          model : models.Order,
+          where: {
+            type: 'debit',
+            dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
+          },
+          include: [{
+            model: models.OrderItem,
+            where: { ProductId: 'rent' },
+          }],
         }],
-      }],
+      };
     });
 
     Client.addScope('roomSwitchCount', {
@@ -156,6 +162,21 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  // TODO: this can probably be improved to use a Client scope
+  Client.prototype.getRentingsFor = function(date = Date.now()) {
+    const startOfMonth = D.format(D.startOfMonth(date));
+
+    return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
+      where: {
+        ClientId: this.id,
+        bookingDate: { $lte: D.endOfMonth(date) },
+        $and: sequelize.literal(
+          `(Events.id IS NULL OR Events.startDate >= '${startOfMonth}')`
+        ),
+      },
+    });
+  };
+
   Client.prototype.hasUncashedDeposit = function() {
     return this.getOrders({
       where: {
@@ -177,21 +198,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Client.prototype.getRentingsFor = function(date = Date.now()) {
-    const startOfMonth = D.format(D.startOfMonth(date));
-
-    return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
-      where: {
-        ClientId: this.id,
-        bookingDate: { $lte: D.endOfMonth(date) },
-        $and: sequelize.literal(
-          `(Events.id IS NULL OR Events.startDate >= '${startOfMonth}')`
-        ),
-      },
-    });
-  };
-
-  Client.prototype.createRentingsOrder =
+  Client.prototype.createRentOrder =
     function(rentings, hasUncashedDeposit, date = Date.now(), number) {
     const {Order, OrderItem} = models;
     const items = rentings.reduce((all, renting) => {
@@ -216,6 +223,24 @@ module.exports = (sequelize, DataTypes) => {
     }, {
       include: [OrderItem],
     });
+  };
+
+  Client.prototype.findOrCreateRentOrder = function(date = Date.now()) {
+    if ( this.Orders[0] ) {
+      return [this.Orders[0], false];
+    }
+
+    return Promise.all([
+        this.getRentingsFor(date),
+        this.hasUncashedDeposit(),
+      ])
+      .then(([rentings, hasUncashedDeposit]) => {
+        if ( rentings.length === 0 ) {
+          throw new Error('Client has no active rentings, aborting.');
+        }
+
+        return this.createRentOrder(rentings, hasUncashedDeposit, date);
+      });
   };
 
   Client.prototype.ninjaSerialize = function() {

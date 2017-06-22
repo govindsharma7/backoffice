@@ -2,6 +2,7 @@ const Promise     = require('bluebird');
 const bodyParser  = require('body-parser');
 const uuid        = require('uuid/v4');
 const reduce      = require('lodash/reduce');
+const D           = require('date-fns');
 const Liana       = require('forest-express-sequelize');
 const Ninja       = require('../../vendor/invoiceninja');
 const Utils       = require('../../utils');
@@ -13,6 +14,31 @@ const _ = { reduce };
 
 module.exports = (app, models, Client) => {
   const LEA = Liana.ensureAuthenticated;
+
+  app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
+    const {values, ids} = req.body.data.attributes;
+    const month = values.for === 'current month' ?
+      Date.now() :
+      D.addMonths(Date.now(), 1);
+
+    Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple rentings orders');
+        }
+
+        return Client.scope(
+          { method: ['rentOrdersFor', month] }
+        ).findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.findOrCreateRentOrder(month);
+      })
+      .then(Utils.findOrCreateSuccessHandler(res, 'Renting Order'))
+      .catch(Utils.logAndSend(res));
+
+    return null;
+  });
 
   app.post('/forest/actions/credit-client', LEA, (req, res) => {
     const idCredit = uuid();
@@ -129,6 +155,7 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
+  // TODO: I beleive this belongs in Renting's routes
   app.post('/forest/actions/change-do-not-cash-deposit-option', LEA, (req, res) => {
     const {ids, values} = req.body.data.attributes;
 

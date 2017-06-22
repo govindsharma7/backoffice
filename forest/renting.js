@@ -28,8 +28,6 @@ Liana.collection('Renting', {
   }, {
     name: 'Create Deposit Order',
   }, {
-    name: 'Create Rent Order',
-  }, {
     name: 'Add Checkin Date',
     fields: [{
       field: 'dateAndTime',

@@ -74,6 +74,13 @@ Liana.collection('Client', {
   }, {
     name: 'Generate Lease',
   }, {
+    name: 'Create Rent Order',
+    fields: [{
+      field: 'for',
+      type: 'Enum',
+      enums: ['current month', 'next month'],
+    }],
+  }, {
     name: 'Change "do not cash deposit" Option',
     fields: [{
       field: 'option',
