@@ -22,8 +22,11 @@ module.exports = {
     id: 'privilege-pack',
     name: 'Privilege Pack',
   }, {
-    id: 'special-checkinout',
-    name: 'Special Checkin/Checkout',
+    id: 'special-checkin',
+    name: 'Special Checkin',
+  }, {
+    id: 'special-checkout',
+    name: 'Special Checkout',
   }, {
     id: 'late-notice',
     name: 'Late Notice',

@@ -128,6 +128,12 @@ module.exports = function(app, models, Renting) {
 
           return renting[`findOrCreate${_.capitalize(type)}Order`]();
         })
+        .tap(([, isCreated]) => {
+          // We create the refund event once the checkout order is created,
+          // as the checkout date is more reliable at this point
+          return type === 'checkout' && isCreated &&
+            this.createOrUpdateRefundEvent(this.get('checkoutDate'));
+        })
         .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} order`))
         .catch(Utils.logAndSend(res));
       });

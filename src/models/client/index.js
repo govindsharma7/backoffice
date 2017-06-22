@@ -11,9 +11,11 @@ const {
   LATE_FEES,
   DEPOSIT_PRICES,
   UNCASHED_DEPOSIT_FEE,
+}                = require('../../const');
+const {
   WEBMERGE_DOCUMENT_ID,
   WEBMERGE_DOCUMENT_KEY,
-}                = require('../../const');
+}                = require('../../config');
 const routes     = require('./routes');
 
 const _ = { find };

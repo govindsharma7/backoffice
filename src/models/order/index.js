@@ -96,6 +96,7 @@ module.exports = (sequelize, DataTypes) => {
         model: models.OrderItem,
         attributes: [],
       }],
+      group: ['Order.id'],
     });
   };
 

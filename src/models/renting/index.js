@@ -99,7 +99,6 @@ module.exports = (sequelize, DataTypes) => {
         }],
       });
     });
-    // TODO: test this scope
     Renting.addScope('comfortLevel', {
       attributes: [[
         sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
@@ -254,6 +253,53 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  // this function finds or creates checkin and checkout Order,
+  // if it's a checkout order, it also creates a refund event
+  ['checkin', 'checkout'].forEach((type) => {
+    Renting.prototype[`findOrCreate${_.capitalize(type)}Order`] =
+      function(number) {
+        return Promise.all([
+            Utils[`get${_.capitalize(type)}Price`](
+              this.get(`${type}Date`),
+              this.get('comfortLevel')
+            ),
+            Utils.getLateNoticeFees(type, this.get(`${type}Date`)),
+          ])
+          .then(([price, lateNoticeFees]) => {
+            const ProductId = `special-${type}`;
+            const items = [
+              {
+                label: `${price !== 0 ? 'Special' : 'Free' } ${type}`,
+                unitPrice: price,
+                RentingId: this.id,
+                ProductId,
+              },
+              lateNoticeFees !== 0 && {
+                label: `Late notice ${name}`,
+                unitPrice: lateNoticeFees,
+                RentingId: this.id,
+                ProductId: 'late-notice',
+              },
+            ].filter(Boolean);
+
+            return models.Order
+              .findItemOrCreate({
+                where: {
+                  RentingId: this.id,
+                  ProductId,
+                },
+                defaults: {
+                  type: 'debit',
+                  label: _.capitalize(type),
+                  ClientId: this.ClientId,
+                  OrderItems: items,
+                  number,
+                },
+              });
+          });
+      };
+  });
+
   Renting.prototype.createRoomSwitchOrder = function({discount}, number) {
     const comfortLevel = this.get('comfortLevel');
 
@@ -290,112 +336,41 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  // TODO: this shouldn't do an update with an 'findOrCreate' name
-  Renting.prototype.findOrCreateRefundEvent = function(date, options) {
-    const {Event, Term} = models;
+  Renting.prototype.createOrUpdateRefundEvent = function(date) {
     const {name} = this.Room;
     const {firstName, lastName} = this.Client;
     const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.get('comfortLevel')]);
-    const term = {
-      name: 'refund-deposit',
-      taxonomy: 'event-category',
-      termable: 'Event',
-    };
+    const category = 'refund-deposit';
 
-    return Event
-      .findOrCreate(Object.assign({
-        where: {
-          EventableId: this.id,
-        },
-        include: [{
-          model: Term,
-          where: term,
-        }],
-        defaults: {
-          startDate,
-          endDate: startDate,
-          summary: `refund deposit ${firstName} ${lastName}`,
-          description: `${name}`,
-          eventable: 'Renting',
-          EventableId: this.id,
-          Terms: [term],
-        },
-      }, options))
-      .then(([model, isCreated]) => {
-        if ( !isCreated ) {
-          return model.update({
+    return sequelize.transaction((transaction) => {
+      return models.Event.scope('event-category')
+        .findOne({
+          where: {
+            EventableId: this.id,
+            category,
+          },
+          transaction,
+        })
+        .then((event) => {
+          if ( event ) {
+            return event.update({ startDate, endDate: startDate }, transaction);
+          }
+
+          return models.event.create({
             startDate,
             endDate: startDate,
-          });
-        }
-
-        return true;
-      });
-  };
-
-  /*  this function find or create checkin and checkout Order,
-      if it's a checkout event, it also create a refund event
-  */
-  // TODO: this can probably be improved
-  Renting.findOrCreateCheckinoutOrder = function(type) {
-    return function(number, options) {
-      /*eslint-disable no-invalid-this */
-      return Promise.all([
-          Utils[`get${_.capitalize(type)}Price`](
-            this.get(`${type}Date`),
-            this.get('comfortLevel')
-          ),
-          type === 'checkout' ?
-            Utils.getLateNoticeFees(this.get(`${type}Date`)) : 0,
-        ])
-        .then(([price, lateNoticeFees]) => {
-          const items = [];
-
-          if ( price !== 0 ) {
-            items.push({
-              label: `Special ${type}`,
-              unitPrice: price,
-              ProductId: 'special-checkinout',
-            });
-          }
-          if ( lateNoticeFees !== 0 ) {
-            items.push({
-              label: `Late notice ${name}`,
-              unitPrice: lateNoticeFees,
-              ProductId: 'late-notice',
-            });
-          }
-          if (items.length === 0) {
-            throw new Error(`This ${type} is free, no order was created.`);
-          }
-          return models.Order
-            .findOrCreate({
-              where: {
-                ClientId: this.ClientId,
-                label: `C${type.substr(1)}`,
-              },
-              defaults: {
-                type: 'debit',
-                label: `C${type.substr(1)}`,
-                ClientId: this.ClientId,
-                OrderItems: items,
-                number,
-              },
-              include: [models.OrderItem],
-            });
-        })
-        .tap(() => {
-          if ( type === 'checkout' ) {
-            this.findOrCreateRefundEvent(this.get('checkoutDate'), options);
-          }
-
-          return true;
-        })
-        .then(([instance, isCreated]) => {
-          return [instance, isCreated];
+            summary: `Refund deposit ${firstName} ${lastName}`,
+            description: `${name}`,
+            eventable: 'Renting',
+            EventableId: this.id,
+            Terms: [{
+              name: 'refund-deposit',
+              taxonomy: 'event-category',
+              termable: 'Event',
+            }],
+          }, { transaction });
         });
-    /*eslint-enable no-invalid-this */
-    };
+    });
   };
 
   // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
@@ -476,8 +451,7 @@ module.exports = (sequelize, DataTypes) => {
               event.startDate,
               this.getComfortLevel()) : 0,
             Orders && Orders.length ? Orders[0].id : null,
-            type === 'checkout' ?
-            Utils.getLateNoticeFees(event.startDate) : 0,
+            Utils.getLateNoticeFees(type, event.startDate),
         ]);
       })
       .then(([price, OrderId, lateFees]) => {
@@ -541,7 +515,7 @@ module.exports = (sequelize, DataTypes) => {
       })
       .then(() => {
         if ( type === 'checkout' ) {
-          return this.findOrCreateRefundEvent(event.startDate, options);
+          return this.createOrUpdateRefundEvent(event.startDate, options);
         }
         return true;
     });
