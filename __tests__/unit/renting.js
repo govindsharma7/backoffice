@@ -62,7 +62,7 @@ describe('Renting', () => {
           return renting.get('comfortLevel');
         })
         .then((comfortLevel) => {
-          return expect(comfortLevel).toBeUndefined();
+          return expect(comfortLevel).toBeNull();
         });
     });
   });

@@ -101,11 +101,11 @@ module.exports = (sequelize, DataTypes) => {
     });
     // TODO: test this scope
     Renting.addScope('comfortLevel', {
+      attributes: [[
+        sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
+        'comfortLevel',
+      ]],
       include: [{
-        attributes: [[
-          sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
-          'comfortLevel',
-        ]],
         model: models.OrderItem,
         required: false,
         where: { ProductId: { $like: '%-pack' } },
