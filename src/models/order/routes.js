@@ -1,5 +1,5 @@
 const Liana       = require('forest-express-sequelize');
-const makePublic  = require('../middlewares/makePublic');
+const makePublic  = require('../../middlewares/makePublic');
 const Utils       = require('../../utils');
 
 const Serializer = Liana.ResourceSerializer;

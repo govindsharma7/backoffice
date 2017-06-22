@@ -45,10 +45,10 @@ describe('Renting', () => {
 
   describe('#getComfortLevel()', () => {
     test('it should return the comfort level of the housing pack', () => {
-      return Renting.scope('orderItems', 'events', 'room+apartment')
+      return Renting.scope('comfortLevel')
         .findById(renting1.id)
         .then((renting) => {
-          return renting.getComfortLevel();
+          return renting.get('comfortLevel');
         })
         .then((comfortLevel) => {
           return expect(comfortLevel).toEqual('privilege');
@@ -56,23 +56,23 @@ describe('Renting', () => {
     });
 
     test('it should return null when there is no housing pack', () => {
-      return Renting.scope('orderItems', 'events', 'room+apartment')
+      return Renting.scope('comfortLevel')
         .findById(renting2.id)
         .then((renting) => {
-          return renting.getComfortLevel();
+          return renting.get('comfortLevel');
         })
         .then((comfortLevel) => {
-          return expect(comfortLevel).toBeNull();
+          return expect(comfortLevel).toBeUndefined();
         });
     });
   });
 
-  describe('#findOrCreateCheckin()', () => {
+  describe('#findOrCreateCheckinEvent()', () => {
     test('It should\'nt create a checkin event as it already exists', () => {
-      return Renting.scope('room+apartment', 'events', 'client')
+      return Renting.scope('room+apartment', 'client')
         .findById(renting1.id)
         .then((renting) => {
-          return renting.findOrCreateCheckin('2017-05-16 Z', {hooks:false});
+          return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});
         })
         .then((result) => {
           return expect(result[1]).toEqual(false);
@@ -80,10 +80,10 @@ describe('Renting', () => {
     });
 
     test('It should create a checkin event', () => {
-      return Renting.scope('room+apartment', 'events', 'client')
+      return Renting.scope('room+apartment', 'client')
         .findById(renting2.id)
         .then((renting) => {
-          return renting.findOrCreateCheckin('2017-05-16 Z', {hooks:false});
+          return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});
         })
         .then((result) => {
           return expect(result[1]).toEqual(true);

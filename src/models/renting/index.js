@@ -107,6 +107,7 @@ module.exports = (sequelize, DataTypes) => {
           'comfortLevel',
         ]],
         model: models.OrderItem,
+        required: false,
         where: { ProductId: { $like: '%-pack' } },
       }],
     });
@@ -335,7 +336,7 @@ module.exports = (sequelize, DataTypes) => {
   /*  this function find or create checkin and checkout Order,
       if it's a checkout event, it also create a refund event
   */
-  // TODO: this deserves a lot of improvement
+  // TODO: this can probably be improved
   Renting.findOrCreateCheckinoutOrder = function(type) {
     return function(number, options) {
       /*eslint-disable no-invalid-this */
