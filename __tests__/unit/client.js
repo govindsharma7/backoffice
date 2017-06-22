@@ -39,10 +39,9 @@ describe('Client', () => {
           return expect(client.Orders.length).toEqual(2);
       });
     });
-
-    test('rentOrders scope return no Order as there is no `rent` orderItem', () => {
+    test('rentOrders scope return no  Order as there isn\'t `rent` orderItem', () => {
       return models.Client.scope('rentOrders')
-        .findById(client3.id)
+        .findById(client.id)
         .then((client) => {
           return expect(client.Orders).toHaveLength(0);
       });
@@ -55,7 +54,6 @@ describe('Client', () => {
           return expect(client.get('roomSwitchCount')).toEqual(1);
         });
     });
-
     test('currentApartment scope should return current client of a Room', () => {
       return models.Client.scope('currentApartment')
         .findById(client.id)
