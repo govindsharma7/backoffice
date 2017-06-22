@@ -17,6 +17,13 @@ module.exports = fixtures((u) => {
       email: u.str('joy@boule.com'),
       phoneNumber: '0033654321678',
       status: 'active',
+    }, {
+      id: u.id('client-3'),
+      firstName: 'Henry',
+      lastName: 'Smith',
+      email: u.str('henry@smith.com'),
+      phoneNumber: '00336123459876',
+      status: 'active',
     }],
     Order: [{
       id: u.id('order-1'),
@@ -55,10 +62,10 @@ module.exports = fixtures((u) => {
       dueDate: D.parse('2016-01-01 Z'),
     }, {
       id: u.id('order-6'),
-      type: 'deposit',
+      type: 'debit',
       receiptNumber: u.int(6),
-      label: 'test order 6',
-      ClientId: u.id('client-2'),
+      label: 'March Invoice',
+      ClientId: u.id('client-3'),
       dueDate: D.parse('2016-01-01 Z'),
     }],
     Apartment: [{
@@ -77,6 +84,13 @@ module.exports = fixtures((u) => {
       id: u.id('room-1'),
       reference: u.str('09DUN21'),
       name: '9 henri dunant - chambre 1',
+      floorArea: 16,
+      basePrice: 598,
+      ApartmentId: u.id('apartment-1'),
+    }, {
+      id: u.id('room-2'),
+      reference: u.str('09DUN22'),
+      name: '9 henri dunant - chambre 2',
       floorArea: 16,
       basePrice: 598,
       ApartmentId: u.id('apartment-1'),
@@ -102,6 +116,13 @@ module.exports = fixtures((u) => {
       price: '30000',
       ClientId: u.id('client-1'),
       RoomId: u.id('room-1'),
+    }, {
+      id: u.id('renting-4'),
+      bookingDate: '2017-01-11',
+      serviceFees: 300,
+      price: '30000',
+      ClientId: u.id('client-3'),
+      RoomId: u.id('room-2'),
     }],
     OrderItem: [{
       id: u.id('orderitem-1'),
@@ -136,6 +157,13 @@ module.exports = fixtures((u) => {
       vatRate: 0,
       OrderId: u.id('order-4'),
       ProductId: 'rent',
+    }, {
+      id: u.id('orderitem-5'),
+      label: 'test item 5',
+      quantity: 1,
+      unitPrice: 250,
+      vatRate: 0,
+      OrderId: u.id('order-5'),
     }],
     Event: [{
       id: u.id('event-1'),

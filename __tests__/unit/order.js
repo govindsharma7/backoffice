@@ -17,6 +17,24 @@ describe('Order', () => {
       });
   });
 
+  describe('Scopes', () => {
+    test('totalPaidRefund scope return total paid and refund for an Order', () => {
+      return models.Order.scope('totalPaidRefund')
+        .findById(order.id)
+        .then((order) => {
+          expect(order.get('totalPaid')).toEqual(100 + 100);
+          return expect(order.get('totalRefund')).toBe(100);
+        });
+    });
+    test('amount scope return amount of an order', () => {
+      return models.Order.scope('amount')
+        .findById(order.id)
+        .then((order) => {
+          return expect(order.get('amount')).toEqual(100 * 3 + 200);
+      });
+    });
+  });
+
   describe('#getAmount()', () => {
     test('it should calculate the amount for one item', () => {
       return order

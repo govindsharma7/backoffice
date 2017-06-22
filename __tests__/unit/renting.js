@@ -24,48 +24,33 @@ describe('Renting', () => {
       return Renting.scope('checkinDate')
         .findById(renting1.id)
         .then((renting) => {
-          return renting.get('checkinDate');
-        })
-        .then((checkinDate) => {
-          return expect(checkinDate).toEqual(D.parse('2017-05-14 Z'));
+          return expect(renting.get('checkinDate')).toEqual(D.parse('2017-05-14 Z'));
         });
     });
-
     test('checkinDate should be null when there is no checkin event', () => {
       return Renting.scope('checkinDate')
         .findById(renting2.id)
         .then((renting) => {
-          return renting.get('checkinDate');
-        })
-        .then((checkinDate) => {
-          return expect(checkinDate).toBeNull();
+          return expect(renting.get('checkinDate')).toBeNull();
         });
     });
-  });
 
-  describe('#getComfortLevel()', () => {
     test('it should return the comfort level of the housing pack', () => {
       return Renting.scope('comfortLevel')
         .findById(renting1.id)
         .then((renting) => {
-          return renting.get('comfortLevel');
-        })
-        .then((comfortLevel) => {
-          return expect(comfortLevel).toEqual('privilege');
+          return expect(renting.get('comfortLevel')).toEqual('privilege');
         });
     });
-
     test('it should return null when there is no housing pack', () => {
       return Renting.scope('comfortLevel')
         .findById(renting2.id)
         .then((renting) => {
-          return renting.get('comfortLevel');
-        })
-        .then((comfortLevel) => {
-          return expect(comfortLevel).toBeNull();
+          return expect(renting.get('comfortLevel')).toBeNull();
         });
     });
   });
+
 
   describe('#findOrCreateCheckinEvent()', () => {
     test('It should\'nt create a checkin event as it already exists', () => {

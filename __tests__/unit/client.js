@@ -23,12 +23,47 @@ describe('Client', () => {
       });
   });
 
-  describe('scopes', () => {
+  describe('Scopes', () => {
+    test('rentOrders scope find orders where orderItem ProductId equals `rent`', () => {
+      return models.Client.scope('rentOrders')
+        .findById(client2.id)
+        .then((client) => {
+          client.Orders.map((order) => {
+            return order.OrderItems.map((orderitem) => {
+              return expect(orderitem.ProductId).toEqual('rent');
+            });
+          });
+          return expect(client.Orders.length).toEqual(2);
+      });
+    });
+    test('rentOrders scope return no  Order as there isn\'t `rent` orderItem', () => {
+      return models.Client.scope('rentOrders')
+        .findById(client.id)
+        .then((client) => {
+          return expect(client.Orders).toHaveLength(0);
+      });
+    });
+
     test('roomSwitchCount scope counts the time a client switched room', () => {
       return models.Client.scope('roomSwitchCount')
         .findById(client.id)
         .then((client) => {
           return expect(client.get('roomSwitchCount')).toEqual(1);
+        });
+    });
+
+    test('currentApartment scope should return current client of a Room', () => {
+      return models.Client.scope('currentApartment')
+        .findById(client.id)
+        .then((client) => {
+          return expect(client.Rentings[0].Room.id).toBe(u.id('room-1'));
+        });
+    });
+    test('currentApartment scope return no Renting as client already checkout', () => {
+      return models.Client.scope('currentApartment')
+        .findById(client2.id)
+        .then((client) => {
+          return expect(client.Rentings).toHaveLength(0);
         });
     });
   });

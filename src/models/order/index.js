@@ -97,21 +97,6 @@ module.exports = (sequelize, DataTypes) => {
         attributes: [],
       }],
     });
-
-    Order.addScope('forRenting', (id) => {
-      return {
-        include: [{
-          attributes: { include: [
-            [sequelize.fn('count', 'OrderItems.id'), 'matchingItemsCount'],
-          ] },
-          model: models.OrderItem,
-          where: {
-            RentingId: id,
-            '$OrderItems.matchingItemsCount$': { $gte: 1 },
-          },
-        }],
-      };
-    });
   };
 
   Order.INVOICE_STATUS_DRAFT = 1;
