@@ -79,19 +79,21 @@ module.exports = (sequelize, DataTypes) => {
       scope: { metadatable: 'Client' },
     });
 
-    Client.addScope('rentOrdersFor', (date = Date.now()) => {
-      return {
+    Client.addScope('rentOrders', {
+      include: [{
+        model : models.Order,
         include: [{
-          model : models.Order,
-          where: {
-            type: 'debit',
-            dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
-          },
-          include: [{
-            model: models.OrderItem,
-            where: { ProductId: 'rent' },
-          }],
+          model: models.OrderItem,
+          where: { ProductId: 'rent' },
         }],
+      }],
+    });
+    Client.addScope('ordersFor', (date = Date.now()) => {
+      return {
+        where: {
+          '$Order.type$': 'debit',
+          '$Order.dueDate$': { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
+        },
       };
     });
 

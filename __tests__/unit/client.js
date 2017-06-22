@@ -36,7 +36,7 @@ describe('Client', () => {
           return expect(client.Orders.length).toEqual(2);
       });
     });
-    test('rentOrders scope return no  Order as there isn\'t `rent` orderItem', () => {
+    test('rentOrders scope return no Order as there isn\'t `rent` orderItem', () => {
       return models.Client.scope('rentOrders')
         .findById(client.id)
         .then((client) => {
@@ -68,14 +68,14 @@ describe('Client', () => {
     });
   });
 
-  describe('#getRentingOrdersFor()', () => {
-    test('it should find the renting order for a specific month', () => {
-      return client.getRentingOrdersFor(D.parse('2016-01 Z'))
-        .then((orders) => {
-          return expect(orders[0].dueDate).toEqual('2016-01-01');
-        });
-    });
-  });
+  // describe('#getRentingOrdersFor()', () => {
+  //   test('it should find the renting order for a specific month', () => {
+  //     return client.getRentingOrdersFor(D.parse('2016-01 Z'))
+  //       .then((orders) => {
+  //         return expect(orders[0].dueDate).toEqual('2016-01-01');
+  //       });
+  //   });
+  // });
 
   describe('#getRentingsFor', () => {
     test('it should find all rentings for a specific month', () => {
@@ -88,9 +88,7 @@ describe('Client', () => {
     });
   });
 
-
-
-  describe('#createRentingsOrder', () => {
+  describe('#createRentOrder', () => {
     test('it should create an order with appropriate orderitems', () => {
       const _Renting = models.Renting.scope('room+apartment');
 
@@ -102,7 +100,7 @@ describe('Client', () => {
         client.hasUncashedDeposit(),
         ])
         .then(([rentings, uncashedDeposit]) => {
-          return client.createRentingsOrder(
+          return client.createRentOrder(
             rentings,
             uncashedDeposit,
             D.parse('2017-02 Z'),
