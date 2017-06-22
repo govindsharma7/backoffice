@@ -104,7 +104,6 @@ module.exports = (sequelize, DataTypes) => {
         }],
       });
     });
-
     Renting.addScope('comfortLevel', {
       attributes: [
         [sequelize.fn('replace', sequelize.col('OrderItems.ProductId'), '-pack', ''),
@@ -460,9 +459,6 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  /*  this function find or create checkin and checkout Order,
-      if it's a checkout event, it also create a refund event
-  */
   // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
   ['checkin', 'checkout'].forEach((type) => {
     Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
