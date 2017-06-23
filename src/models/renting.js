@@ -604,7 +604,7 @@ module.exports = (sequelize, DataTypes) => {
 
         Promise.resolve()
         .then(() => {
-          if ( !values.plannedDate ) {
+          if ( !values.dateAndTime ) {
             throw new Error('Please select a planned date');
           }
           if ( ids.length > 1 ) {
@@ -613,7 +613,7 @@ module.exports = (sequelize, DataTypes) => {
           return Renting.scope('room+apartment', 'events', 'client').findById(ids[0]);
         })
         .then((renting) => {
-          return renting[`findOrCreate${_.capitalize(type)}`](values.plannedDate);
+          return renting[`findOrCreate${_.capitalize(type)}`](values.dateAndTime);
         })
         .then(Utils.findOrCreateSuccessHandler(res, `${type} event`))
         .catch(Utils.logAndSend(res));

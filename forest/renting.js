@@ -32,13 +32,13 @@ Liana.collection('Renting', {
   }, {
     name: 'Add Checkin Date',
     fields: [{
-      field: 'plannedDate',
+      field: 'dateAndTime',
       type: 'Date',
     }],
   }, {
     name: 'Add Checkout Date',
     fields :[{
-      field: 'plannedDate',
+      field: 'dateAndTime',
       type: 'Date',
     }],
   }, {
