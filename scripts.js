@@ -17,6 +17,7 @@ const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
 const dbSync = 'node scripts/dbSync.js';
 const dbSeed = 'node scripts/dbSeed.js';
 const dbFixture = 'node scripts/dbFixture.js';
+const dbDump = 'node scripts/dbDump.js';
 const createCalendar = 'node scripts/createCalendar.js';
 const extractClients = 'node scripts/extractInvoiceninja.js > data/clients.json';
 const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
@@ -37,6 +38,7 @@ const common = {
   'db:sync': dbSync,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
+  'db:dump': dbDump,
   'deploy': [env2json, dbSeed, claudiaUpdate],
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
