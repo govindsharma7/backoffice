@@ -145,7 +145,10 @@ module.exports = (sequelize, DataTypes) => {
         },
         include: [{
           model: models.OrderItem,
-          where: { RentingId: { $not: null } },
+          where: {
+            RentingId: { $not: null },
+            ProductId: 'rent',
+          },
         }],
       });
   };
