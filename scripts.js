@@ -11,7 +11,7 @@ const sequelizeMigrationDo =
 const sequelizeMigrationUndo =
   `sequelize db:migrate:undo ${sequelizeFlags}`;
 
-const watched = '--watch src --watch forest --watch __tests__ scripts.js';
+const watched = '--watch src --watch forest --watch __tests__ --watch scripts.js';
 const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
 
 const dbSync = 'node scripts/dbSync.js';
