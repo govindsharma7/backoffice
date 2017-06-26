@@ -11,7 +11,7 @@ const sequelizeMigrationDo =
 const sequelizeMigrationUndo =
   `sequelize db:migrate:undo ${sequelizeFlags}`;
 
-const watched = '--watch src --watch forest --watch __tests__';
+const watched = '--watch src --watch forest --watch __tests__ scripts.js';
 const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
 
 const dbSync = 'node scripts/dbSync.js';
@@ -23,7 +23,7 @@ const extractClients = 'node scripts/extractInvoiceninja.js > data/clients.json'
 const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
 
-const lint = 'eslint .';
+const lint = 'eslint src forest __tests__ scripts';
 const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
