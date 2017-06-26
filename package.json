@@ -19,7 +19,6 @@
     "deasync": "^0.1.10",
     "express": "^4.15.3",
     "express-jwt": "^5.3.0",
-    "forest-express": "^1.1.9",
     "forest-express-sequelize": "^1.1.8",
     "googleapis": "^19.0.0",
     "lodash": "^4.17.4",

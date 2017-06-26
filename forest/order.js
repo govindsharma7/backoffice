@@ -1,4 +1,4 @@
-const Liana   = require('forest-express');
+const Liana   = require('forest-express-sequelize');
 const {Order} = require('../src/models');
 const Utils   = require('../src/utils');
 const {
