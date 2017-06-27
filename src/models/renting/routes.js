@@ -113,6 +113,7 @@ module.exports = function(app, models, Renting) {
           }
 
           return Renting.scope(
+            'room', // required to create the orderItem late notice
             'client', // required to create the refund event,
             `${type}Date`, // required below
             'comfortLevel' // required below
@@ -126,13 +127,16 @@ module.exports = function(app, models, Renting) {
             ));
           }
 
-          return renting[`findOrCreate${_.capitalize(type)}Order`]();
+          return Promise.all([
+            renting,
+            renting[`findOrCreate${_.capitalize(type)}Order`](),
+            ]);
         })
-        .tap(([, isCreated]) => {
+        .tap(([renting]) => {
           // We create the refund event once the checkout order is created,
           // as the checkout date is more reliable at this point
-          return type === 'checkout' && isCreated &&
-            this.createOrUpdateRefundEvent(this.get('checkoutDate'));
+          return type === 'checkout' &&
+            renting.createOrUpdateRefundEvent(renting.get('checkoutDate'));
         })
         .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} order`))
         .catch(Utils.logAndSend(res));
