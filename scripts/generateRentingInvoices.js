@@ -35,7 +35,7 @@ return Client.scope({ method: ['rentOrdersFor', month] }).findAll()
     // pick the same receiptNumber
     return Promise.reduce(tuples, (prev, [client, rentings, hasUncashedDeposit]) => {
       return client
-        .createRentOrder(rentings, hasUncashedDeposit, month)
+        .findOrCreateRentOrder(rentings, hasUncashedDeposit, month)
         .tap((order) => {
           return order.pickReceiptNumber();
         })

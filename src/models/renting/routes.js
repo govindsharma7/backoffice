@@ -76,7 +76,7 @@ module.exports = function(app, models, Renting) {
       .then((renting) => {
         return renting[`findOrCreate${_.capitalize(type)}Event`](values.dateAndTime);
       })
-      .then(Utils.findOrCreateSuccessHandler(res, `${type} event`))
+      .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} event`))
       .catch(Utils.logAndSend(res));
 
       return null;

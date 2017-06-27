@@ -101,6 +101,7 @@ module.exports = (sequelize, DataTypes) => {
       return {
         include: [{
           model : models.Order,
+          required: false,
           where: {
             type: 'debit',
             dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
@@ -215,7 +216,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Client.prototype.createRentOrder =
+  Client.prototype.findOrCreateRentOrder =
     function(rentings, hasUncashedDeposit, date = Date.now(), number) {
     const {Order, OrderItem} = models;
     const items = rentings.reduce((all, renting) => {
@@ -226,20 +227,45 @@ module.exports = (sequelize, DataTypes) => {
       items.push({
         label: 'Caution',
         unitPrice: UNCASHED_DEPOSIT_FEE,
-        quantity: 1,
+        ProductId: 'uncashed-deposit',
       });
     }
 
-    return Order.create({
-      type: 'debit',
-      label: `${D.format(date, 'MMMM')} Invoice`,
-      dueDate: D.startOfMonth(date),
-      OrderItems: items,
-      ClientId: this.id,
-      number,
-    }, {
-      include: [OrderItem],
+    return Order.findOrCreate({
+      where: {
+        ClientId: this.id,
+        dueDate: D.startOfMonth(date),
+      },
+      include: [{
+        model: OrderItem,
+        where: { ProductId: 'rent' },
+      }],
+      defaults: {
+        type: 'debit',
+        label: `${D.format(date, 'MMMM')} Invoice`,
+        dueDate: D.startOfMonth(date),
+        OrderItems: items,
+        ClientId: this.id,
+        number,
+      },
     });
+  };
+
+  Client.createRentOrders = function(clients, date = Date.now()) {
+    return Promise
+      .mapSeries(clients, (client) => {
+        return Promise.all([
+          client,
+          client.getRentingsFor(date),
+          client.hasUncashedDeposit(),
+        ]);
+      })
+      .filter(([, rentings]) => {
+        return rentings.length !== 0;
+      })
+      .then(([client, rentings, hasUncashedDeposit]) => {
+        return client.findOrCreateRentOrder(rentings, hasUncashedDeposit, date);
+      });
   };
 
   Client.prototype.findOrCreateRentOrder = function(date = Date.now()) {
@@ -472,7 +498,6 @@ module.exports = (sequelize, DataTypes) => {
           this.findOrCreateCurrentOrder([{
             label: 'Late fees',
             unitPrice: lateFees,
-            quantity: 1,
             ProductId: 'late-fees',
           }]),
           lateFees,

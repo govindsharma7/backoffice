@@ -113,7 +113,7 @@ return models.sequelize.sync({ force: true })
           }
 
           return Promise.map(records, (record) => {
-            return models.Room.scope('Room.Apartment')
+            return models.Room.scope('apartment')
               .findById(record.RoomId)
               .then((room) => {
                 return Utils.getServiceFees(room.get('roomCount'));

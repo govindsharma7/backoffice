@@ -71,7 +71,7 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Room.id'],
     });
 
-    Room.addScope('Apartment', {
+    Room.addScope('apartment', {
       include: [{
         model: models.Apartment,
       }],

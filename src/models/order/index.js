@@ -252,20 +252,16 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.ninjaCreateInvoices = (orders) => {
-    return Promise.all(
-      orders
-        .filter((order) => {
-          return order.ninjaId == null && order.price !== 0;
-        })
-        .map((order) => {
-          return ( order.receiptNumber ?
-              Promise.resolve(order) :
-              order.pickReceiptNumber()
-            ).then(() => {
-              return order.ninjaCreate();
-            });
-        })
-    );
+    return Promise
+      .filter(orders, (order) => {
+        return order.ninjaId == null && order.price !== 0;
+      })
+      .mapSeries((order) => {
+        return ( order.receiptNumber ? order : order.pickReceiptNumber() );
+      })
+      .map((order) => {
+        return order.ninjaCreate();
+      }, {concurrency: 5});
   };
 
   // This is an alternative to Order.findOrCreate, to use when the only thing

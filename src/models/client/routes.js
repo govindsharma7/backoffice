@@ -18,23 +18,23 @@ module.exports = (app, models, Client) => {
   app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
     const month = values.for === 'current month' ?
-      Date.now() :
+      D.startOfMonth(Date.now()) :
       D.addMonths(Date.now(), 1);
 
     Promise.resolve()
       .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple rentings orders');
+        if (!values.for) {
+          throw new Error('"for" field is required');
         }
 
         return Client.scope(
           { method: ['rentOrdersFor', month] }
-        ).findById(ids[0]);
+        ).findAll({ where: { id: { $in: ids } } });
       })
-      .then((renting) => {
-        return renting.findOrCreateRentOrder(month);
+      .then((clients) => {
+        return Client.createRentOrders(clients, month);
       })
-      .then(Utils.findOrCreateSuccessHandler(res, 'Renting Order'))
+      .then(Utils.createSuccessHandler(res, 'Renting Order'))
       .catch(Utils.logAndSend(res));
 
     return null;

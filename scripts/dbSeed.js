@@ -13,21 +13,22 @@ Object.entries = typeof Object.entries === 'function' ?
 /* eslint-disable promise/no-nesting */
 return models.sequelize.sync()
   .then(() => {
-    const promises = [];
+    const tuples = [];
 
     for (let [modelName, records] of Object.entries(seed)) {
       for (let record of records) {
-        promises.push(models[modelName].findOrCreate({
-          where: { id: record.id },
-          defaults: record,
-        }));
+        tuples.push([modelName, record]);
       }
     }
-
     // use Promise.map instead of Promise.all, as .map limits paralellism
     // (while .all results in "database is locked" sqlite errors)
-    return Promise.map(promises, (promise) => {
-      return promise;
+    //TODO try to make this run with .map and concurrency
+    return Promise.mapSeries(tuples, ([modelName, record]) => {
+      return models[modelName]
+        .findOrCreate({
+          where: { id: record.id },
+          defaults: record,
+        });
     });
   })
   .then(() => {

@@ -45,5 +45,11 @@ module.exports = {
   }, {
     id: 'paris-deposit',
     name: 'Paris deposit',
+  }, {
+    id: 'uncashed-deposit',
+    name: 'Uncashed Deposit',
+  }, {
+    id: 'service-overcharging-fees',
+    name: 'Service Overcharging Fees',
   }],
 };

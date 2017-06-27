@@ -16,7 +16,7 @@ module.exports = (app, models, Order) => {
       .then((orders) => {
         return Order.ninjaCreateInvoices(orders);
       })
-      .then(Utils.createSuccessHandler(res, 'Ninja invoices'))
+      .then(Utils.createSuccessHandler(res, 'Ninja invoice'))
       .catch(Utils.logAndSend(res));
   });
 
