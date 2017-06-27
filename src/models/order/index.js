@@ -266,17 +266,21 @@ module.exports = (sequelize, DataTypes) => {
 
   // This is an alternative to Order.findOrCreate, to use when the only thing
   // we're interested in is the existence of the orderItem
-  Order.findItemOrCreate = function({where, defaults, include = [models.OrderItem] }) {
+  Order.findItemOrCreate = function({where, defaults, include}) {
     return sequelize.transaction((transaction) => {
       return models.OrderItem
         .findAll({
           where,
+          include,
           transaction,
         })
         .then((orderItems) => {
           return Promise.all( orderItems.length ?
             [Order.findById(orderItems[0].OrderId), false] :
-            [Order.create(defaults, { include, transaction }), true]
+            [Order.create(defaults, {
+              include: [models.OrderItem],
+              transaction,
+            }), true]
           );
         });
     });

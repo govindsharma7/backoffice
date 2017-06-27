@@ -164,21 +164,23 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Client.prototype.getRentingOrdersFor = function(date = Date.now()) {
-    return this.getOrders({
-        where: {
-          type: 'debit',
-          dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
-        },
-        include: [{
-          model: models.OrderItem,
-          where: {
-            RentingId: { $not: null },
-            ProductId: 'rent',
-          },
-        }],
-      });
-  };
+  // This was the reliable method used by generateInvoice
+  // TODO: get rid of it once we're certain that script still works
+  // Client.prototype.getRentingOrdersFor = function(date = Date.now()) {
+  //   return this.getOrders({
+  //       where: {
+  //         type: 'debit',
+  //         dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
+  //       },
+  //       include: [{
+  //         model: models.OrderItem,
+  //         where: {
+  //           RentingId: { $not: null },
+  //           ProductId: 'rent',
+  //         },
+  //       }],
+  //     });
+  // };
 
   // TODO: this can probably be improved to use a Client scope
   Client.prototype.getRentingsFor = function(date = Date.now()) {
@@ -209,46 +211,37 @@ module.exports = (sequelize, DataTypes) => {
       }],
     })
     .then((result) => {
-      if ( result.length ) {
-        return true;
-      }
-      return false;
+      return result.length > 0;
     });
   };
 
   Client.prototype.findOrCreateRentOrder =
     function(rentings, hasUncashedDeposit, date = Date.now(), number) {
-    const {Order, OrderItem} = models;
-    const items = rentings.reduce((all, renting) => {
-      return all.concat(renting.toOrderItems(date));
-    }, []);
-
-    if ( hasUncashedDeposit ) {
-      items.push({
-        label: 'Caution',
-        unitPrice: UNCASHED_DEPOSIT_FEE,
-        ProductId: 'uncashed-deposit',
-      });
-    }
-
-    return Order.findOrCreate({
-      where: {
-        ClientId: this.id,
-        dueDate: D.startOfMonth(date),
-      },
-      include: [{
-        model: OrderItem,
-        where: { ProductId: 'rent' },
-      }],
-      defaults: {
-        type: 'debit',
-        label: `${D.format(date, 'MMMM')} Invoice`,
-        dueDate: D.startOfMonth(date),
-        OrderItems: items,
-        ClientId: this.id,
-        number,
-      },
-    });
+      return models.Order
+        .findItemOrCreate({
+          where: { ProductId: 'rent' },
+          include: [{
+            model: models.Order,
+            where: { dueDate: D.startOfMonth(date) },
+          }],
+          defaults: {
+            label: `${D.format(date, 'MMMM')} Invoice`,
+            type: 'debit',
+            ClientId: this.id,
+            dueDate: D.startOfMonth(date),
+            OrderItems:
+              rentings.reduce((all, renting) => {
+                return all.concat(renting.toOrderItems(date));
+              }, [])
+              .concat(hasUncashedDeposit && {
+                label: 'Option Liberté',
+                unitPrice: UNCASHED_DEPOSIT_FEE,
+                ProductId: 'uncashed-deposit',
+              })
+              .filter(Boolean),
+            number,
+          },
+        });
   };
 
   Client.createRentOrders = function(clients, date = Date.now()) {
@@ -263,26 +256,8 @@ module.exports = (sequelize, DataTypes) => {
       .filter(([, rentings]) => {
         return rentings.length !== 0;
       })
-      .then(([client, rentings, hasUncashedDeposit]) => {
+      .map(([client, rentings, hasUncashedDeposit]) => {
         return client.findOrCreateRentOrder(rentings, hasUncashedDeposit, date);
-      });
-  };
-
-  Client.prototype.findOrCreateRentOrder = function(date = Date.now()) {
-    if ( this.Orders[0] ) {
-      return [this.Orders[0], false];
-    }
-
-    return Promise.all([
-        this.getRentingsFor(date),
-        this.hasUncashedDeposit(),
-      ])
-      .then(([rentings, hasUncashedDeposit]) => {
-        if ( rentings.length === 0 ) {
-          throw new Error('Client has no active rentings, aborting.');
-        }
-
-        return this.createRentOrder(rentings, hasUncashedDeposit, date);
       });
   };
 

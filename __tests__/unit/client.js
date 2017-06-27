@@ -3,11 +3,13 @@ const D                = require('date-fns');
 const models           = require('../../src/models');
 const fixtures         = require('../../__fixtures__/client');
 
-var client;
-var client2;
-var renting2;
-var renting3;
-var u;
+let client;
+let client2;
+let client3;
+
+let renting2;
+let renting3;
+let u;
 
 describe('Client', () => {
   beforeAll(() => {
@@ -16,6 +18,7 @@ describe('Client', () => {
         return (
           client = instances['client-1'],
           client2 = instances['client-2'],
+          client3 = instances['client-3'],
           renting2 = instances['renting-2'],
           renting3 = instances['renting-3'],
           u = unique
@@ -36,9 +39,10 @@ describe('Client', () => {
           return expect(client.Orders.length).toEqual(2);
       });
     });
-    test('rentOrders scope return no Order as there isn\'t `rent` orderItem', () => {
+
+    test('rentOrders scope return no Order as there is no `rent` orderItem', () => {
       return models.Client.scope('rentOrders')
-        .findById(client.id)
+        .findById(client3.id)
         .then((client) => {
           return expect(client.Orders).toHaveLength(0);
       });
@@ -88,30 +92,31 @@ describe('Client', () => {
     });
   });
 
-  describe('#createRentOrder', () => {
+  describe('#findOrCreateRentOrder', () => {
     test('it should create an order with appropriate orderitems', () => {
       const _Renting = models.Renting.scope('room+apartment');
 
-      return Promise.all([
-        Promise.all([
-          _Renting.findById(renting2.id),
-          _Renting.findById(renting3.id),
-        ]),
-        client.hasUncashedDeposit(),
+      return Promise
+        .all([
+          Promise.all([
+            _Renting.findById(renting2.id),
+            _Renting.findById(renting3.id),
+          ]),
+          client.hasUncashedDeposit(),
         ])
         .then(([rentings, uncashedDeposit]) => {
-          return client.createRentOrder(
+          return client.findOrCreateRentOrder(
             rentings,
             uncashedDeposit,
             D.parse('2017-02 Z'),
             Math.round(Math.random() * 1E12)
           );
         })
-        .then((order) => {
-          return order.getOrderItems();
-        })
-        .then((orderItems) => {
-          return expect(orderItems.length).toEqual(5);
+        .then(([order, isCreated]) => {
+          return (
+            expect(isCreated).toEqual(true),
+            expect(order.OrderItems.length).toEqual(5)
+          );
         });
     });
   });
