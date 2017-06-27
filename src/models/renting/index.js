@@ -531,7 +531,7 @@ module.exports = (sequelize, DataTypes) => {
       return renting;
     }
 
-    return models.Room.scope('Apartment')
+    return models.Room.scope('apartment')
       .findById(renting.RoomId)
       .then((room) => {
         return room.getCalculatedProps(renting.bookingDate);

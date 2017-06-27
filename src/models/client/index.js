@@ -13,6 +13,7 @@ const {
   UNCASHED_DEPOSIT_FEE,
 }                = require('../../const');
 const {
+  NODE_ENV,
   WEBMERGE_DOCUMENT_ID,
   WEBMERGE_DOCUMENT_KEY,
 }                = require('../../config');
@@ -380,7 +381,8 @@ module.exports = (sequelize, DataTypes) => {
       apartmentRoomNumber: Apartment.Rooms.length,
       roomNumber: Rentings[0].Room.reference.slice(-1),
       email: this.email,
-    }, true);
+    // the last param turns on the test environment of webmerge
+    }, NODE_ENV !== 'production');
   };
 
   Client.paylineCredit = (clientId, values, idCredit) => {
