@@ -187,7 +187,10 @@ module.exports = (sequelize, DataTypes) => {
           return event.googleEventId != null && event.googleUpdate();
         });
       }
-      return event.googleEventId != null && event.googleUpdate();
+      return event.update({endDate: event.startDate}, {hooks: false})
+        .then(() => {
+          return event.googleEventId != null && event.googleUpdate();
+      });
     });
   });
 

@@ -473,96 +473,101 @@ module.exports = (sequelize, DataTypes) => {
       .findById(eventableId)
       .then((renting) => {
         return Promise.all([
-        renting,
-        Utils[`get${_.capitalize(type)}Price`](
-          event.startDate,
-          renting.get('comfortLevel')),
-        Utils.getLateNoticeFees(type, event.startDate),
-      ]);
-    })
-    .then(([renting, price, lateFees]) => {
-      return Promise.all([
-        renting,
-        price,
-        lateFees,
-        models.Order
-          .findOrCreate(Object.assign({
-            where: {
-              ClientId: renting.ClientId,
-              label: `${_.capitalize(type)}`,
-            },
-            defaults: {
-              type: 'debit',
-              label: `${_.capitalize(type)}`,
-              ClientId: renting.ClientId,
-            },
-          }, {transaction})),
-      ]);
-    })
-    .tap(([renting, price, lateFees, [order]]) => {
-      if ( price === 0 && lateFees === 0 ) {
-        return models.Order
+          renting,
+          Utils[`get${_.capitalize(type)}Price`](
+            event.startDate,
+            renting.get('comfortLevel')),
+          Utils.getLateNoticeFees(type, event.startDate),
+          models.Order
+            .findOrCreate(Object.assign({
+              where: {
+                ClientId: renting.ClientId,
+                label: `${_.capitalize(type)}`,
+              },
+              defaults: {
+                type: 'debit',
+                label: `${_.capitalize(type)}`,
+                ClientId: renting.ClientId,
+              },
+            }, {transaction})),
+        ]);
+      })
+      .tap(([, price, lateFees, [order]]) => {
+        if ( price === 0 && lateFees === 0 ) {
+          return models.Order
+            .destroy({
+              where: {
+                id: order.id,
+              },
+              transaction,
+            });
+        }
+        return true;
+      })
+      .tap(([renting, price, , [order]]) => {
+        if ( price !== 0 ) {
+          return models.OrderItem
+            .findOrCreate({
+              where: {
+                RentingId: renting.id,
+                ProductId: `special-${type}`,
+                OrderId: order.id,
+              },
+              defaults: {
+                label: `Special ${_.capitalize(type)}`,
+                unitPrice: price,
+                RentingId: renting.id,
+                ProductId: `special-${type}`,
+                OrderId: order.id,
+              },
+              transaction,
+           });
+        }
+        return models.OrderItem
           .destroy({
             where: {
-              id: order.id,
+              OrderId: order.id,
+              ProductId: `special-${type}`,
+              RentingId: renting.id,
             },
             transaction,
           });
-      }
-      if ( price !== 0 ) {
-        models.OrderItem
-          .findOrCreate({
-            where: {
-              label: `Special ${_.capitalize(type)}`,
-              unitPrice: price,
-              RentingId: renting.id,
-              ProductId: `special-${type}`,
-              OrderId: order.id,
-            },
-          });
-      }
-      else {
-        models.OrderItem
+      })
+      .tap(([renting, , lateFees, [order]]) => {
+        if ( lateFees !== 0 ) {
+          return models.OrderItem
+            .findOrCreate({
+              where: {
+                RentingId: renting.id,
+                ProductId: 'late-notice',
+                OrderId: order.id,
+              },
+              defaults: {
+                label: `Late notice ${renting.Room.name}`,
+                unitPrice: lateFees,
+                RentingId: renting.id,
+                ProductId: 'late-notice',
+                OrderId: order.id,
+              },
+              transaction,
+            });
+        }
+        return models.OrderItem
           .destroy({
-            where: {
-              OrderId: order.id,
-              ProductId: `special-${type}`,
-              RentingId: renting.id,
-            },
-            transaction,
-          });
-      }
-      if ( lateFees !== 0 ) {
-        models.OrderItem
-          .findOrCreate({
-            where: {
-              label: `Late notice ${renting.Room.name}`,
-              unitPrice: lateFees,
-              RentingId: renting.id,
-              ProductId: 'late-notice',
-              OrderId: order.id,
-            },
+          where: {
+            OrderId: order.id,
+            ProductId: 'late-notice',
+            RentingId: renting.id,
+          },
+          transaction,
         });
-      }
-      else {
-        models.OrderItem
-          .destroy({
-            where: {
-              OrderId: order.id,
-              ProductId: 'late-notice',
-              RentingId: renting.id,
-            },
-            transaction,
-          });
-      }
-      return true;
-    })
-    .then(([renting]) => {
-      if ( type === 'checkout' ) {
-        return renting.createOrUpdateRefundEvent(event.startDate, transaction);
-      }
-      return true;
-    });
+      })
+      .then(([renting]) => {
+        if ( type === 'checkout' ) {
+          return renting.createOrUpdateRefundEvent(event.startDate, transaction);
+        }
+        return true;
+      });
   };
 
   Renting.hook('beforeValidate', (renting) => {
