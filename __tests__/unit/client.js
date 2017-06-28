@@ -116,7 +116,7 @@ describe('Client', () => {
         .then(([client, renting2, renting3]) => {
           return client.findOrCreateRentOrder(
             [renting2, renting3],
-            D.parse('2017-02 Z'),
+            D.parse('2017-02-01 Z'),
             Math.round(Math.random() * 1E12)
           );
         })
