@@ -85,12 +85,6 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Renting.addScope('client', {
-      include: [{
-        model: models.Client,
-      }],
-    });
-
     // checkinDate, checkoutDate, checkinEvent, checkoutEvent scopes
     ['checkin', 'checkout'].forEach((type) => {
       Renting.addScope(`${type}Date`, {
