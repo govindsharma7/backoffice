@@ -223,7 +223,10 @@ module.exports = (sequelize, DataTypes) => {
           where: { ProductId: 'rent' },
           include: [{
             model: models.Order,
-            where: { dueDate: D.startOfMonth(date) },
+            where: {
+              ClientId: this.id,
+              dueDate: D.startOfMonth(date),
+            },
           }],
           defaults: {
             label: `${D.format(date, 'MMMM')} Invoice`,
