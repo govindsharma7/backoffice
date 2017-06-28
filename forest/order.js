@@ -66,6 +66,8 @@ Liana.collection('Order', {
     name: 'Restore Order',
   }, {
     name: 'Destroy Order',
+  }, {
+    name: 'Cancel Invoice',
   }],
   segments: TRASH_SEGMENTS,
 });

@@ -59,6 +59,12 @@ module.exports = (sequelize, DataTypes) => {
       scope: { termable: 'Order' },
     });
 
+    Order.addScope('orderItems', {
+      include: [{
+        model: models.OrderItem,
+      }],
+    });
+
     Order.addScope('totalPaidRefund', {
       attributes: [[
         sequelize.fn('sum', sequelize.literal('`Payments`.`amount`')),
@@ -138,6 +144,39 @@ module.exports = (sequelize, DataTypes) => {
           balance: totalPaid - amount - totalRefund,
         };
       });
+  };
+
+  Order.prototype.findOrCreateCancelOrder = function() {
+    const {OrderItems} = this;
+    const items = [];
+
+    OrderItems.map((orderItem) => {
+      return items.push({
+        label: orderItem.label,
+        quantity: orderItem.quantity,
+        unitPrice: orderItem.unitPrice * -1,
+        vatRate: orderItem.vatRate,
+        ProductId: orderItem.ProductId,
+        RentingId: orderItem.RentingId,
+      });
+    });
+
+    return Order.findOrCreate({
+      where: {
+        type: 'credit',
+        label: `Credit Order - #${this.receiptNumber}`,
+        ClientId: this.ClientId,
+      },
+      defaults: {
+        type: 'credit',
+        label: `Credit Order - #${this.receiptNumber}`,
+        ClientId: this.ClientId,
+        OrderItems: items,
+      },
+      include: [{
+        model: models.OrderItem,
+      }],
+    });
   };
 
   Order.prototype.pickReceiptNumber = function() {
