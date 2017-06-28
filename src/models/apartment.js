@@ -133,7 +133,9 @@ module.exports = (sequelize, DataTypes) => {
         })
         .then((clients) => {
           return Aws.sendSms(
-            clients.map((client) => { return client.phoneNumber; }),
+            clients
+              .filter((client) => { return client.phoneNumber != null; })
+              .map((client) => { return client.phoneNumber; }),
             values.bodySms
           );
         })
