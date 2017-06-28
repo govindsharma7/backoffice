@@ -9,10 +9,7 @@ const Utils                 = require('../utils');
 const eventsInsert = Promise.promisify(Calendar.events.insert);
 const eventsUpdate = Promise.promisify(Calendar.events.update);
 const eventsDelete = Promise.promisify(Calendar.events.delete);
-
 const _ = { capitalize };
-
-
 
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
@@ -74,19 +71,13 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { termable: 'Event' },
     });
-    Event.belongsTo(models.Client, {
-      foreignKey: 'EventableId',
-      constaints: false,
-      as: 'Client',
-    });
-
     Event.addScope('event-category', {
       attributes: { include: [
         [sequelize.col('Terms.name'), 'category'],
       ]},
       include: [{
-        model: models.Term,
         required: false,
+        model: models.Term,
         where: { taxonomy: 'event-category' },
       }],
     });
@@ -195,8 +186,10 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Event.hook('afterDelete', (event, options) => {
+    const {transaction} = options;
+
     if ( event.googleEventId != null ) {
-      return wrapHookHandler(event, options, (event) => {
+      return wrapHookHandler(event, transaction, (event) => {
         return event.googleDelete();
       });
     }
