@@ -140,7 +140,7 @@ module.exports = (sequelize, DataTypes) => {
     }
     else {
       if ( this.bookingDate > startOfMonth ) {
-        daysStayed -= D.getDate(this.bookingDate);
+        daysStayed -= D.getDate(this.bookingDate) - 1;
       }
       if ( this.checkoutDate != null && this.checkoutDate < endOfMonth ) {
         daysStayed -= daysInMonth - D.getDate(this.checkoutDate);
