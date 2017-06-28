@@ -48,6 +48,9 @@ module.exports = (sequelize, DataTypes) => {
     phoneNumber: {
       type:                     DataTypes.STRING,
       required: true,
+      validate: {
+        is: /^([+]\d{11}|0{2}\d{11})$/,
+      },
     },
     preferredLanguage: {
       type:                     DataTypes.ENUM('fr', 'en'),
