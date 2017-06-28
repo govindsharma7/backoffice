@@ -116,6 +116,28 @@ module.exports = function(app, models, Renting) {
         .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} order`))
         .catch(Utils.logAndSend(res));
       });
+
+      app.post('/forest/actions/change-do-not-cash-deposit-option', LEA, (req, res) => {
+        const {ids, values} = req.body.data.attributes;
+
+        Promise.resolve()
+          .then(() => {
+            if ( ids.length > 1 ) {
+              throw new Error('Can\'t create multiple deposit order');
+            }
+            if ( values.option == null ) {
+              throw new Error('"Option" field is required');
+            }
+
+            return Renting.build({ id: ids[0] }, { isNewRecord: false })
+              .changeDepositOption(values.option);
+          })
+          .then((result) => {
+            console.log(result);
+            return res.send({success: true});
+          })
+          .catch(Utils.logAndSend(res));
+      });
   });
 
   app.post('/forest/actions/room-switch-order', LEA, (req, res) => {

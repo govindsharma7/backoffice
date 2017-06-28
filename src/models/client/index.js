@@ -129,7 +129,22 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Client.id'],
     });
-
+    Client.addScope('uncashedDepositCount', {
+      attributes: { include: [
+        [fn('count', col('Rentings.id')), 'uncashedDepositCount'],
+      ]},
+      include: [{
+        model: models.Renting,
+        include: [{
+          model: models.Term,
+          where: {
+            taxonomy: 'deposit-option',
+            name: 'do-not-cash',
+          },
+        }],
+      }],
+      group: ['Client.id'],
+    });
     Client.addScope('currentApartment', function(date = Date.now()) {
       return {
         where: { $or: [
@@ -157,7 +172,6 @@ module.exports = (sequelize, DataTypes) => {
         }],
       };
     });
-
     Client.addScope('metadata', {
       include: [{
         model: models.Metadata,
@@ -198,26 +212,8 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Client.prototype.hasUncashedDeposit = function() {
-    return this.getOrders({
-      where: {
-        type: 'deposit',
-      },
-      include: [{
-        model: models.Term,
-        where: {
-          taxonomy: 'do-not-cash',
-          name: 'true',
-        },
-      }],
-    })
-    .then((result) => {
-      return result.length > 0;
-    });
-  };
-
   Client.prototype.findOrCreateRentOrder =
-    function(rentings, hasUncashedDeposit, date = Date.now(), number) {
+    function(rentings, date = Date.now(), number) {
       return models.Order
         .findItemOrCreate({
           where: { ProductId: 'rent' },
@@ -237,7 +233,7 @@ module.exports = (sequelize, DataTypes) => {
               rentings.reduce((all, renting) => {
                 return all.concat(renting.toOrderItems(date));
               }, [])
-              .concat(hasUncashedDeposit && {
+              .concat(this.get('uncashedDepositCount') > 0 && {
                 label: 'Option Liberté',
                 unitPrice: UNCASHED_DEPOSIT_FEE,
                 ProductId: 'uncashed-deposit',
@@ -254,14 +250,13 @@ module.exports = (sequelize, DataTypes) => {
         return Promise.all([
           client,
           client.getRentingsFor(date),
-          client.hasUncashedDeposit(),
         ]);
       })
       .filter(([, rentings]) => {
         return rentings.length !== 0;
       })
-      .map(([client, rentings, hasUncashedDeposit]) => {
-        return client.findOrCreateRentOrder(rentings, hasUncashedDeposit, date);
+      .map(([client, rentings]) => {
+        return client.findOrCreateRentOrder(rentings, date);
       });
   };
 
@@ -509,26 +504,6 @@ module.exports = (sequelize, DataTypes) => {
         }
 
         return error;
-      });
-  };
-
-  Client.prototype.changeDepositOption = function(option) {
-    const {Orders} = this;
-    let name = option === 'cash deposit' ? 'false' : 'true';
-
-    return Orders[0]
-      .getTerms({where: {taxonomy: 'do-not-cash'} })
-      .then((terms) => {
-        if ( terms.length ) {
-          return terms[0].changeName(name);
-        }
-        return models.Term
-          .create({
-            name,
-            taxonomy: 'do-not-cash',
-            termable: 'Order',
-            TermableId: Orders[0].id,
-          });
       });
   };
 

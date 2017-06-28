@@ -39,6 +39,11 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       as: 'Event',
     });
+    Term.belongsTo(models.Renting, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      as: 'Renting',
+    });
   };
 
   // Term.addTaxonomy = function(options) {
@@ -55,17 +60,27 @@ module.exports = (sequelize, DataTypes) => {
   //
   // });
 
-  Term.prototype.changeName = function(name) {
-    return sequelize.transaction((t) => {
-      return Promise.all([
-        this.destroy({transaction: t}),
-        Term.create({
-          name,
-          taxonomy: this.taxonomy,
-          TermableId: this.TermableId,
-          termable: this.termable,
-        }, {transaction: t}),
-      ]);
+  Term.prototype.createOrUpdate = function(name) {
+    return sequelize.transaction((transaction) => {
+      return Promise.resolve()
+        .then(() => {
+          return Term.destroy({
+            where: {
+              taxonomy: this.taxonomy,
+              termable: this.termable,
+              TermableId: this.TermableId,
+            },
+            transaction,
+          });
+        })
+        .then(() => {
+          return Term.create({
+            name,
+            taxonomy: this.taxonomy,
+            TermableId: this.TermableId,
+            termable: this.termable,
+          }, {transaction});
+        });
     });
   };
 

@@ -28,7 +28,8 @@ module.exports = (app, models, Client) => {
         }
 
         return Client.scope(
-          { method: ['rentOrdersFor', month] }
+          { method: ['rentOrdersFor', month] }, // required by createRentOrders
+          'uncashedDepositCount' // required by findOrCreateRentOrder
         ).findAll({ where: { id: { $in: ids } } });
       })
       .then((clients) => {
@@ -152,33 +153,6 @@ module.exports = (app, models, Client) => {
         return client.createMetadata(values);
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
-      .catch(Utils.logAndSend(res));
-  });
-
-  // TODO: I beleive this belongs in Renting's routes
-  app.post('/forest/actions/change-do-not-cash-deposit-option', LEA, (req, res) => {
-    const {ids, values} = req.body.data.attributes;
-
-    Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple deposit order');
-        }
-        if ( !values.option ) {
-          throw new Error('Option field is required');
-        }
-        return Client.scope('depositOrder').findById(ids[0]);
-      })
-      .then((client) => {
-        if ( !client.Rentings.length ) {
-          throw new Error('This client has no renting yet');
-        }
-        if ( !client.Orders.length ) {
-          throw new Error('This client has no deposit order yet');
-        }
-        return client.changeDepositOption(values.option);
-      })
-      .then(Utils.createSuccessHandler(res, 'Deposit change option'))
       .catch(Utils.logAndSend(res));
   });
 

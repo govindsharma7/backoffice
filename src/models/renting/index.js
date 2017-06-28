@@ -79,6 +79,11 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { eventable: 'Renting' },
     });
+    Renting.hasMany(models.Term, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      scope: { termable: 'Renting' },
+    });
 
     // checkinDate, checkoutDate, checkinEvent, checkoutEvent scopes
     ['checkin', 'checkout'].forEach((type) => {
@@ -412,6 +417,15 @@ module.exports = (sequelize, DataTypes) => {
           });
       };
   });
+
+  Renting.prototype.changeDepositOption = function(option) {
+    return models.Term.build({
+        taxonomy: 'deposit-option',
+        termable: 'Order',
+        TermableId: this.id,
+      }, {isNewRecord: false})
+      .createOrUpdate(option === 'cash deposit' ? 'cash' : 'do-not-cash');
+  };
 
   Renting.prototype.googleSerialize = function(event) {
     const {Apartment} = this.Room;

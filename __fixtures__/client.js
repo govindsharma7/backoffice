@@ -191,10 +191,10 @@ module.exports = fixtures((u) => {
       termable: 'Event',
       TermableId: u.id('event-2'),
     }, {
-      name: 'true',
-      taxonomy: 'do-not-cash',
-      termable: 'Order',
-      TermableId: u.id('order-5'),
+      name: 'do-not-cash',
+      taxonomy: 'deposit-option',
+      termable: 'Renting',
+      TermableId: u.id('renting-3'),
     }],
      Payment: [{
       id: u.id('payment-1'),

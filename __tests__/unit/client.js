@@ -56,11 +56,19 @@ describe('Client', () => {
         });
     });
 
+    test('uncashedDepositCount count rentings with "do-not-cash" option', () => {
+      return models.Client.scope('uncashedDepositCount')
+        .findById(client.id)
+        .then((client) => {
+          return expect(client.get('uncashedDepositCount')).toEqual(1);
+        });
+    });
+
     test('currentApartment scope should return current client of a Room', () => {
       return models.Client.scope('currentApartment')
         .findById(client.id)
         .then((client) => {
-          return expect(client.Rentings[0].Room.id).toBe(u.id('room-1'));
+          return expect(client.Rentings[0].Room.id).toEqual(u.id('room-1'));
         });
     });
     test('currentApartment scope return no Renting as client already checkout', () => {
@@ -96,18 +104,18 @@ describe('Client', () => {
     test('it should create an order with appropriate orderitems', () => {
       const _Renting = models.Renting.scope('room+apartment');
 
-      return Promise
-        .all([
-          Promise.all([
+      return models.Client.scope('uncashedDepositCount')
+        .findById(client.id)
+        .then((client) => {
+          return Promise.all([
+            client,
             _Renting.findById(renting2.id),
             _Renting.findById(renting3.id),
-          ]),
-          client.hasUncashedDeposit(),
-        ])
-        .then(([rentings, uncashedDeposit]) => {
+          ]);
+        })
+        .then(([client, renting2, renting3]) => {
           return client.findOrCreateRentOrder(
-            rentings,
-            uncashedDeposit,
+            [renting2, renting3],
             D.parse('2017-02 Z'),
             Math.round(Math.random() * 1E12)
           );
@@ -148,23 +156,6 @@ describe('Client', () => {
           expect(lateFees).toEqual(1000);
           return true;
         });
-    });
-  });
-
-  describe('#hasUncashedDeposit', () => {
-    test('it should return true if client have an uncashed deposit', () => {
-      return client.hasUncashedDeposit()
-        .then((result) => {
-          expect(result).toEqual(true);
-          return true;
-      });
-    });
-    test('it should return false as client2 didn\'t pay his deposit', () => {
-      return client2.hasUncashedDeposit()
-        .then((result) => {
-          expect(result).toEqual(false);
-          return true;
-      });
     });
   });
 

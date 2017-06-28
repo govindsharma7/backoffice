@@ -7,7 +7,8 @@ const models  = require('../src/models');
 const {Client} = models;
 const month = D.addMonths(Date.now(), 1);
 
-return Client.scope({ method: ['rentOrdersFor', month] }).findAll()
+return Client.scope({ method: ['rentOrdersFor', month] }, 'uncashedDepositCount')
+  .findAll()
   // Filter-out clients who already have an order for this month
   .then((clients) => {
     return clients.filter((client) => {
@@ -19,7 +20,6 @@ return Client.scope({ method: ['rentOrdersFor', month] }).findAll()
       return Promise.all([
         client,
         client.getRentingsFor(month),
-        client.hasUncashedDeposit(),
       ]);
     });
   })
@@ -33,9 +33,9 @@ return Client.scope({ method: ['rentOrdersFor', month] }).findAll()
   .tap((tuples) => {
     // rentings-orders should be created one after the other, otherwise they all
     // pick the same receiptNumber
-    return Promise.reduce(tuples, (prev, [client, rentings, hasUncashedDeposit]) => {
+    return Promise.reduce(tuples, (prev, [client, rentings]) => {
       return client
-        .findOrCreateRentOrder(rentings, hasUncashedDeposit, month)
+        .findOrCreateRentOrder(rentings, month)
         .tap((order) => {
           return order.pickReceiptNumber();
         })
