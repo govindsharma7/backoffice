@@ -86,7 +86,7 @@ module.exports = (sequelize, DataTypes) => {
           return Payment.paylineRefund(ids[0], values);
         })
         .then(() => {
-          return res.send({success: 'Refund ok'});
+          return res.send({success: 'Payment Successfully Refund'});
         })
         .catch(Utils.logAndSend(res));
     });

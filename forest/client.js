@@ -81,14 +81,6 @@ Liana.collection('Client', {
       enums: ['current month', 'next month'],
     }],
   }, {
-    name: 'Change "do not cash deposit" Option',
-    fields: [{
-      field: 'option',
-      description: 'required',
-      type: 'Enum',
-      enums: ['cash deposit', 'do not cash deposit'],
-    }],
-  }, {
     name: 'Restore Client',
   }, {
     name: 'Destroy Client',

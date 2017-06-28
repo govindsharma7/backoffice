@@ -28,6 +28,14 @@ Liana.collection('Renting', {
   }, {
     name: 'Create Deposit Order',
   }, {
+    name: 'Update "do not cash deposit" Option',
+    fields: [{
+      field: 'option',
+      description: 'required',
+      type: 'Enum',
+      enums: ['cash deposit', 'do not cash deposit'],
+    }],
+  }, {
     name: 'Add Checkin Date',
     fields: [{
       field: 'dateAndTime',
@@ -44,7 +52,7 @@ Liana.collection('Renting', {
   }, {
     name: 'Create Checkout Order',
   }, {
-    name: 'Room Switch Order',
+    name: 'Create Room Switch Order',
     fields: [{
       field: 'discount',
       type: 'Number',

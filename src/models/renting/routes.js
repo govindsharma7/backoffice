@@ -117,7 +117,7 @@ module.exports = function(app, models, Renting) {
         .catch(Utils.logAndSend(res));
       });
 
-      app.post('/forest/actions/change-do-not-cash-deposit-option', LEA, (req, res) => {
+      app.post('/forest/actions/update-do-not-cash-deposit-option', LEA, (req, res) => {
         const {ids, values} = req.body.data.attributes;
 
         Promise.resolve()
@@ -132,15 +132,14 @@ module.exports = function(app, models, Renting) {
             return Renting.build({ id: ids[0] }, { isNewRecord: false })
               .changeDepositOption(values.option);
           })
-          .then((result) => {
-            console.log(result);
-            return res.send({success: true});
+          .then(() => {
+            return res.send({success: 'Deposit option successfuly updated'});
           })
           .catch(Utils.logAndSend(res));
       });
   });
 
-  app.post('/forest/actions/room-switch-order', LEA, (req, res) => {
+  app.post('/forest/actions/create-room-switch-order', LEA, (req, res) => {
     const {ids, values} = req.body.data.attributes;
 
     if ( values.discount != null ) {

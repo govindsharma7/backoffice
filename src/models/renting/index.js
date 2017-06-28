@@ -421,7 +421,7 @@ module.exports = (sequelize, DataTypes) => {
   Renting.prototype.changeDepositOption = function(option) {
     return models.Term.build({
         taxonomy: 'deposit-option',
-        termable: 'Order',
+        termable: 'Renting',
         TermableId: this.id,
       }, {isNewRecord: false})
       .createOrUpdate(option === 'cash deposit' ? 'cash' : 'do-not-cash');
