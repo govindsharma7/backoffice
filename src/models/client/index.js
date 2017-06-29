@@ -456,7 +456,7 @@ module.exports = (sequelize, DataTypes) => {
           defaults: {
             ClientId: this.id,
             status: 'draft',
-            label: 'test',
+            label: 'Late fees',
             OrderItems: item,
             deletedAt: D.format(Date.now()),
           },
