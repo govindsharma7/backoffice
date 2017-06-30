@@ -101,7 +101,7 @@ module.exports = (sequelize, DataTypes) => {
         model: models.Client,
         include: [{
           model: models.Order,
-          required:false,
+          required: false,
           where: {
             dueDate: {
               $gte: startOfMonth,
