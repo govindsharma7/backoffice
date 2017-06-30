@@ -52,25 +52,17 @@ describe('Renting', () => {
   });
 
 
-  describe.only('#findOrCreateCheckinEvent()', () => {
+  describe('#findOrCreateCheckinEvent()', () => {
     test('It should\'nt create a checkin event when one already exists', () => {
-      debugger;
-      return Renting.scope('Room+Apartment', 'Client')
-        .findById(renting1.id)
-        .then((renting) => {
-          return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});
-        })
+      return renting1
+        .findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false})
         .then((result) => {
           return expect(result[1]).toEqual(false);
         });
     });
 
     test('It should create a checkin event', () => {
-      return Renting.scope('Room+Apartment', 'Client')
-        .findById(renting2.id)
-        .then((renting) => {
-          return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});
-        })
+      return renting2.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false})
         .then((result) => {
           return expect(result[1]).toEqual(true);
         });
@@ -79,29 +71,20 @@ describe('Renting', () => {
 
   describe('#prorate()', () => {
     test('it calculates the prorated price and service fees', () => {
-      const scoped = Renting.scope('checkoutDate');
-
       return Promise.all([
-          scoped.findById(renting1.id),
-          scoped.findById(renting2.id),
+          renting1.prorate(D.parse('2015-01 Z')),
+          renting1.prorate(D.parse('2015-02 Z')),
+          renting2.prorate(D.parse('2015-03 Z')),
         ])
-        .then(([renting1, renting2]) => {
-          const result1 = renting1.prorate(D.parse('2015-01 Z'));
-
+        .then(([result1, result2, result3]) => {
           expect(result1).toEqual({
             price: Utils.roundBy100(20000 / 31 * (31 - (20 - 1))),
             serviceFees: Utils.roundBy100(3000 / 31 * (31 - (20 - 1))),
           });
-
-          const result2 = renting1.prorate(D.parse('2015-02 Z'));
-
           expect(result2).toEqual({
             price: Utils.roundBy100(20000 / 28 * 10),
             serviceFees: Utils.roundBy100(3000 / 28 * 10),
           });
-
-          const result3 = renting2.prorate(D.parse('2015-03 Z'));
-
           expect(result3).toEqual({
             price: Utils.roundBy100(20000 / 31 * (28 - 2)),
             serviceFees: Utils.roundBy100(3000 / 31 * (28 - 2)),

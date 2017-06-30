@@ -56,25 +56,27 @@ Model.prototype.requireScopes = function(_scopes, _options) {
     });
 };
 
+function addWatermark(name, definition) {
+  const watermark = [sequelize.literal('1'), `${name}-scope`];
+
+  if ( Array.isArray(definition.attributes) ) {
+    definition.attributes.push(watermark);
+  }
+  else if ( definition.attributes == null ) {
+    definition.attributes = { include: [watermark] };
+  }
+  else {
+    definition.attributes.include.push(watermark);
+  }
+
+  return definition;
+}
 
 Model._addScope = Model.addScope;
+// Model.addScope = function(name, definition) {
+//   return this._addScope(name, definition );
+// };
 Model.addScope = function(name, definition) {
-  const watermark = [sequelize.literal('1'), `${name}-scope`];
-  const addWatermark = () => {
-    if ( definition.attributes == null ) {
-      definition.attributes = { include: [] };
-    }
-
-    if ( Array.isArray(definition.attributes) ) {
-      definition.attributes.push(watermark);
-    }
-    else {
-      definition.attributes.include.push(watermark);
-    }
-
-    return definition;
-  };
-
   if ( typeof definition === 'function' ) {
     return this._addScope(name, function() {
       return addWatermark( name, definition.apply(null, arguments) );
@@ -108,16 +110,18 @@ fs.readdirSync(__dirname)
   });
 
 Object.keys(db).forEach(function(modelName) {
-  if ('associate' in db[modelName]) {
-    db[modelName].associate(db);
-  }
-
   // create one scope for each model, cause we'll probaby need 'em.
-  db[modelName].addScope(modelName, {
+  db[modelName]._addScope(modelName, {
+    // If we remove the following lines, we end up with badly messed up queries.
+    attributes: [],
     include: [{
       model: db[modelName],
     }],
   });
+
+  if ('associate' in db[modelName]) {
+    db[modelName].associate(db);
+  }
 });
 
 db.sequelize = sequelize;

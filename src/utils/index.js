@@ -10,6 +10,7 @@ const {
   getCheckoutFees,
 }                                  = require('./getCheckinoutFees');
 const getPackPrice                 = require('./getPackPrice');
+const getDepositPrice              = require('./getDepositPrice');
 const getPeriodCoef                = require('./getPeriodCoef');
 const getPeriodPrice               = require('./getPeriodPrice');
 const getServiceFees               = require('./getServiceFees');
@@ -33,6 +34,7 @@ module.exports = {
   getCheckinFees,
   getCheckoutFees,
   getPackPrice,
+  getDepositPrice,
   getPeriodCoef,
   getPeriodPrice,
   getServiceFees,
