@@ -18,6 +18,8 @@ const dbSync = 'node scripts/dbSync.js';
 const dbSeed = 'node scripts/dbSeed.js';
 const dbFixture = 'node scripts/dbFixture.js';
 const dbDump = 'node scripts/dbDump.js';
+//process.env.SEQUELIZE_HOST result undefined
+const dbConvert = './scripts/mysql2sqlite data.sql | sqlite3 .dev.sqlite';
 const createCalendar = 'node scripts/createCalendar.js';
 const extractClients = 'node scripts/extractInvoiceninja.js > data/clients.json';
 const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
@@ -39,6 +41,7 @@ const common = {
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
   'db:dump': dbDump,
+  'db:convert': dbConvert,
   'deploy': [env2json, dbSeed, claudiaUpdate],
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
