@@ -16,7 +16,7 @@ Liana.collection('Renting', {
     },
   }],
   actions:[{
-    name: 'Create Rent Order',
+    name: 'Create First Rent Order',
   }, {
     name: 'Create Pack Order',
     fields: [{

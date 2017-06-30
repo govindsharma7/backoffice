@@ -53,7 +53,7 @@ module.exports = function(app, models, Renting) {
       .catch(Utils.logAndSend(res));
   });
 
-  app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
+  app.post('/forest/actions/create-first-rent-order', LEA, (req, res) => {
     const {ids} = req.body.data.attributes;
 
     Promise.resolve()
@@ -65,7 +65,7 @@ module.exports = function(app, models, Renting) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => {
-        return renting.findOrCreateRentOrder();
+        return renting.findOrCreateRentOrder(renting.bookingDate);
       })
       .then(Utils.createSuccessHandler(res, 'Rent order'))
       .catch(Utils.logAndSend(res));

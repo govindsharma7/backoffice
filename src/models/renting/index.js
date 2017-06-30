@@ -194,6 +194,10 @@ module.exports = (sequelize, DataTypes) => {
           RentingId: this.id,
           ProductId: 'rent',
         },
+        include: [{
+          model: models.Order,
+          where: { dueDate: D.startOfMonth(date) },
+        }],
         defaults: Object.assign(this.getDefaultOrderFields(), {
           label: `${D.format(date, 'MMMM')} Invoice`,
           dueDate: Math.max(Date.now(), D.startOfMonth(date)),
