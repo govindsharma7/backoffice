@@ -86,6 +86,37 @@ module.exports = (sequelize, DataTypes) => {
       scope: { termable: 'Renting' },
     });
 
+    const startOfMonth = D.startOfMonth(Date.now());
+    const endOfMonth = D.endOfMonth(Date.now());
+
+    Renting.addScope('rentOrdersProrate', {
+      where: {
+        bookingDate: {
+          $gte: startOfMonth,
+          $lte: endOfMonth,
+        },
+      },
+      include: [{
+        model: models.Client,
+        include: [{
+          model: models.Order,
+          required:false,
+          where: {
+            dueDate: {
+              $gte: startOfMonth,
+              $lte: endOfMonth,
+            },
+          },
+          include: [{
+            model: models.OrderItem,
+            where: {
+                ProductId: 'rent',
+            },
+          }],
+        }],
+      }],
+    });
+
     // checkinDate, checkoutDate, checkinEvent, checkoutEvent scopes
     ['checkin', 'checkout'].forEach((type) => {
       Renting.addScope(`${type}Date`, {

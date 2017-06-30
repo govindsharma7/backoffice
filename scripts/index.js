@@ -26,6 +26,7 @@ const createCalendar =   'node scripts/createCalendar.js';
 const extractClients =   'node scripts/extractInvoiceninja.js > data/clients.json';
 const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
+const updateRentProrate = 'node scripts/updateRentOrdersProrate.js';
 
 const lint = 'eslint src forest __tests__ scripts scripts.js';
 const unitTest = 'jest __tests__/unit';
@@ -49,6 +50,7 @@ const common = {
   'extract:clients': extractClients,
   'extract:portfolio': extractPortfolio,
   'generate:invoices': generateInvoices,
+  'update:rent:prorate': updateRentProrate,
   'fixRoomCount': 'node scripts/fixRoomCount.js',
 };
 
