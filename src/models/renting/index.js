@@ -91,6 +91,7 @@ module.exports = (sequelize, DataTypes) => {
 
     Renting.addScope('rentOrdersProrate', {
       where: {
+        status: 'draft',
         bookingDate: {
           $gte: startOfMonth,
           $lte: endOfMonth,
@@ -115,6 +116,7 @@ module.exports = (sequelize, DataTypes) => {
           }],
         }],
       }],
+      paranoid: false,
     });
 
     // checkinDate, checkoutDate, checkinEvent, checkoutEvent scopes
