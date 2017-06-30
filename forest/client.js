@@ -22,6 +22,12 @@ Liana.collection('Client', {
       return null;
     },
   }, {
+    field: 'jotform link',
+    type: 'String',
+    get(object) {
+      return `https://form.jotformpro.com/50392735671964?clientId=${object.id}`;
+    },
+  }, {
     field: 'Invoices',
     type: ['String'],
     reference: 'Invoice.id',
