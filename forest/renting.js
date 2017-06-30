@@ -16,6 +16,8 @@ Liana.collection('Renting', {
     },
   }],
   actions:[{
+    name: 'Create Deposit Order',
+  }, {
     name: 'Create Pack Order',
     fields: [{
       field: 'comfortLevel',

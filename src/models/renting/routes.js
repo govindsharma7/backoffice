@@ -41,7 +41,7 @@ module.exports = function(app, models, Renting) {
     Promise.resolve()
       .then(() => {
         if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple deposit order');
+          throw new Error('Can\'t create multiple deposit orders');
         }
 
         return Renting.scope('room+apartment').findById(ids[0]);
@@ -50,6 +50,24 @@ module.exports = function(app, models, Renting) {
         return renting.findOrCreateDepositOrder();
       })
       .then(Utils.createSuccessHandler(res, 'Deposit order'))
+      .catch(Utils.logAndSend(res));
+  });
+
+  app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
+    const {ids} = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple rent orders');
+        }
+
+        return Renting.scope('room+apartment').findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.findOrCreateRentOrder();
+      })
+      .then(Utils.createSuccessHandler(res, 'Rent order'))
       .catch(Utils.logAndSend(res));
   });
 
