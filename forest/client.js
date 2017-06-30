@@ -26,9 +26,15 @@ Liana.collection('Client', {
     type: ['String'],
     reference: 'Invoice.id',
   }, {
-    field: 'draft-rentings',
+    name: 'Draft Rentings',
+    field: 'draftRentings',
     type: ['String'],
     reference: 'Renting.id',
+  }, {
+    name: 'Draft Orders',
+    field: 'draftOrders',
+    type: ['String'],
+    reference: 'Order.id',
   }],
   actions:[{
     name: 'Credit Client',

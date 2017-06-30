@@ -160,7 +160,18 @@ module.exports = (app, models, Client) => {
     app,
     sourceModel: Client,
     associatedModel: models.Renting,
-    routeName: 'draft-rentings',
+    routeName: 'draftRentings',
+    scope: 'draft',
+    where: (req) => {
+      return { ClientId: req.params.recordId };
+    },
+  });
+
+  Utils.addInternalRelationshipRoute({
+    app,
+    sourceModel: Client,
+    associatedModel: models.Order,
+    routeName: 'draftOrders',
     scope: 'draft',
     where: (req) => {
       return { ClientId: req.params.recordId };
