@@ -1,25 +1,15 @@
 const Promise    = require('bluebird');
 const D          = require('date-fns');
-const find       = require('lodash/find');
 const Payline    = require('payline');
 const Ninja       = require('../../vendor/invoiceninja');
-const webMerge   = require('../../vendor/webmerge');
 const payline    = require('../../vendor/payline');
 const Utils      = require('../../utils');
 const {
   TRASH_SCOPES,
-  LATE_FEES,
-  DEPOSIT_PRICES,
-  UNCASHED_DEPOSIT_FEE,
+  LATE_PAYMENT_FEES,
+  UNCASHED_DEPOSIT_FEES,
 }                = require('../../const');
-const {
-  NODE_ENV,
-  WEBMERGE_DOCUMENT_ID,
-  WEBMERGE_DOCUMENT_KEY,
-}                = require('../../config');
 const routes     = require('./routes');
-
-const _ = { find };
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -172,11 +162,6 @@ module.exports = (sequelize, DataTypes) => {
         }],
       };
     });
-    Client.addScope('metadata', {
-      include: [{
-        model: models.Metadata,
-      }],
-    });
   };
 
   // This was the reliable method used by generateInvoice
@@ -201,7 +186,7 @@ module.exports = (sequelize, DataTypes) => {
   Client.prototype.getRentingsFor = function(date = Date.now()) {
     const startOfMonth = D.format(D.startOfMonth(date));
 
-    return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
+    return models.Renting.scope('Room+Apartment', 'checkoutDate').findAll({
       where: {
         ClientId: this.id,
         bookingDate: { $lte: D.endOfMonth(date) },
@@ -235,7 +220,7 @@ module.exports = (sequelize, DataTypes) => {
               }, [])
               .concat(this.get('uncashedDepositCount') > 0 && {
                 label: 'Option Liberté',
-                unitPrice: UNCASHED_DEPOSIT_FEE,
+                unitPrice: UNCASHED_DEPOSIT_FEES,
                 ProductId: 'uncashed-deposit',
               })
               .filter(Boolean),
@@ -276,7 +261,7 @@ module.exports = (sequelize, DataTypes) => {
       .ninjaSerialize()
       .then((ninjaClient) => {
         return Ninja.client.createClient({
-          'client': ninjaClient,
+          client: ninjaClient,
         });
       })
       .then((response) => {
@@ -293,7 +278,7 @@ module.exports = (sequelize, DataTypes) => {
       .then((ninjaClient) => {
         return Ninja.client.updateClient({
           'client_id': this.ninjaId,
-          'client': ninjaClient,
+          client: ninjaClient,
         });
       })
       .then((response) => {
@@ -351,38 +336,6 @@ module.exports = (sequelize, DataTypes) => {
       .bulkCreate(metadata);
   };
 
-  // TODO: This belongs in renting
-  Client.prototype.generateLease = function () {
-    const {Metadata, Rentings} = this;
-    const {Apartment} = Rentings[0].Room;
-    const {addressStreet, addressZip, addressCity} = Apartment;
-    const bookingDate = Rentings[0].bookingDate ?
-      Rentings[0].bookingDate : D.format(Date.now());
-
-    return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
-      fullName: `${this.firstName} ${this.lastName}`,
-      fullAddress: _.find(Metadata, {name: 'fullAddress'}).value,
-      birthDate: _.find(Metadata, {name: 'birthDate'}).value,
-      birthPlace: _.find(Metadata, {name: 'birthPlace'}).value,
-      nationality: _.find(Metadata, {name: 'nationality'}).value,
-      floorArea: Apartment.floorArea,
-      address: `${addressStreet}, ${addressZip}, ${addressCity}`,
-      floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
-      code: Apartment.code ? Apartment.code : 'néant',
-      rent: Rentings[0].price / 100,
-      serviceFees: Rentings[0].serviceFees / 100,
-      bookingDate,
-      endDate: D.addYears(D.subDays(bookingDate, 1), 1),
-      deposit: DEPOSIT_PRICES[Apartment.addressCity] / 100,
-      packLevel: this.Rentings[0].get('comfortLevel'),
-      roomFloorArea: Rentings[0].Room.floorArea,
-      apartmentRoomNumber: Apartment.Rooms.length,
-      roomNumber: Rentings[0].Room.reference.slice(-1),
-      email: this.email,
-    // the last param turns on the test environment of webmerge
-    }, NODE_ENV !== 'production');
-  };
-
   Client.paylineCredit = (clientId, values, idCredit) => {
     const {Order, OrderItem, Credit} = models;
     const card = {
@@ -430,7 +383,7 @@ module.exports = (sequelize, DataTypes) => {
       })
       .then((unpaidOrders) => {
         if ( unpaidOrders.length > 0 ) {
-          lateFees = unpaidOrders.length * LATE_FEES;
+          lateFees = unpaidOrders.length * LATE_PAYMENT_FEES;
 
           return lateFees;
         }

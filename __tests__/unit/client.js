@@ -102,7 +102,7 @@ describe('Client', () => {
 
   describe('#findOrCreateRentOrder', () => {
     test('it should create an order with appropriate orderitems', () => {
-      const _Renting = models.Renting.scope('room+apartment');
+      const _Renting = models.Renting.scope('Room+Apartment');
 
       return models.Client.scope('uncashedDepositCount')
         .findById(client.id)

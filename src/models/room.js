@@ -70,12 +70,6 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Room.id'],
     });
-
-    Room.addScope('apartment', {
-      include: [{
-        model: models.Apartment,
-      }],
-    });
   };
 
   // calculate periodPrice and serviceFees for the room

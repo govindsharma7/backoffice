@@ -31,3 +31,5 @@ while ( !Ninja ) {
 }
 
 module.exports = Ninja;
+module.exports.URL =
+  `${config.INVOICENINJA_PROTOCOL || 'http'}://${config.INVOICENINJA_HOST}`;

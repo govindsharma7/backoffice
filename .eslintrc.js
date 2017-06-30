@@ -133,8 +133,10 @@ module.exports = {
     'arrow-spacing': ['error'],
     'object-shorthand': ['error', 'always'],
     'prefer-destructuring': ['error', { array: false }],
-    'prefer-rest-params': 'error',
-    'prefer-spread': 'error',
+    // We can't use the following two preferences before Node8 is supported in
+    // prod or before we put Webpack in place
+    //'prefer-rest-params': 'error',
+    //'prefer-spread': 'error',
     'prefer-template': 'error',
 
     // React

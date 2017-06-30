@@ -1,9 +1,9 @@
 const Liana   = require('forest-express-sequelize');
 const {Order} = require('../src/models');
 const Utils   = require('../src/utils');
+const Ninja   = require('../src/vendor/invoiceninja');
 const {
   TRASH_SEGMENTS,
-  INVOICENINJA_URL,
 } = require('../src/const');
 
 const memoizer = new Utils.calculatedPropsMemoizer(Order);
@@ -50,7 +50,7 @@ Liana.collection('Order', {
     type: 'String',
     get(object) {
       if (object.ninjaId !== null) {
-        return `${INVOICENINJA_URL}/invoices/${object.ninjaId}/edit`;
+        return `${Ninja.URL}/invoices/${object.ninjaId}/edit`;
       }
 
       return null;

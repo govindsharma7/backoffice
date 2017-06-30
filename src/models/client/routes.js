@@ -6,9 +6,6 @@ const D           = require('date-fns');
 const Liana       = require('forest-express-sequelize');
 const Ninja       = require('../../vendor/invoiceninja');
 const Utils       = require('../../utils');
-const {
-  INVOICENINJA_URL,
-}                 = require('../../const');
 
 const _ = { reduce };
 
@@ -67,40 +64,6 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
-  // TODO: shouldn't this be a renting action??
-  app.post('/forest/actions/generate-lease', LEA, (req, res) => {
-    const {ids} = req.body.data.attributes;
-
-    Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1) {
-          throw new Error('Can\'t create multiple leases');
-        }
-
-        return Client.scope(
-          'currentApartment', // required by #generateLease
-          'metadata' // required by #generateLease
-        ).findById(ids[0]);
-      })
-      .then((client) => {
-        if ( !client.Metadata.length ) {
-          throw new Error('Metadata are missing for this client');
-        }
-        if ( !client.Rentings.length ) {
-          throw new Error('This client has no renting yet');
-        }
-        // TODO: this won't work, as comfortLevel scope isn't loaded
-        // we'll fix this once we move it to Renting actions
-        if ( !client.Rentings[0].get('comfortLevel') ) {
-          throw new Error('Housing pack is required to generate lease');
-        }
-
-        return client.generateLease();
-      })
-      .then(Utils.createSuccessHandler(res, 'Lease'))
-      .catch(Utils.logAndSend(res));
-  });
-
   app.get('/forest/Client/:recordId/relationships/Invoices', LEA, (req, res) => {
     Client
       .findById(req.params.recordId)
@@ -118,7 +81,7 @@ module.exports = (app, models, Client) => {
               id: invoice.id,
               type: 'Invoice',
               attributes: {
-                href: `${INVOICENINJA_URL}/invoices/${invoice.id}/edit`,
+                href: `${Ninja.URL}/invoices/${invoice.id}/edit`,
               },
             };
           }),

@@ -1,7 +1,7 @@
 const Liana          = require('forest-express-sequelize');
+const Ninja          = require('../src/vendor/invoiceninja');
 const {
   TRASH_SEGMENTS,
-  INVOICENINJA_URL,
 }                    = require('../src/const');
 
 Liana.collection('Client', {
@@ -16,7 +16,7 @@ Liana.collection('Client', {
     type: 'String',
     get(object) {
       if (object.ninjaId !== null) {
-        return `${INVOICENINJA_URL}/clients/${object.ninjaId}`;
+        return `${Ninja.URL}/clients/${object.ninjaId}`;
       }
 
       return null;

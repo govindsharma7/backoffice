@@ -159,7 +159,7 @@ module.exports = (sequelize, DataTypes) => {
     return wrapHookHandler(event, (event) => {
       return Promise.all([
           // TODO: remove these non-generic scopes doing here??
-          models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
+          models[eventable].scope(`eventable${eventable}`, 'Client', 'orderItems')
             .findById(EventableId),
           event.googleEventId != null && event.googleUpdate(),
         ])

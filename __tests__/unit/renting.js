@@ -52,9 +52,10 @@ describe('Renting', () => {
   });
 
 
-  describe('#findOrCreateCheckinEvent()', () => {
-    test('It should\'nt create a checkin event as it already exists', () => {
-      return Renting.scope('room+apartment', 'client')
+  describe.only('#findOrCreateCheckinEvent()', () => {
+    test('It should\'nt create a checkin event when one already exists', () => {
+      debugger;
+      return Renting.scope('Room+Apartment', 'Client')
         .findById(renting1.id)
         .then((renting) => {
           return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});
@@ -65,7 +66,7 @@ describe('Renting', () => {
     });
 
     test('It should create a checkin event', () => {
-      return Renting.scope('room+apartment', 'client')
+      return Renting.scope('Room+Apartment', 'Client')
         .findById(renting2.id)
         .then((renting) => {
           return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});

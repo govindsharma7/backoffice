@@ -1,16 +1,22 @@
 const Promise               = require('bluebird');
 const D                     = require('date-fns');
 const capitalize            = require('lodash/capitalize');
+const find                  = require('lodash/find');
+const Webmerge              = require('../../vendor/webmerge');
 const Utils                 = require('../../utils');
 const {
   TRASH_SCOPES,
   DEPOSIT_PRICES,
-  DEPOSIT_REFUND_DELAYS,
 }                           = require('../../const');
-const {GOOGLE_CALENDAR_IDS} = require('../../config');
+const {
+  GOOGLE_CALENDAR_IDS,
+  NODE_ENV,
+  WEBMERGE_DOCUMENT_ID,
+  WEBMERGE_DOCUMENT_KEY,
+}                           = require('../../config');
 const routes                = require('./routes');
 
-const _ = { capitalize };
+const _ = { capitalize, find };
 
 // TODO: for some reason sqlite seems to return a date in a strange format
 // find out why and fix this.
@@ -115,17 +121,21 @@ module.exports = (sequelize, DataTypes) => {
         where: { ProductId: { $like: '%-pack' } },
       }],
     });
-    Renting.addScope('room+apartment', {
+    Renting.addScope('leaseVersion', {
+      attributes: [
+        [sequelize.fn('ifnull', sequelize.col('Term.name'), 'v1'), 'leaseVersion'],
+      ],
+      include: [{
+        model: models.Term,
+        where: { taxonomy: 'lease-version' },
+      }],
+    });
+    Renting.addScope('Room+Apartment', {
       include: [{
         model: models.Room,
         include: [{
           model: models.Apartment,
         }],
-      }],
-    });
-    Renting.addScope('client', {
-      include: [{
-        model : models.Client,
       }],
     });
   };
@@ -264,7 +274,7 @@ module.exports = (sequelize, DataTypes) => {
     Renting.prototype[`findOrCreate${_.capitalize(type)}Order`] =
       function(number) {
         return Promise.all([
-            Utils[`get${_.capitalize(type)}Price`](
+            Utils[`get${_.capitalize(type)}Fees`](
               this.get(`${type}Date`),
               this.get('comfortLevel')
             ),
@@ -306,17 +316,22 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Renting.prototype.createRoomSwitchOrder = function({discount}, number) {
-    const comfortLevel = this.get('comfortLevel');
-
-    return models.Client.scope('roomSwitchCount')
-      .findById(this.ClientId)
+    return Promise
+      .all([
+        this.requireScopes(['comfortLevel', 'leaseVersion']),
+        models.Client.scope('roomSwitchCount').findById(this.ClientId),
+      ])
       .then((client) => {
-        return Utils.getRoomSwitchPrice( client.get('roomSwitchCount'), comfortLevel );
+        return Utils.getRoomSwitchFees(
+          client.get('roomSwitchCount'),
+          this.get('comfortLevel'),
+          this.get('leaseVersion')
+        );
       })
       .then((price) => {
         const items = [
           price !== 0 && {
-            label: `Room switch ${comfortLevel}`,
+            label: `Room switch ${this.get('comfortLevel')}`,
             unitPrice: price,
             ProductId: 'room-switch',
           },
@@ -332,7 +347,7 @@ module.exports = (sequelize, DataTypes) => {
           label: items.length > 0 ? 'Room switch' : 'Free Room switch',
           ClientId: this.ClientId,
           OrderItems: items.length > 0 ? items : [{
-            label: `Room switch ${comfortLevel})`,
+            label: `Room switch ${this.get('comfortLevel')})`,
             unitPrice: 0,
             ProductId: 'room-switch',
           }],
@@ -344,38 +359,43 @@ module.exports = (sequelize, DataTypes) => {
   Renting.prototype.createOrUpdateRefundEvent = function(date) {
     const {name} = this.Room;
     const {firstName, lastName} = this.Client;
-    const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.get('comfortLevel')]);
     const category = 'refund-deposit';
 
-    return sequelize.transaction((transaction) => {
-      return models.Event.scope('event-category')
-        .findOne({
-          where: {
-            EventableId: this.id,
-            category,
-          },
-          transaction,
-        })
-        .then((event) => {
-          if ( event ) {
-            return event.update({ startDate, endDate: startDate }, transaction);
-          }
+    return Utils
+      .getRefundDate(date, this.get('comfortLevel'), this.get('leaseVersion'))
+      .then((startDate) => {
+        /* eslint-disable promise/no-nesting */
+        return sequelize.transaction((transaction) => {
+          return models.Event.scope('event-category')
+            .findOne({
+              where: {
+                EventableId: this.id,
+                category,
+              },
+              transaction,
+            })
+            .then((event) => {
+              if ( event ) {
+                return event.update({ startDate, endDate: startDate }, transaction);
+              }
 
-          return models.event.create({
-            startDate,
-            endDate: startDate,
-            summary: `Refund deposit ${firstName} ${lastName}`,
-            description: `${name}`,
-            eventable: 'Renting',
-            EventableId: this.id,
-            Terms: [{
-              name: 'refund-deposit',
-              taxonomy: 'event-category',
-              termable: 'Event',
-            }],
-          }, { transaction });
+              return models.event.create({
+                startDate,
+                endDate: startDate,
+                summary: `Refund deposit ${firstName} ${lastName}`,
+                description: `${name}`,
+                eventable: 'Renting',
+                EventableId: this.id,
+                Terms: [{
+                  name: 'refund-deposit',
+                  taxonomy: 'event-category',
+                  termable: 'Event',
+                }],
+              }, { transaction });
+            });
         });
-    });
+        /* eslint-enable promise/no-nesting */
+      });
   };
 
   // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
@@ -444,6 +464,39 @@ module.exports = (sequelize, DataTypes) => {
     };
   };
 
+  Renting.prototype.generateLease = function() {
+    return this
+      .requireScopes(['Client+Apartment', 'Room+Apartment', 'comfortLevel'])
+      .then(() => {
+        const {Client: {Metadata}, Room} = this;
+        const {Apartment} = Room;
+        const {addressStreet, addressZip, addressCity} = Apartment;
+
+        return Webmerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
+          fullName: `${this.firstName} ${this.lastName}`,
+          fullAddress: _.find(Metadata, {name: 'fullAddress'}).value,
+          birthDate: _.find(Metadata, {name: 'birthDate'}).value,
+          birthPlace: _.find(Metadata, {name: 'birthPlace'}).value,
+          nationality: _.find(Metadata, {name: 'nationality'}).value,
+          floorArea: Apartment.floorArea,
+          address: `${addressStreet}, ${addressZip}, ${addressCity}`,
+          floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
+          code: Apartment.code ? Apartment.code : 'néant',
+          rent: this.price / 100,
+          serviceFees: this.serviceFees / 100,
+          bookingDate: this.bookingDate,
+          endDate: D.addYears(D.subDays(this.bookingDate, 1), 1),
+          deposit: DEPOSIT_PRICES[Apartment.addressCity] / 100,
+          packLevel: this.get('comfortLevel'),
+          roomFloorArea: Room.floorArea,
+          apartmentRoomNumber: Apartment.roomCount,
+          roomNumber: Room.reference.slice(-1),
+          email: this.email,
+        // the last param turns on the test environment of webmerge
+        }, NODE_ENV !== 'production');
+      });
+  };
+
   /*  handle update of an event, check if an Order
       is related to this event and create/update it
       Also update/create Refund Event if it's a 'Checkout' Event
@@ -452,7 +505,7 @@ module.exports = (sequelize, DataTypes) => {
   Renting.prototype.handleEventUpdate = function(event, options) {
     const type = event.get('category');
 
-    return Renting.scope(type === 'refund-deposit' ? 'client' : `${type}Order`)
+    return Renting.scope(type === 'refund-deposit' ? 'Client' : `${type}Order`)
       .findById(this.id)
       .then((renting) => {
         if ( !renting ) {
@@ -461,7 +514,7 @@ module.exports = (sequelize, DataTypes) => {
         const {Orders} = renting.Client === undefined || null ? null : renting.Client;
 
         return Promise.all([
-            type !== 'refund-deposit' ? Utils[`getC${type.substr(1)}Price`](
+            type !== 'refund-deposit' ? Utils[`get${_.capitalize(type)}Fees`](
               event.startDate,
               this.getComfortLevel()) : 0,
             Orders && Orders.length ? Orders[0].id : null,
@@ -545,7 +598,7 @@ module.exports = (sequelize, DataTypes) => {
       return renting;
     }
 
-    return models.Room.scope('apartment')
+    return models.Room.scope('Apartment')
       .findById(renting.RoomId)
       .then((room) => {
         return room.getCalculatedProps(renting.bookingDate);

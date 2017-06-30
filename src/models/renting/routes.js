@@ -24,7 +24,7 @@ module.exports = function(app, models, Renting) {
           throw new Error('Can\'t create multiple housing-pack orders');
         }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
+        return Renting.scope('Room+Apartment').findById(ids[0]);
       })
       .then((renting) => {
         return renting.findOrCreatePackOrder(values);
@@ -44,7 +44,7 @@ module.exports = function(app, models, Renting) {
           throw new Error('Can\'t create multiple deposit order');
         }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
+        return Renting.scope('Room+Apartment').findById(ids[0]);
       })
       .then((renting) => {
         return renting.findOrCreateDepositOrder();
@@ -69,8 +69,8 @@ module.exports = function(app, models, Renting) {
         }
 
         return Renting.scope(
-          'room+apartment', // required to create the event
-          'client' // required to create the event
+          'Room+Apartment', // required to create the event
+          'Client' // required to create the event
         ).findById(ids[0]);
       })
       .then((renting) => {
@@ -92,7 +92,7 @@ module.exports = function(app, models, Renting) {
           }
 
           return Renting.scope(
-            'client', // required to create the refund event,
+            'Client', // required to create the refund event,
             `${type}Date`, // required below
             'comfortLevel' // required below
           ).findById(ids[0]);
@@ -139,6 +139,35 @@ module.exports = function(app, models, Renting) {
       });
   });
 
+  app.post('/forest/actions/generate-lease', LEA, (req, res) => {
+    const {ids} = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1) {
+          throw new Error('Can\'t create multiple lease');
+        }
+
+        return Renting.scope(
+          'Client+Metadata',
+          'comfortLevel',
+          'Room+Apartment'
+        ).findById(ids[0]);
+      })
+      .then((renting) => {
+        if ( _.find(renting.Client.Metadata, {name: 'birthDate'}) === undefined ) {
+          throw new Error('Identity Record hasn\'t been received for this client');
+        }
+        if ( this.get('comfortLevel') == null ) {
+          throw new Error('Pack Order hasn\'t been created for this client');
+        }
+
+        return renting.generateLease();
+      })
+      .then(Utils.createSuccessHandler(res, 'Lease'))
+      .catch(Utils.logAndSend(res));
+  });
+
   app.post('/forest/actions/create-room-switch-order', LEA, (req, res) => {
     const {ids, values} = req.body.data.attributes;
 
@@ -153,7 +182,8 @@ module.exports = function(app, models, Renting) {
       }
 
       return Renting.scope(
-        'comfortLevel' // required below
+        'comfortLevel', // required below
+        'leaseVersion' // required by createRoomSwitchOrder
       ).findById(ids[0]);
     })
     .then((renting) => {

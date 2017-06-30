@@ -52,7 +52,7 @@ describe('Room', () => {
 
   describe('#getCalculatedProps()', () => {
     test('it calculates the period price using Utils.getPeriodPrice', () => {
-      return models.Room.scope('apartment')
+      return models.Room.scope('Apartment')
         .findById(room1.id)
         .then((room) => {
           return Promise.all([
@@ -68,11 +68,11 @@ describe('Room', () => {
     });
 
     test('it calculates correct serviceFees using Utils.getServiceFees', () => {
-      return models.Room.scope('apartment')
+      return models.Room.scope('Apartment')
         .findById(room1.id)
         .then((room) => {
           return Promise.all([
-            Utils.getServiceFees(2),
+            Utils.getServiceFees(2, 'v1'),
             room.getCalculatedProps(now),
           ]);
         })
