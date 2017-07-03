@@ -87,14 +87,12 @@ module.exports = function(app, models, Renting) {
       })
       .then((renting) => {
         return Promise.mapSeries([
-          () => { return renting.findOrCreateRentOrder(renting.bookingDate); },
-          () => { return renting.findOrCreateDepositOrder(); },
-          () => {
-            return renting.findOrCreatePackOrder(
-              values.comfortLevel,
-              values.packDiscount);
-          },
-        ], (fn) => { return fn(); });
+          { suffix: 'RentOrder', args: [renting.bookingDate] },
+          { suffix: 'DepositOrder' },
+          { suffix: 'PackOrder', args: [values.comfortLevel, values.packDiscount] },
+        ], (def) => {
+          return renting[`findOrCreate${def.suffix}`].apply(renting, def.args);
+        });
       })
       .then(([[rentOrder], [depositOrder], [packOrder]]) => {
         return models.Order.ninjaCreateInvoices([rentOrder, depositOrder, packOrder]);

@@ -134,7 +134,7 @@ module.exports = {
     'object-shorthand': ['error', 'always'],
     'prefer-destructuring': ['error', { array: false }],
     'prefer-rest-params': 'error',
-    'prefer-spread': 'error',
+    // 'prefer-spread': 'error',
     'prefer-template': 'error',
 
     // React
