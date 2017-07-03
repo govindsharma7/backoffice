@@ -207,7 +207,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Renting.prototype.findOrCreatePackOrder = function({comfortLevel, discount}, number) {
+  Renting.prototype.findOrCreatePackOrder = function(comfortLevel, discount, number) {
     const {addressCity} = this.Room.Apartment;
     const ProductId = `${comfortLevel}-pack`;
 

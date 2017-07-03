@@ -27,7 +27,7 @@ module.exports = function(app, models, Renting) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => {
-        return renting.findOrCreatePackOrder(values);
+        return renting.findOrCreatePackOrder(values.comfortLevel, values.discount);
       })
       .then(Utils.findOrCreateSuccessHandler(res, 'Housing pack order'))
       .catch(Utils.logAndSend(res));
@@ -89,7 +89,11 @@ module.exports = function(app, models, Renting) {
         return Promise.mapSeries([
           () => { return renting.findOrCreateRentOrder(renting.bookingDate); },
           () => { return renting.findOrCreateDepositOrder(); },
-          () => { return renting.findOrCreatePackOrder(values); },
+          () => {
+            return renting.findOrCreatePackOrder(
+              values.comfortLevel,
+              values.packDiscount);
+          },
         ], (fn) => { return fn(); });
       })
       .then(([[rentOrder], [depositOrder], [packOrder]]) => {
@@ -102,7 +106,7 @@ module.exports = function(app, models, Renting) {
   // add-checkin-date, add-checkout-date, create-checkin-order and
   // create-checkout-order routes
   ['checkin', 'checkout'].forEach((type) => {
-    app.post(`/forest/actions/add-${typequote}-date`, LEA, (req, res) => {
+    app.post(`/forest/actions/add-${type}-date`, LEA, (req, res) => {
       const {values, ids} = req.body.data.attributes;
 
       Promise.resolve()
