@@ -71,10 +71,38 @@ module.exports = function(app, models, Renting) {
       .catch(Utils.logAndSend(res));
   });
 
+  app.post('/forest/actions/create-quote-orders', LEA, (req, res) => {
+    const {values, ids} = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+        if ( !values.comfortLevel ) {
+          throw new Error('Please select a comfort level');
+        }
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple housing-pack orders');
+        }
+
+        return Renting.scope('room+apartment').findById(ids[0]);
+      })
+      .then((renting) => {
+        return Promise.mapSeries([
+          () => { return renting.findOrCreateRentOrder(renting.bookingDate); },
+          () => { return renting.findOrCreateDepositOrder(); },
+          () => { return renting.findOrCreatePackOrder(values); },
+        ], (fn) => { return fn(); });
+      })
+      .then(([[rentOrder], [depositOrder], [packOrder]]) => {
+        return models.Order.ninjaCreateInvoices([rentOrder, depositOrder, packOrder]);
+      })
+      .then(Utils.createSuccessHandler(res, 'Quote order'))
+      .catch(Utils.logAndSend(res));
+  });
+
   // add-checkin-date, add-checkout-date, create-checkin-order and
   // create-checkout-order routes
   ['checkin', 'checkout'].forEach((type) => {
-    app.post(`/forest/actions/add-${type}-date`, LEA, (req, res) => {
+    app.post(`/forest/actions/add-${typequote}-date`, LEA, (req, res) => {
       const {values, ids} = req.body.data.attributes;
 
       Promise.resolve()

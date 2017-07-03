@@ -196,7 +196,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         include: [{
           model: models.Order,
-          where: { dueDate: D.startOfMonth(date) },
+          where: { dueDate: Math.max(Date.now(), D.startOfMonth(date)) },
         }],
         defaults: Object.assign(this.getDefaultOrderFields(), {
           label: `${D.format(date, 'MMMM')} Invoice`,
@@ -218,7 +218,9 @@ module.exports = (sequelize, DataTypes) => {
           .findItemOrCreate({
             where: {
               RentingId: this.id,
-              ProductId,
+              ProductId: {
+                $like: '%-pack',
+              },
             },
             defaults: Object.assign(this.getDefaultOrderFields(), {
               label: 'Housing Pack',

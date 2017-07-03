@@ -30,6 +30,16 @@ Liana.collection('Renting', {
   }, {
     name: 'Create Deposit Order',
   }, {
+    name: 'Create Quote Orders',
+    fields: [{
+      field: 'comfortLevel',
+      type: 'Enum',
+      enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
+    }, {
+      field: 'discount',
+      type: 'Number',
+    }],
+  }, {
     name: 'Update "do not cash deposit" Option',
     fields: [{
       field: 'option',
