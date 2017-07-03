@@ -142,15 +142,23 @@ module.exports = (app, models, Client) => {
       return result;
     }, {});
 
-    Client
-      .findById(values.clientId)
-      .tap((client) => {
-          return client
-            .set('phoneNumber', `${values.phoneNumber[0]}${values.phoneNumber[1]}`)
-            .save();
-      })
-     .then((client) => {
-        return client.createMetadata(values);
+//    Client
+//      .findById(values.clientId)
+//      .tap((client) => {
+//          return client
+//            .set('phoneNumber', `${values.phoneNumber[0]}${values.phoneNumber[1]}`)
+//            .save();
+//      })
+//     .then((client) => {
+//        return client.createMetadata(values);
+//      })
+    console.log(req.body);
+    models.Metadata
+      .create({
+        metadatable: 'Client',
+        MetadatableId: values.clientId,
+        name: 'test',
+        value: JSON.stringify(values),
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
