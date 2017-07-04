@@ -14,6 +14,7 @@ const _ = { reduce };
 
 module.exports = (app, models, Client) => {
   const LEA = Liana.ensureAuthenticated;
+  const multer = Multer().fields([{ name: 'passport', maxCount: 1 }]);
 
   app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
@@ -128,23 +129,14 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
-  const multer = Multer();
-
   /*
     Handle JotForm data (Identity - New Member)
     in order to collect more information for a new client
   */
-  app.post('/forest/actions/clientIdentity',
-           multer.fields([{ name: 'passport', maxCount: 1 }]),
-           LEA,
-           (req, res) => {
-    const values = _.reduce(req.body,
-      function(result, value, key) {
-      let newKey = key.replace(/(q[\d]*_)/g, '');
-
-      result[newKey] = value;
-      return result;
-    }, {});
+  app.post('/forest/actions/clientIdentity', multer, LEA, (req, res) => {
+    const values = _.mapKeys(req.body.rawRequest, (value, key) => {
+      return key.replace(/(q[\d]*_)/g, '');
+    });
 //    Client
 //      .findById(values.clientId)
 //      .tap((client) => {

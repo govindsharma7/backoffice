@@ -129,7 +129,7 @@ module.exports = (sequelize, DataTypes) => {
             throw new Error('You have to select one apartment');
           }
           return models.Client.scope('currentApartment')
-            .findAll({ where: { '$Rentings->Room.ApartmentId$': req.params.recordId} });
+            .findAll({ where: { '$Rentings->Room.ApartmentId$': ids} });
         })
         .then((clients) => {
           return Aws.sendSms(
