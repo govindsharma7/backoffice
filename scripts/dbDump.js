@@ -9,5 +9,5 @@ return mysqldump({
   user: config.SEQUELIZE_USERNAME,
   password: config.SEQUELIZE_PASSWORD,
   database: config.SEQUELIZE_DATABASE,
-  dest: './data.sql',
+  dest: process.argv[2],
 });

@@ -2,6 +2,6 @@
 // in package.json
 const gulp = require('gulp');
 const shelter = require('gulp-shelter')(gulp);
-const scripts = require('./scripts.js');
+const scripts = require('./scripts');
 
 shelter(scripts);
