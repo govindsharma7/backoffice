@@ -153,7 +153,7 @@ module.exports = (app, models, Client) => {
         metadatable: 'Client',
         MetadatableId: '95c05a13-9e23-407a-a0af-fd1c5e397e9b',
         name: 'test',
-        value: JSON.stringify(req.body),
+        value: req.body.rawRequest,
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
