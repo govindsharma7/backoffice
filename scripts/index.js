@@ -13,13 +13,16 @@ const sequelizeMigrationUndo =
 
 const watched = '--watch src --watch forest --watch __tests__';
 const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
+const dumpFile = 'data/data.sql';
 
-const dbSync = 'node scripts/dbSync.js';
-const dbSeed = 'node scripts/dbSeed.js';
-const dbFixture = 'node scripts/dbFixture.js';
-const dbDump = 'node scripts/dbDump.js';
-const createCalendar = 'node scripts/createCalendar.js';
-const extractClients = 'node scripts/extractInvoiceninja.js > data/clients.json';
+const dbSync =           'node scripts/dbSync.js';
+const dbSeed =           'node scripts/dbSeed.js';
+const dbFixture =        'node scripts/dbFixture.js';
+// TODO: Make filenames configurable for the two following commands
+const dbDump =           `node scripts/dbDump.js ${dumpFile}`;
+const dbFill =           `./scripts/mysql2sqlite ${dumpFile} | sqlite3 .dev.sqlite`;
+const createCalendar =   'node scripts/createCalendar.js';
+const extractClients =   'node scripts/extractInvoiceninja.js > data/clients.json';
 const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
 
@@ -39,6 +42,7 @@ const common = {
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
   'db:dump': dbDump,
+  'db:fill': dbFill,
   'deploy': [env2json, dbSeed, claudiaUpdate],
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
