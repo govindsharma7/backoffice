@@ -1,6 +1,6 @@
 const Promise     = require('bluebird');
 const uuid        = require('uuid/v4');
-const reduce      = require('lodash/reduce');
+// const mapKeys      = require('lodash/mapKeys');
 const D           = require('date-fns');
 const Multer      = require('multer');
 const Liana       = require('forest-express-sequelize');
@@ -10,7 +10,7 @@ const {
   INVOICENINJA_URL,
 }                 = require('../../const');
 
-const _ = { reduce };
+// const _ = { mapKeys };
 
 module.exports = (app, models, Client) => {
   const LEA = Liana.ensureAuthenticated;
