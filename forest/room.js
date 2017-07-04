@@ -1,4 +1,5 @@
 const Liana            = require('forest-express-sequelize');
+const D                = require('date-fns');
 const {Room}           = require('../src/models');
 const {TRASH_SEGMENTS} = require('../src/const');
 const Utils            = require('../src/utils');
@@ -36,5 +37,29 @@ Liana.collection('Room', {
   }, {
     name: 'Destroy Room',
   }],
-  segments: TRASH_SEGMENTS,
+  segments: TRASH_SEGMENTS.concat([{
+    name: 'Available Rooms',
+    where: () => {
+      return Room.scope('latestRenting')
+        .findAll({
+          where: {
+            $or: [{
+              '$latestRentingId$': null,
+            }, {
+              '$latestCheckoutDate$': {
+                $and: {
+                  $not: null,
+                  $lt: D.format(Date.now()),
+                },
+              },
+            }],
+          },
+        })
+        .then((rooms) => {
+          return { id : rooms.map((room) => {
+            return room.id;
+          }) };
+        });
+    },
+  }]),
 });

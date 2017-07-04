@@ -53,6 +53,7 @@ module.exports = (sequelize, DataTypes) => {
       ]},
       include: [{
         model: models.Renting,
+        required: false,
         attributes: [],
         include: [{
           model: models.Event,
