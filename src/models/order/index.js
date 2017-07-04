@@ -68,6 +68,20 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
+    Order.addScope('rentOrdersProrate', {
+      include: [{
+        model: models.OrderItem,
+        where: {
+          ProductId: 'rent',
+          status: 'draft',
+        },
+        include: [{
+          model: models.Renting,
+        }],
+      }],
+      paranoid: false,
+    });
+
     Order.addScope('totalPaidRefund', {
       attributes: [[
         sequelize.fn('sum', sequelize.literal('`Payments`.`amount`')),
@@ -108,8 +122,6 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Order.id'],
     });
   };
-
-  Order.INVOICE_STATUS_DRAFT = 1;
 
   Order.prototype.getTotalPaidAndRefund = function() {
     const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
@@ -239,7 +251,7 @@ module.exports = (sequelize, DataTypes) => {
   Order.prototype.ninjaCreate = function() {
     return this
       .ninjaSerialize({
-        'invoice_status_id': Order.INVOICE_STATUS_DRAFT,
+        'invoice_status_id': Ninja.INVOICE_STATUS_DRAFT,
       })
       .then((ninjaOrder) => {
         return Ninja.invoice.createInvoice({

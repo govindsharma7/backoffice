@@ -22,6 +22,9 @@ new Swagger({
   Ninja = ninja;
   Ninja.setSchemes([config.INVOICENINJA_PROTOCOL || 'http']);
   Ninja.setHost(config.INVOICENINJA_HOST);
+  Ninja.INVOICE_STATUS_PAID = 6;
+  Ninja.INVOICE_STATUS_PARTIAL = 5;
+  Ninja.INVOICE_STATUS_DRAFT = 1;
 });
 
 // Swagger client initialization is async :thumbs-down:. Fix that!
