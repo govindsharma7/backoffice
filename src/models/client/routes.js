@@ -134,9 +134,9 @@ module.exports = (app, models, Client) => {
     in order to collect more information for a new client
   */
   app.post('/forest/actions/clientIdentity', multer, LEA, (req, res) => {
-    const values = _.mapKeys(req.body.rawRequest, (value, key) => {
-      return key.replace(/(q[\d]*_)/g, '');
-    });
+    // const values = _.mapKeys(req.body.rawRequest, (value, key) => {
+    //   return key.replace(/(q[\d]*_)/g, '');
+    // });
 //    Client
 //      .findById(values.clientId)
 //      .tap((client) => {
@@ -151,7 +151,7 @@ module.exports = (app, models, Client) => {
     models.Metadata
       .create({
         metadatable: 'Client',
-        MetadatableId: values.clientId,
+        MetadatableId: '95c05a13-9e23-407a-a0af-fd1c5e397e9b',
         name: 'test',
         value: JSON.stringify(req.body),
       })
