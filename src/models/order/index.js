@@ -147,32 +147,29 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.prototype.findOrCreateCancelOrder = function() {
-    const {OrderItems} = this;
-    const items = [];
-
-    OrderItems.map((orderItem) => {
-      return items.push({
-        label: orderItem.label,
-        quantity: orderItem.quantity,
-        unitPrice: orderItem.unitPrice * -1,
-        vatRate: orderItem.vatRate,
-        ProductId: orderItem.ProductId,
-        RentingId: orderItem.RentingId,
-      });
-    });
+    const order = {
+      type: 'credit',
+      // TODO: Searching existing order based on label is unreliable.
+      // We should rahter have a status:cancelled of some kind
+      // (and prevent cancelling an order that has already been cancelled)
+      label: `Credit Order - #${this.receiptNumber}`,
+      ClientId: this.ClientId,
+    };
 
     return Order.findOrCreate({
-      where: {
-        type: 'credit',
-        label: `Credit Order - #${this.receiptNumber}`,
-        ClientId: this.ClientId,
-      },
-      defaults: {
-        type: 'credit',
-        label: `Credit Order - #${this.receiptNumber}`,
-        ClientId: this.ClientId,
-        OrderItems: items,
-      },
+      where: order,
+      defaults: Object.assign({}, order, {
+        OrderItems: this.OrderItems.map((orderItem) => {
+          return {
+            label: orderItem.label,
+            quantity: orderItem.quantity,
+            unitPrice: orderItem.unitPrice * -1,
+            vatRate: orderItem.vatRate,
+            ProductId: orderItem.ProductId,
+            RentingId: orderItem.RentingId,
+          };
+        }),
+      }),
       include: [{
         model: models.OrderItem,
       }],

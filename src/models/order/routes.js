@@ -48,10 +48,10 @@ module.exports = (app, models, Order) => {
       })
       .then((order) => {
         if ( !order.receiptNumber ) {
-          throw new Error('This order hasn\'t been generate yet');
+          throw new Error('This order is a draft and should be deleted instead.');
         }
         if ( order.type !== 'debit' ) {
-          throw new Error('Can\'t cancel this order');
+          throw new Error(`Only debit orders can be cancelled (found ${order.type})`);
         }
         return order.findOrCreateCancelOrder();
       })

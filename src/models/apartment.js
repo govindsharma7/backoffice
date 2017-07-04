@@ -131,16 +131,18 @@ module.exports = (sequelize, DataTypes) => {
           return models.Client.scope('currentApartment')
             .findAll({ where: { '$Rentings->Room.ApartmentId$': ids} });
         })
-        .then((clients) => {
+        .tap((clients) => {
           return Aws.sendSms(
             clients
-              .filter((client) => { return client.phoneNumber != null; })
-              .map((client) => { return client.phoneNumber; }),
+              .map((client) => { return client.phoneNumber; })
+              .filter(Boolean), // filter-out falsy values
             values.bodySms
           );
         })
-        .then(() => {
-          return res.status(200).send({success: 'SMS successfully sent!'});
+        .then((clients) => {
+          return res.status(200).send({
+            success: `SMS successfully sent to ${clients.length} clients!`,
+          });
         })
         .catch(Utils.logAndSend(res));
     });
