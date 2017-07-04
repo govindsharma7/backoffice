@@ -1,8 +1,8 @@
 const Promise     = require('bluebird');
-const bodyParser  = require('body-parser');
 const uuid        = require('uuid/v4');
 const reduce      = require('lodash/reduce');
 const D           = require('date-fns');
+const Multer      = require('multer');
 const Liana       = require('forest-express-sequelize');
 const Ninja       = require('../../vendor/invoiceninja');
 const Utils       = require('../../utils');
@@ -128,20 +128,23 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
-  let urlencodedParser = bodyParser.urlencoded({ extended: true });
+  const multer = Multer();
 
   /*
     Handle JotForm data (Identity - New Member)
     in order to collect more information for a new client
   */
-  app.post('/forest/actions/clientIdentity', urlencodedParser, LEA, (req, res) => {
-    const values = _.reduce(req.body, function(result, value, key) {
+  app.post('/forest/actions/clientIdentity',
+           multer.fields([{ name: 'passport', maxCount: 1 }]),
+           LEA,
+           (req, res) => {
+    const values = _.reduce(req.body,
+      function(result, value, key) {
       let newKey = key.replace(/(q[\d]*_)/g, '');
 
       result[newKey] = value;
       return result;
     }, {});
-
 //    Client
 //      .findById(values.clientId)
 //      .tap((client) => {
@@ -152,7 +155,7 @@ module.exports = (app, models, Client) => {
 //     .then((client) => {
 //        return client.createMetadata(values);
 //      })
-    console.log(req.body);
+
     models.Metadata
       .create({
         metadatable: 'Client',
