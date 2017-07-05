@@ -148,10 +148,13 @@ module.exports = (sequelize, DataTypes) => {
     });
     Client.addScope('currentApartment', function(date = Date.now()) {
       return {
-        where: { $or: [
+        where: {
+          '$Rentings.bookingDate$': { $lte:  D.format(date) },
+          $or: [
             { '$Rentings.Events.id$': null },
             { '$Rentings.Events.startDate$': { $gte: D.format(date) } },
-        ] },
+          ],
+        },
         include: [{
           model: models.Renting,
           include: [{
