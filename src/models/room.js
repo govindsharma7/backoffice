@@ -103,7 +103,10 @@ module.exports = (sequelize, DataTypes) => {
       routeName: 'current-client',
       scope: 'currentApartment',
       where: (req) => {
-        return { '$Rentings.RoomId$': req.params.recordId };
+        return {
+          '$Rentings.RoomId$': req.params.recordId,
+          '$Rentings.bookingDate$': { $lte:  D.format(Date.now()) },
+        };
       },
     });
 

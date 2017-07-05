@@ -1,6 +1,7 @@
 const Promise                     = require('bluebird');
 const bodyParser                  = require('body-parser');
 const Liana                       = require('forest-express-sequelize');
+const D                           = require('date-fns');
 const Geocode                     = require('../vendor/geocode');
 const Aws                         = require('../vendor/aws');
 const Utils                       = require('../utils');
@@ -154,7 +155,10 @@ module.exports = (sequelize, DataTypes) => {
       routeName: 'current-clients',
       scope: 'currentApartment',
       where: (req) => {
-        return { '$Rentings->Room.ApartmentId$': req.params.recordId };
+        return {
+          '$Rentings->Room.ApartmentId$': req.params.recordId,
+          '$Rentings.bookingDate$': { $lte:  D.format(Date.now()) },
+        };
       },
     });
 
