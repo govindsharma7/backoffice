@@ -244,9 +244,11 @@ module.exports = (sequelize, DataTypes) => {
         });
       })
       .then((response) => {
-        this
-          .set('ninjaId', response.obj.data.id)
-          .save({hooks: false});
+        this.update({
+          'ninjaId': response.obj.data.id,
+        }, {
+          hooks: false,
+        });
         return response.obj.data;
       });
   };
@@ -290,14 +292,14 @@ module.exports = (sequelize, DataTypes) => {
   Order.ninjaCreateInvoices = (orders) => {
     return Promise
       .filter(orders, (order) => {
-        return order.ninjaId == null && order.price !== 0;
+        return order.ninjaId == null && order.amount !== 0;
       })
       .mapSeries((order) => {
         return ( order.receiptNumber ? order : order.pickReceiptNumber() );
       })
-      .map((order) => {
+      .mapSeries((order) => {
         return order.ninjaCreate();
-      }, {concurrency: 5});
+      });
   };
 
   // This is an alternative to Order.findOrCreate, to use when the only thing
