@@ -36,5 +36,25 @@ Liana.collection('Room', {
   }, {
     name: 'Destroy Room',
   }],
-  segments: TRASH_SEGMENTS,
+  segments: TRASH_SEGMENTS.concat([{
+    name: 'Available Rooms',
+    where: () => {
+      return Room.scope('latestRenting')
+        .findAll()
+        .then((rooms) => {
+          return {
+            id : rooms.filter((room) => {
+              return (
+                  room.get('latestBookingDate') < Date.now() &&
+                  room.get('latestCheckoutDate') < Date.now() &&
+                  room.get('latestCheckoutDate') > new Date('1980-01-01')
+                ) ||
+                room.get('latestRentingId') == null;
+            })
+            .map((room) => {
+              return room.id;
+            }) };
+        });
+    },
+  }]),
 });
