@@ -264,10 +264,7 @@ module.exports = (sequelize, DataTypes) => {
       })
       .then((response) => {
         return response.obj.data;
-      })
-      .catch((err) => {
-      console.log(err);
-    });
+      });
   };
 
   Order.prototype.ninjaUpsert = function() {
