@@ -47,9 +47,9 @@ module.exports = (sequelize, DataTypes) => {
 
     Room.addScope('latestRenting', {
       attributes: { include: [
+        [sequelize.fn('max', sequelize.col('Rentings.bookingDate')), 'latestBookingDate'],
         [sequelize.col('Rentings.id'), 'latestRentingId'],
         [sequelize.col('Rentings->Events.startDate'), 'latestCheckoutDate'],
-        [sequelize.fn('max', sequelize.col('Rentings.bookingDate')), 'latestBookingDate'],
       ]},
       include: [{
         model: models.Renting,
