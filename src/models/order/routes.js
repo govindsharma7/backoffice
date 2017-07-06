@@ -13,11 +13,9 @@ module.exports = (app, models, Order) => {
 
   app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
     Order
-      .findAll({
-        where: {
-          id: { $in: req.body.data.attributes.ids },
-        },
-      //in order to select Draft orders
+      .findAll(
+        { where: { id: { $in: req.body.data.attributes.ids } },
+        // include draft orders
         paranoid: false,
       })
       .then((orders) => {

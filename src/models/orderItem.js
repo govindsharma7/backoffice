@@ -75,7 +75,7 @@ module.exports = (sequelize, DataTypes) => {
       'product_key': this.label,
       'cost': this.unitPrice / 100,
       'qty': this.quantity,
-      'notes': '',
+      'notes': '', // Updating orders on InvoiceNinja will fail without this
     });
   };
 

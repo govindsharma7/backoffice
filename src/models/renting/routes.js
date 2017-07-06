@@ -67,7 +67,7 @@ module.exports = function(app, models, Renting) {
       .then((renting) => {
         return renting.findOrCreateRentOrder(renting.bookingDate);
       })
-      .then(Utils.createSuccessHandler(res, 'Rent order'))
+      .then(Utils.findOrCreateSuccessHandler(res, 'Rent order'))
       .catch(Utils.logAndSend(res));
   });
 
