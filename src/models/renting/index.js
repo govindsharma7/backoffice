@@ -158,14 +158,25 @@ module.exports = (sequelize, DataTypes) => {
     };
   };
 
-  Renting.prototype.getDefaultOrderFields = function() {
-    return {
+  // Propagate the status of the renting to that of first-rent/deposit/pack orders
+  // and their orderItems
+  Renting.prototype.normalizeOrder = function(order) {
+    if ( order.OrderItems != null ) {
+      order.OrderItems = order.OrderItems.map((item) => {
+        return Object.assign({
+          status: this.status,
+          deletedAt: this.deletedAt,
+        }, item);
+      });
+    }
+
+    return Object.assign({
       type: 'debit',
       ClientId: this.ClientId,
       // We want the order to be a draft if the renting is a draft
       status: this.status,
       deletedAt: this.deletedAt,
-    };
+    }, order);
   };
 
   Renting.prototype.toOrderItems = function(date = Date.now()) {
@@ -197,8 +208,9 @@ module.exports = (sequelize, DataTypes) => {
         include: [{
           model: models.Order,
           where: { dueDate: Math.max(Date.now(), D.startOfMonth(date)) },
+          paranoid: false, // include drafts
         }],
-        defaults: Object.assign(this.getDefaultOrderFields(), {
+        defaults: this.normalizeOrder({
           label: `${D.format(date, 'MMMM')} Invoice`,
           dueDate: Math.max(Date.now(), D.startOfMonth(date)),
           OrderItems: this.toOrderItems(date),
@@ -222,7 +234,7 @@ module.exports = (sequelize, DataTypes) => {
                 $like: '%-pack',
               },
             },
-            defaults: Object.assign(this.getDefaultOrderFields(), {
+            defaults: this.normalizeOrder({
               label: 'Housing Pack',
               dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
               OrderItems: [
@@ -257,7 +269,7 @@ module.exports = (sequelize, DataTypes) => {
           RentingId: this.id,
           ProductId,
         },
-        defaults: Object.assign(this.getDefaultOrderFields(), {
+        defaults: this.normalizeOrder({
           type: 'deposit',
           label: 'Deposit',
           OrderItems: [{
