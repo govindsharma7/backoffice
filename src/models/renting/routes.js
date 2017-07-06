@@ -49,7 +49,7 @@ module.exports = function(app, models, Renting) {
       .then((renting) => {
         return renting.findOrCreateDepositOrder();
       })
-      .then(Utils.createSuccessHandler(res, 'Deposit order'))
+      .then(Utils.findOrCreateSuccessHandler(res, 'Deposit order'))
       .catch(Utils.logAndSend(res));
   });
 

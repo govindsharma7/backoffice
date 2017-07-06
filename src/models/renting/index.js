@@ -197,6 +197,8 @@ module.exports = (sequelize, DataTypes) => {
         include: [{
           model: models.Order,
           where: { dueDate: Math.max(Date.now(), D.startOfMonth(date)) },
+          // first orders are create in draft
+          paranoid: false,
         }],
         defaults: Object.assign(this.getDefaultOrderFields(), {
           label: `${D.format(date, 'MMMM')} Invoice`,
