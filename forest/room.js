@@ -44,10 +44,12 @@ Liana.collection('Room', {
         .then((rooms) => {
           return {
             id : rooms.filter((room) => {
-              return (room.get('latestBookingDate') < Date.now() &&
-                      room.get('latestCheckoutDate') < Date.now() &&
-                      room.get('latestCheckoutDate') > new Date('1980-01-01')) ||
-                      room.get('latestRentingId') == null;
+              return (
+                  room.get('latestBookingDate') < Date.now() &&
+                  room.get('latestCheckoutDate') < Date.now() &&
+                  room.get('latestCheckoutDate') > new Date('1980-01-01')
+                ) ||
+                room.get('latestRentingId') == null;
             })
             .map((room) => {
               return room.id;
