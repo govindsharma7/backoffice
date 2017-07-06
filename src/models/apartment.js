@@ -2,7 +2,6 @@ const Promise                     = require('bluebird');
 const bodyParser                  = require('body-parser');
 const D                           = require('date-fns');
 const Liana                       = require('forest-express-sequelize');
-const D                           = require('date-fns');
 const Geocode                     = require('../vendor/geocode');
 const Aws                         = require('../vendor/aws');
 const Utils                       = require('../utils');
