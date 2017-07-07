@@ -110,10 +110,12 @@ describe('Order', () => {
               'product_key': 'test item 1',
               'cost': 1,
               'qty': 3,
+              'notes': '',
             }, {
               'product_key': 'test item 2',
               'cost': 2,
               'qty': 1,
+              'notes': '',
             }],
           });
         });

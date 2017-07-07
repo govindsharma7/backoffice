@@ -16,6 +16,7 @@ describe('OrderItem', () => {
             'product_key': 'test item',
             'cost': 1,
             'qty': 3,
+            'notes': '',
           });
         });
     });
