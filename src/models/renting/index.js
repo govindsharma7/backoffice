@@ -189,11 +189,13 @@ module.exports = (sequelize, DataTypes) => {
       label: `Loyer ${month} - Chambre #${room.reference}`,
       unitPrice: prorated.price,
       RentingId: this.id,
+      status: this.status,
       ProductId: 'rent',
     }, {
       label: `Charges ${month} - Apt #${apartment.reference}`,
       unitPrice: prorated.serviceFees,
       RentingId: this.id,
+      status: this.status,
       ProductId: 'service-fees',
     }];
   };
@@ -242,12 +244,14 @@ module.exports = (sequelize, DataTypes) => {
                   label: `Housing Pack ${addressCity} ${comfortLevel}`,
                   unitPrice: packPrice,
                   RentingId: this.id,
+                  status: this.status,
                   ProductId,
                 },
                 discount != null && discount !== 0 && {
                   label: 'Discount',
                   unitPrice: -1 * discount,
                   RentingId: this.id,
+                  status: this.status,
                   ProductId,
                 },
                 // We should not add more items to this order. We want to keep the amount
@@ -276,6 +280,7 @@ module.exports = (sequelize, DataTypes) => {
             label: 'Deposit',
             unitPrice: DEPOSIT_PRICES[addressCity],
             RentingId: this.id,
+            status: this.status,
             ProductId,
           }],
           number,

@@ -331,7 +331,49 @@ module.exports = (sequelize, DataTypes) => {
 
     return true;
   };
+
+  Order.hook('beforeCreate', (order) => {
+    if ( order.status !== 'active' ) {
+      order.setDataValue('deletedAt', Date.now());
+    }
+  });
+
   Order.hook('afterUpdate', Order.afterUpdate);
+
+  Order.hook('beforeDelete', (order) => {
+    if (order.deletedAt == null) {
+    return order.getOrderItems()
+      .then((orderItems) => {
+        return orderItems
+        .map((orderItem) => {
+          return orderItem
+            .destroy();
+        });
+      });
+    }
+    return order.getOrderItems({paranoid: false})
+      .then((orderItems) => {
+        return orderItems
+        .map((orderItem) => {
+          return orderItem
+            .destroy({force: true});
+        });
+      });
+  });
+
+  Order.hook('afterRestore', (order) => {
+    return order.getOrderItems({paranoid: false})
+      .then((orderItems) => {
+        return orderItems.filter((orderItem) => {
+          return orderItem.deletedAt != null;
+        })
+        .map((orderItem) => {
+          return orderItem
+            .set('status', 'active')
+            .restore();
+        });
+      });
+  });
 
   Order.beforeLianaInit = routes;
 

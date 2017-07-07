@@ -86,6 +86,13 @@ module.exports = (sequelize, DataTypes) => {
       .then(models.Order.afterUpdate);
   });
 
+  OrderItem.hook('beforeCreate', (orderItem) => {
+    if ( orderItem.status !== 'active' ) {
+      orderItem.setDataValue('deletedAt', Date.now());
+    }
+  });
+
+
   OrderItem.beforeLianaInit = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
