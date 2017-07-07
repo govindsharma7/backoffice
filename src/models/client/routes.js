@@ -163,8 +163,8 @@ module.exports = (app, models, Client) => {
     app,
     sourceModel: Client,
     associatedModel: models.Renting,
-    routeName: 'draftRentings',
-    scope: 'draft',
+    routeName: 'allRentings',
+    scope: 'untrashed',
     where: (req) => {
       return { ClientId: req.params.recordId };
     },
@@ -174,8 +174,8 @@ module.exports = (app, models, Client) => {
     app,
     sourceModel: Client,
     associatedModel: models.Order,
-    routeName: 'draftOrders',
-    scope: 'draft',
+    routeName: 'allOrders',
+    scope: 'untrashed',
     where: (req) => {
       return { ClientId: req.params.recordId };
     },
