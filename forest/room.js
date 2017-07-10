@@ -41,20 +41,26 @@ Liana.collection('Room', {
     where: () => {
       return Room.scope('latestRenting')
         .findAll()
-        .then((rooms) => {
-          return {
-            id : rooms.filter((room) => {
-              return (
-                  room.get('latestBookingDate') < Date.now() &&
-                  room.get('latestCheckoutDate') < Date.now() &&
-                  room.get('latestCheckoutDate') > new Date('1980-01-01')
-                ) ||
-                room.get('latestRentingId') == null;
-            })
-            .map((room) => {
-              return room.id;
-            }) };
-        });
+        .filter((room) => {
+          if (room.Rentings.length === 0) {
+            return true;
+          }
+
+          // Find renting with latest bookingDate
+          const latestRenting = room.Rentings.reduce((acc, curr) => {
+            return curr.bookingDate > acc.bookingDate ? curr : acc;
+          }, room.Rentings[0]);
+          const checkoutDate =
+            latestRenting.Events[0] && latestRenting.Events[0].startDate;
+
+          return (
+            latestRenting.bookingDate < Date.now() && checkoutDate <= Date.now()
+          );
+        })
+        .reduce((acc, curr) => {
+          acc.id.push(curr.id);
+          return acc;
+        }, { id: [] });
     },
   }]),
 });

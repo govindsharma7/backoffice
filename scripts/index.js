@@ -14,13 +14,14 @@ const sequelizeMigrationUndo =
 const watched = '--watch src --watch forest --watch __tests__';
 const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
 const dumpFile = 'data/data.sql';
+const devDb = '.dev.sqlite';
 
 const dbSync =           'node scripts/dbSync.js';
 const dbSeed =           'node scripts/dbSeed.js';
 const dbFixture =        'node scripts/dbFixture.js';
 // TODO: Make filenames configurable for the two following commands
 const dbDump =           `node scripts/dbDump.js ${dumpFile}`;
-const dbFill =           `./scripts/mysql2sqlite ${dumpFile} | sqlite3 .dev.sqlite`;
+const dbFill = `rm ${devDb} && ./scripts/mysql2sqlite ${dumpFile} | sqlite3 ${devDb}`;
 const createCalendar =   'node scripts/createCalendar.js';
 const extractClients =   'node scripts/extractInvoiceninja.js > data/clients.json';
 const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
