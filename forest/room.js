@@ -52,12 +52,11 @@ Liana.collection('Room', {
               }, room.Rentings[0]);
               const checkoutDate = latestRenting.Events[0]
               && latestRenting.Events[0].startDate;
-              console.log(checkoutDate, room.reference);
+
               return latestRenting.bookingDate < Date.now() &&
                 checkoutDate <= Date.now();
             })
             .map((room) => {
-              console.log(room.reference);
               return room.id;
             }) };
         });
