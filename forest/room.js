@@ -44,14 +44,20 @@ Liana.collection('Room', {
         .then((rooms) => {
           return {
             id : rooms.filter((room) => {
-              return (
-                  room.get('latestBookingDate') < Date.now() &&
-                  room.get('latestCheckoutDate') < Date.now() &&
-                  room.get('latestCheckoutDate') > new Date('1980-01-01')
-                ) ||
-                room.get('latestRentingId') == null;
+              if (room.Rentings.length === 0) {
+                return room;
+              }
+              const latestRenting = room.Rentings.reduce((acc, curr) => {
+                return curr.bookingDate > acc.bookingDate ? curr : acc;
+              }, room.Rentings[0]);
+              const checkoutDate = latestRenting.Events[0]
+              && latestRenting.Events[0].startDate;
+              console.log(checkoutDate, room.reference);
+              return latestRenting.bookingDate < Date.now() &&
+                checkoutDate <= Date.now();
             })
             .map((room) => {
+              console.log(room.reference);
               return room.id;
             }) };
         });

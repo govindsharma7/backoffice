@@ -45,19 +45,18 @@ module.exports = (sequelize, DataTypes) => {
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
 
-    Room.addScope('latestRenting', {
-      attributes: { include: [
-        [sequelize.fn('max', sequelize.col('Rentings.bookingDate')), 'latestBookingDate'],
-        [sequelize.col('Rentings.id'), 'latestRentingId'],
-        [sequelize.col('Rentings->Events.startDate'), 'latestCheckoutDate'],
-      ]},
+    Room.addScope('apartment', {
+      include: [{
+        model: models.Apartment,
+      }],
+    });
+
+   Room.addScope('latestRenting', {
       include: [{
         model: models.Renting,
         required: false,
-        attributes: [],
         include: [{
           model: models.Event,
-          attributes: [],
           required: false,
           include: [{
             model: models.Term,
@@ -69,16 +68,9 @@ module.exports = (sequelize, DataTypes) => {
           }],
         }],
       }],
-      group: ['Room.id'],
     });
 
-    Room.addScope('apartment', {
-      include: [{
-        model: models.Apartment,
-      }],
-    });
   };
-
   // calculate periodPrice and serviceFees for the room
   Room.prototype.getCalculatedProps = function(date = Date.now()) {
     return Promise.all([

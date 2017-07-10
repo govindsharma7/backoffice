@@ -20,7 +20,8 @@ const dbSeed =           'node scripts/dbSeed.js';
 const dbFixture =        'node scripts/dbFixture.js';
 // TODO: Make filenames configurable for the two following commands
 const dbDump =           `node scripts/dbDump.js ${dumpFile}`;
-const dbFill =           `./scripts/mysql2sqlite ${dumpFile} | sqlite3 .dev.sqlite`;
+const dbFill =           ` rm .dev.sqlite &&
+./scripts/mysql2sqlite ${dumpFile} | sqlite3 .dev.sqlite`;
 const createCalendar =   'node scripts/createCalendar.js';
 const extractClients =   'node scripts/extractInvoiceninja.js > data/clients.json';
 const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
