@@ -329,12 +329,12 @@ module.exports = (sequelize, DataTypes) => {
     const metadata = [{
       name: 'fullAddress',
       value: Utils.stripIndent(`\
-        ${address[0]}${(address[1] || '') && ` ${address[1]}`}, \
-        ${address[2]}, ${address[4]}, ${address[5]}`
+        ${address.addr_line1}${(address.addr_line2 || '') && ` ${address.addr_line2}`}, \
+        ${address.city}, ${address.postal}, ${address.country}`
       ),
     }, {
       name: 'birthDate',
-      value: `${birthDate[0]}/${birthDate[1]}/${birthDate[2]}`,
+      value: `${birthDate.day}/${birthDate.month}/${birthDate.year}`,
     }, {
       name: 'birthPlace',
       value: `${values.birthPlace}`,

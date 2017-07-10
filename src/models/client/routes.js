@@ -1,6 +1,6 @@
 const Promise     = require('bluebird');
 const uuid        = require('uuid/v4');
-// const mapKeys      = require('lodash/mapKeys');
+const mapKeys     = require('lodash/mapKeys');
 const D           = require('date-fns');
 const Multer      = require('multer');
 const Liana       = require('forest-express-sequelize');
@@ -10,7 +10,7 @@ const {
   INVOICENINJA_URL,
 }                 = require('../../const');
 
-// const _ = { mapKeys };
+const _ = { mapKeys };
 
 module.exports = (app, models, Client) => {
   const LEA = Liana.ensureAuthenticated;
@@ -134,26 +134,19 @@ module.exports = (app, models, Client) => {
     in order to collect more information for a new client
   */
   app.post('/forest/actions/clientIdentity', multer, LEA, (req, res) => {
-    // const values = _.mapKeys(req.body.rawRequest, (value, key) => {
-    //   return key.replace(/(q[\d]*_)/g, '');
-    // });
-//    Client
-//      .findById(values.clientId)
-//      .tap((client) => {
-//          return client
-//            .set('phoneNumber', `${values.phoneNumber[0]}${values.phoneNumber[1]}`)
-//            .save();
-//      })
-//     .then((client) => {
-//        return client.createMetadata(values);
-//      })
+     const values = _.mapKeys(req.body.rawRequest, (value, key) => {
+       return key.replace(/(q[\d]*_)/g, '');
+     });
 
-    models.Metadata
-      .create({
-        metadatable: 'Client',
-        MetadatableId: '95c05a13-9e23-407a-a0af-fd1c5e397e9b',
-        name: 'test',
-        value: req.body.rawRequest,
+    Client
+      .findById(values.clientId)
+      .tap((client) => {
+          return client
+            .set('phoneNumber', `${values.phoneNumber.area}${values.phoneNumber.phone}`)
+            .save();
+      })
+     .then((client) => {
+        return client.createMetadata(values);
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
