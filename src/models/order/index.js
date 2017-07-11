@@ -357,8 +357,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Order.hook('afterRestore', (order) => {
     return order.getOrderItems({paranoid: false})
-      .then((orderItems) => {
-        return orderItems.filter((orderItem) => {
+        .filter((orderItem) => {
           return orderItem.deletedAt != null;
         })
         .map((orderItem) => {
@@ -366,7 +365,6 @@ module.exports = (sequelize, DataTypes) => {
             .set('status', 'active')
             .restore();
         });
-      });
   });
 
   Order.beforeLianaInit = routes;
