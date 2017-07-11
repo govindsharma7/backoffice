@@ -32,13 +32,11 @@ Liana.collection('Client', {
     type: ['String'],
     reference: 'Invoice.id',
   }, {
-    name: 'All Rentings',
-    field: 'allRentings',
+    field: 'Rentings',
     type: ['String'],
     reference: 'Renting.id',
   }, {
-    name: 'All Orders',
-    field: 'allOrders',
+    field: 'Orders',
     type: ['String'],
     reference: 'Order.id',
   }],
