@@ -1,12 +1,15 @@
-const Liana          = require('forest-express-sequelize');
-const diffInYears    = require('date-fns/difference_in_years');
-const {Metadata}     = require('../src/models');
-const Utils          = require('../src/utils');
+const Liana             = require('forest-express-sequelize');
+const differenceInYears = require('date-fns/difference_in_years');
+const values            = require('lodash/values');
+const {Metadata}        = require('../src/models');
+const Utils             = require('../src/utils');
 const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
 }                    = require('../src/const');
 
+const D = { differenceInYears };
+const _ = { values };
 const cache = new WeakMap();
 
 function getClientIdentyMemoized(object) {
@@ -21,20 +24,17 @@ function getClientIdentyMemoized(object) {
       },
     })
     .then((instance) => {
-      if (instance) {
-        const data  = JSON.parse(instance.value);
-
-        return {
-          nationality: data.nationality,
-          status: data.frenchStatus === 'Student' ||
-              data.frenchStatus === 'Intern' ? 'Student' : 'Worker',
-          birthDate : Object.keys(data.birthDate)
-                        .map((key) => {
-                          return data.birthDate[key];
-                        }).reverse().join(', '),
-        };
+      if ( instance == null ) {
+        return instance;
       }
-      return null;
+      const data  = JSON.parse(instance.value);
+      const birthDate = _.values(data.birthDate).reverse().join('-');
+
+      return {
+        nationality: data.nationality,
+        status: /^(Student|Intern)$/.test(data.frenchStatus) ? 'Student' : 'Worker',
+        age: D.differenceInYears(Date.now(), birthDate),
+      };
     })
     .tapCatch(console.error);
 
@@ -72,13 +72,14 @@ Liana.collection('Client', {
     get(object) {
       return getClientIdentyMemoized(object)
         .then((result) => {
-          if ( result ) {
-            return Utils.stripIndent(`\
-              ${object.firstName}, ${diffInYears(Date.now(), result.birthDate)} \
-              years old ${result.status} from ${result.nationality}`);
+          if ( result == null ) {
+            return null;
           }
 
-          return null;
+          return Utils.stripIndent(`\
+            ${object.firstName}, ${age} \
+            years old ${result.status} from ${result.nationality}`
+          );
         });
     },
   }, {
@@ -87,15 +88,16 @@ Liana.collection('Client', {
     get(object) {
       return getClientIdentyMemoized(object)
         .then((result) => {
-          if ( result ) {
-            return Utils.stripIndent(`\
-              ${object.firstName}, \
-              ${result.status === 'Student' ? 'étudiant(e)' : 'jeune actif(ve)'} de \
-              ${diffInYears(Date.now(), result.birthDate)} ans \
-              venant de ${result.nationality}`);
+          if ( result == null ) {
+            return result;
           }
 
-          return null;
+          return Utils.stripIndent(`\
+            ${object.firstName}, \
+            ${result.status === 'Student' ? 'étudiant(e)' : 'jeune actif(ve)'} \
+            de ${age} ans \
+            venant de ${result.nationality}`
+          );
         });
     },
   }, {

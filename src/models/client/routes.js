@@ -134,18 +134,16 @@ module.exports = (app, models, Client) => {
     in order to collect more information for a new client
   */
   app.post('/forest/actions/clientIdentity', multer, LEA, (req, res) => {
-     const values = _.mapKeys(JSON.parse(req.body.rawRequest), (value, key) => {
-       return key.replace(/(q[\d]*_)/g, '');
-     });
+    const values = _.mapKeys(JSON.parse(req.body.rawRequest), (value, key) => {
+      return key.replace(/(q[\d]*_)/g, '');
+    });
     const phoneNumber = `${values.phoneNumber.area}${values.phoneNumber.phone}`;
 
     Client
       .findById(values.clientId)
       .then((client) => {
         return Promise.all([
-          /^(\+|0{2})\d{5,}$/.test(phoneNumber) ? client.update({
-            phoneNumber,
-          }) : null,
+          Utils.isValidPhoneNumber(phoneNumber) && client.update({ phoneNumber }),
           models.Metadata
             .create({
               metadatable: 'Client',
@@ -153,7 +151,7 @@ module.exports = (app, models, Client) => {
               name: 'clientIdentity',
               value: JSON.stringify(values),
             }),
-          ]);
+        ]);
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
