@@ -1,5 +1,4 @@
 const Liana          = require('forest-express-sequelize');
-const models         = require('../src/models');
 const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
@@ -28,13 +27,6 @@ Liana.collection('Client', {
     get(object) {
       return `https://form.jotformpro.com/50392735671964?clientId=${object.id}`;
     },
-  },{
-    field: 'description En',
-    type: 'String',
-    get(object) {
-      models.Metadata
-        .find
-    }
   }, {
     field: 'Invoices',
     type: ['String'],
