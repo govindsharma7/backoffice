@@ -3,9 +3,7 @@ module.exports = {
     queryInterface.changeColumn(
       'Metadata',
       'value',
-      {
-        type: Sequelize.TEXT,
-      }
+      { type: Sequelize.TEXT }
     );
   },
 
@@ -13,9 +11,7 @@ module.exports = {
     queryInterface.changeColumn(
       'Metadata',
       'value',
-      {
-        type: Sequelize.STRING,
-      }
+      { type: Sequelize.STRING }
     );
   },
 };
