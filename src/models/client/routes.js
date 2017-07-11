@@ -137,22 +137,23 @@ module.exports = (app, models, Client) => {
      const values = _.mapKeys(JSON.parse(req.body.rawRequest), (value, key) => {
        return key.replace(/(q[\d]*_)/g, '');
      });
+    const phoneNumber = `${values.phoneNumber.area}${values.phoneNumber.phone}`;
 
     Client
       .findById(values.clientId)
-      .tap((client) => {
-        return client
-          .set('phoneNumber', `${values.phoneNumber.area}${values.phoneNumber.phone}`)
-          .save();
-      })
       .then((client) => {
-        return models.Metadata
-          .create({
-            metadatable: 'Client',
-            MetadatableId: client.id,
-            name: 'clientIdentity',
-            value: JSON.stringify(values),
-          });
+        return Promise.all([
+          /^(\+|0{2})\d{5,}$/.test(phoneNumber) ? client.update({
+            phoneNumber,
+          }) : null,
+          models.Metadata
+            .create({
+              metadatable: 'Client',
+              MetadatableId: client.id,
+              name: 'clientIdentity',
+              value: JSON.stringify(values),
+            }),
+          ]);
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));

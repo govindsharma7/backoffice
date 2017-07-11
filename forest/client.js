@@ -1,8 +1,47 @@
 const Liana          = require('forest-express-sequelize');
+const diffInYears    = require('date-fns/difference_in_years');
+const {Metadata}     = require('../src/models');
+const Utils          = require('../src/utils');
 const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
 }                    = require('../src/const');
+
+const cache = new WeakMap();
+
+function getClientIdentyMemoized(object) {
+  if ( cache.has(object) ) {
+    return cache.get(object);
+  }
+
+  const promise = Metadata.findOne({
+      where: {
+        MetadatableId: object.id,
+        name: 'clientIdentity',
+      },
+    })
+    .then((instance) => {
+      if (instance) {
+        const data  = JSON.parse(instance.value);
+
+        return {
+          nationality: data.nationality,
+          status: data.frenchStatus === 'Student' ||
+              data.frenchStatus === 'Intern' ? 'Student' : 'Worker',
+          birthDate : Object.keys(data.birthDate)
+                        .map((key) => {
+                          return data.birthDate[key];
+                        }).reverse().join(', '),
+        };
+      }
+      return null;
+    })
+    .tapCatch(console.error);
+
+  cache.set(object, promise);
+  return promise;
+}
+
 
 Liana.collection('Client', {
   fields: [{
@@ -26,6 +65,38 @@ Liana.collection('Client', {
     type: 'String',
     get(object) {
       return `https://form.jotformpro.com/50392735671964?clientId=${object.id}`;
+    },
+  }, {
+    field: 'Description En',
+    type: 'String',
+    get(object) {
+      return getClientIdentyMemoized(object)
+        .then((result) => {
+          if ( result ) {
+            return Utils.stripIndent(`\
+              ${object.firstName}, ${diffInYears(Date.now(), result.birthDate)} \
+              years old ${result.status} from ${result.nationality}`);
+          }
+
+          return null;
+        });
+    },
+  }, {
+    field: 'Description Fr',
+    type: 'String',
+    get(object) {
+      return getClientIdentyMemoized(object)
+        .then((result) => {
+          if ( result ) {
+            return Utils.stripIndent(`\
+              ${object.firstName}, \
+              ${result.status === 'Student' ? 'étudiant(e)' : 'jeune actif(ve)'} de \
+              ${diffInYears(Date.now(), result.birthDate)} ans \
+              venant de ${result.nationality}`);
+          }
+
+          return null;
+        });
     },
   }, {
     field: 'Invoices',
