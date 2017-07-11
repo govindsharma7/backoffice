@@ -341,17 +341,11 @@ module.exports = (sequelize, DataTypes) => {
   Order.hook('afterUpdate', Order.afterUpdate);
 
   Order.hook('beforeDelete', (order) => {
-    if (order.deletedAt == null) {
-    return order.getOrderItems()
+    const isDeleted = order.deletedAt != null;
+
+    return order.getOrderItems({paranoid: !isDeleted})
       .map((orderItem) => {
-        return orderItem
-          .destroy();
-      });
-    }
-    return order.getOrderItems({paranoid: false})
-      .map((orderItem) => {
-        return orderItem
-          .destroy({force: true});
+        return orderItem.destroy({force: isDeleted});
       });
   });
 
