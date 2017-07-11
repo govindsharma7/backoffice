@@ -343,21 +343,15 @@ module.exports = (sequelize, DataTypes) => {
   Order.hook('beforeDelete', (order) => {
     if (order.deletedAt == null) {
     return order.getOrderItems()
-      .then((orderItems) => {
-        return orderItems
-        .map((orderItem) => {
-          return orderItem
-            .destroy();
-        });
+      .map((orderItem) => {
+        return orderItem
+          .destroy();
       });
     }
     return order.getOrderItems({paranoid: false})
-      .then((orderItems) => {
-        return orderItems
-        .map((orderItem) => {
-          return orderItem
-            .destroy({force: true});
-        });
+      .map((orderItem) => {
+        return orderItem
+          .destroy({force: true});
       });
   });
 
