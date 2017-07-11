@@ -24,6 +24,18 @@ module.exports = {
       paranoid: false,
     },
   },
+  UNTRASHED_SCOPE: {
+    untrashed: {
+      where : { $or: [{
+        deletedAt: { $not: null },
+        status : 'draft',
+      }, {
+        deletedAt: null,
+      }],
+    },
+    paranoid: false,
+    },
+  },
 
   INVOICENINJA_URL:
     `${config.INVOICENINJA_PROTOCOL || 'http'}://${config.INVOICENINJA_HOST}`,

@@ -1,7 +1,10 @@
 const Promise        = require('bluebird');
 const Ninja          = require('../../vendor/invoiceninja');
 const Utils          = require('../../utils');
-const {TRASH_SCOPES} = require('../../const');
+const {
+  TRASH_SCOPES,
+  UNTRASHED_SCOPE,
+}                    = require('../../const');
 const routes         = require('./routes');
 
 module.exports = (sequelize, DataTypes) => {
@@ -45,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     paranoid: true,
-    scopes: TRASH_SCOPES,
+    scopes: Object.assign({}, TRASH_SCOPES, UNTRASHED_SCOPE),
   });
 
   Order.associate = () => {

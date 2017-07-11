@@ -4,6 +4,7 @@ const capitalize            = require('lodash/capitalize');
 const Utils                 = require('../../utils');
 const {
   TRASH_SCOPES,
+  UNTRASHED_SCOPE,
   DEPOSIT_PRICES,
   DEPOSIT_REFUND_DELAYS,
 }                           = require('../../const');
@@ -67,7 +68,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     paranoid: true,
-    scopes: TRASH_SCOPES,
+    scopes: Object.assign({}, TRASH_SCOPES, UNTRASHED_SCOPE),
   });
 
   Renting.associate = () => {
