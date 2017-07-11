@@ -215,7 +215,7 @@ module.exports = (sequelize, DataTypes) => {
     return Promise.all([
         this.getClient(),
         this.getCalculatedProps(),
-        this.getOrderItems()
+        this.getOrderItems({paranoid: false})
           .then((orderItems) => {
             return Promise.map(orderItems, (item) => {
               return item.ninjaSerialize();
