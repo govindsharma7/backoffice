@@ -68,7 +68,7 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Order.addScope('rentOrdersProrate', {
+    Order.addScope('rentOrders', {
       include: [{
         model: models.OrderItem,
         where: {
