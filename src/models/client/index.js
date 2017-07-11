@@ -1,6 +1,5 @@
 const Promise    = require('bluebird');
 const D          = require('date-fns');
-const find       = require('lodash/find');
 const Payline    = require('payline');
 const Ninja       = require('../../vendor/invoiceninja');
 const webMerge   = require('../../vendor/webmerge');
@@ -19,7 +18,6 @@ const {
 }                = require('../../config');
 const routes     = require('./routes');
 
-const _ = { find };
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -324,34 +322,6 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Client.prototype.createMetadata = function(values) {
-    const {address, birthDate} = values;
-    const metadata = [{
-      name: 'fullAddress',
-      value: Utils.stripIndent(`\
-        ${address.addr_line1}${(address.addr_line2 || '') && ` ${address.addr_line2}`}, \
-        ${address.city}, ${address.postal}, ${address.country}`
-      ),
-    }, {
-      name: 'birthDate',
-      value: `${birthDate.day}/${birthDate.month}/${birthDate.year}`,
-    }, {
-      name: 'birthPlace',
-      value: `${values.birthPlace}`,
-    }, {
-      name: 'nationality',
-      value: `${values.nationality}`,
-    }].map((data) => {
-      return Object.assign(data, {
-        metadatable: 'Client',
-        MetadatableId: this.id,
-      });
-    });
-
-    return models.Metadata
-      .bulkCreate(metadata);
-  };
-
   // TODO: This belongs in renting
   Client.prototype.generateLease = function () {
     const {Metadata, Rentings} = this;
@@ -360,12 +330,16 @@ module.exports = (sequelize, DataTypes) => {
     const bookingDate = Rentings[0].bookingDate ?
       Rentings[0].bookingDate : D.format(Date.now());
 
+    const values = JSON.parse(Metadata.value);
+    const fullAddress = Object.values(values.address).join(',');
+    const birthDate = Object.values(values.birthDate).join('/');
+
     return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
       fullName: `${this.firstName} ${this.lastName}`,
-      fullAddress: _.find(Metadata, {name: 'fullAddress'}).value,
-      birthDate: _.find(Metadata, {name: 'birthDate'}).value,
-      birthPlace: _.find(Metadata, {name: 'birthPlace'}).value,
-      nationality: _.find(Metadata, {name: 'nationality'}).value,
+      fullAddress,
+      birthDate,
+      birthPlace: values.birthPlace,
+      nationality: values.nationality,
       floorArea: Apartment.floorArea,
       address: `${addressStreet}, ${addressZip}, ${addressCity}`,
       floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
