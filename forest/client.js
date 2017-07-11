@@ -61,7 +61,7 @@ Liana.collection('Client', {
       return null;
     },
   }, {
-    field: 'jotform link',
+    field: 'Identity Record Form',
     type: 'String',
     get(object) {
       return `https://form.jotformpro.com/50392735671964?clientId=${object.id}`;
