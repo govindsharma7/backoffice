@@ -331,7 +331,9 @@ module.exports = (sequelize, DataTypes) => {
       Rentings[0].bookingDate : D.format(Date.now());
 
     const values = JSON.parse(Metadata.value);
-    const fullAddress = Object.values(values.address).join(',');
+    const fullAddress = Object.values(values.address).filter((val) => {
+      return Boolean(val);
+    }).join(', ');
     const birthDate = Object.values(values.birthDate).join('/');
 
     return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
