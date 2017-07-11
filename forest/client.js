@@ -77,7 +77,7 @@ Liana.collection('Client', {
           }
 
           return Utils.stripIndent(`\
-            ${object.firstName}, ${age} \
+            ${object.firstName}, ${result.age} \
             years old ${result.status} from ${result.nationality}`
           );
         });
@@ -95,7 +95,7 @@ Liana.collection('Client', {
           return Utils.stripIndent(`\
             ${object.firstName}, \
             ${result.status === 'Student' ? 'étudiant(e)' : 'jeune actif(ve)'} \
-            de ${age} ans \
+            de ${result.age} ans \
             venant de ${result.nationality}`
           );
         });
