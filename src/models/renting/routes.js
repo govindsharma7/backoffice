@@ -35,6 +35,34 @@ module.exports = function(app, models, Renting) {
     return null;
   });
 
+  app.post('/forest/actions/generate-lease', LEA, (req, res) => {
+    const {ids} = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1) {
+          throw new Error('Can\'t create multiple leases');
+        }
+
+        return Renting.scope(
+          'comfortLevel', // required by #generateLease
+          'client+metadata', // required by #generateLease
+          'room+apartment', // required by #generateLease
+          'depositOption'// required by #generateLease
+        ).findById(ids[0]);
+      })
+      .then((renting) => {
+        if ( !renting.Client.Metadata.length ) {
+          throw new Error('Identity record is missing for this client');
+        }
+        if ( !renting.get('comfortLevel') ) {
+          throw new Error('Housing pack is required to generate lease');
+        }
+        return renting.generateLease();
+      })
+      .then(Utils.createSuccessHandler(res, 'Lease'))
+      .catch(Utils.logAndSend(res));
+  });
   app.post('/forest/actions/create-deposit-order', LEA, (req, res) => {
     const {ids} = req.body.data.attributes;
 
