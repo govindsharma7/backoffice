@@ -28,7 +28,6 @@ app.use(Jwt({
 app.use(checkToken);
 
 // CORS
-
 app.use(Cors({
   origin: [/^http:\/\/127\.0\.0\.1:/, /^http:\/\/localhost:/, /\.forestadmin\.com$/],
   allowedHeaders: [
@@ -59,7 +58,7 @@ Schemas.perform = function() {
     // load collections for models
     Object.keys(models).forEach((modelName) => {
       if ('collection' in models[modelName]) {
-        Liana.collection( modelName, models[modelName].collection(models));
+        Liana.collection( modelName, models[modelName].collection(models) );
       }
     });
     // load smart collections
