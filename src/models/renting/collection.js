@@ -60,6 +60,8 @@ module.exports = function() {
         type: 'Date',
       }],
     }, {
+      name: 'Generate Lease',
+    }, {
       name: 'Create Checkin Order',
     }, {
       name: 'Create Checkout Order',
