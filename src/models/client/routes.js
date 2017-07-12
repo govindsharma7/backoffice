@@ -111,7 +111,7 @@ module.exports = (app, models, Client) => {
         return Promise.all([
           client.update({
             firstName: values.fullName.first,
-            lastName: values.fullName.lasr,
+            lastName: values.fullName.last,
           }),
           Utils.isValidPhoneNumber(phoneNumber) && client.update({ phoneNumber }),
           models.Metadata
