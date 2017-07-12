@@ -109,6 +109,10 @@ module.exports = (app, models, Client) => {
       .findById(values.clientId)
       .then((client) => {
         return Promise.all([
+          client.update({
+            firstName: values.fullName.first,
+            lastName: values.fullName.lasr,
+          }),
           Utils.isValidPhoneNumber(phoneNumber) && client.update({ phoneNumber }),
           models.Metadata
             .create({

@@ -629,7 +629,9 @@ module.exports = (sequelize, DataTypes) => {
       fullName: `${Client.firstName} ${Client.lastName}`,
       fullAddress,
       birthDate,
-      birthPlace: metaValues.birthPlace,
+      birthPlace: Utils.stripIndent(`\
+              ${metaValues.birthPlace.first} \
+(${_.capitalize(metaValues.birthPlace.last)})`),
       nationality: metaValues.nationality,
       rent: this.price / 100,
       serviceFees: this.serviceFees / 100,
