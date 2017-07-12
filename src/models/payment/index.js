@@ -1,8 +1,9 @@
 const Promise        = require('bluebird');
 const Liana          = require('forest-express-sequelize');
-const payline        = require('../vendor/payline');
-const Utils          = require('../utils');
-const {TRASH_SCOPES} = require('../const');
+const payline        = require('../../vendor/payline');
+const Utils          = require('../../utils');
+const {TRASH_SCOPES} = require('../../const');
+const collection     = require('./collection');
 
 module.exports = (sequelize, DataTypes) => {
   const Payment = sequelize.define('Payment', {
@@ -93,6 +94,8 @@ module.exports = (sequelize, DataTypes) => {
 
     Utils.addRestoreAndDestroyRoutes(app, Payment);
   };
+
+  Payment.collection = collection;
 
   return Payment;
 };

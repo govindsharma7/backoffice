@@ -10,6 +10,7 @@ const {
 }                           = require('../../const');
 const {GOOGLE_CALENDAR_IDS} = require('../../config');
 const routes                = require('./routes');
+const collection            = require('./collection');
 
 const _ = { capitalize };
 
@@ -600,6 +601,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Renting.beforeLianaInit = routes;
+  Renting.collection = collection;
 
   return Renting;
 };

@@ -1,7 +1,7 @@
 const Promise    = require('bluebird');
 const D          = require('date-fns');
 const Payline    = require('payline');
-const Ninja       = require('../../vendor/invoiceninja');
+const Ninja      = require('../../vendor/invoiceninja');
 const webMerge   = require('../../vendor/webmerge');
 const payline    = require('../../vendor/payline');
 const Utils      = require('../../utils');
@@ -17,6 +17,7 @@ const {
   WEBMERGE_DOCUMENT_KEY,
 }                = require('../../config');
 const routes     = require('./routes');
+const collection = require('./collection');
 
 
 module.exports = (sequelize, DataTypes) => {
@@ -510,6 +511,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.beforeLianaInit = routes;
+  Client.collection = collection;
 
   return Client;
 };

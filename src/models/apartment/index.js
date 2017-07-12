@@ -2,10 +2,11 @@ const Promise                     = require('bluebird');
 const bodyParser                  = require('body-parser');
 const D                           = require('date-fns');
 const Liana                       = require('forest-express-sequelize');
-const Geocode                     = require('../vendor/geocode');
-const Aws                         = require('../vendor/aws');
-const Utils                       = require('../utils');
-const {TRASH_SCOPES}              = require('../const');
+const Geocode                     = require('../../vendor/geocode');
+const Aws                         = require('../../vendor/aws');
+const Utils                       = require('../../utils');
+const {TRASH_SCOPES}              = require('../../const');
+const collection                  = require('./collection');
 
 module.exports = (sequelize, DataTypes) => {
   const Apartment = sequelize.define('Apartment', {
@@ -164,6 +165,8 @@ module.exports = (sequelize, DataTypes) => {
 
     Utils.addRestoreAndDestroyRoutes(app, Apartment);
   };
+
+  Apartment.collection = collection;
 
   return Apartment;
 };

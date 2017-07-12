@@ -6,6 +6,7 @@ const {
   UNTRASHED_SCOPE,
 }                    = require('../../const');
 const routes         = require('./routes');
+const collection     = require('./collection');
 
 module.exports = (sequelize, DataTypes) => {
 
@@ -377,6 +378,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Order.beforeLianaInit = routes;
+  Order.collection = collection;
 
   return Order;
 };

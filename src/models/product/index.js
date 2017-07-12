@@ -1,5 +1,6 @@
-const {TRASH_SCOPES} = require('../const');
-const Utils          = require('../utils');
+const {TRASH_SCOPES} = require('../../const');
+const Utils          = require('../../utils');
+const collection     = require('./collection');
 
 module.exports = (sequelize, DataTypes) => {
   const Product = sequelize.define('Product', {
@@ -36,5 +37,8 @@ module.exports = (sequelize, DataTypes) => {
   Product.beforeLianaInit = (app) => {
     Utils.addRestoreAndDestroyRoutes(app, Product);
   };
+
+  Product.collection = collection;
+
   return Product;
 };

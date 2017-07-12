@@ -1,8 +1,9 @@
 const Calendar              = require('googleapis').calendar('v3');
 const Promise               = require('bluebird');
-const {TRASH_SCOPES}        = require('../const');
-const jwtClient             = require('../vendor/googlecalendar');
-const Utils                 = require('../utils');
+const jwtClient             = require('../../vendor/googlecalendar');
+const {TRASH_SCOPES}        = require('../../const');
+const Utils                 = require('../../utils');
+const collection     = require('./collection');
 
 const eventsInsert = Promise.promisify(Calendar.events.insert);
 const eventsUpdate = Promise.promisify(Calendar.events.update);
@@ -193,6 +194,8 @@ module.exports = (sequelize, DataTypes) => {
   Event.beforeLianaInit = (app) => {
     Utils.addRestoreAndDestroyRoutes(app, Event);
   };
+
+  Event.collection = collection;
 
   return Event;
 };

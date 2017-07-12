@@ -1,4 +1,5 @@
 const Promise          = require('bluebird');
+const collection       = require('./collection');
 
 module.exports = (sequelize, DataTypes) => {
   const Setting = sequelize.define('Setting', {
@@ -49,6 +50,8 @@ module.exports = (sequelize, DataTypes) => {
 
     return this._increment('intVal', options);
   };
+
+  Setting.collection = collection;
 
   return Setting;
 };

@@ -1,15 +1,19 @@
-const path       = require('path');
-const Express    = require('express');
-const Jwt        = require('express-jwt');
-const Cors       = require('cors');
-const BodyParser = require('body-parser');
-const Liana      = require('forest-express-sequelize');
-const config     = require('./config');
-const models     = require('./models');
-const checkToken = require('./middlewares/checkToken');
+const Express          = require('express');
+const Jwt              = require('express-jwt');
+const Cors             = require('cors');
+const BodyParser       = require('body-parser');
+const Liana            = require('forest-express-sequelize');
+const values           = require('lodash/values');
+const config           = require('./config');
+const models           = require('./models');
+const checkToken       = require('./middlewares/checkToken');
+const smartCollections = require('./smart-collections');
+
 
 const parentApp = Express();
-const app = Express();
+const app       = Express();
+const {Schemas} = Liana;
+const _         = { values };
 
 /*
  * Middleware that will handle our custom Forest routes
@@ -39,22 +43,39 @@ app.use(Cors({
 app.use(BodyParser.json());
 
 // This hook and all app.use above are currently useless
-Object.keys(models).forEach(function(modelName) {
-  if ('beforeLianaInit' in models[modelName]) {
-    models[modelName].beforeLianaInit(app, models, models[modelName]);
+_.values(models).forEach(function(model) {
+  if ('beforeLianaInit' in model) {
+    model.beforeLianaInit(app, models, model);
   }
 });
 
 parentApp.use(app);
 
+// Hijack Schemas.perform to load Liana collections ourselves
+// → definitely prevent forest-express from trapping our errors, YAY!
+Schemas._perform = Schemas.perform;
+Schemas.perform = function() {
+  return Schemas._perform.apply(this, arguments).tap(() => {
+    // load collections for models
+    Object.keys(models).forEach((modelName) => {
+      if ('collection' in models[modelName]) {
+        Liana.collection( modelName, models[modelName].collection(models));
+      }
+    });
+    // load smart collections
+    Object.keys(smartCollections).forEach((name) => {
+      Liana.collection( name, smartCollections[name](models) );
+    });
+  });
+};
+
 /*
  * Forest middleware
  */
 parentApp.use(Liana.init({
-  modelsDir: path.join(__dirname, '/models'), // models directory.
+  sequelize: models.sequelize,
   envSecret: config.FOREST_ENV_SECRET,
   authSecret: config.FOREST_AUTH_SECRET,
-  sequelize: models.sequelize, // sequelize database connection.
 }));
 
 // This hook is currently useless

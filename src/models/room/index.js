@@ -1,7 +1,8 @@
 const Promise          = require('bluebird');
 const D                = require('date-fns');
-const Utils            = require('../utils');
-const {TRASH_SCOPES}   = require('../const');
+const Utils            = require('../../utils');
+const {TRASH_SCOPES}   = require('../../const');
+const collection       = require('./collection');
 
 module.exports = (sequelize, DataTypes) => {
   const Room = sequelize.define('Room', {
@@ -107,6 +108,8 @@ module.exports = (sequelize, DataTypes) => {
 
     Utils.addRestoreAndDestroyRoutes(app, Room);
   };
+
+  Room.collection = collection;
 
   return Room;
 };
