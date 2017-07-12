@@ -2,20 +2,13 @@ const Promise    = require('bluebird');
 const D          = require('date-fns');
 const Payline    = require('payline');
 const Ninja      = require('../../vendor/invoiceninja');
-const webMerge   = require('../../vendor/webmerge');
 const payline    = require('../../vendor/payline');
 const Utils      = require('../../utils');
 const {
   TRASH_SCOPES,
   LATE_FEES,
-  DEPOSIT_PRICES,
   UNCASHED_DEPOSIT_FEE,
 }                = require('../../const');
-const {
-  NODE_ENV,
-  WEBMERGE_DOCUMENT_ID,
-  WEBMERGE_DOCUMENT_KEY,
-}                = require('../../config');
 const routes     = require('./routes');
 const collection = require('./collection');
 
@@ -172,11 +165,6 @@ module.exports = (sequelize, DataTypes) => {
         }],
       };
     });
-    Client.addScope('metadata', {
-      include: [{
-        model: models.Metadata,
-      }],
-    });
   };
 
   // This was the reliable method used by generateInvoice
@@ -321,41 +309,6 @@ module.exports = (sequelize, DataTypes) => {
 
         return this.ninjaCreate();
       });
-  };
-
-  // TODO: This belongs in renting
-  Client.prototype.generateLease = function () {
-    const {Metadata, Rentings} = this;
-    const {Apartment} = Rentings[0].Room;
-    const {addressStreet, addressZip, addressCity} = Apartment;
-    const bookingDate = Rentings[0].bookingDate ?
-      Rentings[0].bookingDate : D.format(Date.now());
-    const values = JSON.parse(Metadata.value);
-    const fullAddress = Object.values(values.address).filter(Boolean).join(', ');
-    const birthDate = Object.values(values.birthDate).join('/');
-
-    return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
-      fullName: `${this.firstName} ${this.lastName}`,
-      fullAddress,
-      birthDate,
-      birthPlace: values.birthPlace,
-      nationality: values.nationality,
-      floorArea: Apartment.floorArea,
-      address: `${addressStreet}, ${addressZip}, ${addressCity}`,
-      floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
-      code: Apartment.code ? Apartment.code : 'néant',
-      rent: Rentings[0].price / 100,
-      serviceFees: Rentings[0].serviceFees / 100,
-      bookingDate,
-      endDate: D.addYears(D.subDays(bookingDate, 1), 1),
-      deposit: DEPOSIT_PRICES[Apartment.addressCity] / 100,
-      packLevel: this.Rentings[0].get('comfortLevel'),
-      roomFloorArea: Rentings[0].Room.floorArea,
-      apartmentRoomNumber: Apartment.Rooms.length,
-      roomNumber: Rentings[0].Room.reference.slice(-1),
-      email: this.email,
-    // the last param turns on the test environment of webmerge
-    }, NODE_ENV !== 'production');
   };
 
   Client.paylineCredit = (clientId, values, idCredit) => {

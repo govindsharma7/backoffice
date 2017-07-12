@@ -1,6 +1,8 @@
 const Promise               = require('bluebird');
 const D                     = require('date-fns');
 const capitalize            = require('lodash/capitalize');
+const values                = require('lodash/values');
+const webMerge   = require('../../vendor/webmerge');
 const Utils                 = require('../../utils');
 const {
   TRASH_SCOPES,
@@ -8,11 +10,16 @@ const {
   DEPOSIT_PRICES,
   DEPOSIT_REFUND_DELAYS,
 }                           = require('../../const');
+const {
+  NODE_ENV,
+  WEBMERGE_DOCUMENT_ID,
+  WEBMERGE_DOCUMENT_KEY,
+}                = require('../../config');
 const {GOOGLE_CALENDAR_IDS} = require('../../config');
 const routes                = require('./routes');
 const collection            = require('./collection');
 
-const _ = { capitalize };
+const _ = { capitalize, values };
 
 // TODO: for some reason sqlite seems to return a date in a strange format
 // find out why and fix this.
@@ -106,17 +113,27 @@ module.exports = (sequelize, DataTypes) => {
         }],
       });
     });
+
+    Renting.addScope('depositOption', {
+      include: [{
+        required:false,
+        model: models.Term,
+        where: { taxonomy: 'deposit-option' },
+      }],
+    });
+
     Renting.addScope('comfortLevel', {
-      attributes: [[
+      attributes: { include: [[
         sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
         'comfortLevel',
-      ]],
+      ]]},
       include: [{
         model: models.OrderItem,
         required: false,
         where: { ProductId: { $like: '%-pack' } },
       }],
     });
+
     Renting.addScope('room+apartment', {
       include: [{
         model: models.Room,
@@ -125,9 +142,21 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
+
     Renting.addScope('client', {
       include: [{
         model : models.Client,
+      }],
+    });
+
+    Renting.addScope('client+metadata', {
+      include: [{
+        model: models.Client,
+        include: [{
+          required: false,
+          model: models.Metadata,
+          where: { name: 'clientIdentity' },
+        }],
       }],
     });
   };
@@ -566,6 +595,59 @@ module.exports = (sequelize, DataTypes) => {
         }
         return true;
     });
+  };
+
+  Renting.prototype.generateLease = function () {
+    const {Client} = this;
+    const {Terms} = this;
+    const {Metadata} = Client;
+    const {Apartment} = this.Room;
+    const {name, addressStreet, addressZip, addressCity} = Apartment;
+    const bookingDate = this.bookingDate ?
+      this.bookingDate : Date.now();
+    const metaValues = JSON.parse(Metadata[0].value);
+    const fullAddress = _.values(metaValues.address).filter(Boolean).join(', ');
+    const birthDate = _.values(metaValues.birthDate).join('/');
+    const roomNumber = name.split(' ').splice(-1)[0] === 'studio' ?
+        'l\'appartement entier' : `la chambre privée nº${this.Room.reference.slice(-1)}`;
+    const depositOption = !Terms[0] || (Terms[0] && Terms[0].name === 'cash') ?
+          'd\'encaissement du montant' : 'de non encaissement du chèque';
+    let packLevel;
+
+    switch (this.get('comfortLevel')) {
+      default:
+        packLevel = 'Basique';
+        break;
+      case 'comfort':
+        packLevel = 'Confort';
+        break;
+      case 'privilege':
+        packLevel = 'Privilège';
+        break;
+    }
+    return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
+      fullName: `${Client.firstName} ${Client.lastName}`,
+      fullAddress,
+      birthDate,
+      birthPlace: Utils.stripIndent(`\
+              ${metaValues.birthPlace.first} \
+(${_.capitalize(metaValues.birthPlace.last)})`),
+      nationality: metaValues.nationality,
+      rent: this.price / 100,
+      serviceFees: this.serviceFees / 100,
+      deposit: DEPOSIT_PRICES[addressCity] / 100,
+      depositOption,
+      packLevel,
+      roomNumber,
+      roomFloorArea: this.Room.floorArea,
+      floorArea: Apartment.floorArea,
+      address: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
+      floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
+      bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
+      endDate: D.format(D.addYears(D.subDays(bookingDate, 1), 1), 'DD/MM/YYYY'),
+      email: this.Client.email,
+    // the last param turns on the test environment of webmerge
+    }, NODE_ENV !== 'production');
   };
 
   Renting.hook('beforeValidate', (renting) => {

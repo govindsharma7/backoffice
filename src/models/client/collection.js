@@ -153,8 +153,6 @@ module.exports = function(models) {
         },
       ],
     }, {
-      name: 'Generate Lease',
-    }, {
       name: 'Create Rent Order',
       fields: [{
         field: 'for',
