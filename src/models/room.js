@@ -67,6 +67,8 @@ module.exports = (sequelize, DataTypes) => {
             },
           }],
         }],
+      }, {
+        model: models.Apartment,
       }],
     });
 

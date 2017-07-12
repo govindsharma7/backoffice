@@ -1,8 +1,10 @@
 const Liana            = require('forest-express-sequelize');
+const capitalize       = require('lodash/capitalize');
 const {Room}           = require('../src/models');
 const {TRASH_SEGMENTS} = require('../src/const');
 const Utils            = require('../src/utils');
 
+const _ = { capitalize };
 const memoizer = new Utils.calculatedPropsMemoizer(Room.scope('apartment'));
 
 Liana.collection('Room', {
@@ -36,31 +38,36 @@ Liana.collection('Room', {
   }, {
     name: 'Destroy Room',
   }],
-  segments: TRASH_SEGMENTS.concat([{
-    name: 'Available Rooms',
-    where: () => {
-      return Room.scope('latestRenting')
-        .findAll()
-        .filter((room) => {
-          if (room.Rentings.length === 0) {
-            return true;
-          }
+  segments: TRASH_SEGMENTS.concat(
+    ['lyon', 'montpellier', 'paris'].map((city) => {
+      return {
+        name: `Available Rooms ${_.capitalize(city)}`,
+        where: () => {
+          return Room.scope('latestRenting')
+            .findAll({
+              where: { '$Apartment.addressCity$' : `${city}` },
+            })
+            .filter((room) => {
+              if (room.Rentings.length === 0) {
+                return true;
+              }
 
-          // Find renting with latest bookingDate
-          const latestRenting = room.Rentings.reduce((acc, curr) => {
-            return curr.bookingDate > acc.bookingDate ? curr : acc;
-          }, room.Rentings[0]);
-          const checkoutDate =
-            latestRenting.Events[0] && latestRenting.Events[0].startDate;
+              // Find renting with latest bookingDate
+              const latestRenting = room.Rentings.reduce((acc, curr) => {
+                return curr.bookingDate > acc.bookingDate ? curr : acc;
+              }, room.Rentings[0]);
+              const checkoutDate =
+                latestRenting.Events[0] && latestRenting.Events[0].startDate;
+              const now = Date.now();
 
-          return (
-            latestRenting.bookingDate < Date.now() && checkoutDate <= Date.now()
-          );
-        })
-        .reduce((acc, curr) => {
-          acc.id.push(curr.id);
-          return acc;
-        }, { id: [] });
-    },
-  }]),
+              return latestRenting.bookingDate < now && checkoutDate <= now;
+            })
+            .reduce((acc, curr) => {
+              acc.id.push(curr.id);
+              return acc;
+            }, { id: [] });
+        },
+      };
+    })
+  ),
 });
