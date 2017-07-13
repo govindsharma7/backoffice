@@ -50,11 +50,22 @@ _.values(models).forEach(function(model) {
 
 parentApp.use(app);
 
-// Hijack Schemas.perform to load Liana collections ourselves
-// → definitely prevent forest-express from trapping our errors, YAY!
+// - Hijack Schemas.perform to load Liana collections ourselves
+//   → definitely prevent forest-express from trapping our errors, YAY!
+// - Hijack integrator.defineCollections to throw before apimap updates
+//   → prevent deploys from overwriting production layout, YAY!
 Schemas._perform = Schemas.perform;
-Schemas.perform = function() {
-  return Schemas._perform.apply(this, arguments).tap(() => {
+Schemas.perform = function(Implementation, integrator) {
+  // Hijack integrator.defineCollections
+  integrator._defineCollections = integrator.defineCollections;
+  integrator.defineCollections = function() {
+    integrator._defineCollections.apply(integrator, arguments);
+    if ( config.NODE_ENV === 'production' ) {
+      throw new Error('You shall not pass!');
+    }
+  };
+
+  return Schemas._perform.apply(Schemas, arguments).tap(() => {
     // load collections for models
     Object.keys(models).forEach((modelName) => {
       if ('collection' in models[modelName]) {
