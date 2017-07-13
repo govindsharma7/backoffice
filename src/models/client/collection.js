@@ -1,4 +1,7 @@
+const Promise           = require('bluebird');
 const differenceInYears = require('date-fns/difference_in_years');
+const country           = require('countryjs');
+const translate         = require('google-translate-api');
 const values            = require('lodash/values');
 const Utils             = require('../../utils');
 const {
@@ -76,7 +79,7 @@ module.exports = function(models) {
 
             return Utils.stripIndent(`\
               ${object.firstName}, ${result.age} \
-              years old ${result.status} from ${result.nationality}`
+              years old ${country.demonym(result.nationality, 'name')} ${result.status}`
             );
           });
       },
@@ -87,15 +90,21 @@ module.exports = function(models) {
         return getClientIdentyMemoized(object)
           .then((result) => {
             if ( result == null ) {
+              return [null, null];
+            }
+            return Promise.all([
+              result,
+              translate(country.demonym(result.nationality, 'name'), {to: 'fr'}),
+            ]);
+          })
+          .then(([result, translation]) => {
+            if ( result == null) {
               return result;
             }
-
             return Utils.stripIndent(`\
               ${object.firstName}, \
               ${result.status === 'Student' ? 'étudiant(e)' : 'jeune actif(ve)'} \
-              de ${result.age} ans \
-              venant de ${result.nationality}`
-            );
+              ${translation.text} de ${result.age} ans`);
           });
       },
     }, {

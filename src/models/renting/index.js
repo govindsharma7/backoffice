@@ -1,5 +1,7 @@
 const Promise               = require('bluebird');
 const D                     = require('date-fns');
+const country               = require('countryjs');
+const translate             = require('google-translate-api');
 const capitalize            = require('lodash/capitalize');
 const values                = require('lodash/values');
 const webMerge   = require('../../vendor/webmerge');
@@ -625,29 +627,39 @@ module.exports = (sequelize, DataTypes) => {
         packLevel = 'Privilège';
         break;
     }
-    return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
-      fullName: `${Client.firstName} ${Client.lastName}`,
-      fullAddress,
-      birthDate,
-      birthPlace: Utils.stripIndent(`\
+
+    return Promise.resolve()
+      .then(() => {
+        return Promise.all([
+          translate(country.demonym(metaValues.nationality, 'name'), {to: 'fr'}),
+          translate(metaValues.birthPlace.last, {to: 'fr'}),
+        ]);
+      })
+      .then(([nationality, fromCountry]) => {
+        return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
+          fullName: `${Client.firstName} ${Client.lastName}`,
+          fullAddress,
+          birthDate,
+          birthPlace: Utils.stripIndent(`\
               ${metaValues.birthPlace.first} \
-(${_.capitalize(metaValues.birthPlace.last)})`),
-      nationality: metaValues.nationality,
-      rent: this.price / 100,
-      serviceFees: this.serviceFees / 100,
-      deposit: DEPOSIT_PRICES[addressCity] / 100,
-      depositOption,
-      packLevel,
-      roomNumber,
-      roomFloorArea: this.Room.floorArea,
-      floorArea: Apartment.floorArea,
-      address: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
-      floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
-      bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
-      endDate: D.format(D.addYears(D.subDays(bookingDate, 1), 1), 'DD/MM/YYYY'),
-      email: this.Client.email,
+(${_.capitalize(fromCountry.text)})`),
+          nationality: nationality.text,
+          rent: this.price / 100,
+          serviceFees: this.serviceFees / 100,
+          deposit: DEPOSIT_PRICES[addressCity] / 100,
+          depositOption,
+          packLevel,
+          roomNumber,
+          roomFloorArea: this.Room.floorArea,
+          floorArea: Apartment.floorArea,
+          address: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
+          floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
+          bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
+          endDate: D.format(D.addYears(D.subDays(bookingDate, 1), 1), 'DD/MM/YYYY'),
+          email: this.Client.email,
     // the last param turns on the test environment of webmerge
     }, NODE_ENV !== 'production');
+      });
   };
 
   Renting.hook('beforeValidate', (renting) => {
