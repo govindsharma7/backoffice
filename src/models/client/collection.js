@@ -1,5 +1,6 @@
 const differenceInYears = require('date-fns/difference_in_years');
 const values            = require('lodash/values');
+const find              = require('lodash/find');
 const Utils             = require('../../utils');
 const {
   TRASH_SEGMENTS,
@@ -7,7 +8,7 @@ const {
 }                       = require('../../const');
 
 const D = { differenceInYears };
-const _ = { values };
+const _ = { values, find };
 const cache = new WeakMap();
 
 module.exports = function(models) {
@@ -47,6 +48,19 @@ module.exports = function(models) {
       type: 'String',
       get(object) {
         return `${object.firstName} ${object.lastName}`;
+      },
+      search(query, search) {
+        let s = models.sequelize;
+        let split = search.split(' ');
+
+        var searchCondition = s.and(
+          { firstName: { $like: `%${split[0]}%` }},
+          { lastName: { $like: `%${split[1]}%` }}
+        );
+
+        let searchConditions = _.find(query.where.$and, '$or');
+
+        searchConditions.$or.push(searchCondition);
       },
     }, {
       field: 'ninja',
