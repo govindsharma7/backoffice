@@ -368,24 +368,24 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.prototype.findOrCreateCurrentOrder = function (item) {
-    const {Order, OrderItem} = models;
+    const {Order} = models;
 
      return Order
-        .findOrCreate({
-          where: {
-            ClientId: this.id,
-            status: 'draft',
-            deletedAt: {$ne: null},
-          },
+        .findItemOrCreate({
+          where: { ProductId: 'rent' },
+          include: [{
+            model: models.Order,
+            where: {
+              ClientId: this.id,
+              deletedAt: {$ne: null},
+            },
+          }],
           paranoid: false,
           defaults: {
             ClientId: this.id,
-            status: 'draft',
             label: 'Late fees',
             OrderItems: item,
-            deletedAt: D.format(Date.now()),
           },
-          include: [OrderItem],
         });
   };
 
