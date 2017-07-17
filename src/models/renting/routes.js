@@ -46,7 +46,7 @@ module.exports = function(app, models, Renting) {
 
         return Renting.scope(
           'comfortLevel', // required by #generateLease
-          'client+metadata', // required by #generateLease
+          'client+identity', // required by #generateLease
           'room+apartment', // required by #generateLease
           'depositOption'// required by #generateLease
         ).findById(ids[0]);

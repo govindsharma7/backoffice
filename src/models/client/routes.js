@@ -1,6 +1,6 @@
 const Promise     = require('bluebird');
 const uuid        = require('uuid/v4');
-const mapKeys     = require('lodash/mapKeys');
+const pickBy      = require('lodash/pickBy');
 const D           = require('date-fns');
 const Multer      = require('multer');
 const Liana       = require('forest-express-sequelize');
@@ -10,7 +10,7 @@ const {
   INVOICENINJA_URL,
 }                 = require('../../const');
 
-const _ = { mapKeys };
+const _ = { pickBy };
 
 module.exports = (app, models, Client) => {
   const LEA = Liana.ensureAuthenticated;
@@ -100,27 +100,26 @@ module.exports = (app, models, Client) => {
     in order to collect more information for a new client
   */
   app.post('/forest/actions/clientIdentity', multer, LEA, (req, res) => {
-    const values = _.mapKeys(JSON.parse(req.body.rawRequest), (value, key) => {
-      return key.replace(/(q[\d]*_)/g, '');
-    });
-    const phoneNumber = `${values.phoneNumber.area}${values.phoneNumber.phone}`;
+    Client.normalizeIdentityRecord(JSON.parse(req.body.rawRequest))
+      .then((identityRecord) => {
+        const { fullName, phoneNumber, clientId } = identityRecord;
+        const fieldsToUpdate = {
+          firstName: fullName.first,
+          lastName: fullName.last,
+          phoneNumber: Utils.isValidPhoneNumber( phoneNumber ) && phoneNumber,
+        };
 
-    Client
-      .findById(values.clientId)
-      .then((client) => {
         return Promise.all([
-          client.update({
-            firstName: values.fullName.first,
-            lastName: values.fullName.last,
+          Client.update(
+            _.pickBy(fieldsToUpdate, Boolean), // filter out falsy phoneNumber
+            { where: { id: clientId } },
+          ),
+          models.Metadata.create({
+            metadatable: 'Client',
+            MetadatableId: clientId,
+            name: 'clientIdentity',
+            value: JSON.stringify(identityRecord),
           }),
-          Utils.isValidPhoneNumber(phoneNumber) && client.update({ phoneNumber }),
-          models.Metadata
-            .create({
-              metadatable: 'Client',
-              MetadatableId: client.id,
-              name: 'clientIdentity',
-              value: JSON.stringify(values),
-            }),
         ]);
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))

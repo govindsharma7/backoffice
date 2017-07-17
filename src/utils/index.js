@@ -1,4 +1,3 @@
-const stripIndent                  = require('strip-indent');
 const addInternalRelationshipRoute = require('./addInternalRelationshipRoute');
 const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
 const calculatedPropsMemoizer      = require('./calculatedPropsMemoizer');
@@ -22,6 +21,7 @@ const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
 const isValidPhoneNumber           = require('./isValidPhoneNumber');
 const logAndSend                   = require('./logAndSend');
 const parseDBDate                  = require('./parseDBDate');
+const toSingleLine                 = require('./toSingleLine');
 const wrapHookPromise              = require('./wrapHookPromise');
 
 module.exports = {
@@ -44,6 +44,6 @@ module.exports = {
   isValidPhoneNumber,
   logAndSend,
   parseDBDate,
-  stripIndent,
+  toSingleLine,
   wrapHookPromise,
 };

@@ -25,13 +25,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     latestBookingDate: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get() {
         return D.parse(this.dataValues.latestBookingDate);
       },
     },
     latestCheckoutDate: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get() {
         return D.parse(this.dataValues.latestCheckoutDate);
       },

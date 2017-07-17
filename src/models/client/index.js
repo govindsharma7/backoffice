@@ -1,6 +1,9 @@
 const Promise    = require('bluebird');
+const mapKeys    = require('lodash/mapKeys');
 const D          = require('date-fns');
 const Payline    = require('payline');
+const Country    = require('countryjs');
+const Translate  = require('google-translate-api');
 const Ninja      = require('../../vendor/invoiceninja');
 const payline    = require('../../vendor/payline');
 const Utils      = require('../../utils');
@@ -12,6 +15,7 @@ const {
 const routes     = require('./routes');
 const collection = require('./collection');
 
+const _ = { mapKeys };
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -432,6 +436,69 @@ module.exports = (sequelize, DataTypes) => {
         }
 
         return error;
+      });
+  };
+
+  // the last argument is only used for testing purpose
+  Client.getIdentity = function(client, findOne = models.Metadata.findOne) {
+    return findOne({
+        where: {
+          MetadatableId: client.id,
+          name: 'clientIdentity',
+        },
+      })
+      .then((metadata) => {
+        if ( metadata == null ) {
+          return null;
+        }
+
+        const identity  = JSON.parse(metadata.value);
+        const {day, month, year} = identity.birthDate;
+
+        identity.age =
+          D.differenceInYears(Date.now(), `${year}-${month}-${day} Z`);
+
+        return identity;
+      });
+  };
+
+  Client.getDescriptionEn = function(client) {
+    return client != null && Utils.toSingleLine(`
+      ${client.firstName},
+      ${client.identity.age} years old ${client.identity.nationalityEn}
+      ${client.identity.isStudent ? 'student' : 'young worker'}
+    `);
+  };
+
+  Client.getDescriptionFr = function(client) {
+    return client != null && Utils.toSingleLine(`
+      ${client.firstName},
+      ${client.identity.isStudent ? 'étudiant(e)' : 'jeune actif(ve)'}
+      ${client.identity.nationalityFr} de ${client.identity.age} ans
+    `);
+  };
+
+  Client.normalizeIdentityRecord = function(raw) {
+    const values = _.mapKeys(raw, (value, key) => {
+      return key.replace(/(q[\d]*_)/g, '');
+    });
+    const phoneNumber = values.phoneNumber.phone.replace(/^0/, '');
+
+    values.phoneNumber = `${values.phoneNumber.area}${phoneNumber}`;
+    values.countryEn = values.nationality;
+    values.nationalityEn = Country.demonym(values.countryEn, 'name');
+    values.countryFr = Country.translations(values.countryEn, 'name').fr;
+    values.birthCountryEn = values.birthPlace.last;
+    values.isStudent = /^(Student|Intern)$/.test(values.frenchStatus);
+
+    return Promise.all([
+        Translate(values.birthCountryEn, { to: 'fr' }),
+        Translate(values.nationalityEn, { to: 'fr' }),
+      ])
+      .then(([{ text : birthCountryFr }, { text : nationalityFr }]) => {
+        Object.assign( values, { birthCountryFr, nationalityFr });
+
+        return values;
       });
   };
 
