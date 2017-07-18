@@ -733,7 +733,6 @@ module.exports = (sequelize, DataTypes) => {
     if (renting.housingPack) {
       return Renting.scope('room+apartment').findById(renting.id)
         .then((renting) => {
-        console.log(renting);
 
           return Promise.mapSeries([
           { suffix: 'RentOrder', args: [renting.bookingDate] },
