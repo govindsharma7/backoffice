@@ -162,31 +162,36 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   // Prorate the price and service fees of a renting for a given month
-  Renting.prototype.prorate = function(date) {
+  Renting.prorate = function(renting, date) {
+    const { bookingDate, price, serviceFees } = renting;
+    const checkoutDate = renting.get('checkoutDate');
     const daysInMonth = D.getDaysInMonth(date);
     const startOfMonth = D.startOfMonth(date);
     const endOfMonth = D.endOfMonth(date);
     let daysStayed = daysInMonth;
 
     if (
-      this.bookingDate > endOfMonth ||
-      ( this.checkoutDate != null && this.checkoutDate < startOfMonth )
+      bookingDate > endOfMonth ||
+      ( checkoutDate != null && checkoutDate < startOfMonth )
     ) {
       daysStayed = 0;
     }
     else {
-      if ( this.bookingDate > startOfMonth ) {
-        daysStayed -= D.getDate(this.bookingDate) - 1;
+      if ( bookingDate >= startOfMonth ) {
+        daysStayed -= D.getDate(bookingDate) - 1;
       }
-      if ( this.checkoutDate != null && this.checkoutDate < endOfMonth ) {
-        daysStayed -= daysInMonth - D.getDate(this.checkoutDate);
+      if ( checkoutDate != null && checkoutDate < endOfMonth ) {
+        daysStayed -= daysInMonth - D.getDate(checkoutDate);
       }
     }
 
     return {
-      price: Utils.roundBy100(( this.price / daysInMonth ) * daysStayed),
-      serviceFees: Utils.roundBy100(( this.serviceFees / daysInMonth ) * daysStayed),
+      price: Utils.roundBy100(( price / daysInMonth ) * daysStayed),
+      serviceFees: Utils.roundBy100(( serviceFees / daysInMonth ) * daysStayed),
     };
+  };
+  Renting.prototype.prorate = function(date) {
+    return Renting.prorate(this, date);
   };
 
   // Propagate the status of the renting to that of first-rent/deposit/pack orders

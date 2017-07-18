@@ -2,6 +2,7 @@
 
 const Promise = require('bluebird');
 const D       = require('date-fns');
+const _       = require('lodash');
 const models  = require('../src/models');
 
 const {Client} = models;
@@ -25,8 +26,10 @@ return Client.scope({ method: ['rentOrdersFor', month] }, 'uncashedDepositCount'
   })
   // Filter-out clients with no active rentings
   .then((tuples) => {
-    return tuples.filter(([client, rentings]) => {
-      console.log(`${client.id} has ${rentings.length} rentings`);
+    return tuples.filter(([{firstName, lastName}, rentings]) => {
+      const fullName = _.padEnd(`${firstName}  ${lastName}`, 35);
+
+      console.log(`${fullName} has ${rentings.length} rentings`);
       return rentings.length > 0;
     });
   })

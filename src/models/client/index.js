@@ -8,6 +8,7 @@ const {
   TRASH_SCOPES,
   LATE_FEES,
   UNCASHED_DEPOSIT_FEE,
+  DATETIME_FORMAT,
 }                = require('../../const');
 const routes     = require('./routes');
 const collection = require('./collection');
@@ -187,13 +188,14 @@ module.exports = (sequelize, DataTypes) => {
 
   // TODO: this can probably be improved to use a Client scope
   Client.prototype.getRentingsFor = function(date = Date.now()) {
-    const startOfMonth = D.format(D.startOfMonth(date));
+    const startOfMonth = D.format(D.startOfMonth(date), DATETIME_FORMAT);
 
     return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
       where: {
         ClientId: this.id,
         bookingDate: { $lte: D.endOfMonth(date) },
         $and: sequelize.literal(
+          // /!\ startOfMonth must be formatted using DATETIME_FORMAT
           `(Events.id IS NULL OR Events.startDate >= '${startOfMonth}')`
         ),
       },

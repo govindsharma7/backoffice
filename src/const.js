@@ -37,6 +37,8 @@ module.exports = {
     },
   },
 
+  DATETIME_FORMAT: 'YYYY-MM-DD HH:mm:ss.SSSZ',
+
   INVOICENINJA_URL:
     `${config.INVOICENINJA_PROTOCOL || 'http'}://${config.INVOICENINJA_HOST}`,
 

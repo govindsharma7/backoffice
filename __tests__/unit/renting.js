@@ -1,5 +1,4 @@
 const D         = require('date-fns');
-const Promise   = require('bluebird');
 const fixtures  = require('../../__fixtures__/renting');
 const Utils     = require('../../src/utils');
 const models    = require('../../src/models');
@@ -76,38 +75,81 @@ describe('Renting', () => {
     });
   });
 
-  describe('#prorate()', () => {
-    test('it calculates the prorated price and service fees', () => {
-      const scoped = Renting.scope('checkoutDate');
+  describe('.prorate()', () => {
+    const price = 20000;
+    const serviceFees = 3000;
+    const get = () => { return null; };
 
-      return Promise.all([
-          scoped.findById(renting1.id),
-          scoped.findById(renting2.id),
-        ])
-        .then(([renting1, renting2]) => {
-          const result1 = renting1.prorate(D.parse('2015-01 Z'));
+    test('it calculates the prorata for the "booking month"', () => {
+      return expect(Renting.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-20'),
+        get,
+      }, D.parse('2015-01 Z'))).toEqual({
+        price: Utils.roundBy100(price / 31 * (31 - (20 - 1))),
+        serviceFees: Utils.roundBy100(serviceFees / 31 * (31 - (20 - 1))),
+      });
+    });
 
-          expect(result1).toEqual({
-            price: Utils.roundBy100(20000 / 31 * (31 - (20 - 1))),
-            serviceFees: Utils.roundBy100(3000 / 31 * (31 - (20 - 1))),
-          });
+    test('it calculates the prorata for "checkout month"', () => {
+      return expect(Renting.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-20'),
+        get: () => { return D.parse('2015-02-10'); },
+      }, D.parse('2015-02 Z'))).toEqual({
+        price: Utils.roundBy100(price / 28 * 10),
+        serviceFees: Utils.roundBy100(serviceFees / 28 * 10),
+      });
+    });
 
-          const result2 = renting1.prorate(D.parse('2015-02 Z'));
+    test('it calculates the prorata for "booking+checkout month"', () => {
+      return expect(Renting.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-03-03'),
+        get: () => { return D.parse('2015-03-28'); },
+      }, D.parse('2015-03 Z'))).toEqual({
+        price: Utils.roundBy100(price / 31 * (28 - 2)),
+        serviceFees: Utils.roundBy100(serviceFees / 31 * (28 - 2)),
+      });
+    });
 
-          expect(result2).toEqual({
-            price: Utils.roundBy100(20000 / 28 * 10),
-            serviceFees: Utils.roundBy100(3000 / 28 * 10),
-          });
+    test('it bills a full month when checkout is the last day of the month', () => {
+      return expect(Renting.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-01'),
+        get: () => { return D.parse('2015-03-31'); },
+      }, D.parse('2015-03 Z'))).toEqual({
+        price: Utils.roundBy100(price),
+        serviceFees: Utils.roundBy100(serviceFees),
+      });
+    });
 
-          const result3 = renting2.prorate(D.parse('2015-03 Z'));
+    test('it bills a single day when checkout is the first day of the month', () => {
+      return expect(Renting.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-01'),
+        get: () => { return D.parse('2015-03-01'); },
+      }, D.parse('2015-03 Z'))).toEqual({
+        price: Utils.roundBy100(price / 31),
+        serviceFees: Utils.roundBy100(serviceFees / 31),
+      });
+    });
 
-          expect(result3).toEqual({
-            price: Utils.roundBy100(20000 / 31 * (28 - 2)),
-            serviceFees: Utils.roundBy100(3000 / 31 * (28 - 2)),
-          });
-
-          return null;
-        });
+    test('it bills a single day when booking is the last day of the month', () => {
+      return expect(Renting.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-31'),
+        get,
+      }, D.parse('2015-01 Z'))).toEqual({
+        price: Utils.roundBy100(price / 31),
+        serviceFees: Utils.roundBy100(serviceFees / 31),
+      });
     });
   });
 
