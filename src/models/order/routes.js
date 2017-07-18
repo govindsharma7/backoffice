@@ -63,5 +63,16 @@ module.exports = (app, models, Order) => {
       .catch(Utils.logAndSend(res));
   });
 
+  Utils.addInternalRelationshipRoute({
+    app,
+    sourceModel: Order,
+    associatedModel: models.OrderItem,
+    routeName: 'OrderItems',
+    scope: 'untrashed',
+    where: (req) => {
+      return { OrderId: req.params.recordId };
+    },
+  });
+
   Utils.addRestoreAndDestroyRoutes(app, Order);
 };

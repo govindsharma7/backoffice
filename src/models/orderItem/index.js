@@ -1,8 +1,11 @@
 const Promise          = require('bluebird');
 const Liana            = require('forest-express-sequelize');
 const Utils            = require('../../utils');
-const {TRASH_SCOPES}   = require('../../const');
-const collection     = require('./collection');
+const {
+  TRASH_SCOPES,
+  UNTRASHED_SCOPE,
+}                      = require('../../const');
+const collection       = require('./collection');
 
 module.exports = (sequelize, DataTypes) => {
   const OrderItem = sequelize.define('OrderItem', {
@@ -42,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     paranoid: true,
-    scopes: TRASH_SCOPES,
+    scopes: Object.assign({}, TRASH_SCOPES, UNTRASHED_SCOPE),
   });
   const {models} = sequelize;
 
