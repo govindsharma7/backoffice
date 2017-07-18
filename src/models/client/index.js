@@ -363,49 +363,6 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.prototype.applyLateFees = function() {
-<<<<<<< HEAD
-    return this.calculateTodaysLateFees()
-      .then((lateFees) => {
-        if ( lateFees === 0 ) {
-          throw new Error('No late fees');
-        }
-
-        return Promise.all([
-          this.findOrCreateCurrentOrder([{
-            label: 'Late fees',
-            unitPrice: lateFees,
-            ProductId: 'late-fees',
-          }]),
-          lateFees,
-        ]);
-      })
-      .then(([[order, isCreated], lateFees]) => {
-        const orderItem = order.OrderItems
-          .find((item) => {
-            return item.ProductId === 'late-fees';
-          });
-
-        /*
-          Check if an order item already exists and hasn't been updated today
-          to avoid incrementing its unitprice twice or more per day
-        */
-        if ( isCreated || orderItem.updatedAt >= D.startOfDay(Date.now()) ) {
-          return order;
-        }
-        /*eslint-disable promise/no-nesting */
-        return orderItem.increment('unitPrice', {by: lateFees})
-          .then(() => {
-            return order;
-          });
-        /*eslint-enable promise/no-nesting */
-      })
-      .catch((error) => {
-        if (error.message === 'No late fees') {
-          return true;
-        }
-
-        return error;
-=======
     return this.findUnpaidOrders()
       .map((order) => {
         const lateFees = D.differenceInDays(Date.now(), order.dueDate);
@@ -425,7 +382,6 @@ module.exports = (sequelize, DataTypes) => {
             });
         })
         .thenReturn(order);
->>>>>>> Late-fees_method_updated
       });
   };
 
