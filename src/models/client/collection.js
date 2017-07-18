@@ -52,7 +52,7 @@ module.exports = function(models) {
       field: 'Identity Record Form',
       type: 'String',
       get(object) {
-        return `https://form.jotformpro.com/50392735671964?clientId=${object.id}`;
+        return `https://form.jotformpro.com/50392735671964?clientId=${object.email}`;
       },
     }, {
       field: 'Description En',

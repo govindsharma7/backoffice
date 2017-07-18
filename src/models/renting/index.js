@@ -66,6 +66,12 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'draft',
       allowNull: false,
     },
+    housingPack: {
+      type:                     DataTypes.VIRTUAL,
+    },
+    discount: {
+      type:                     DataTypes.VIRTUAL,
+    },
     checkinDate: {
       type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get: checkinoutDateGetter('checkin'),
@@ -429,7 +435,7 @@ module.exports = (sequelize, DataTypes) => {
             return event.update({ startDate, endDate: startDate }, transaction);
           }
 
-          return models.event.create({
+          return models.Event.create({
             startDate,
             endDate: startDate,
             summary: `Refund deposit ${firstName} ${lastName}`,
@@ -715,6 +721,34 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     return renting;
+  });
+
+  Renting.hook('afterCreate', (renting) => {
+    var {housingPack, discount} = renting;
+
+    if ( discount != null ) {
+      discount *= 100;
+    }
+
+    if (renting.housingPack) {
+      return Renting.scope('room+apartment').findById(renting.id)
+        .then((renting) => {
+        console.log(renting);
+
+          return Promise.mapSeries([
+          { suffix: 'RentOrder', args: [renting.bookingDate] },
+          { suffix: 'DepositOrder' },
+          { suffix: 'PackOrder', args: [housingPack, discount] },
+        ], (def) => {
+          return renting[`findOrCreate${def.suffix}`].apply(renting, def.args);
+          });
+        })
+        .then(([[rentOrder], [depositOrder], [packOrder]]) => {
+          return models.Order
+            .ninjaCreateInvoices([rentOrder, depositOrder, packOrder]);
+        });
+    }
+    return null;
   });
 
   Renting.beforeLianaInit = routes;

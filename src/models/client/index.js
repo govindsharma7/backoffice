@@ -143,6 +143,16 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Client.id'],
     });
+
+    Client.addScope('renting', {
+      include: [{
+        model: models.Renting,
+        include: [{
+          model: models.Room,
+        }],
+      }],
+    });
+
     Client.addScope('currentApartment', function(date = Date.now()) {
       return {
         where: { $or: [
