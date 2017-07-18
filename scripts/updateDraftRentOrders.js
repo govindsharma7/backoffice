@@ -6,7 +6,7 @@ const models  = require('../src/models');
 const {Order} = models;
 
 
-return Order.scope('rentOrders')
+return Order.scope('draftRentOrders')
   .findAll()
   .then((orders) => {
     return orders.map((order) => {

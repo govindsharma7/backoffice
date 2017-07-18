@@ -3,6 +3,7 @@ const D                = require('date-fns');
 const models           = require('../../src/models');
 const fixtures         = require('../../__fixtures__/client');
 
+
 let client;
 let client2;
 let client3;
@@ -36,7 +37,7 @@ describe('Client', () => {
               return expect(orderitem.ProductId).toEqual('rent');
             });
           });
-          return expect(client.Orders.length).toEqual(2);
+          return expect(client.Orders.length).toEqual(3);
       });
     });
 
@@ -145,45 +146,38 @@ describe('Client', () => {
     });
   });
 
-  describe('#claculateTodaysLateFees()', () => {
-    test('it should return late fee amount for a client', () => {
-      return models.Client.scope('rentOrders')
-        .findById(client2.id)
-        .then((client) => {
-            return client.calculateTodaysLateFees();
-        })
-        .then((lateFees) => {
-          expect(lateFees).toEqual(1000);
-          return true;
-        });
-    });
-  });
-
   describe('#applyLateFees()', () => {
     test('it should create a draft order with late fees', () => {
-      return models.Client.scope('rentOrders')
+      return models.Client
         .findById(client2.id)
         .then((client) => {
           return client.applyLateFees();
         })
-        .then((result) => {
-          expect(result.OrderItems[0].unitPrice).toEqual(1000);
-          return true;
+        .map((order) => {
+          return order.getOrderItems({
+            where: {ProductId: 'late-fees'},
+          })
+          .then((orderItems) => {
+            return expect(orderItems[0].quantity)
+              .toEqual(D.differenceInDays(Date.now(), order.dueDate));
+          });
         });
     });
 
     test('it shouldn\'t increment late fees as it has been update today', () => {
-      return models.Client.scope('rentOrders')
+      return models.Client
         .findById(client2.id)
         .then((client) => {
           return client.applyLateFees();
         })
-        .then((order) => {
-          return order.reload({paranoid: false});
-        })
-        .then((order) => {
-          expect(order.OrderItems[0].unitPrice).toEqual(1000);
-          return true;
+        .map((order) => {
+          return order.getOrderItems({
+            where: {ProductId: 'late-fees'},
+          })
+          .then((orderItems) => {
+            return expect(orderItems[0].quantity)
+              .toEqual(D.differenceInDays(Date.now(), order.dueDate));
+          });
         });
       });
   });

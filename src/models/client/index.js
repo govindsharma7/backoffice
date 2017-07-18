@@ -344,94 +344,44 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Client.prototype.calculateTodaysLateFees = function() {
-    const {Orders} = this;
-    var lateFees;
+  Client.prototype.findUnpaidOrders = function () {
+    const {Order} = models;
 
-    return Promise.filter(Orders, (order) => {
-      /*eslint-disable promise/no-nesting */
-      return order.getCalculatedProps()
-        .then(({balance}) => {
-          return balance < 0;
-        });
-      /*eslint-enable promise/no-nesting */
-      })
-      .then((unpaidOrders) => {
-        if ( unpaidOrders.length > 0 ) {
-          lateFees = unpaidOrders.length * LATE_FEES;
-
-          return lateFees;
-        }
-
-        return 0;
+     return Order.scope('rentOrders')
+        .findAll({
+          where: {
+            ClientId: this.id,
+            dueDate: {$lt: Date.now()},
+          },
+        })
+        .filter((order) => {
+          return order.getCalculatedProps()
+            .then(({balance}) => {
+              return balance < 0;
+          });
       });
   };
 
-  Client.prototype.findOrCreateCurrentOrder = function (item) {
-    const {Order} = models;
-
-     return Order
-        .findItemOrCreate({
-          where: { ProductId: 'rent' },
-          include: [{
-            model: models.Order,
-            where: {
-              ClientId: this.id,
-              deletedAt: {$ne: null},
-            },
-          }],
-          paranoid: false,
-          defaults: {
-            ClientId: this.id,
-            label: 'Late fees',
-            OrderItems: item,
-          },
-        });
-  };
-
   Client.prototype.applyLateFees = function() {
+    return this.findUnpaidOrders()
+      .map((order) => {
+        const lateFees = D.differenceInDays(Date.now(), order.dueDate);
 
-    return this.calculateTodaysLateFees()
-      .then((lateFees) => {
-        if ( lateFees === 0 ) {
-          throw new Error('No late fees');
-        }
-
-        return Promise.all([
-          this.findOrCreateCurrentOrder([{
-            label: 'Late fees',
-            unitPrice: lateFees,
-            ProductId: 'late-fees',
-          }]),
-          lateFees,
-        ]);
-      })
-      .then(([[order, isCreated], lateFees]) => {
-        const orderItem = order.OrderItems
-          .find((item) => {
-            return item.ProductId === 'late-fees';
-          });
-
-        /*
-          Check if an order item already exists and hasn't been updated today
-          to avoid incrementing its unitprice twice or more per day
-        */
-        if ( isCreated || orderItem.updatedAt >= D.startOfDay(Date.now()) ) {
-          return order;
-        }
-        /*eslint-disable promise/no-nesting */
-        return orderItem.increment('unitPrice', {by: lateFees})
-          .then(() => {
-            return order;
-          });
-        /*eslint-enable promise/no-nesting */
-      })
-      .catch((error) => {
-        if (error.message === 'No late fees') {
-          return true;
-        }
-
-        return error;
+        return order.getOrderItems({
+          where: {ProductId: 'late-fees'},
+        })
+        .then((orderItem) => {
+          return models.OrderItem
+            .upsert({
+              id: orderItem[0] && orderItem[0].id,
+              OrderId: order.id,
+              ProductId: 'late-fees',
+              quantity: lateFees,
+              unitPrice: LATE_FEES,
+              label: 'Late fees',
+            });
+        })
+        .thenReturn(order);
       });
   };
 
