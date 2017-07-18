@@ -17,31 +17,11 @@ module.exports = function(models) {
     }, {
       field: 'current status',
       type: 'Enum',
-      enums: ['current',
-              'past',
-              'future',
-              'draft'],
+      enums: ['current', 'past', 'future', 'draft'],
       get(object) {
         return models.Renting.scope('checkoutDate')
           .findById(object.id)
-          .then((renting) => {
-            if ( renting.get('checkoutDate') &&
-                renting.get('checkoutDate') < Date.now() ) {
-              return 'past';
-            }
-            else if ( renting.status === 'draft' ) {
-              return 'draft';
-            }
-            else if ( renting.bookingDate > Date.now() ) {
-              return 'future';
-            }
-            else if ( renting.bookingDate < Date.now() &&
-                (renting.get('checkoutDate') == null ||
-                 renting.get('checkoutDate') > Date.now()) ) {
-              return 'current';
-            }
-            return null;
-          });
+          .then(models.Renting.getStatus);
       },
     }],
     actions:[{

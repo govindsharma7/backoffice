@@ -50,17 +50,13 @@ module.exports = function(models) {
         return `${object.firstName} ${object.lastName}`;
       },
       search(query, search) {
-        let s = models.sequelize;
-        let split = search.split(' ');
+        const split = search.split(' ');
 
-        var searchCondition = s.and(
+        // modify the first $or of the search query
+        _.find(query.where.$and, '$or').$or.push(models.sequelize.and(
           { firstName: { $like: `%${split[0]}%` }},
           { lastName: { $like: `%${split[1]}%` }}
-        );
-
-        let searchConditions = _.find(query.where.$and, '$or');
-
-        searchConditions.$or.push(searchCondition);
+        ));
       },
     }, {
       field: 'ninja',
