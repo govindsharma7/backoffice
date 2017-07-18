@@ -390,7 +390,6 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.prototype.applyLateFees = function() {
-
     return this.calculateTodaysLateFees()
       .then((lateFees) => {
         if ( lateFees === 0 ) {

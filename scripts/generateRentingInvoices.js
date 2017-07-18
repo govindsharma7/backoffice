@@ -36,10 +36,10 @@ return Client.scope({ method: ['rentOrdersFor', month] }, 'uncashedDepositCount'
     return Promise.reduce(tuples, (prev, [client, rentings]) => {
       return client
         .findOrCreateRentOrder(rentings, month)
-        .tap((order) => {
+        .tap(([order]) => {
           return order.pickReceiptNumber();
         })
-        .then((order) => {
+        .then(([order]) => {
           return order.ninjaCreate();
         })
         .catch((err) => {
