@@ -86,7 +86,7 @@ module.exports = fixtures((u) => {
       receiptNumber: u.int(4),
       label: 'March Invoice',
       ClientId: u.id('client-2'),
-      dueDate: D.parse('2016-01-01 Z'),
+      dueDate: D.parse('2017-07-01 Z'),
     }, {
       id: u.id('order-5'),
       type: 'deposit',
@@ -115,6 +115,13 @@ module.exports = fixtures((u) => {
       label: 'February Invoice',
       ClientId: u.id('client-4'),
       dueDate: D.parse('2017-02-01 Z'),
+    }, {
+      id: u.id('order-9'),
+      type: 'debit',
+      receiptNumber: u.int(9),
+      label: 'July Invoice',
+      ClientId: u.id('client-2'),
+      dueDate: D.parse('2017-03-21 Z'),
     }],
     Renting: [{
       id: u.id('renting-1'),
@@ -196,6 +203,20 @@ module.exports = fixtures((u) => {
       label: 'test item 7',
       unitPrice: 250,
       OrderId: u.id('order-8'),
+      ProductId: 'rent',
+    }, {
+      id: u.id('orderitem-8'),
+      label: 'Late Fees',
+      quantity: 10,
+      unitPrice: 1000,
+      vatRate: 0,
+      OrderId: u.id('order-4'),
+      ProductId: 'late-fees',
+    }, {
+      id: u.id('orderitem-9'),
+      label: 'test item 9',
+      unitPrice: 2000,
+      OrderId: u.id('order-9'),
       ProductId: 'rent',
     }],
     Event: [{

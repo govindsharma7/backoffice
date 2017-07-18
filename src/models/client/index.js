@@ -344,52 +344,26 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Client.prototype.calculateTodaysLateFees = function() {
-    const {Orders} = this;
-    var lateFees;
+  Client.prototype.findUnpaidOrders = function () {
+    const {Order} = models;
 
-    return Promise.filter(Orders, (order) => {
-      /*eslint-disable promise/no-nesting */
-      return order.getCalculatedProps()
-        .then(({balance}) => {
-          return balance < 0;
-        });
-      /*eslint-enable promise/no-nesting */
-      })
-      .then((unpaidOrders) => {
-        if ( unpaidOrders.length > 0 ) {
-          lateFees = unpaidOrders.length * LATE_FEES;
-
-          return lateFees;
-        }
-
-        return 0;
+     return Order.scope('rentOrders')
+        .findAll({
+          where: {
+            ClientId: this.id,
+            dueDate: {$lt: Date.now()},
+          },
+        })
+        .filter((order) => {
+          return order.getCalculatedProps()
+            .then(({balance}) => {
+              return balance < 0;
+          });
       });
   };
 
-  Client.prototype.findOrCreateCurrentOrder = function (item) {
-    const {Order, OrderItem} = models;
-
-     return Order
-        .findOrCreate({
-          where: {
-            ClientId: this.id,
-            status: 'draft',
-            deletedAt: {$ne: null},
-          },
-          paranoid: false,
-          defaults: {
-            ClientId: this.id,
-            status: 'draft',
-            label: 'Late fees',
-            OrderItems: item,
-            deletedAt: D.format(Date.now()),
-          },
-          include: [OrderItem],
-        });
-  };
-
   Client.prototype.applyLateFees = function() {
+<<<<<<< HEAD
     return this.calculateTodaysLateFees()
       .then((lateFees) => {
         if ( lateFees === 0 ) {
@@ -431,6 +405,27 @@ module.exports = (sequelize, DataTypes) => {
         }
 
         return error;
+=======
+    return this.findUnpaidOrders()
+      .map((order) => {
+        const lateFees = D.differenceInDays(Date.now(), order.dueDate);
+
+        return order.getOrderItems({
+          where: {ProductId: 'late-fees'},
+        })
+        .then((orderItem) => {
+          return models.OrderItem
+            .upsert({
+              id: orderItem[0] && orderItem[0].id,
+              OrderId: order.id,
+              ProductId: 'late-fees',
+              quantity: lateFees,
+              unitPrice: LATE_FEES,
+              label: 'Late fees',
+            });
+        })
+        .thenReturn(order);
+>>>>>>> Late-fees_method_updated
       });
   };
 

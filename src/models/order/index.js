@@ -74,6 +74,15 @@ module.exports = (sequelize, DataTypes) => {
         model: models.OrderItem,
         where: {
           ProductId: 'rent',
+        },
+      }],
+    });
+
+    Order.addScope('draftRentOrders', {
+      include: [{
+        model: models.OrderItem,
+        where: {
+          ProductId: 'rent',
           status: 'draft',
         },
         include: [{
