@@ -655,12 +655,19 @@ module.exports = (sequelize, DataTypes) => {
     const {bookingDate} = renting;
     const now = Date.now();
 
-    if ( checkoutDate && checkoutDate < now ) {
+    if ( renting.status === 'draft' ) {
+      if ( checkoutDate && checkoutDate < now) {
+        return 'draft/past';
+      }
+      else if ( bookingDate > now ) {
+        return 'draft/future';
+      }
+      return 'draft/current';
+    }
+    else if ( checkoutDate && checkoutDate < now ) {
       return 'past';
     }
-    else if ( renting.status === 'draft' ) {
-      return 'draft';
-    }
+
     else if ( bookingDate > now ) {
       return 'future';
     }

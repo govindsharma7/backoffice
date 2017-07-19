@@ -17,7 +17,7 @@ module.exports = function(models) {
     }, {
       field: 'current status',
       type: 'Enum',
-      enums: ['current', 'past', 'future', 'draft'],
+      enums: ['current', 'past', 'future', 'draft/current', 'draft/future', 'draft/past'],
       get(object) {
         return models.Renting.scope('checkoutDate')
           .findById(object.id)

@@ -111,4 +111,34 @@ describe('Renting', () => {
     });
   });
 
+  describe('.getStatus', () => {
+    test('it should return the Renting\'s status', () => {
+      expect(Renting.getStatus({
+        get: () => { return D.parse('2016-03-03 Z'); },
+        status: 'active',
+        bookingDate: D.parse('2016-01-01 Z'),
+      })).toEqual('past');
+      expect(Renting.getStatus({
+        get: () => { return D.parse('2016-03-03 Z'); },
+        status: 'draft',
+        bookingDate: D.parse('2016-01-01 Z'),
+      })).toEqual('draft/past');
+      expect(Renting.getStatus({
+        get: () => { return D.parse('2018-03-03 Z'); },
+        status: 'draft',
+        bookingDate: D.parse('2018-01-01 Z'),
+      })).toEqual('draft/future');
+      expect(Renting.getStatus({
+        get: () => { return D.parse('2018-03-03 Z'); },
+        status: 'draft',
+        bookingDate: D.parse('2017-01-01 Z'),
+      })).toEqual('draft/current');
+      expect(Renting.getStatus({
+        get: () => { return D.parse('2018-03-03 Z'); },
+        status: 'active',
+        bookingDate: D.parse('2018-01-01 Z'),
+      })).toEqual('future');
+    });
+  });
+
 });
