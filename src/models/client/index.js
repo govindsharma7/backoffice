@@ -3,7 +3,7 @@ const mapKeys    = require('lodash/mapKeys');
 const D          = require('date-fns');
 const Payline    = require('payline');
 const Country    = require('countryjs');
-const Translate  = require('google-translate-api');
+// const Translate  = require('google-translate-api');
 const Ninja      = require('../../vendor/invoiceninja');
 const payline    = require('../../vendor/payline');
 const Utils      = require('../../utils');
@@ -443,15 +443,16 @@ module.exports = (sequelize, DataTypes) => {
     values.birthCountryEn = values.birthPlace.last;
     values.isStudent = /^(Student|Intern)$/.test(values.frenchStatus);
 
-    return Promise.all([
-        Translate(values.birthCountryEn, { to: 'fr' }),
-        Translate(values.nationalityEn, { to: 'fr' }),
-      ])
-      .then(([{ text : birthCountryFr }, { text : nationalityFr }]) => {
-        Object.assign( values, { birthCountryFr, nationalityFr });
-
-        return values;
-      });
+    return values;
+    // return Promise.all([
+    //     Translate(values.birthCountryEn, { to: 'fr' }),
+    //     Translate(values.nationalityEn, { to: 'fr' }),
+    //   ])
+    //   .then(([{ text : birthCountryFr }, { text : nationalityFr }]) => {
+    //     Object.assign( values, { birthCountryFr, nationalityFr });
+    //
+    //     return values;
+    //   });
   };
 
   /*
