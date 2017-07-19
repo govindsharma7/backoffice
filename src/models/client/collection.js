@@ -1,43 +1,21 @@
-const differenceInYears = require('date-fns/difference_in_years');
-const values            = require('lodash/values');
-const Utils             = require('../../utils');
 const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
 }                       = require('../../const');
 
-const D = { differenceInYears };
-const _ = { values };
-const cache = new WeakMap();
-
 module.exports = function(models) {
-  function getClientIdentyMemoized(object) {
+  const {Client} = models;
+  const cache = new WeakMap();
+
+  function getIdentyMemoized(object) {
     if ( cache.has(object) ) {
-      return cache.get(object);
+     return cache.get(object);
     }
 
-    const promise = models.Metadata.findOne({
-        where: {
-          MetadatableId: object.id,
-          name: 'clientIdentity',
-        },
-      })
-      .then((instance) => {
-        if ( instance == null ) {
-          return instance;
-        }
-        const data  = JSON.parse(instance.value);
-        const birthDate = _.values(data.birthDate).reverse().join('-');
-
-        return {
-          nationality: data.nationality,
-          status: /^(Student|Intern)$/.test(data.frenchStatus) ? 'Student' : 'Worker',
-          age: D.differenceInYears(Date.now(), birthDate),
-        };
-      })
-      .tapCatch(console.error);
+    const promise = Client.getIdentity(object);
 
     cache.set(object, promise);
+
     return promise;
   }
 
@@ -68,34 +46,18 @@ module.exports = function(models) {
       field: 'Description En',
       type: 'String',
       get(object) {
-        return getClientIdentyMemoized(object)
-          .then((result) => {
-            if ( result == null ) {
-              return null;
-            }
-
-            return Utils.stripIndent(`\
-              ${object.firstName}, ${result.age} \
-              years old ${result.status} from ${result.nationality}`
-            );
+        return getIdentyMemoized(object)
+          .then((identity) => {
+            return Client.getDescriptionEn(Object.assign({ identity }, object));
           });
       },
     }, {
       field: 'Description Fr',
       type: 'String',
       get(object) {
-        return getClientIdentyMemoized(object)
-          .then((result) => {
-            if ( result == null ) {
-              return result;
-            }
-
-            return Utils.stripIndent(`\
-              ${object.firstName}, \
-              ${result.status === 'Student' ? 'étudiant(e)' : 'jeune actif(ve)'} \
-              de ${result.age} ans \
-              venant de ${result.nationality}`
-            );
+        return getIdentyMemoized(object)
+          .then((identity) => {
+            return Client.getDescriptionFr(Object.assign({ identity }, object));
           });
       },
     }, {

@@ -182,4 +182,79 @@ describe('Client', () => {
       });
   });
 
+  describe('.getIdentity', () => {
+    test('it fetches and parse the identity record of the client', () => {
+      return models.Client
+        .getIdentity({}, () => {
+            return Promise.resolve({ value: JSON.stringify(
+              { birthDate: { year: '1986', month: '07', day: '23' } }
+            ) });
+          }
+        )
+        .then((identity) => {
+          return expect(identity).toEqual({
+            birthDate: { year: '1986', month: '07', day: '23' },
+            age: D.differenceInYears(Date.now(), '1986-07-23 Z'),
+          });
+        });
+    });
+  });
+
+  describe('.getDescriptionEn/Fr', () => {
+    const client = {
+      firstName: 'Victor',
+      identity: {
+        age: 30,
+        nationalityEn: 'American',
+        nationalityFr: 'américain',
+        isStudent: false,
+      },
+    };
+
+    test('it generates a valid English description of the client', () => {
+      return expect(models.Client.getDescriptionEn(client)).toEqual(
+        'Victor, 30 years old American young worker'
+      );
+    });
+
+    test('it generates a valid English description of the client', () => {
+      return expect(models.Client.getDescriptionFr(client)).toEqual(
+        'Victor, jeune actif(ve) américain de 30 ans'
+      );
+    });
+  });
+
+  describe('.normalizeIdentityRecord', () => {
+    test('it adds nationality and translate country and nationality to FR', () => {
+      const input = {
+        'q01_phoneNumber': { area: '+33', phone: '0671114171' },
+        'q02_nationality': 'United States',
+        'q03_birthPlace': { last: 'England' },
+        'q04_frenchStatus': 'Intern',
+        'q06_something': 'else',
+      };
+
+      const expected = {
+        phoneNumber: '+33671114171',
+        nationality: 'United States',
+        nationalityEn: 'American',
+        nationalityFr: 'américain',
+        countryEn: 'United States',
+        countryFr: 'États-Unis',
+        birthPlace: { last: 'England' },
+        birthCountryEn: 'England',
+        birthCountryFr: 'Angleterre',
+        frenchStatus: 'Intern',
+        isStudent: true,
+        something: 'else',
+      };
+
+      return models.Client
+        .normalizeIdentityRecord(input)
+        .then((result) => {
+          return expect(result).toEqual(expected);
+        });
+    });
+  });
+
 });

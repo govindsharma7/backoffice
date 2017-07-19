@@ -19,11 +19,10 @@ calculatedPropsMemoizer.prototype.getCalculatedProps = function(object) {
     return this.cache.get(object);
   }
 
-  const promise = object
-    .getCalculatedProps()
-    .tapCatch(console.error);
+  const promise = object.getCalculatedProps();
 
   this.cache.set(object, promise);
+
   return promise;
 };
 

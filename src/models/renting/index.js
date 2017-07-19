@@ -2,7 +2,7 @@ const Promise               = require('bluebird');
 const D                     = require('date-fns');
 const capitalize            = require('lodash/capitalize');
 const values                = require('lodash/values');
-const webMerge   = require('../../vendor/webmerge');
+const webMerge              = require('../../vendor/webmerge');
 const Utils                 = require('../../utils');
 const {
   TRASH_SCOPES,
@@ -67,11 +67,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     checkinDate: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get: checkinoutDateGetter('checkin'),
     },
     checkoutDate: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
       get: checkinoutDateGetter('checkout'),
     },
   }, {
@@ -149,13 +149,14 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Renting.addScope('client+metadata', {
+    Renting.addScope('client+identity', {
       include: [{
         model: models.Client,
         include: [{
           required: false,
           model: models.Metadata,
           where: { name: 'clientIdentity' },
+          limit: 1,
         }],
       }],
     });
@@ -472,10 +473,11 @@ module.exports = (sequelize, DataTypes) => {
                 startDate,
                 endDate,
                 summary: `${type} ${firstName} ${lastName}`,
-                description: Utils.stripIndent(`\
+                description: Utils.toSingleLine(`
                   ${firstName} ${lastName},
                   ${roomName},
-                  tel: ${phoneNumber || 'N/A'}`),
+                  tel: ${phoneNumber || 'N/A'}
+                `),
                 eventable: 'Renting',
                 EventableId: this.id,
                 Terms: [term],
@@ -503,10 +505,11 @@ module.exports = (sequelize, DataTypes) => {
         isRefundDeposit ? 'refund-deposit' : Apartment.addressCity
       ],
       resource: isRefundDeposit && {
-        location: Utils.stripIndent(`\
-          ${Apartment.addressStreet}, \
-          ${Apartment.addressZip} ${Apartment.addressCity}, \
-          ${Apartment.addressCountry}`),
+        location: Utils.toSingleLine(`
+          ${Apartment.addressStreet},
+          ${Apartment.addressZip} ${Apartment.addressCity},
+          ${Apartment.addressCountry}
+        `),
       },
     };
   };
@@ -602,57 +605,68 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Renting.prototype.generateLease = function () {
-    const {Client} = this;
-    const {Terms} = this;
-    const {Metadata} = Client;
-    const {Apartment} = this.Room;
+  Renting.prototype.generateLease = function() {
+    return Renting
+      .webmergeSerialize(this)
+      .then((serialized) => {
+        return webMerge.mergeDocument(
+          WEBMERGE_DOCUMENT_ID,
+          WEBMERGE_DOCUMENT_KEY,
+          serialized,
+          NODE_ENV !== 'production' // webmerge's test environment switch
+        );
+      });
+  };
+
+  Renting.webmergeSerialize = function(renting) {
+    const {Client, Terms, Room} = renting;
+    const {Apartment} = Room;
     const {name, addressStreet, addressZip, addressCity} = Apartment;
-    const bookingDate = this.bookingDate ?
-      this.bookingDate : Date.now();
-    const metaValues = JSON.parse(Metadata[0].value);
-    const fullAddress = _.values(metaValues.address).filter(Boolean).join(', ');
-    const birthDate = _.values(metaValues.birthDate).join('/');
+    const bookingDate = renting.bookingDate || Date.now();
+    const identity = JSON.parse(Client.Metadata[0].value);
+    const fullAddress = _.values(identity.address).filter(Boolean).join(', ');
+    const birthDate = _.values(identity.birthDate).join('/');
     const roomNumber = name.split(' ').splice(-1)[0] === 'studio' ?
-        'l\'appartement entier' : `la chambre privée nº${this.Room.reference.slice(-1)}`;
+      'l\'appartement entier' : `la chambre privée nº${Room.reference.slice(-1)}`;
     const depositOption = !Terms[0] || (Terms[0] && Terms[0].name === 'cash') ?
-          'd\'encaissement du montant' : 'de non encaissement du chèque';
+      'd\'encaissement du montant' : 'de non encaissement du chèque';
     let packLevel;
 
-    switch (this.get('comfortLevel')) {
-      default:
-        packLevel = 'Basique';
-        break;
+    switch (renting.get('comfortLevel')) {
       case 'comfort':
         packLevel = 'Confort';
         break;
       case 'privilege':
         packLevel = 'Privilège';
         break;
+      default:
+        packLevel = 'Basique';
+        break;
     }
-    return webMerge.mergeDocument(WEBMERGE_DOCUMENT_ID, WEBMERGE_DOCUMENT_KEY, {
+
+    return Promise.resolve({
       fullName: `${Client.firstName} ${Client.lastName}`,
       fullAddress,
       birthDate,
-      birthPlace: Utils.stripIndent(`\
-              ${metaValues.birthPlace.first} \
-(${_.capitalize(metaValues.birthPlace.last)})`),
-      nationality: metaValues.nationality,
-      rent: this.price / 100,
-      serviceFees: this.serviceFees / 100,
+      birthPlace: Utils.toSingleLine(`
+        ${identity.birthPlace.first}
+        (${_.capitalize(identity.birthCountryFr)})
+      `),
+      nationality: identity.nationalityFr,
+      rent: renting.price / 100,
+      serviceFees: renting.serviceFees / 100,
       deposit: DEPOSIT_PRICES[addressCity] / 100,
       depositOption,
       packLevel,
       roomNumber,
-      roomFloorArea: this.Room.floorArea,
+      roomFloorArea: Room.floorArea,
       floorArea: Apartment.floorArea,
       address: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
       floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
       bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
       endDate: D.format(D.addYears(D.subDays(bookingDate, 1), 1), 'DD/MM/YYYY'),
-      email: this.Client.email,
-    // the last param turns on the test environment of webmerge
-    }, NODE_ENV !== 'production');
+      email: Client.email,
+    });
   };
 
   Renting.hook('beforeValidate', (renting) => {

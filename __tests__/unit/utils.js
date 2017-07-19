@@ -15,4 +15,17 @@ describe('Utils', () => {
       expect(getPeriodPrice(16900, 1, 4000)).toEqual(15800);
     });
   });
+
+  describe('.toSingleLine', () => {
+    const {toSingleLine} = Utils;
+
+    test('it converts any (sequence of) spacing character to a single space', () => {
+      expect(toSingleLine('\rA  B\tC\n')).toEqual('A B C');
+      expect(toSingleLine(`
+        A
+        B
+        C
+      `)).toEqual('A B C');
+    });
+  });
 });

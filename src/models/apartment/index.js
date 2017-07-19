@@ -39,6 +39,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'active',
     },
+    district:                 DataTypes.STRING,
   }, {
     paranoid: true,
     scopes: Object.assign({
