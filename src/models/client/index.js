@@ -392,8 +392,8 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   // the last argument is only used for testing purpose
-  Client.getIdentity = function(client, findOne = models.Metadata.findOne) {
-    return findOne({
+  Client.getIdentity = function(client, Metadata = models.Metadata) {
+    return Metadata.findOne({
         where: {
           MetadatableId: client.id,
           name: 'clientIdentity',
@@ -415,7 +415,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.getDescriptionEn = function(client) {
-    return client != null && Utils.toSingleLine(`
+    return client && client.identity && Utils.toSingleLine(`
       ${client.firstName},
       ${client.identity.age} years old ${client.identity.nationalityEn}
       ${client.identity.isStudent ? 'student' : 'young worker'}
@@ -423,7 +423,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.getDescriptionFr = function(client) {
-    return client != null && Utils.toSingleLine(`
+    return client && client.identity && Utils.toSingleLine(`
       ${client.firstName},
       ${client.identity.isStudent ? 'étudiant(e)' : 'jeune actif(ve)'}
       ${client.identity.nationalityFr} de ${client.identity.age} ans

@@ -185,11 +185,11 @@ describe('Client', () => {
   describe('.getIdentity', () => {
     test('it fetches and parse the identity record of the client', () => {
       return models.Client
-        .getIdentity({}, () => {
+        .getIdentity({}, { findOne: () => {
             return Promise.resolve({ value: JSON.stringify(
               { birthDate: { year: '1986', month: '07', day: '23' } }
             ) });
-          }
+          } }
         )
         .then((identity) => {
           return expect(identity).toEqual({
