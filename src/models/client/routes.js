@@ -112,7 +112,7 @@ module.exports = (app, models, Client) => {
         return Promise.all([
           Client.update(
             _.pickBy(fieldsToUpdate, Boolean), // filter out falsy phoneNumber
-            { where: { id: clientId } },
+            { where: { id: clientId } }
           ),
           models.Metadata.create({
             metadatable: 'Client',
