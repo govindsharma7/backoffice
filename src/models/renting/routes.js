@@ -175,7 +175,7 @@ module.exports = function(app, models, Renting) {
         })
         .then((renting) => {
           if ( !renting.get(`${type}Date`) || !renting.get('comfortLevel') ) {
-            throw new Error(Utils.stripIndent(`\
+            throw new Error(Utils.toSingleLine(`\
               ${_.capitalize(type)} event and housing pack are required to\
               create ${_.capitalize(type)} order`
             ));
