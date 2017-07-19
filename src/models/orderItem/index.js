@@ -70,6 +70,7 @@ module.exports = (sequelize, DataTypes) => {
       unitPrice: -1 * amount,
       RentingId: this.RentingId,
       ProductId: this.ProductId,
+      status: this.status,
       OrderId: this.OrderId,
     });
   };
@@ -94,6 +95,18 @@ module.exports = (sequelize, DataTypes) => {
     if ( orderItem.status !== 'active' ) {
       orderItem.setDataValue('deletedAt', Date.now());
     }
+  });
+
+  OrderItem.hook('afterCreate', (orderItem) => {
+    return orderItem
+      .getOrder()
+      .then(models.Order.afterUpdate);
+  });
+
+  OrderItem.hook('afterDelete', (orderItem) => {
+    return orderItem
+      .getOrder()
+      .then(models.Order.afterUpdate);
   });
 
 
