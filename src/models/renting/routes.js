@@ -168,6 +168,7 @@ module.exports = function(app, models, Renting) {
           }
 
           return Renting.scope(
+            'room', // required to create checkin/out order
             'client', // required to create the refund event,
             `${type}Date`, // required below
             'comfortLevel' // required below
@@ -183,11 +184,14 @@ module.exports = function(app, models, Renting) {
 
           return renting[`findOrCreate${_.capitalize(type)}Order`]();
         })
-        .tap(([, isCreated]) => {
+        .tap(([order, isCreated]) => {
           // We create the refund event once the checkout order is created,
           // as the checkout date is more reliable at this point
-          return type === 'checkout' && isCreated &&
-            this.createOrUpdateRefundEvent(this.get('checkoutDate'));
+          return Promise.all([
+            type === 'checkout' && isCreated &&
+            this.createOrUpdateRefundEvent(this.get('checkoutDate')),
+            isCreated && models.Order.ninjaCreateInvoices([order]),
+          ]);
         })
         .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} order`))
         .catch(Utils.logAndSend(res));
