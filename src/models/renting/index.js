@@ -654,27 +654,16 @@ module.exports = (sequelize, DataTypes) => {
     const checkoutDate = renting.get('checkoutDate');
     const {bookingDate} = renting;
     const now = Date.now();
+    let status = renting.status === 'draft' ? 'draft/' : '';
 
-    if ( renting.status === 'draft' ) {
-      if ( checkoutDate && checkoutDate < now) {
-        return 'draft/past';
-      }
-      else if ( bookingDate > now ) {
-        return 'draft/future';
-      }
-      return 'draft/current';
+    if ( checkoutDate && checkoutDate < now ) {
+      return status += 'past';
     }
-    else if ( checkoutDate && checkoutDate < now ) {
-      return 'past';
-    }
-
     else if ( bookingDate > now ) {
-      return 'future';
+      return status += 'future';
     }
-    else if ( bookingDate < now && ( checkoutDate == null || checkoutDate > now ) ) {
-      return 'current';
-    }
-    return null;
+
+    return status += 'current';
   };
 
   Renting.hook('beforeValidate', (renting) => {
