@@ -1,7 +1,10 @@
+const find              = require('lodash/find');
 const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
 }                       = require('../../const');
+
+const _ = { find };
 
 module.exports = function(models) {
   const {Client} = models;
@@ -25,6 +28,15 @@ module.exports = function(models) {
       type: 'String',
       get(object) {
         return `${object.firstName} ${object.lastName}`;
+      },
+      search(query, search) {
+        const split = search.split(' ');
+
+        // modify the first $or of the search query
+        _.find(query.where.$and, '$or').$or.push(models.sequelize.and(
+          { firstName: { $like: `%${split[0]}%` }},
+          { lastName: { $like: `%${split[1]}%` }}
+        ));
       },
     }, {
       field: 'ninja',

@@ -669,6 +669,22 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  Renting.getStatus = function(renting) {
+    const checkoutDate = renting.get('checkoutDate');
+    const {bookingDate} = renting;
+    const now = Date.now();
+    let status = renting.status === 'draft' ? 'draft/' : '';
+
+    if ( checkoutDate && checkoutDate < now ) {
+      return status += 'past';
+    }
+    else if ( bookingDate > now ) {
+      return status += 'future';
+    }
+
+    return status += 'current';
+  };
+
   Renting.hook('beforeValidate', (renting) => {
     // Only calculate the price and fees on creation
     if (

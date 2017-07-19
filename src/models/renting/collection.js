@@ -6,13 +6,22 @@ const {
 }                 = require('../../const');
 const Utils       = require('../../utils');
 
-module.exports = function() {
+module.exports = function(models) {
   return {
     fields: [{
       field: 'booking date coef',
       type: 'Number',
       get(object) {
         return Utils.getPeriodCoef(object.bookingDate);
+      },
+    }, {
+      field: 'current status',
+      type: 'Enum',
+      enums: ['current', 'past', 'future', 'draft/current', 'draft/future', 'draft/past'],
+      get(object) {
+        return models.Renting.scope('checkoutDate')
+          .findById(object.id)
+          .then(models.Renting.getStatus);
       },
     }],
     actions:[{
