@@ -473,7 +473,7 @@ module.exports = (sequelize, DataTypes) => {
                 startDate,
                 endDate,
                 summary: `${type} ${firstName} ${lastName}`,
-                description: Utils.toSingleLine(`
+                description: Utils.stripIndent(`
                   ${firstName} ${lastName},
                   ${roomName},
                   tel: ${phoneNumber || 'N/A'}

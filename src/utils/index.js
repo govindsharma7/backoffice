@@ -1,3 +1,4 @@
+const stripIndent                  = require('strip-indent');
 const addInternalRelationshipRoute = require('./addInternalRelationshipRoute');
 const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
 const calculatedPropsMemoizer      = require('./calculatedPropsMemoizer');
@@ -45,5 +46,6 @@ module.exports = {
   logAndSend,
   parseDBDate,
   toSingleLine,
+  stripIndent,
   wrapHookPromise,
 };

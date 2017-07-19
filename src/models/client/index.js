@@ -170,6 +170,18 @@ module.exports = (sequelize, DataTypes) => {
         }],
       };
     });
+    Client.addScope('latestClientRenting', {
+      attributes: { include: [
+        [fn('max', col('Rentings.bookingDate')), 'latestBookingDate'],
+      ]},
+      include: [{
+        model: models.Renting,
+        include: [{
+          model: models.Room,
+        }],
+      }],
+      group: ['Client.id'],
+    });
   };
 
   // This was the reliable method used by generateInvoice
@@ -442,7 +454,6 @@ module.exports = (sequelize, DataTypes) => {
     values.countryFr = Country.translations(values.countryEn, 'name').fr;
     values.birthCountryEn = values.birthPlace.last;
     values.isStudent = /^(Student|Intern)$/.test(values.frenchStatus);
-
     return Promise.all([
         Translate(values.birthCountryEn, { to: 'fr' }),
         Translate(values.nationalityEn, { to: 'fr' }),
