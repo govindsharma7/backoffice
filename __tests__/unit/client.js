@@ -224,37 +224,37 @@ describe('Client', () => {
     });
   });
 
-  describe('.normalizeIdentityRecord', () => {
-    test('it adds nationality and translate country and nationality to FR', () => {
-      const input = {
-        'q01_phoneNumber': { area: '+33', phone: '0671114171' },
-        'q02_nationality': 'United States',
-        'q03_birthPlace': { last: 'England' },
-        'q04_frenchStatus': 'Intern',
-        'q06_something': 'else',
-      };
-
-      const expected = {
-        phoneNumber: '+33671114171',
-        nationality: 'United States',
-        nationalityEn: 'American',
-        nationalityFr: 'américain',
-        countryEn: 'United States',
-        countryFr: 'États-Unis',
-        birthPlace: { last: 'England' },
-        birthCountryEn: 'England',
-        birthCountryFr: 'Angleterre',
-        frenchStatus: 'Intern',
-        isStudent: true,
-        something: 'else',
-      };
-
-      return models.Client
-        .normalizeIdentityRecord(input)
-        .then((result) => {
-          return expect(result).toEqual(expected);
-        });
-    });
-  });
+  // describe('.normalizeIdentityRecord', () => {
+  //   test('it adds nationality and translate country and nationality to FR', () => {
+  //     const input = {
+  //       'q01_phoneNumber': { area: '+33', phone: '0671114171' },
+  //       'q02_nationality': 'United States',
+  //       'q03_birthPlace': { last: 'England' },
+  //       'q04_frenchStatus': 'Intern',
+  //       'q06_something': 'else',
+  //     };
+  //
+  //     const expected = {
+  //       phoneNumber: '+33671114171',
+  //       nationality: 'United States',
+  //       nationalityEn: 'American',
+  //       nationalityFr: 'américain',
+  //       countryEn: 'United States',
+  //       countryFr: 'États-Unis',
+  //       birthPlace: { last: 'England' },
+  //       birthCountryEn: 'England',
+  //       birthCountryFr: 'Angleterre',
+  //       frenchStatus: 'Intern',
+  //       isStudent: true,
+  //       something: 'else',
+  //     };
+  //
+  //     return models.Client
+  //       .normalizeIdentityRecord(input)
+  //       .then((result) => {
+  //         return expect(result).toEqual(expected);
+  //       });
+  //   });
+  // });
 
 });
