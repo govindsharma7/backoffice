@@ -23,8 +23,23 @@ module.exports = function(models) {
           .findById(object.id)
           .then(models.Renting.getStatus);
       },
+    }, {
+      field: 'Housing Pack',
+      type: 'Enum',
+      enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
+      set(object, value) {
+        object.comfortLevel = value;
+        return object;
+      },
+    }, {
+      field: 'Pack Discount',
+      type: 'Number',
+      set(object, value) {
+        object.packDiscount = value;
+        return object;
+      },
     }],
-    actions:[{
+    actions: [{
       name: 'Create First Rent Order',
     }, {
       name: 'Create Pack Order',

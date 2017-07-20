@@ -1,9 +1,9 @@
 const Promise          = require('bluebird');
 const D                = require('date-fns');
-const makePublic       = require('../../middlewares/makePublic');
 const Utils            = require('../../utils');
 const {TRASH_SCOPES}   = require('../../const');
 const collection       = require('./collection');
+const routes           = require('./routes');
 
 module.exports = (sequelize, DataTypes) => {
   const Room = sequelize.define('Room', {
@@ -92,29 +92,8 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Room.beforeLianaInit = (app) => {
-
-    // Make the room listing endpoint public, for chez-nestor.com
-    app.get('/forest/Room', makePublic);
-
-    Utils.addInternalRelationshipRoute({
-      app,
-      sourceModel: Room,
-      associatedModel: models.Client,
-      routeName: 'current-client',
-      scope: 'currentApartment',
-      where: (req) => {
-        return {
-          '$Rentings.RoomId$': req.params.recordId,
-          '$Rentings.bookingDate$': { $lte:  D.format(Date.now()) },
-        };
-      },
-    });
-
-    Utils.addRestoreAndDestroyRoutes(app, Room);
-  };
-
   Room.collection = collection;
+  Room.routes = routes;
 
   return Room;
 };

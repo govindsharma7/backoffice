@@ -67,7 +67,8 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Payment.beforeLianaInit = (app) => {
+  Payment.collection = collection;
+  Payment.routes = (app) => {
     const LEA = Liana.ensureAuthenticated;
 
     app.post('/forest/actions/refund', LEA, (req, res) => {
@@ -94,8 +95,6 @@ module.exports = (sequelize, DataTypes) => {
 
     Utils.addRestoreAndDestroyRoutes(app, Payment);
   };
-
-  Payment.collection = collection;
 
   return Payment;
 };

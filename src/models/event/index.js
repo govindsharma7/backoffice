@@ -3,7 +3,8 @@ const Promise               = require('bluebird');
 const jwtClient             = require('../../vendor/googlecalendar');
 const {TRASH_SCOPES}        = require('../../const');
 const Utils                 = require('../../utils');
-const collection     = require('./collection');
+const collection            = require('./collection');
+const hooks                 = require('./hooks');
 
 const eventsInsert = Promise.promisify(Calendar.events.insert);
 const eventsUpdate = Promise.promisify(Calendar.events.update);
@@ -138,64 +139,11 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  function wrapHookHandler(event, callback) {
-    /* eslint-disable promise/no-callback-in-promise */
-    return Event.scope('event-category')
-      .findById(event.id)
-      .then(callback)
-      .thenReturn(true)
-      .tapCatch(console.error);
-    /* eslint-enable promise/no-callback-in-promise */
-  }
-
-  Event.hook('afterCreate', (event, options) => {
-    return wrapHookHandler(event, (event) => {
-      return event.googleCreate(options);
-    });
-  });
-
-  Event.hook('afterUpdate', (event, options) => {
-    const {eventable, EventableId} = event;
-
-    return wrapHookHandler(event, (event) => {
-      return Promise.all([
-          // TODO: remove these non-generic scopes doing here??
-          models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
-            .findById(EventableId),
-          event.googleEventId != null && event.googleUpdate(),
-        ])
-        .then(([eventableInstance]) => {
-          return eventableInstance.handleEventUpdate &&
-            eventableInstance.handleEventUpdate(event, options);
-        });
-    });
-  });
-
-  Event.hook('afterDelete', (event) => {
-    if ( event.googleEventId != null ) {
-      return wrapHookHandler(event, (event) => {
-        return event.googleDelete();
-      });
-    }
-
-    return true;
-  });
-
-  Event.hook('afterRestore', (event, options) => {
-    if ( event.googleEventId != null ) {
-      return wrapHookHandler(event, (event) => {
-        return event.googleCreate(options);
-      });
-    }
-
-    return true;
-  });
-
-  Event.beforeLianaInit = (app) => {
+  Event.collection = collection;
+  Event.routes = (app) => {
     Utils.addRestoreAndDestroyRoutes(app, Event);
   };
-
-  Event.collection = collection;
+  Event.hooks = hooks;
 
   return Event;
 };

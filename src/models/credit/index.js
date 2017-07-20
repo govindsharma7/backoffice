@@ -48,11 +48,10 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Credit.beforeLianaInit = (app) => {
+  Credit.collection = collection;
+  Credit.routes = (app) => {
     Utils.addRestoreAndDestroyRoutes(app, Credit);
   };
-
-  Credit.collection = collection;
 
   return Credit;
 };

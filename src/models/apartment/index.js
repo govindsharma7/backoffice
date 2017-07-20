@@ -1,12 +1,8 @@
-const Promise                     = require('bluebird');
-const bodyParser                  = require('body-parser');
-const D                           = require('date-fns');
-const Liana                       = require('forest-express-sequelize');
 const Geocode                     = require('../../vendor/geocode');
-const Aws                         = require('../../vendor/aws');
-const Utils                       = require('../../utils');
 const {TRASH_SCOPES}              = require('../../const');
 const collection                  = require('./collection');
+const routes                      = require('./routes');
+const hooks                       = require('./hooks');
 
 module.exports = (sequelize, DataTypes) => {
   const Apartment = sequelize.define('Apartment', {
@@ -89,85 +85,9 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Apartment.hook('beforeCreate', (apartment) => {
-    if ( apartment.latLng != null ) {
-      return apartment;
-    }
-
-    return apartment.calculateLatLng();
-  });
-
-  Apartment.hook('beforeUpdate', (apartment) => {
-    // if no address field has been updated…
-    if (
-      Object.keys(apartment.changed).every((name) => {
-        return !/^address/.test(name);
-      })
-    ) {
-      return apartment;
-    }
-
-    // We need to reload the existing apartment to make sure we have all address fields
-    return Apartment
-      .findById(apartment.id)
-      .then((previousApartment) => {
-        return apartment.calculateLatLng(Object.assign(
-          {},
-          previousApartment.dataValues,
-          apartment.dataValues
-        ));
-      });
-  });
-
-  Apartment.beforeLianaInit = (app) => {
-    const LEA = Liana.ensureAuthenticated;
-    let urlencodedParser = bodyParser.urlencoded({ extended: true });
-
-    app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
-      const {values, ids} = req.body.data.attributes;
-
-      Promise.resolve()
-        .then(() => {
-          if (!ids || ids.length > 1 ) {
-            throw new Error('You have to select one apartment');
-          }
-          return models.Client.scope('currentApartment')
-            .findAll({ where: { '$Rentings->Room.ApartmentId$': ids} });
-        })
-        .tap((clients) => {
-          return Aws.sendSms(
-            clients
-              .map((client) => { return client.phoneNumber; })
-              .filter(Boolean), // filter-out falsy values
-            values.bodySms
-          );
-        })
-        .then((clients) => {
-          return res.status(200).send({
-            success: `SMS successfully sent to ${clients.length} clients!`,
-          });
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    Utils.addInternalRelationshipRoute({
-      app,
-      sourceModel: Apartment,
-      associatedModel: models.Client,
-      routeName: 'current-clients',
-      scope: 'currentApartment',
-      where: (req) => {
-        return {
-          '$Rentings->Room.ApartmentId$': req.params.recordId,
-          '$Rentings.bookingDate$': { $lte:  D.format(Date.now()) },
-        };
-      },
-    });
-
-    Utils.addRestoreAndDestroyRoutes(app, Apartment);
-  };
-
   Apartment.collection = collection;
+  Apartment.routes = routes;
+  Apartment.hooks = hooks;
 
   return Apartment;
 };

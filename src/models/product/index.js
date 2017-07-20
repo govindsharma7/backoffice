@@ -34,11 +34,10 @@ module.exports = (sequelize, DataTypes) => {
     Product.hasMany(models.OrderItem);
   };
 
-  Product.beforeLianaInit = (app) => {
+  Product.collection = collection;
+  Product.routes = (app) => {
     Utils.addRestoreAndDestroyRoutes(app, Product);
   };
-
-  Product.collection = collection;
 
   return Product;
 };

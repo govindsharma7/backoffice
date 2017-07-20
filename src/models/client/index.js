@@ -13,8 +13,9 @@ const {
   UNCASHED_DEPOSIT_FEE,
   DATETIME_FORMAT,
 }                = require('../../const');
-const routes     = require('./routes');
 const collection = require('./collection');
+const routes     = require('./routes');
+const hooks      = require('./hooks');
 
 const _ = { mapKeys };
 
@@ -143,6 +144,7 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Client.id'],
     });
+
     Client.addScope('currentApartment', function(date = Date.now()) {
       return {
         where: { $or: [
@@ -455,36 +457,9 @@ module.exports = (sequelize, DataTypes) => {
     //   });
   };
 
-  /*
-   * CRUD hooks
-   *
-   * Those hooks are used to update Invoiceninja records when clients are updated
-   * in Forest.
-   */
-  Client.hook('afterCreate', (client) => {
-    if ( !client.ninjaId ) {
-      return Utils.wrapHookPromise(client.ninjaCreate());
-    }
-
-    return true;
-  });
-
-  Client.hook('afterUpdate', (client) => {
-    if (
-      client.ninjaId && (
-        client.changed('firstName') ||
-        client.changed('lastName') ||
-        client.changed('email')
-      )
-    ) {
-      return Utils.wrapHookPromise(client.ninjaUpdate());
-    }
-
-    return true;
-  });
-
-  Client.beforeLianaInit = routes;
   Client.collection = collection;
+  Client.routes = routes;
+  Client.hooks = hooks;
 
   return Client;
 };
