@@ -94,7 +94,9 @@ module.exports = (sequelize, DataTypes) => {
 
   Room.beforeLianaInit = (app) => {
 
+    // Make the room listing endpoint public, for chez-nestor.com
     app.get('/forest/Room', makePublic);
+
     Utils.addInternalRelationshipRoute({
       app,
       sourceModel: Room,
