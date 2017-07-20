@@ -91,7 +91,8 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Room.beforeLianaInit = (app) => {
+  Room.collection = collection;
+  Room.routes = (app) => {
     Utils.addInternalRelationshipRoute({
       app,
       sourceModel: Room,
@@ -108,8 +109,6 @@ module.exports = (sequelize, DataTypes) => {
 
     Utils.addRestoreAndDestroyRoutes(app, Room);
   };
-
-  Room.collection = collection;
 
   return Room;
 };

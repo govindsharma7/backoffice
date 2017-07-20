@@ -1,11 +1,11 @@
 const Promise          = require('bluebird');
-const Liana            = require('forest-express-sequelize');
-const Utils            = require('../../utils');
 const {
   TRASH_SCOPES,
   UNTRASHED_SCOPE,
 }                      = require('../../const');
 const collection       = require('./collection');
+const routes           = require('./routes');
+const hooks            = require('./hooks');
 
 module.exports = (sequelize, DataTypes) => {
   const OrderItem = sequelize.define('OrderItem', {
@@ -68,9 +68,9 @@ module.exports = (sequelize, DataTypes) => {
     return OrderItem.create({
       label: 'Discount',
       unitPrice: -1 * amount,
+      status: this.status,
       RentingId: this.RentingId,
       ProductId: this.ProductId,
-      status: this.status,
       OrderId: this.OrderId,
     });
   };
@@ -84,59 +84,9 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  // Run Order's afterUpdate hook when an orderItem is updated
-  OrderItem.hook('afterUpdate', (orderItem) => {
-    return orderItem
-      .getOrder()
-      .then(models.Order.afterUpdate);
-  });
-
-  OrderItem.hook('beforeCreate', (orderItem) => {
-    if ( orderItem.status !== 'active' ) {
-      orderItem.setDataValue('deletedAt', Date.now());
-    }
-  });
-
-  OrderItem.hook('afterCreate', (orderItem) => {
-    return orderItem
-      .getOrder()
-      .then(models.Order.afterUpdate);
-  });
-
-  OrderItem.hook('afterDelete', (orderItem) => {
-    return orderItem
-      .getOrder()
-      .then(models.Order.afterUpdate);
-  });
-
-
-  OrderItem.beforeLianaInit = (app) => {
-    const LEA = Liana.ensureAuthenticated;
-
-    app.post('/forest/actions/add-discount', LEA, (req, res) => {
-      const {ids, values} = req.body.data.attributes;
-
-      Promise.resolve()
-        .then(() => {
-          if ( ids.length > 1 ) {
-            throw new Error('Can\'t create multiple discounts');
-          }
-
-          return OrderItem.findById(ids[0]);
-        })
-        .then((orderItem) => {
-          return orderItem.createDiscount(100 * values.discount);
-        })
-        .then(() => {
-          return res.status(200).send({success: 'Discount created'});
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    Utils.addRestoreAndDestroyRoutes(app, OrderItem);
-  };
-
   OrderItem.collection = collection;
+  OrderItem.routes = routes;
+  OrderItem.hooks = hooks;
 
   return OrderItem;
 };

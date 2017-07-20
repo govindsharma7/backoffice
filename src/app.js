@@ -41,10 +41,9 @@ app.use(Cors({
 // Mime type
 app.use(BodyParser.json());
 
-// This hook and all app.use above are currently useless
 _.values(models).forEach(function(model) {
-  if ('beforeLianaInit' in model) {
-    model.beforeLianaInit(app, models, model);
+  if ('routes' in model) {
+    model.routes(app, models, model);
   }
 });
 

@@ -28,14 +28,14 @@ module.exports = function(models) {
       type: 'Enum',
       enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
       set(object, value) {
-        object.housingPack = value;
+        object.comfortLevel = value;
         return object;
       },
     }, {
-      field: 'discount',
+      field: 'Pack Discount',
       type: 'Number',
       set(object, value) {
-        object.discount = value;
+        object.packDiscount = value;
         return object;
       },
     }],

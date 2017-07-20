@@ -100,11 +100,11 @@ module.exports = function(app, models, Renting) {
   });
 
   app.post('/forest/actions/create-quote-orders', LEA, (req, res) => {
-    const {values, ids} = req.body.data.attributes;
+    const { values: {comfortLevel, discount}, ids } = req.body.data.attributes;
 
     Promise.resolve()
       .then(() => {
-        if ( !values.comfortLevel ) {
+        if ( !comfortLevel ) {
           throw new Error('Please select a comfort level');
         }
         if ( ids.length > 1 ) {
@@ -114,16 +114,10 @@ module.exports = function(app, models, Renting) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => {
-        return Promise.mapSeries([
-          { suffix: 'RentOrder', args: [renting.bookingDate] },
-          { suffix: 'DepositOrder' },
-          { suffix: 'PackOrder', args: [values.comfortLevel, values.packDiscount] },
-        ], (def) => {
-          return renting[`findOrCreate${def.suffix}`].apply(renting, def.args);
+        return renting.createQuoteOrders({
+          comfortLevel,
+          discount: discount * 100,
         });
-      })
-      .then(([[rentOrder], [depositOrder], [packOrder]]) => {
-        return models.Order.ninjaCreateInvoices([rentOrder, depositOrder, packOrder]);
       })
       .then(Utils.createSuccessHandler(res, 'Quote order'))
       .catch(Utils.logAndSend(res));

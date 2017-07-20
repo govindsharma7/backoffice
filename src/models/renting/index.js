@@ -17,6 +17,7 @@ const {
 }                = require('../../config');
 const {GOOGLE_CALENDAR_IDS} = require('../../config');
 const routes                = require('./routes');
+const hooks                 = require('./hooks');
 const collection            = require('./collection');
 
 const _ = { capitalize, values };
@@ -66,10 +67,10 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'draft',
       allowNull: false,
     },
-    housingPack: {
+    comfortLevel: {
       type:                     DataTypes.VIRTUAL,
     },
-    discount: {
+    packDiscount: {
       type:                     DataTypes.VIRTUAL,
     },
     checkinDate: {
@@ -624,6 +625,20 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Renting.prototype.createQuoteOrders = function({comfortLevel, packDiscount}) {
+    return Promise.mapSeries([
+        { suffix: 'RentOrder', args: [this.bookingDate] },
+        { suffix: 'DepositOrder' },
+        { suffix: 'PackOrder', args: [comfortLevel, packDiscount] },
+      ], (def) => {
+        return this[`findOrCreate${def.suffix}`].apply(this, def.args);
+      })
+      .then(([[rentOrder], [depositOrder], [packOrder]]) => {
+        return models.Order
+          .ninjaCreateInvoices([rentOrder, depositOrder, packOrder]);
+      });
+  };
+
   Renting.webmergeSerialize = function(renting) {
     const {Client, Terms, Room} = renting;
     const {Apartment} = Room;
@@ -691,67 +706,9 @@ module.exports = (sequelize, DataTypes) => {
     return status += 'current';
   };
 
-  Renting.hook('beforeValidate', (renting) => {
-    // Only calculate the price and fees on creation
-    if (
-      !( 'RoomId' in renting.dataValues ) ||
-      !( 'bookingDate' in renting.dataValues ) ||
-      ( renting.price != null && !isNaN(renting.price) )
-    ) {
-      return renting;
-    }
-
-    return models.Room.scope('apartment')
-      .findById(renting.RoomId)
-      .then((room) => {
-        return room.getCalculatedProps(renting.bookingDate);
-      })
-      .then(({periodPrice, serviceFees}) => {
-        renting.setDataValue('price', periodPrice);
-        renting.setDataValue('serviceFees', serviceFees);
-        return renting;
-      });
-  });
-
-  // We want rentings to be draft by default, but users shouldn't have
-  // to set the deletedAt value themselves
-  Renting.hook('beforeCreate', (renting) => {
-    if ( renting.status !== 'active' ) {
-      renting.setDataValue('deletedAt', Date.now());
-    }
-
-    return renting;
-  });
-
-  Renting.hook('afterCreate', (renting) => {
-    var {housingPack, discount} = renting;
-
-    if ( discount != null ) {
-      discount *= 100;
-    }
-
-    if (renting.housingPack) {
-      return Renting.scope('room+apartment').findById(renting.id)
-        .then((renting) => {
-
-          return Promise.mapSeries([
-          { suffix: 'RentOrder', args: [renting.bookingDate] },
-          { suffix: 'DepositOrder' },
-          { suffix: 'PackOrder', args: [housingPack, discount] },
-        ], (def) => {
-          return renting[`findOrCreate${def.suffix}`].apply(renting, def.args);
-          });
-        })
-        .then(([[rentOrder], [depositOrder], [packOrder]]) => {
-          return models.Order
-            .ninjaCreateInvoices([rentOrder, depositOrder, packOrder]);
-        });
-    }
-    return null;
-  });
-
-  Renting.beforeLianaInit = routes;
   Renting.collection = collection;
+  Renting.routes = routes;
+  Renting.hooks = hooks;
 
   return Renting;
 };

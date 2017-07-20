@@ -48,6 +48,10 @@ Object.keys(db).forEach(function(modelName) {
   if ('associate' in db[modelName]) {
     db[modelName].associate(db);
   }
+
+  if ('hooks' in db[modelName]) {
+    db[modelName].hooks(db, db[modelName]);
+  }
 });
 
 db.sequelize = sequelize;
