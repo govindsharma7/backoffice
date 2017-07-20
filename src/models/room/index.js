@@ -1,5 +1,6 @@
 const Promise          = require('bluebird');
 const D                = require('date-fns');
+const makePublic       = require('../../middlewares/makePublic');
 const Utils            = require('../../utils');
 const {TRASH_SCOPES}   = require('../../const');
 const collection       = require('./collection');
@@ -92,6 +93,10 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Room.beforeLianaInit = (app) => {
+
+    // Make the room listing endpoint public, for chez-nestor.com
+    app.get('/forest/Room', makePublic);
+
     Utils.addInternalRelationshipRoute({
       app,
       sourceModel: Room,
