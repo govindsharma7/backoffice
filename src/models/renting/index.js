@@ -149,6 +149,12 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
+    Renting.addScope('room', {
+      include: [{
+        model: models.Room,
+      }],
+    });
+
     Renting.addScope('client+identity', {
       include: [{
         model: models.Client,
@@ -331,6 +337,8 @@ module.exports = (sequelize, DataTypes) => {
   ['checkin', 'checkout'].forEach((type) => {
     Renting.prototype[`findOrCreate${_.capitalize(type)}Order`] =
       function(number) {
+        const {name} = this.Room;
+
         return Promise.all([
             Utils[`get${_.capitalize(type)}Price`](
               this.get(`${type}Date`),
