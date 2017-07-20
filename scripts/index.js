@@ -25,6 +25,7 @@ const dbFill = `rm ${devDb} && ./scripts/mysql2sqlite ${dumpFile} | sqlite3 ${de
 const createCalendar =   'node scripts/createCalendar.js';
 const extractClients =   'node scripts/extractInvoiceninja.js > data/clients.json';
 const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
+const extractPictures = 'node scripts/extractWordpressPictures.js > data/pictures.json';
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
 const updateDraftRentOrders = 'node scripts/updateDraftRentOrders.js';
 const updateLateFees = 'node scripts/updateLateFees.js';
@@ -50,6 +51,7 @@ const common = {
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
   'extract:portfolio': extractPortfolio,
+  'extract:pictures': extractPictures,
   'generate:invoices': generateInvoices,
   'update:draftRentOrders': updateDraftRentOrders,
   'update:lateFees': updateLateFees,

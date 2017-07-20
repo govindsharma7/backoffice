@@ -61,7 +61,6 @@ function recursePaginate(request) {
 /* eslint-disable complexity */
 function parseProperties(properties) {
   return properties.reduce((portfolio, property) => {
-
     let address =
       property.meta.estate_property_google_maps[0]
         .match(/address".*?"([^,]+).*?lat".*?"([^"]+).*?lng".*?"([^"]+)/);
@@ -154,7 +153,6 @@ function parseProperties(properties) {
     if ( portfolio.rooms[roomRef] !== void 0 ) {
       console.error(`Room reference already exist: ${roomRef}`);
     }
-
     portfolio.rooms[roomRef] = {
       id: roomRef,
       reference: roomRef,
@@ -162,6 +160,7 @@ function parseProperties(properties) {
       floorArea: parseFloat(property.meta.additional_estate_property_size_room[0]),
       basePrice: parseFloat(property.meta.estate_property_price[0]) * 100,
       ApartmentId: apartmentRef,
+      url: property.link.replace('localhost:8080', 'www.chez-nestor.com'),
     };
 
     return portfolio;
