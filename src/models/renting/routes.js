@@ -176,10 +176,10 @@ module.exports = function(app, models, Renting) {
         })
         .then((renting) => {
           if ( !renting.get(`${type}Date`) || !renting.get('comfortLevel') ) {
-            throw new Error(Utils.toSingleLine(`\
-              ${_.capitalize(type)} event and housing pack are required to\
-              create ${_.capitalize(type)} order`
-            ));
+            throw new Error(Utils.toSingleLine(`
+              ${_.capitalize(type)} event and housing pack are required to
+              create ${_.capitalize(type)} order
+            `));
           }
 
           return renting[`findOrCreate${_.capitalize(type)}Order`]();
@@ -189,7 +189,7 @@ module.exports = function(app, models, Renting) {
           // as the checkout date is more reliable at this point
           return Promise.all([
             type === 'checkout' && isCreated &&
-            this.createOrUpdateRefundEvent(this.get('checkoutDate')),
+              this.createOrUpdateRefundEvent(this.get('checkoutDate')),
             isCreated && models.Order.ninjaCreateInvoices([order]),
           ]);
         })
