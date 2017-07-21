@@ -172,6 +172,18 @@ module.exports = (sequelize, DataTypes) => {
         }],
       };
     });
+    Client.addScope('latestClientRenting', {
+      attributes: { include: [
+        [fn('max', col('Rentings.bookingDate')), 'latestBookingDate'],
+      ]},
+      include: [{
+        model: models.Renting,
+        include: [{
+          model: models.Room,
+        }],
+      }],
+      group: ['Client.id'],
+    });
   };
 
   // This was the reliable method used by generateInvoice

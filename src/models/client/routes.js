@@ -108,17 +108,32 @@ module.exports = (app, models, Client) => {
           lastName: fullName.last,
           phoneNumber: Utils.isValidPhoneNumber( phoneNumber ) && phoneNumber,
         };
+        const scoped = Client.scope('latestClientRenting');
 
         return Promise.all([
-          Client.update(
-            _.pickBy(fieldsToUpdate, Boolean), // filter out falsy phoneNumber
-            { where: { id: clientId } }
+          /@/.test(clientId) ?
+            scoped.findOne({ where: { email: clientId } }) :
+            scoped.findById(clientId),
+          fieldsToUpdate,
+          identityRecord,
+        ]);
+      })
+      .then(([client, fieldsToUpdate, identityRecord]) => {
+        const { year, month, day, hour, min } = identityRecord.checkinDate;
+        const startDate = `${year}-${month}-${day} ${hour}:${min}`;
+
+        return Promise.all([
+          client.update(
+            _.pickBy(fieldsToUpdate, Boolean) // filter out falsy phoneNumber
           ),
-          models.Metadata.create({
-            metadatable: 'Client',
-            MetadatableId: clientId,
+          client.addMetadata({
             name: 'clientIdentity',
             value: JSON.stringify(identityRecord),
+          }),
+          models.Renting.findOrCreateCheckinEvent({
+            startDate,
+            renting: client.Rentings[0],
+            client,
           }),
         ]);
       })

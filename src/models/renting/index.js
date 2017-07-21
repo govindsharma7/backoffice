@@ -463,42 +463,53 @@ module.exports = (sequelize, DataTypes) => {
 
   // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
   ['checkin', 'checkout'].forEach((type) => {
-    Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
-      function(startDate, options) {
-        const {firstName, lastName, phoneNumber} = this.Client;
-        const roomName = this.Room.name;
-        const term = {
-          name: type,
-          taxonomy: 'event-category',
-          termable: 'Event',
-        };
+    Renting[`findOrCreate${_.capitalize(type)}Event`] = function(args) {
+      const { startDate, transaction, renting, client } = args;
+      const {firstName, lastName, phoneNumber} = client;
+      const roomName = this.Room.name;
+      const term = {
+        name: type,
+        taxonomy: 'event-category',
+        termable: 'Event',
+      };
 
-        return Utils[`get${_.capitalize(type)}EndDate`](startDate)
-          .then((endDate) => {
-            // TODO: test that this findOrCreate actually works
-            return models.Event.findOrCreate(Object.assign({
-              where: {
-                EventableId: this.id,
-              },
-              include: [{
-                model: models.Term,
-                where: term,
-              }],
-              defaults: {
-                startDate,
-                endDate,
-                summary: `${type} ${firstName} ${lastName}`,
-                description: Utils.toSingleLine(`
-                  ${firstName} ${lastName},
-                  ${roomName},
-                  tel: ${phoneNumber || 'N/A'}
-                `),
-                eventable: 'Renting',
-                EventableId: this.id,
-                Terms: [term],
-              },
-            }, options));
+      return Utils[`get${_.capitalize(type)}EndDate`](startDate)
+        .then((endDate) => {
+          // TODO: test that this findOrCreate actually works
+          return models.Event.findOrCreate({
+            where: {
+              EventableId: renting.id,
+            },
+            include: [{
+              model: models.Term,
+              where: term,
+            }],
+            defaults: {
+              startDate,
+              endDate,
+              summary: `${type} ${firstName} ${lastName}`,
+              description: Utils.stripIndent(`\
+                ${firstName} ${lastName},
+                ${roomName},
+                tel: ${phoneNumber || 'N/A'}\
+              `),
+              eventable: 'Renting',
+              EventableId: renting.id,
+              Terms: [term],
+            },
+            transaction,
           });
+        });
+    };
+
+    Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
+      function(startDate, transaction) {
+        return Renting[`findOrCreate${_.capitalize(type)}Event`]({
+          renting: this,
+          client: this.Client,
+          startDate,
+          transaction,
+        });
       };
   });
 
