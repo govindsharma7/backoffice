@@ -464,9 +464,8 @@ module.exports = (sequelize, DataTypes) => {
   // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
   ['checkin', 'checkout'].forEach((type) => {
     Renting[`findOrCreate${_.capitalize(type)}Event`] = function(args) {
-      const { startDate, transaction, renting, client } = args;
+      const { startDate, renting, client, room, transaction, hooks } = args;
       const {firstName, lastName, phoneNumber} = client;
-      const roomName = this.Room.name;
       const term = {
         name: type,
         taxonomy: 'event-category',
@@ -475,7 +474,6 @@ module.exports = (sequelize, DataTypes) => {
 
       return Utils[`get${_.capitalize(type)}EndDate`](startDate)
         .then((endDate) => {
-          // TODO: test that this findOrCreate actually works
           return models.Event.findOrCreate({
             where: {
               EventableId: renting.id,
@@ -490,7 +488,7 @@ module.exports = (sequelize, DataTypes) => {
               summary: `${type} ${firstName} ${lastName}`,
               description: Utils.stripIndent(`\
                 ${firstName} ${lastName},
-                ${roomName},
+                ${room.name},
                 tel: ${phoneNumber || 'N/A'}\
               `),
               eventable: 'Renting',
@@ -498,17 +496,20 @@ module.exports = (sequelize, DataTypes) => {
               Terms: [term],
             },
             transaction,
+            hooks,
           });
         });
     };
 
     Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
-      function(startDate, transaction) {
+      function(startDate, { transaction, hooks }) {
         return Renting[`findOrCreate${_.capitalize(type)}Event`]({
           renting: this,
           client: this.Client,
+          room: this.Room,
           startDate,
           transaction,
+          hooks,
         });
       };
   });
