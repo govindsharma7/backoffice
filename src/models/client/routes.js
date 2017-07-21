@@ -108,66 +108,32 @@ module.exports = (app, models, Client) => {
           lastName: fullName.last,
           phoneNumber: Utils.isValidPhoneNumber( phoneNumber ) && phoneNumber,
         };
+        const scoped = Client.scope('latestClientRenting');
 
-        if ( clientId.search('@') < 0 ) {
-          return Promise.all([
-            Client.scope('latestClientRenting').findById(clientId),
-            fieldsToUpdate,
-            identityRecord,
-          ]);
-        }
         return Promise.all([
-          Client.scope('latestClientRenting').findOne({ where: { email: clientId } }),
+          /@/.test(clientId) ?
+            scoped.findOne({ where: { email: clientId } }) :
+            scoped.findById(clientId),
           fieldsToUpdate,
           identityRecord,
         ]);
       })
       .then(([client, fieldsToUpdate, identityRecord]) => {
-        const startDate = Utils.toSingleLine(`
-            ${identityRecord.checkinDate.year}-\
-            ${identityRecord.checkinDate.month}-\
-            ${identityRecord.checkinDate.day}\
-            ${identityRecord.checkinDate.hour}:\
-            ${identityRecord.checkinDate.min}`);
+        const { year, month, day, hour, min } = identityRecord.checkinDate;
+        const startDate = `${year}-${month}-${day} ${hour}:${min}`;
 
         return Promise.all([
           client.update(
             _.pickBy(fieldsToUpdate, Boolean) // filter out falsy phoneNumber
           ),
-          models.Metadata.create({
-            metadatable: 'Client',
-            MetadatableId: client.id,
+          client.addMetadata({
             name: 'clientIdentity',
             value: JSON.stringify(identityRecord),
           }),
-          models.Event.findOrCreate({
-            where: {
-              EventableId: client.Rentings[0].id,
-            },
-            include: [{
-              model: models.Term,
-              where: {
-                name: 'checkin',
-                taxonomy: 'event-category',
-                termable: 'Event',
-              },
-            }],
-            defaults: {
-              startDate,
-              endDate: D.addMinutes(startDate, 30),
-              summary: `Checkin ${client.firstName} ${client.lastName}`,
-              description: Utils.stripIndent(`\
-                  ${client.firstName} ${client.lastName},
-                  ${client.Rentings[0].Room.name},
-                  tel: ${identityRecord.phoneNumber || 'N/A'}`),
-              eventable: 'Renting',
-              EventableId: client.Rentings[0].id,
-              Terms: [{
-                name: 'checkin',
-                taxonomy:'event-category',
-                termable: 'Event',
-              }],
-            },
+          models.Renting.findOrCreateCheckinEvent({
+            startDate,
+            renting: client.Rentings[0],
+            client,
           }),
         ]);
       })
