@@ -23,13 +23,13 @@ module.exports = function(models, Renting) {
 
   // We want rentings to be draft by default, but users shouldn't have
   // to set the deletedAt value themselves
-  Renting.hook('beforeCreate', (renting) => {
-    if ( renting.status !== 'active' ) {
-      renting.setDataValue('deletedAt', Date.now());
-    }
-
-    return renting;
-  });
+//  Renting.hook('beforeCreate', (renting) => {
+//    if ( renting.status !== 'active' ) {
+//      renting.setDataValue('deletedAt', Date.now());
+//    }
+//
+//    return renting;
+//  });
 
   // Create quote orders if the housing pack has been set when creating the renting
   Renting.hook('afterCreate', (_renting) => {

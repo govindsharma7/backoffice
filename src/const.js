@@ -12,22 +12,21 @@ module.exports = {
     trashed: {
       where: {
         deletedAt: { $not: null },
-        status: { $ne: 'draft'},
       },
       paranoid: false,
     },
     draft: {
       where: {
-        deletedAt: { $not: null },
+//        deletedAt: { $not: null },
         status: 'draft',
       },
-      paranoid: false,
+//      paranoid: false,
     },
   },
   UNTRASHED_SCOPE: {
     untrashed: {
       where : { $or: [{
-        deletedAt: { $not: null },
+//        deletedAt: { $not: null },
         status : 'draft',
       }, {
         deletedAt: null,

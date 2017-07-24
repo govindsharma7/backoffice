@@ -106,7 +106,7 @@ module.exports = (sequelize, DataTypes) => {
           model: models.Renting,
         }],
       }],
-      paranoid: false,
+//      paranoid: false,
     });
 
     Order.addScope('totalPaidRefund', {
@@ -257,7 +257,7 @@ module.exports = (sequelize, DataTypes) => {
     return Promise.all([
         this.getClient(),
         this.getCalculatedProps(),
-        this.getOrderItems({paranoid: false})
+        this.getOrderItems(/*{paranoid: false}*/)
           .then((orderItems) => {
             return Promise.map(orderItems, (item) => {
               return item.ninjaSerialize();

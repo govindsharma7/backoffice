@@ -16,7 +16,7 @@ module.exports = (app, models, Order) => {
       .findAll(
         { where: { id: { $in: req.body.data.attributes.ids } },
         // include draft orders
-        paranoid: false,
+//        paranoid: false,
       })
       .then((orders) => {
         return Order.ninjaCreateInvoices(orders);

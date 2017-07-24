@@ -1,9 +1,9 @@
 module.exports = function(models, Order) {
-  Order.hook('beforeCreate', (order) => {
-    if ( order.status !== 'active' ) {
-      order.setDataValue('deletedAt', Date.now());
-    }
-  });
+//  Order.hook('beforeCreate', (order) => {
+//    if ( order.status !== 'active' ) {
+//      order.setDataValue('deletedAt', Date.now());
+//    /}
+//  });
 
   Order.hook('afterUpdate', Order.afterUpdate);
 
@@ -17,7 +17,7 @@ module.exports = function(models, Order) {
   });
 
   Order.hook('afterRestore', (order) => {
-    return order.getOrderItems({paranoid: false})
+    return order.getOrderItems(/*{paranoid: false}*/)
         .filter((orderItem) => {
           return orderItem.deletedAt != null;
         })

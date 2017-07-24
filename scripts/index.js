@@ -30,6 +30,7 @@ const generateInvoices = 'node scripts/generateRentingInvoices.js';
 const updateDraftRentOrders = 'node scripts/updateDraftRentOrders.js';
 const updateLateFees = 'node scripts/updateLateFees.js';
 const archivePastRentings = 'node scripts/archivePastRentings.js';
+const removeDeletedAt = 'node scripts/removeDeletedAt.js';
 const lint = 'eslint src forest __tests__ scripts scripts.js';
 const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
@@ -56,6 +57,7 @@ const common = {
   'update:draftRentOrders': updateDraftRentOrders,
   'update:lateFees': updateLateFees,
   'archive:pastRentings': archivePastRentings,
+  'remove:deletedAt': removeDeletedAt,
   'fixRoomCount': 'node scripts/fixRoomCount.js',
 };
 
