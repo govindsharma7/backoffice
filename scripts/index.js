@@ -28,7 +28,7 @@ const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
 const updateDraftRentOrders = 'node scripts/updateDraftRentOrders.js';
 const updateLateFees = 'node scripts/updateLateFees.js';
-
+const archivedPastRenting = 'node scripts/archivedPastRenting.js';
 const lint = 'eslint src forest __tests__ scripts scripts.js';
 const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
@@ -53,6 +53,7 @@ const common = {
   'generate:invoices': generateInvoices,
   'update:draftRentOrders': updateDraftRentOrders,
   'update:lateFees': updateLateFees,
+  'archived:renting': archivedPastRenting,
   'fixRoomCount': 'node scripts/fixRoomCount.js',
 };
 
