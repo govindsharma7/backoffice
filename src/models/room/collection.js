@@ -32,6 +32,14 @@ module.exports = function({Room}) {
       field: 'current-client',
       type: ['String'],
       reference: 'Client.id',
+    }, {
+      field: 'future-client',
+      type: ['String'],
+      reference: 'Client.id',
+    }, {
+      field: 'past-client',
+      type: ['String'],
+      reference: 'Client.id',
     }],
     actions: [{
       name: 'Restore Room',

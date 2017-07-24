@@ -172,6 +172,32 @@ module.exports = (sequelize, DataTypes) => {
         }],
       };
     });
+    Client.addScope('pastApartment', function(date = Date.now()) {
+      return {
+        where: {
+          '$Rentings.Events.startDate$': { $lte: D.format(date) },
+        },
+        include: [{
+          model: models.Renting,
+          include: [{
+            model: models.Event,
+            attributes: ['id', 'startDate'],
+            required: false,
+            include: [{
+              model: models.Term,
+              attributes: [],
+              where: {
+                taxonomy: 'event-category',
+                name: 'checkout',
+              },
+            }],
+          }, {
+            model: models.Room,
+            attributes: ['id', 'ApartmentId'],
+          }],
+        }],
+      };
+    });
     Client.addScope('latestClientRenting', {
       attributes: { include: [
         [fn('max', col('Rentings.bookingDate')), 'latestBookingDate'],

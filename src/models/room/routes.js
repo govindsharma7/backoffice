@@ -20,5 +20,33 @@ module.exports = function(app, models, Room) {
     },
   });
 
+  Utils.addInternalRelationshipRoute({
+    app,
+    sourceModel: Room,
+    associatedModel: models.Client,
+    routeName: 'future-client',
+    scope: 'currentApartment',
+    where: (req) => {
+      return {
+        '$Rentings.RoomId$': req.params.recordId,
+        '$Rentings.bookingDate$': { $gt:  D.format(Date.now()) },
+      };
+    },
+  });
+
+  Utils.addInternalRelationshipRoute({
+    app,
+    sourceModel: Room,
+    associatedModel: models.Client,
+    routeName: 'past-client',
+    scope: 'pastApartment',
+    where: (req) => {
+      return {
+        '$Rentings.RoomId$': req.params.recordId,
+        '$Rentings.bookingDate$': { $lt:  D.format(Date.now()) },
+      };
+    },
+  });
+
   Utils.addRestoreAndDestroyRoutes(app, Room);
 };
