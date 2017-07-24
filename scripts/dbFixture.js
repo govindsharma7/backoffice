@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// /!\ This script is deprecated /!\
 
 /* eslint-disable import/no-dynamic-require */
 const path    = require('path');
@@ -113,7 +114,7 @@ return models.sequelize.sync({ force: true })
           }
 
           return Promise.map(records, (record) => {
-            return models.Room.scope('apartment')
+            return models.Room.scope('Apartment')
               .findById(record.RoomId)
               .then((room) => {
                 return Utils.getServiceFees(room.get('roomCount'));

@@ -1,8 +1,6 @@
-const find              = require('lodash/find');
-const {
-  TRASH_SEGMENTS,
-  INVOICENINJA_URL,
-}                       = require('../../const');
+const find               = require('lodash/find');
+const Ninja              = require('../src/vendor/invoiceninja');
+const { TRASH_SEGMENTS } = require('../../const');
 
 const _ = { find };
 
@@ -43,7 +41,7 @@ module.exports = function(models) {
       type: 'String',
       get(object) {
         if (object.ninjaId !== null) {
-          return `${INVOICENINJA_URL}/clients/${object.ninjaId}`;
+          return `${Ninja.URL}/clients/${object.ninjaId}`;
         }
 
         return null;

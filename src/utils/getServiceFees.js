@@ -1,11 +1,12 @@
 const Promise        = require('bluebird');
-const {SERVICE_FEES} = require('../const');
+const {LEASE} = require('../const');
 
-module.exports = function(roomCount) {
+module.exports = function(roomCount, version) {
+  const serviceFees = LEASE[version].SERVICE_FEES;
+
   // make this method artificially asynchronous, as it is likely to read from
   // the DB in the future.
   return Promise.resolve(
-    roomCount != null &&
-    roomCount in SERVICE_FEES ? SERVICE_FEES[roomCount] : SERVICE_FEES.default
+    roomCount != null && ( serviceFees[roomCount] || serviceFees.default )
   );
 };

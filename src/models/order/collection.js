@@ -1,8 +1,7 @@
-const {
-  TRASH_SEGMENTS,
-  INVOICENINJA_URL,
-}                   = require('../../const');
-const Utils         = require('../../utils');
+
+const Ninja              = require('../src/vendor/invoiceninja');
+const { TRASH_SEGMENTS } = require('../../const');
+const Utils              = require('../../utils');
 
 module.exports = function({Order}) {
   const memoizer = new Utils.calculatedPropsMemoizer(Order);
@@ -49,7 +48,7 @@ module.exports = function({Order}) {
       type: 'String',
       get(object) {
         if (object.ninjaId !== null) {
-          return `${INVOICENINJA_URL}/invoices/${object.ninjaId}/edit`;
+          return `${Ninja.URL}/invoices/${object.ninjaId}/edit`;
         }
 
         return null;

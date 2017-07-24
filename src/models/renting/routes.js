@@ -24,7 +24,7 @@ module.exports = function(app, models, Renting) {
           throw new Error('Can\'t create multiple housing-pack orders');
         }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
+        return Renting.scope('Room+Apartment').findById(ids[0]);
       })
       .then((renting) => {
         return renting.findOrCreatePackOrder(values.comfortLevel, values.discount);
@@ -46,8 +46,8 @@ module.exports = function(app, models, Renting) {
 
         return Renting.scope(
           'comfortLevel', // required by #generateLease
-          'client+identity', // required by #generateLease
-          'room+apartment', // required by #generateLease
+          'Client+identity', // required by #generateLease
+          'Room+Apartment', // required by #generateLease
           'depositOption'// required by #generateLease
         ).findById(ids[0]);
       })
@@ -72,7 +72,7 @@ module.exports = function(app, models, Renting) {
           throw new Error('Can\'t create multiple deposit orders');
         }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
+        return Renting.scope('Room+Apartment').findById(ids[0]);
       })
       .then((renting) => {
         return renting.findOrCreateDepositOrder();
@@ -90,7 +90,7 @@ module.exports = function(app, models, Renting) {
           throw new Error('Can\'t create multiple rent orders');
         }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
+        return Renting.scope('Room+Apartment').findById(ids[0]);
       })
       .then((renting) => {
         return renting.findOrCreateRentOrder(renting.bookingDate);
@@ -111,7 +111,7 @@ module.exports = function(app, models, Renting) {
           throw new Error('Can\'t create multiple housing-pack orders');
         }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
+        return Renting.scope('Room+Apartment').findById(ids[0]);
       })
       .then((renting) => {
         return renting.createQuoteOrders({
@@ -139,8 +139,8 @@ module.exports = function(app, models, Renting) {
         }
 
         return Renting.scope(
-          'room+apartment', // required to create the event
-          'client' // required to create the event
+          'Room+Apartment', // required to create the event
+          'Client' // required to create the event
         ).findById(ids[0]);
       })
       .then((renting) => {
@@ -162,8 +162,8 @@ module.exports = function(app, models, Renting) {
           }
 
           return Renting.scope(
-            'room', // required to create checkin/out order
-            'client', // required to create the refund event,
+            'Room', // required to create checkin/out order
+            'Client', // required to create the refund event,
             `${type}Date`, // required below
             'comfortLevel' // required below
           ).findById(ids[0]);

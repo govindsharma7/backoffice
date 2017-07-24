@@ -40,12 +40,6 @@ module.exports = (sequelize, DataTypes) => {
     Credit.belongsTo(models.Order, {
       constraints: false,
     });
-
-    Credit.addScope('order', {
-      include: [{
-        model: models.Payment,
-      }],
-    });
   };
 
   Credit.collection = collection;

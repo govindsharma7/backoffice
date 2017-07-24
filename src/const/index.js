@@ -1,4 +1,5 @@
-const config   = require('./config');
+const leaseV1  = require('./lease-v1');
+const leaseV2  = require('./lease-v2');
 
 module.exports = {
   TRASH_SEGMENTS: [{
@@ -39,9 +40,6 @@ module.exports = {
 
   DATETIME_FORMAT: 'YYYY-MM-DD HH:mm:ss.SSSZ',
 
-  INVOICENINJA_URL:
-    `${config.INVOICENINJA_PROTOCOL || 'http'}://${config.INVOICENINJA_HOST}`,
-
   BASIC_PACK:         'basic',
   COMFORT_PACK:     'comfort',
   PRIVILEGE_PACK: 'privilege',
@@ -62,45 +60,19 @@ module.exports = {
       privilege: 119000,
     },
   },
-
-  SPECIAL_CHECKIN_PRICE: 7900,
-
-  SERVICE_FEES: {
-    1:       5000, // 1 room
-    2:       4000, // 2 rooms
-    default: 3000, // 3 or more rooms
-  },
-
-  CHECKIN_DURATION:  30,
-  CHECKOUT_DURATION: 60,
-
-  LATE_NOTICE_FEES: {
-    '0-9days':   67900,
-    '10-19days': 47900,
-    '20-29days': 27900,
-  },
-
-  LATE_FEES: 1000,
-
-  ROOM_SWITCH_PRICES: {
-    privilege:     0,
-    comfort:   19000,
-    basic:     29000,
-  },
-
   DEPOSIT_PRICES: {
     lyon:        69000,
     paris:       89000,
     montpellier: 49000,
   },
+  CHECKIN_DURATION:  30,
+  CHECKOUT_DURATION: 60,
 
-  DEPOSIT_REFUND_DELAYS: {
-    basic:     60,
-    comfort:   40,
-    privilege: 20,
+  LEASE: {
+    v1: leaseV1,
+    v2: leaseV2,
   },
-
-  UNCASHED_DEPOSIT_FEE: 2900,
+  LEASE_VERSION: 'v2',
 
   RENT_COEFS: {
     '01-01': 0.95, // January

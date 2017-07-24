@@ -1,4 +1,5 @@
 module.exports = function(models, Apartment) {
+  // Calculate the latLng from other address fields
   Apartment.hook('beforeCreate', (apartment) => {
     if ( apartment.latLng != null ) {
       return apartment;
@@ -7,6 +8,7 @@ module.exports = function(models, Apartment) {
     return apartment.calculateLatLng();
   });
 
+  // Calculate the latLng from other address fields
   Apartment.hook('beforeUpdate', (apartment) => {
     // if no address field has been updated…
     if (

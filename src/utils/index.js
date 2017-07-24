@@ -6,8 +6,8 @@ const createSuccessHandler         = require('./createSuccessHandler');
 const roundBy100                   = require('./roundBy100');
 const findOrCreateSuccessHandler   = require('./findOrCreateSuccessHandler');
 const {
-  getCheckinPrice,
-  getCheckoutPrice,
+  getCheckinFees,
+  getCheckoutFees,
 }                                  = require('./getCheckinoutPrice');
 const getPackPrice                 = require('./getPackPrice');
 const getPeriodCoef                = require('./getPeriodCoef');
@@ -17,8 +17,10 @@ const {
   getCheckinEndDate,
   getCheckoutEndDate,
 }                                  = require('./getCheckinoutEndDate');
+const getDepositPrice              = require('./getDepositPrice');
 const getLateNoticeFees            = require('./getLateNoticeFees');
-const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
+const getRefundDate                = require('./getRefundDate');
+const getRoomSwitchFees            = require('./getRoomSwitchFees');
 const isValidPhoneNumber           = require('./isValidPhoneNumber');
 const logAndSend                   = require('./logAndSend');
 const parseDBDate                  = require('./parseDBDate');
@@ -32,16 +34,18 @@ module.exports = {
   createSuccessHandler,
   roundBy100,
   findOrCreateSuccessHandler,
-  getCheckinPrice,
-  getCheckoutPrice,
+  getCheckinFees,
+  getCheckoutFees,
   getPackPrice,
   getPeriodCoef,
   getPeriodPrice,
   getServiceFees,
   getCheckinEndDate,
   getCheckoutEndDate,
+  getDepositPrice,
   getLateNoticeFees,
-  getRoomSwitchPrice,
+  getRefundDate,
+  getRoomSwitchFees,
   isValidPhoneNumber,
   logAndSend,
   parseDBDate,

@@ -47,12 +47,6 @@ module.exports = (sequelize, DataTypes) => {
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
 
-    Room.addScope('apartment', {
-      include: [{
-        model: models.Apartment,
-      }],
-    });
-
    Room.addScope('latestRenting', {
       include: [{
         model: models.Renting,

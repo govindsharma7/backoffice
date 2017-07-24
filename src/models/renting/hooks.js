@@ -9,7 +9,7 @@ module.exports = function(models, Renting) {
       return renting;
     }
 
-    return models.Room.scope('apartment')
+    return models.Room.scope('Apartment')
       .findById(renting.RoomId)
       .then((room) => {
         return room.getCalculatedProps(renting.bookingDate);
@@ -34,7 +34,7 @@ module.exports = function(models, Renting) {
   // Create quote orders if the housing pack has been set when creating the renting
   Renting.hook('afterCreate', (_renting) => {
     if (_renting.comfortLevel) {
-      return Renting.scope('room+apartment')
+      return Renting.scope('Room+Apartment')
         .findById(_renting.id)
         .then((renting) => {
           return renting.createQuoteOrders(_renting);

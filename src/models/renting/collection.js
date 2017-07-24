@@ -19,9 +19,7 @@ module.exports = function(models) {
       type: 'Enum',
       enums: ['current', 'past', 'future', 'draft/current', 'draft/future', 'draft/past'],
       get(object) {
-        return models.Renting.scope('checkoutDate')
-          .findById(object.id)
-          .then(models.Renting.getStatus);
+        return models.Renting.getStatus(object);
       },
     }, {
       field: 'Housing Pack',

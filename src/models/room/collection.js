@@ -5,7 +5,7 @@ const Utils            = require('../../utils');
 const _ = { capitalize };
 
 module.exports = function({Room}) {
-  const memoizer = new Utils.calculatedPropsMemoizer( Room.scope('apartment') );
+  const memoizer = new Utils.calculatedPropsMemoizer( Room.scope('Apartment') );
 
   return {
     fields: [{

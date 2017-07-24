@@ -6,9 +6,6 @@ const Multer      = require('multer');
 const Liana       = require('forest-express-sequelize');
 const Ninja       = require('../../vendor/invoiceninja');
 const Utils       = require('../../utils');
-const {
-  INVOICENINJA_URL,
-}                 = require('../../const');
 
 const _ = { pickBy };
 
@@ -85,7 +82,7 @@ module.exports = (app, models, Client) => {
               id: invoice.id,
               type: 'Invoice',
               attributes: {
-                href: `${INVOICENINJA_URL}/invoices/${invoice.id}/edit`,
+                href: `${Ninja.URL}/invoices/${invoice.id}/edit`,
               },
             };
           }),

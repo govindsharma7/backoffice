@@ -141,7 +141,7 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Renting.addScope('room+apartment', {
+    Renting.addScope('Room+Apartment', {
       include: [{
         model: models.Room,
         include: [{
@@ -150,19 +150,7 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Renting.addScope('client', {
-      include: [{
-        model : models.Client,
-      }],
-    });
-
-    Renting.addScope('room', {
-      include: [{
-        model: models.Room,
-      }],
-    });
-
-    Renting.addScope('client+identity', {
+    Renting.addScope('Client+identity', {
       include: [{
         model: models.Client,
         include: [{
@@ -229,45 +217,53 @@ module.exports = (sequelize, DataTypes) => {
     }, order);
   };
 
-  Renting.prototype.toOrderItems = function(date = Date.now()) {
-    const prorated = this.prorate(date);
-    const room = this.Room;
-    const apartment = room.Apartment;
-    const month = D.format(date, 'MMMM');
+  Renting.toOrderItems = function(renting, date = Date.now()) {
+    return renting
+      .requireScopes(['Room+Apartment'])
+      .then((renting) => {
+        const prorated = this.prorate(date);
+        const room = renting.Room;
+        const apartment = room.Apartment;
+        const month = D.format(date, 'MMMM');
 
-    return [{
-      label: `Loyer ${month} - Chambre #${room.reference}`,
-      unitPrice: prorated.price,
-      RentingId: this.id,
-      status: this.status,
-      ProductId: 'rent',
-    }, {
-      label: `Charges ${month} - Apt #${apartment.reference}`,
-      unitPrice: prorated.serviceFees,
-      RentingId: this.id,
-      status: this.status,
-      ProductId: 'service-fees',
-    }];
+        return [{
+          label: `Loyer ${month} - Chambre #${room.reference}`,
+          unitPrice: prorated.price,
+          RentingId: renting.id,
+          status: renting.status,
+          ProductId: 'rent',
+        }, {
+          label: `Charges ${month} - Apt #${apartment.reference}`,
+          unitPrice: prorated.serviceFees,
+          RentingId: renting.id,
+          status: renting.status,
+          ProductId: 'service-fees',
+        }];
+      });
   };
 
   Renting.prototype.findOrCreateRentOrder = function(date = Date.now(), number) {
-    return models.Order
-      .findItemOrCreate({
-        where: {
-          RentingId: this.id,
-          ProductId: 'rent',
-        },
-        include: [{
-          model: models.Order,
-          where: { dueDate: Math.max(Date.now(), D.startOfMonth(date)) },
-          paranoid: false, // include drafts
-        }],
-        defaults: this.normalizeOrder({
-          label: `${D.format(date, 'MMMM')} Invoice`,
-          dueDate: Math.max(Date.now(), D.startOfMonth(date)),
-          OrderItems: this.toOrderItems(date),
-          number,
-        }),
+    return Renting
+      .toOrderItems(this, date)
+      .then((rentingItems) => {
+        return models.Order
+          .findItemOrCreate({
+            where: {
+              RentingId: this.id,
+              ProductId: 'rent',
+            },
+            include: [{
+              model: models.Order,
+              where: { dueDate: Math.max(Date.now(), D.startOfMonth(date)) },
+              paranoid: false, // include drafts
+            }],
+            defaults: this.normalizeOrder({
+              label: `${D.format(date, 'MMMM')} Invoice`,
+              dueDate: Math.max(Date.now(), D.startOfMonth(date)),
+              OrderItems: rentingItems,
+              number,
+            }),
+          });
       });
   };
 
@@ -549,7 +545,7 @@ module.exports = (sequelize, DataTypes) => {
   Renting.prototype.handleEventUpdate = function(event, options) {
     const type = event.get('category');
 
-    return Renting.scope(type === 'refund-deposit' ? 'client' : `${type}Order`)
+    return Renting.scope(type === 'refund-deposit' ? 'Client' : `${type}Order`)
       .findById(this.id)
       .then((renting) => {
         if ( !renting ) {
@@ -558,7 +554,7 @@ module.exports = (sequelize, DataTypes) => {
         const {Orders} = renting.Client === undefined || null ? null : renting.Client;
 
         return Promise.all([
-            type !== 'refund-deposit' ? Utils[`getC${type.substr(1)}Price`](
+            type !== 'refund-deposit' ? Utils[`get${_.capitalize(type)}Fees`](
               event.startDate,
               this.getComfortLevel()) : 0,
             Orders && Orders.length ? Orders[0].id : null,
@@ -632,19 +628,6 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Renting.prototype.generateLease = function() {
-    return Renting
-      .webmergeSerialize(this)
-      .then((serialized) => {
-        return webMerge.mergeDocument(
-          WEBMERGE_DOCUMENT_ID,
-          WEBMERGE_DOCUMENT_KEY,
-          serialized,
-          NODE_ENV !== 'production' // webmerge's test environment switch
-        );
-      });
-  };
-
   Renting.prototype.createQuoteOrders = function({comfortLevel, packDiscount}) {
     return Promise.mapSeries([
         { suffix: 'RentOrder', args: [this.bookingDate] },
@@ -659,71 +642,100 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Renting.webmergeSerialize = function(renting) {
-    const {Client, Terms, Room} = renting;
-    const {Apartment} = Room;
-    const {name, addressStreet, addressZip, addressCity} = Apartment;
-    const bookingDate = renting.bookingDate || Date.now();
-    const identity = JSON.parse(Client.Metadata[0].value);
-    const fullAddress = _.values(identity.address).filter(Boolean).join(', ');
-    const birthDate = _.values(identity.birthDate).join('/');
-    const roomNumber = name.split(' ').splice(-1)[0] === 'studio' ?
-      'l\'appartement entier' : `la chambre privée nº${Room.reference.slice(-1)}`;
-    const depositOption = !Terms[0] || (Terms[0] && Terms[0].name === 'cash') ?
-      'd\'encaissement du montant' : 'de non encaissement du chèque';
-    let packLevel;
-
-    switch (renting.get('comfortLevel')) {
-      case 'comfort':
-        packLevel = 'Confort';
-        break;
-      case 'privilege':
-        packLevel = 'Privilège';
-        break;
-      default:
-        packLevel = 'Basique';
-        break;
-    }
-
-    return Promise.resolve({
-      fullName: `${Client.firstName} ${Client.lastName}`,
-      fullAddress,
-      birthDate,
-      birthPlace: Utils.toSingleLine(`
-        ${identity.birthPlace.first}
-        (${_.capitalize(identity.birthCountryFr)})
-      `),
-      nationality: identity.nationalityFr,
-      rent: renting.price / 100,
-      serviceFees: renting.serviceFees / 100,
-      deposit: DEPOSIT_PRICES[addressCity] / 100,
-      depositOption,
-      packLevel,
-      roomNumber,
-      roomFloorArea: Room.floorArea,
-      floorArea: Apartment.floorArea,
-      address: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
-      floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
-      bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
-      endDate: D.format(D.addYears(D.subDays(bookingDate, 1), 1), 'DD/MM/YYYY'),
-      email: Client.email,
-    });
+  Renting.prototype.generateLease = function() {
+    return Renting
+      .webmergeSerialize(this)
+      .then((serialized) => {
+        return webMerge.mergeDocument(
+          WEBMERGE_DOCUMENT_ID,
+          WEBMERGE_DOCUMENT_KEY,
+          serialized,
+          NODE_ENV !== 'production' // webmerge's test environment switch
+        );
+      });
   };
 
-  Renting.getStatus = function(renting) {
-    const checkoutDate = renting.get('checkoutDate');
-    const {bookingDate} = renting;
-    const now = Date.now();
-    let status = renting.status === 'draft' ? 'draft/' : '';
+  Renting.webmergeSerialize = function(renting) {
+    return renting
+      .requireScopes(
+        ['Client+Metadata', 'Room+Apartment', 'comfortLevel', 'depositOption']
+      )
+      .then((renting) => {
+        return Promise.all([
+          renting,
+          Utils.getDepositPrice(renting.Room.Apartment.addressCity),
+        ]);
+      })
+      .then(([renting, depositPrice]) => {
+        const {Client, Terms, Room} = renting;
+        const {Apartment} = Room;
+        const {name, addressStreet, addressZip, addressCity} = Apartment;
+        const bookingDate = renting.bookingDate || Date.now();
+        const identity = JSON.parse(Client.Metadata[0].value);
+        const fullAddress = _.values(identity.address).filter(Boolean).join(', ');
+        const birthDate = _.values(identity.birthDate).join('/');
+        const roomNumber = name.split(' ').splice(-1)[0] === 'studio' ?
+          'l\'appartement entier' : `la chambre privée nº${Room.reference.slice(-1)}`;
+        const depositOption = !Terms[0] || (Terms[0] && Terms[0].name === 'cash') ?
+          'd\'encaissement du montant' : 'de non encaissement du chèque';
+        let packLevel;
 
-    if ( checkoutDate && checkoutDate < now ) {
-      return status += 'past';
-    }
-    else if ( bookingDate > now ) {
-      return status += 'future';
-    }
+        switch (renting.get('comfortLevel')) {
+          case 'comfort':
+            packLevel = 'Confort';
+            break;
+          case 'privilege':
+            packLevel = 'Privilège';
+            break;
+          default:
+            packLevel = 'Basique';
+            break;
+        }
 
-    return status += 'current';
+        return {
+          fullName: `${Client.firstName} ${Client.lastName}`,
+          fullAddress,
+          birthDate,
+          birthPlace: Utils.toSingleLine(`
+            ${identity.birthPlace.first}
+            (${_.capitalize(identity.birthCountryFr)})
+          `),
+          nationality: identity.nationalityFr,
+          rent: renting.price / 100,
+          serviceFees: renting.serviceFees / 100,
+          deposit: depositPrice / 100,
+          depositOption,
+          packLevel,
+          roomNumber,
+          roomFloorArea: Room.floorArea,
+          floorArea: Apartment.floorArea,
+          address: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
+          floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
+          bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
+          endDate: D.format(D.addYears(D.subDays(bookingDate, 1), 1), 'DD/MM/YYYY'),
+          email: Client.email,
+        };
+      });
+  };
+
+  // (the last parameter only helps with testing)
+  Renting.getStatus = function(renting, date = Date.now()) {
+    return renting
+      .requireScopes('checkoutDate')
+      .then((renting) => {
+        const checkoutDate = renting.get('checkoutDate');
+        const { bookingDate } = renting;
+        let status = renting.status === 'draft' ? 'draft/' : '';
+
+        if ( checkoutDate && checkoutDate < date ) {
+          return status += 'past';
+        }
+        else if ( bookingDate > date ) {
+          return status += 'future';
+        }
+
+        return status += 'current';
+      });
   };
 
   Renting.collection = collection;

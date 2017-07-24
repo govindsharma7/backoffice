@@ -12,7 +12,7 @@ const sequelizeMigrationUndo =
   `sequelize db:migrate:undo ${sequelizeFlags}`;
 
 const watched = '--watch src --watch forest --watch __tests__';
-const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
+const nodemonInspect = `nodemon ${watched} --inspect --debug-brk src/index.js`;
 const dumpFile = 'data/data.sql';
 const devDb = '.dev.sqlite';
 

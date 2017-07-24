@@ -9,8 +9,8 @@ const payline    = require('../../vendor/payline');
 const Utils      = require('../../utils');
 const {
   TRASH_SCOPES,
-  LATE_FEES,
-  UNCASHED_DEPOSIT_FEE,
+  LATE_PAYMENT_FEES,
+  UNCASHED_DEPOSIT_FEES,
   DATETIME_FORMAT,
 }                = require('../../const');
 const collection = require('./collection');
@@ -208,7 +208,7 @@ module.exports = (sequelize, DataTypes) => {
   Client.prototype.getRentingsFor = function(date = Date.now()) {
     const startOfMonth = D.format(D.startOfMonth(date), DATETIME_FORMAT);
 
-    return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
+    return models.Renting.scope('Room+Apartment', 'checkoutDate').findAll({
       where: {
         ClientId: this.id,
         bookingDate: { $lte: D.endOfMonth(date) },
@@ -222,33 +222,38 @@ module.exports = (sequelize, DataTypes) => {
 
   Client.prototype.findOrCreateRentOrder =
     function(rentings, date = Date.now(), number) {
-      return models.Order
-        .findItemOrCreate({
-          where: { ProductId: 'rent' },
-          include: [{
-            model: models.Order,
-            where: {
-              ClientId: this.id,
-              dueDate: D.startOfMonth(date),
-            },
-          }],
-          defaults: {
-            label: `${D.format(date, 'MMMM')} Invoice`,
-            type: 'debit',
-            ClientId: this.id,
-            dueDate: D.startOfMonth(date),
-            OrderItems:
-              rentings.reduce((all, renting) => {
-                return all.concat(renting.toOrderItems(date));
-              }, [])
-              .concat(this.get('uncashedDepositCount') > 0 && {
-                label: 'Option Liberté',
-                unitPrice: UNCASHED_DEPOSIT_FEE,
-                ProductId: 'uncashed-deposit',
-              })
-              .filter(Boolean),
-            number,
-          },
+      return Promise.all([
+          this.requireScopes(['uncashedDepositCount']),
+          Promise.reduce(rentings, (all, renting) => {
+            return all.concat(models.Renting.toOrderItems(renting, date));
+          }, []),
+        ])
+        .then(([client, rentingItems]) => {
+          return models.Order
+            .findItemOrCreate({
+              where: { ProductId: 'rent' },
+              include: [{
+                model: models.Order,
+                where: {
+                  ClientId: client.id,
+                  dueDate: D.startOfMonth(date),
+                },
+              }],
+              defaults: {
+                label: `${D.format(date, 'MMMM')} Invoice`,
+                type: 'debit',
+                ClientId: client.id,
+                dueDate: D.startOfMonth(date),
+                OrderItems:
+                  rentingItems.concat(this.get('uncashedDepositCount') > 0 && {
+                    label: 'Option Liberté',
+                    unitPrice: UNCASHED_DEPOSIT_FEES,
+                    ProductId: 'uncashed-deposit',
+                  })
+                  .filter(Boolean),
+                number,
+              },
+            });
         });
   };
 
@@ -397,7 +402,7 @@ module.exports = (sequelize, DataTypes) => {
               OrderId: order.id,
               ProductId: 'late-fees',
               quantity: lateFees,
-              unitPrice: LATE_FEES,
+              unitPrice: LATE_PAYMENT_FEES,
               label: 'Late fees',
             });
         })

@@ -38,38 +38,17 @@ module.exports = (sequelize, DataTypes) => {
     district:                 DataTypes.STRING,
   }, {
     paranoid: true,
-    scopes: Object.assign({
-      lyon: {
-        where: {
-          addressCity: 'lyon',
-        },
-      },
-      paris: {
-        where: {
-          addressCity: 'paris',
-        },
-      },
-      montpellier: {
-        where: {
-          addressCity: 'montpellier',
-        },
-      },
-    }, TRASH_SCOPES),
+    scopes: TRASH_SCOPES,
   });
   const {models} = sequelize;
 
   Apartment.associate = () => {
     Apartment.hasMany(models.Room);
 
-    Apartment.addScope('_roomCount', {
-      attributes: { include: [
-        [sequelize.fn('count', sequelize.col('Rooms.id')), '_roomCount'],
-      ]},
-      include: [{
-        model: models.Room,
-        attributes: [],
-      }],
-      group: ['Apartment.id'],
+    ['lyon', 'paris', 'montpellier'].forEach((name) => {
+      Apartment.addScope(name, {
+        where: { addressCity: name },
+      });
     });
   };
 

@@ -4,7 +4,7 @@ const Holidays                = require('date-holidays');
 const {
   BASIC_PACK,
   PRIVILEGE_PACK,
-  SPECIAL_CHECKIN_PRICE,
+  LEASE,
 }                             = require('../const');
 
 function isWorkingHours(date) {
@@ -23,17 +23,17 @@ function isSpecialDate(date) {
   return D.isWeekend(date) || !isWorkingHours(date) || h.isHoliday(date);
 }
 
-module.exports.getCheckinPrice = function(date, level) {
+module.exports.getCheckinPrice = function(date, level, version) {
   if ( level === BASIC_PACK && isSpecialDate(date) ) {
-    return Promise.resolve(SPECIAL_CHECKIN_PRICE);
+    return Promise.resolve(LEASE[version].SPECIAL_CHECKIN_FEES);
   }
 
   return Promise.resolve(0);
 };
 
-module.exports.getCheckoutPrice = function(date, level) {
+module.exports.getCheckoutPrice = function(date, level, version) {
   if ( level !== PRIVILEGE_PACK && isSpecialDate(date) ) {
-    return Promise.resolve(SPECIAL_CHECKIN_PRICE);
+    return Promise.resolve(LEASE[version].SPECIAL_CHECKIN_FEES);
   }
 
   return Promise.resolve(0);
