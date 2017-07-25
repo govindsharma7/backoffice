@@ -92,6 +92,26 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Room.prototype.checkAvailability = function(date) {
+    return Room.checkAvailability(this, date);
+  };
+
+  Room.checkAvailability = function(room, date = Date.now()) {
+    if ( room.Rentings.length === 0 ) {
+      return true;
+    }
+    const latestRenting = room.Rentings.reduce((acc, curr) => {
+      return curr.bookingDate > acc.bookingDate ? curr : acc;
+    }, room.Rentings[0]);
+    const checkoutDate =
+          latestRenting.Events[0] &&
+          latestRenting.Events[0].startDate;
+
+    return latestRenting.bookingDate < date && checkoutDate <= date ?
+      true : false;
+
+  };
+
   Room.collection = collection;
   Room.routes = routes;
 

@@ -51,20 +51,10 @@ module.exports = (sequelize, DataTypes) => {
           return models.Room.scope('latestRenting')
             .findById(this.RoomId)
             .then((room) => {
-              if ( room.Rentings.length === 0 ) {
-                return true;
+              if ( !room.checkAvailability(value) ) {
+                throw new Error('Room is already booked');
               }
-              const latestRenting = room.Rentings.reduce((acc, curr) => {
-                return curr.bookingDate > acc.bookingDate ? curr : acc;
-              }, room.Rentings[0]);
-              const checkoutDate =
-                latestRenting.Events[0] &&
-                latestRenting.Events[0].startDate;
-
-              if ( latestRenting.bookingDate < value && checkoutDate <= value ) {
-                return true;
-              }
-              throw new Error('Room is already booked');
+              return true;
           });
         },
       },

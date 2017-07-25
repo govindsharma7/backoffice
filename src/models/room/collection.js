@@ -48,19 +48,7 @@ module.exports = function({Room}) {
                 where: { '$Apartment.addressCity$' : `${city}` },
               })
               .filter((room) => {
-                if (room.Rentings.length === 0) {
-                  return true;
-                }
-
-                // Find renting with latest bookingDate
-                const latestRenting = room.Rentings.reduce((acc, curr) => {
-                  return curr.bookingDate > acc.bookingDate ? curr : acc;
-                }, room.Rentings[0]);
-                const checkoutDate =
-                  latestRenting.Events[0] && latestRenting.Events[0].startDate;
-                const now = Date.now();
-
-                return latestRenting.bookingDate < now && checkoutDate <= now;
+                return room.checkAvailability();
               })
               .reduce((acc, curr) => {
                 acc.id.push(curr.id);

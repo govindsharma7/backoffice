@@ -79,8 +79,8 @@ module.exports = fixtures((u) => {
       EventableId: u.id('renting-1'),
     }, {
       id: u.id('event-2'),
-      startDate: '2015-01-20',
-      endDate: '2015-01-20',
+      startDate: '2017-01-20',
+      endDate: '2017-01-20',
       eventable: 'Renting',
       EventableId: u.id('renting-2'),
     }, {
@@ -91,14 +91,14 @@ module.exports = fixtures((u) => {
       EventableId: u.id('renting-3'),
     }, {
       id: u.id('event-4'),
-      startDate: '2016-02-20',
-      endDate: '2016-02-20',
+      startDate: '2018-02-20',
+      endDate: '2018-02-20',
       eventable: 'Renting',
       EventableId: u.id('renting-4'),
     }, {
       id: u.id('event-5'),
-      startDate: '2015-01-20',
-      endDate: '2015-01-20',
+      startDate: '2017-10-20',
+      endDate: '2017-10-20',
       eventable: 'Renting',
       EventableId: u.id('renting-5'),
     }],

@@ -45,4 +45,23 @@ describe('Room', () => {
         });
     });
   });
+
+  describe('#checkAvailability()', () => {
+    test('it returns a boolean if room is available', () => {
+      return models.Room.scope('latestRenting')
+        .findById(room1.id)
+        .then((room) => {
+          return Promise.all([
+          room.checkAvailability(),
+          room.checkAvailability('2107-01-19 Z'),
+          ]);
+        })
+        .then(([available, unavailable]) => {
+          return [
+            expect(available).toBeTruthy,
+            expect(unavailable).toBeFalsy,
+          ];
+      });
+    });
+  });
 });
