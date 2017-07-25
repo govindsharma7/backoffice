@@ -1,5 +1,4 @@
 const Promise          = require('bluebird');
-const D                = require('date-fns');
 const Utils            = require('../../utils');
 const {TRASH_SCOPES}   = require('../../const');
 const collection       = require('./collection');
@@ -25,18 +24,6 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'active',
       allowNull: false,
     },
-    latestBookingDate: {
-      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
-      get() {
-        return D.parse(this.dataValues.latestBookingDate);
-      },
-    },
-    latestCheckoutDate: {
-      type:                     DataTypes.VIRTUAL(DataTypes.DATE),
-      get() {
-        return D.parse(this.dataValues.latestCheckoutDate);
-      },
-    },
   }, {
     paranoid: true,
     scopes: TRASH_SCOPES,
@@ -53,10 +40,13 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-   Room.addScope('latestRenting', {
+    Room.addScope('Renting+checkoutDate', {
       include: [{
         model: models.Renting,
         required: false,
+        attributes: { include: [
+          [sequelize.literal('`Rentings->Events`.`startDate`'), 'checkoutDate'],
+        ]},
         include: [{
           model: models.Event,
           required: false,
@@ -69,12 +59,10 @@ module.exports = (sequelize, DataTypes) => {
             },
           }],
         }],
-      }, {
-        model: models.Apartment,
       }],
     });
-
   };
+
   // calculate periodPrice and serviceFees for the room
   Room.prototype.getCalculatedProps = function(date = Date.now()) {
     return Promise.all([
@@ -90,6 +78,22 @@ module.exports = (sequelize, DataTypes) => {
           serviceFees,
         };
       });
+  };
+
+  Room.prototype.checkAvailability = function(date = Date.now()) {
+    return Room.checkAvailability(this, date);
+  };
+  Room.checkAvailability = function(room, date = Date.now()) {
+    if ( room.Rentings.length === 0 ) {
+      return Promise.resolve(true);
+    }
+
+    const latestRenting = room.Rentings.reduce((acc, curr) => {
+      return curr.bookingDate > acc.bookingDate ? curr : acc;
+    }, room.Rentings[0]);
+    const checkoutDate = latestRenting.get('checkoutDate');
+
+    return Promise.resolve( checkoutDate && checkoutDate <= date ? true : false );
   };
 
   Room.collection = collection;

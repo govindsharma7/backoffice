@@ -1,4 +1,5 @@
 const Promise  = require('bluebird');
+const D        = require('date-fns');
 const models   = require('../../src/models');
 const fixtures = require('../../__fixtures__/room');
 const Utils    = require('../../src/utils');
@@ -42,6 +43,62 @@ describe('Room', () => {
         })
         .then(([expected, { serviceFees }]) => {
           return expect(serviceFees).toEqual(expected);
+        });
+    });
+  });
+
+  describe('.checkAvailability', () => {
+    const date = D.parse('2017-07-07 Z');
+    const getNull = () => { return null; };
+
+    test('no Rentings == isAvailable', () => {
+      return models.Room.checkAvailability({
+          Rentings: [],
+        }, date)
+        .then((isAvailable) => {
+          return expect(isAvailable).toEqual(true);
+        });
+    });
+
+    test('past bookingDate + no checkoutDate == !isAvailable', () => {
+      return models.Room.checkAvailability({
+          Rentings: [{ bookingDate: D.parse('2017-01-01 Z'), get: getNull }],
+        }, date)
+        .then((isAvailable) => {
+          return expect(isAvailable).toEqual(false);
+        });
+    });
+
+    test('future bookingDate + no checkoutDate == !isAvailable', () => {
+      return models.Room.checkAvailability({
+          Rentings: [{ bookingDate: D.parse('2017-12-12 Z'), get: getNull }],
+        }, date)
+        .then((isAvailable) => {
+          return expect(isAvailable).toEqual(false);
+        });
+    });
+
+    test('past bookingDate + future checkoutDate == !isAvailable', () => {
+      return models.Room.checkAvailability({
+          Rentings: [{
+            bookingDate: D.parse('2017-01-01 Z'),
+            get: () => { return D.parse('2017-12-12'); },
+          }],
+        }, date)
+        .then((isAvailable) => {
+          return expect(isAvailable).toEqual(false);
+        });
+    });
+
+    test('past bookingDate + past checkoutDate == !isAvailable', () => {
+      return models.Room.checkAvailability({
+          Rentings: [{
+            bookingDate: D.parse('2017-01-01 Z'),
+            get: () => { return D.parse('2017-02-02'); },
+          }],
+        }, date)
+        .then((isAvailable) => {
+          return expect(isAvailable).toEqual(true);
         });
     });
   });
