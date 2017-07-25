@@ -1,5 +1,9 @@
 const Promise        = require('bluebird');
 const Ninja          = require('../../vendor/invoiceninja');
+const {
+  WORDPRESS_AJAX_URL,
+  REST_API_SECRET,
+}                 = require('../../config');
 const Utils          = require('../../utils');
 const {
   TRASH_SCOPES,
@@ -73,9 +77,21 @@ module.exports = (sequelize, DataTypes) => {
     Order.addScope('rentOrders', {
       include: [{
         model: models.OrderItem,
-        where: {
-          ProductId: 'rent',
-        },
+        where: { ProductId: 'rent' },
+      }],
+    });
+
+    Order.addScope('packItems', {
+      include: [{
+        model: models.OrderItem,
+        required: false,
+        where: { ProductId: { $like: '%-pack' } },
+        include: [{
+          model: models.Renting,
+          include: [{
+            model: models.Room,
+          }],
+        }],
       }],
     });
 
@@ -348,6 +364,31 @@ module.exports = (sequelize, DataTypes) => {
           );
         });
     });
+  };
+
+  Order.prototype.markAsPaid = function() {
+    return Order.markAsPaid(this);
+  };
+  Order.markAsPaid = function(order) {
+    return Promise.all([
+      // Switch order status from draft to active
+      order.update({ status: 'active', deletedAt: null}),
+      // Switch renting status from draft to active
+      order.OrderItems && order.OrderItems[0] && models.Renting.update(
+        { status: 'active', deletedAt: null },
+        { where: { id: order.OrderItems[0].RentingId } }
+      ),
+      // Mark renting as unavailable in WordPress
+      order.OrderItems && order.OrderItems[0] && fetch(WORDPRESS_AJAX_URL, {
+        method: 'POST',
+        body: {
+          action: 'update_availability',
+          privateKey: REST_API_SECRET,
+          reference: order.OrderItems[0].Renting.Room.reference,
+          meta: '20300901',
+        },
+      }),
+    ]);
   };
 
   Order.afterUpdate = (order) => {

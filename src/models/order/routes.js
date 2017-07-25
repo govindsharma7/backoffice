@@ -25,6 +25,27 @@ module.exports = (app, models, Order) => {
       .catch(Utils.logAndSend(res));
   });
 
+  app.post('/forest/actions/payment-notification', (req, res) => {
+    const ninjaId =
+      /https:\/\/payment\.chez-nestor\.com\/invoices\/(\d+)/.exec(req.message);
+
+    if ( !ninjaId || !ninjaId[1] ) {
+      res.status(502).send('Invalid request');
+    }
+
+    Order.scope('packItems')
+      .findOne({ where: {ninjaId : ninjaId[1]} })
+      .then((order) => {
+        if ( !order ) {
+          throw new Error('No order found for this NinjaId');
+        }
+
+        return order.markAsPaid();
+      })
+      .then(Utils.createSuccessHandler(res, 'Payment Notification'))
+      .catch(Utils.logAndSend(res));
+  });
+
   app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) => {
     models.Credit.scope('order')
       .findAll({ where: { '$Payment.OrderId$': req.params.orderId } })
