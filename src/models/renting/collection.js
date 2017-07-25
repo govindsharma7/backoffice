@@ -15,13 +15,13 @@ module.exports = function(models) {
         return Utils.getPeriodCoef(object.bookingDate);
       },
     }, {
-      field: 'current status',
+      field: 'period',
       type: 'Enum',
-      enums: ['current', 'past', 'future', 'draft/current', 'draft/future', 'draft/past'],
+      enums: ['current', 'past', 'future'],
       get(object) {
         return models.Renting.scope('checkoutDate')
           .findById(object.id)
-          .then(models.Renting.getStatus);
+          .then(models.Renting.getPeriod);
       },
     }, {
       field: 'Housing Pack',

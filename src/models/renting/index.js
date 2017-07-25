@@ -710,20 +710,18 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Renting.getStatus = function(renting) {
+  Renting.getPeriod = function(renting, date = Date.now()) {
     const checkoutDate = renting.get('checkoutDate');
     const {bookingDate} = renting;
-    const now = Date.now();
-    let status = renting.status === 'draft' ? 'draft/' : '';
 
-    if ( checkoutDate && checkoutDate < now ) {
-      return status += 'past';
+    if ( checkoutDate && checkoutDate < date ) {
+      return 'past';
     }
-    else if ( bookingDate > now ) {
-      return status += 'future';
+    else if ( bookingDate > date ) {
+      return 'future';
     }
 
-    return status += 'current';
+    return 'current';
   };
 
   Renting.collection = collection;
