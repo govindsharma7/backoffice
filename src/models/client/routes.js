@@ -99,7 +99,7 @@ module.exports = (app, models, Client) => {
     Handle JotForm data (Identity - New Member)
     in order to collect more information for a new client
   */
-  app.post('/forest/actions/clientIdentity', multer, LEA, (req, res) => {
+  app.post('/forest/actions/client-identity', multer, LEA, (req, res) => {
     Client.normalizeIdentityRecord(JSON.parse(req.body.rawRequest))
       .then((identityRecord) => {
         const { fullName, phoneNumber, clientId } = identityRecord;
@@ -126,7 +126,7 @@ module.exports = (app, models, Client) => {
           client.update(
             _.pickBy(fieldsToUpdate, Boolean) // filter out falsy phoneNumber
           ),
-          client.addMetadata({
+          client.createMetadatum({ // sequelize pluralization ¯\_(ツ)_/¯
             name: 'clientIdentity',
             value: JSON.stringify(identityRecord),
           }),
