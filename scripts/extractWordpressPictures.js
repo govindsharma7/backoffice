@@ -18,7 +18,7 @@ return Promise
     let url;
 
     pictures[reference] = [];
-    while ( url = pictureRegex.exec(html) ) {
+    while ( (url = pictureRegex.exec(html)) ) {
       pictures[reference].push(
         url[1].replace('http://localhost:8080/wp-content/uploads', '')
       );
