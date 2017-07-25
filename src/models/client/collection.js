@@ -84,6 +84,10 @@ module.exports = function(models) {
       field: 'Orders',
       type: ['String'],
       reference: 'Order.id',
+    }, {
+      field: 'rentalAttachments',
+      type: ['String'],
+      reference: 'RentalAttachment.id',
     }],
     actions:[{
       name: 'Credit Client',
