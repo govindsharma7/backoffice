@@ -2,10 +2,6 @@ const Liana       = require('forest-express-sequelize');
 const Promise     = require('bluebird');
 const makePublic  = require('../../middlewares/makePublic');
 const Utils       = require('../../utils');
-const {
-  WORDPRESS_AJAX_URL,
-  REST_API_SECRET,
-}                 = require('../../config');
 
 const Serializer  = Liana.ResourceSerializer;
 
@@ -31,45 +27,23 @@ module.exports = (app, models, Order) => {
 
   app.post('/forest/actions/payment-notification', (req, res) => {
     const ninjaId =
-          /https:\/\/payment\.chez-nestor\.com\/invoices\/(\d*)/.exec(req.message);
+      /https:\/\/payment\.chez-nestor\.com\/invoices\/(\d+)/.exec(req.message);
 
-    if ( ninjaId && ninjaId[1] ) {
-      Order
-        .findOne({ where: {ninjaId : ninjaId[1]} })
-        .then((order) => {
-          if ( order ) {
-            order.update({ status: 'active', deletedAt: null});
-            return order.getOrderItems({where: {ProductId: {$like: '%-pack' }} });
-          }
-          throw new Error('Can\'t retrieve this order');
-        })
-        .then((orderItem) => {
-          if (orderItem && orderItem[0]) {
-            models.Renting.update(
-              {status: 'active', deletedAt: null }, // filter out falsy phoneNumber
-              { where: { id: orderItem[0].RentingId } });
-            return models.Renting.scope('room').findById(orderItem[0].RentingId);
-          }
-          return null;
-        })
-        .then((renting) => {
-          if ( renting != null ) {
-            return fetch(WORDPRESS_AJAX_URL, {
-              method: 'POST',
-              body: JSON.stringify({
-                action: 'update_availability',
-                privateKey: REST_API_SECRET,
-                reference: renting.Room.reference,
-                meta: '20300901',
-              }),
-            });
-          }
-          return null;
-        })
-        .then(Utils.createSuccessHandler(res, 'Payment Notification'))
-        .catch(Utils.logAndSend(res));
+    if ( !ninjaId || !ninjaId[1] ) {
+      res.status(502).send('Invalid request');
     }
-    res.status(502).send('Invalid request');
+
+    Order.scope('packItems')
+      .findOne({ where: {ninjaId : ninjaId[1]} })
+      .then((order) => {
+        if ( !order ) {
+          throw new Error('No order found for this NinjaId');
+        }
+
+        return order.markAsPaid();
+      })
+      .then(Utils.createSuccessHandler(res, 'Payment Notification'))
+      .catch(Utils.logAndSend(res));
   });
 
   app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) => {
