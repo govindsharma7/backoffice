@@ -199,27 +199,27 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
-  Utils.addInternalRelationshipRoute({
-    app,
-    sourceModel: Client,
-    associatedModel: models.Renting,
-    routeName: 'Rentings',
-    scope: 'untrashed',
-    where: (req) => {
-      return { ClientId: req.params.recordId };
-    },
-  });
-
-  Utils.addInternalRelationshipRoute({
-    app,
-    sourceModel: Client,
-    associatedModel: models.Order,
-    routeName: 'Orders',
-    scope: 'untrashed',
-    where: (req) => {
-      return { ClientId: req.params.recordId };
-    },
-  });
+  // Utils.addInternalRelationshipRoute({
+  //   app,
+  //   sourceModel: Client,
+  //   associatedModel: models.Renting,
+  //   routeName: 'Rentings',
+  //   scope: 'untrashed',
+  //   where: (req) => {
+  //     return { ClientId: req.params.recordId };
+  //   },
+  // });
+  //
+  // Utils.addInternalRelationshipRoute({
+  //   app,
+  //   sourceModel: Client,
+  //   associatedModel: models.Order,
+  //   routeName: 'Orders',
+  //   scope: 'untrashed',
+  //   where: (req) => {
+  //     return { ClientId: req.params.recordId };
+  //   },
+  // });
 
   Utils.addRestoreAndDestroyRoutes(app, Client);
 };

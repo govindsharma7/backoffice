@@ -76,7 +76,7 @@ module.exports = function(models) {
       field: 'Invoices',
       type: ['String'],
       reference: 'Invoice.id',
-    }, {
+    }, /*{
       field: 'Rentings',
       type: ['String'],
       reference: 'Renting.id',
@@ -84,7 +84,7 @@ module.exports = function(models) {
       field: 'Orders',
       type: ['String'],
       reference: 'Order.id',
-    }, {
+    },*/ {
       field: 'rentalAttachments',
       type: ['String'],
       reference: 'RentalAttachment.id',
