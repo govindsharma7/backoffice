@@ -134,6 +134,7 @@ module.exports = (app, models, Client) => {
             startDate,
             renting: client.Rentings[0],
             client,
+            room: client.Rentings[0].Room,
           }),
         ]);
       })

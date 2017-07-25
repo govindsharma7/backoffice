@@ -1,23 +1,27 @@
-const Promise    = require('bluebird');
-const mapKeys    = require('lodash/mapKeys');
-const D          = require('date-fns');
-const Payline    = require('payline');
-const Country    = require('countryjs');
-// const Translate  = require('google-translate-api');
-const Ninja      = require('../../vendor/invoiceninja');
-const payline    = require('../../vendor/payline');
-const Utils      = require('../../utils');
+const Promise         = require('bluebird');
+const mapKeys         = require('lodash/mapKeys');
+const D               = require('date-fns');
+const Payline         = require('payline');
+const Country         = require('countryjs');
+const GoogleTranslate = require('google-translate');
+const Ninja           = require('../../vendor/invoiceninja');
+const payline         = require('../../vendor/payline');
+const Utils           = require('../../utils');
 const {
   TRASH_SCOPES,
   LATE_FEES,
   UNCASHED_DEPOSIT_FEE,
   DATETIME_FORMAT,
-}                = require('../../const');
-const collection = require('./collection');
-const routes     = require('./routes');
-const hooks      = require('./hooks');
+}                     = require('../../const');
+const config          = require('../../config');
+const collection      = require('./collection');
+const routes          = require('./routes');
+const hooks           = require('./hooks');
 
 const _ = { mapKeys };
+const Translate = Promise.promisify(
+  GoogleTranslate(config.GOOGLE_TRANSLATE_API).translate
+);
 
 module.exports = (sequelize, DataTypes) => {
   const Client = sequelize.define('Client', {
@@ -457,16 +461,13 @@ module.exports = (sequelize, DataTypes) => {
     values.birthCountryEn = values.birthPlace.last;
     values.isStudent = /^(Student|Intern)$/.test(values.frenchStatus);
 
-    return values;
-    // return Promise.all([
-    //     Translate(values.birthCountryEn, { to: 'fr' }),
-    //     Translate(values.nationalityEn, { to: 'fr' }),
-    //   ])
-    //   .then(([{ text : birthCountryFr }, { text : nationalityFr }]) => {
-    //     Object.assign( values, { birthCountryFr, nationalityFr });
-    //
-    //     return values;
-    //   });
+    return Promise.all([
+      Translate(values.birthCountryEn, 'en', 'fr'),
+      Translate(values.nationalityEn, 'en', 'fr'),
+    ])
+    .then(([{ translatedText : birthCountryFr }, { translatedText : nationalityFr }]) => {
+      return Object.assign( values, { birthCountryFr, nationalityFr });
+    });
   };
 
   Client.collection = collection;
