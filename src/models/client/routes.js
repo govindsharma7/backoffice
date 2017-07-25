@@ -1,6 +1,7 @@
 const Promise     = require('bluebird');
 const uuid        = require('uuid/v4');
 const pickBy      = require('lodash/pickBy');
+const mapKeys     = require('lodash/mapKeys');
 const D           = require('date-fns');
 const Multer      = require('multer');
 const Liana       = require('forest-express-sequelize');
@@ -10,7 +11,7 @@ const {
   INVOICENINJA_URL,
 }                 = require('../../const');
 
-const _ = { pickBy };
+const _ = { pickBy, mapKeys };
 
 module.exports = (app, models, Client) => {
   const LEA = Liana.ensureAuthenticated;
@@ -92,6 +93,62 @@ module.exports = (app, models, Client) => {
           meta: {count: data.length},
         });
       })
+      .catch(Utils.logAndSend(res));
+  });
+
+  app.get('/forest/Client/:recordId/relationships/rentalAttachments',
+    LEA,
+    (req, res) => {
+    models.Metadata
+      .findAll({
+        where: {
+          name: 'rentalAttachments',
+          MetadatableId : req.params.recordId,
+        },
+        order: ['createdAt'],
+        limit: 1,
+      })
+      .then((metadata) => {
+        let rUrl = /https:\/\/www\.jotformeu\.com\/uploads\/cheznestor\//g;
+        const values = _.pickBy(JSON.parse(metadata[0].value), (value) => {
+          return rUrl.test(value);
+        });
+
+        return res.send({
+          data: Object.keys(values).map((key) => {
+            return {
+              type: 'rentalAttachment',
+              id: key,
+              attributes: {
+                href: values[key],
+              },
+            };
+          }),
+          meta: {count: Object.keys(values).length},
+        });
+      })
+      .catch(Utils.logAndSend(res));
+  });
+
+  app.post('/forest/actions/rental-attachments', multer, LEA, (req, res) => {
+    const values = _.mapKeys(
+      JSON.parse(req.body.rawRequest),
+      (value, key) => {
+        return key.replace(/(q[\d]*_)/g, '');
+      });
+    const scoped = Client.scope('latestClientRenting');
+
+    Promise
+      .resolve(/@/.test(values.clientId) ?
+        scoped.findOne({ where: { email: values.clientId } }) :
+        scoped.findById(values.clientId))
+      .then((client) => {
+        return client.createMetadatum({
+          name: 'rentalAttachments',
+          value: JSON.stringify(values),
+        });
+      })
+      .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
   });
 

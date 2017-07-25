@@ -17,8 +17,11 @@ module.exports = function(app, models, Room) {
         return res.send({
           data: roomPictures.map((picture) => {
             return {
-              href: picture,
+              id: null,
               type: 'Picture',
+              attributes: {
+                href: picture,
+              },
             };
           }),
           meta: {count: roomPictures.length },

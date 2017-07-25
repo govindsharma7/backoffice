@@ -1,9 +1,9 @@
 module.exports = function() {
   return {
-    name: 'Picture',
-    idField: 'href',
+    name: 'rentalAttachment',
+    idField: 'id',
     fields: [{
-      field:'id',
+      field: 'id',
       type: 'String',
     }, {
       field: 'href',
