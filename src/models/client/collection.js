@@ -49,12 +49,6 @@ module.exports = function(models) {
         return null;
       },
     }, {
-      field: 'Identity Record Form',
-      type: 'String',
-      get(object) {
-        return `https://form.jotformpro.com/50392735671964?clientId=${object.email}`;
-      },
-    }, {
       field: 'Description En',
       type: 'String',
       get(object) {
