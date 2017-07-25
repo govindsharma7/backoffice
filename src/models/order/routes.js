@@ -1,12 +1,14 @@
 const Liana       = require('forest-express-sequelize');
 const Promise     = require('bluebird');
 const makePublic  = require('../../middlewares/makePublic');
+const checkToken  = require('../../middlewares/checkToken');
 const Utils       = require('../../utils');
 
 const Serializer  = Liana.ResourceSerializer;
 
 module.exports = (app, models, Order) => {
   const LEA = Liana.ensureAuthenticated;
+  const rInvoiceUrl = /https:\/\/payment\.chez-nestor\.com\/invoices\/(\d+)/;
 
   // Make this route completely public
   app.get('/forest/Order/:orderId', makePublic);
@@ -25,19 +27,18 @@ module.exports = (app, models, Order) => {
       .catch(Utils.logAndSend(res));
   });
 
-  app.post('/forest/actions/payment-notification', (req, res) => {
-    const ninjaId =
-      /https:\/\/payment\.chez-nestor\.com\/invoices\/(\d+)/.exec(req.message);
+  app.post('/forest/actions/payment-notification', checkToken, (req, res) => {
+    const ninjaId = rInvoiceUrl.exec(req.body.message);
 
     if ( !ninjaId || !ninjaId[1] ) {
-      res.status(502).send('Invalid request');
+      return res.status(502).send('Invalid request');
     }
 
-    Order.scope('packItems')
+    return Order.scope('packItems')
       .findOne({ where: {ninjaId : ninjaId[1]} })
       .then((order) => {
         if ( !order ) {
-          throw new Error('No order found for this NinjaId');
+          throw new Error(`No order found for the NinjaId ${ninjaId[1]}`);
         }
 
         return order.markAsPaid();
