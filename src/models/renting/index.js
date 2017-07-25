@@ -6,7 +6,7 @@ const webMerge              = require('../../vendor/webmerge');
 const Utils                 = require('../../utils');
 const {
   TRASH_SCOPES,
-  UNTRASHED_SCOPE,
+  // UNTRASHED_SCOPE,
   DEPOSIT_PRICES,
   DEPOSIT_REFUND_DELAYS,
 }                           = require('../../const');
@@ -83,7 +83,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     paranoid: true,
-    scopes: Object.assign({}, TRASH_SCOPES, UNTRASHED_SCOPE),
+    scopes: Object.assign({}, TRASH_SCOPES/*, UNTRASHED_SCOPE*/),
   });
 
   Renting.associate = () => {

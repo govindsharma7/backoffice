@@ -23,18 +23,17 @@ module.exports = {
 //      paranoid: false,
     },
   },
-  UNTRASHED_SCOPE: {
-    untrashed: {
-      where : { $or: [{
-//        deletedAt: { $not: null },
-        status : 'draft',
-      }, {
-        deletedAt: null,
-      }],
-    },
-    paranoid: false,
-    },
-  },
+  // UNTRASHED_SCOPE: {
+  //   untrashed: {
+  //     where : { $or: [{
+  //       deletedAt: { $not: null },
+  //       status : 'draft',
+  //     }, {
+  //       deletedAt: null,
+  //     }] },
+  //     paranoid: false,
+  //   },
+  // },
 
   DATETIME_FORMAT: 'YYYY-MM-DD HH:mm:ss.SSSZ',
 

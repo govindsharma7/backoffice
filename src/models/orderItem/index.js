@@ -1,7 +1,7 @@
 const Promise          = require('bluebird');
 const {
   TRASH_SCOPES,
-  UNTRASHED_SCOPE,
+  // UNTRASHED_SCOPE,
 }                      = require('../../const');
 const collection       = require('./collection');
 const routes           = require('./routes');
@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     paranoid: true,
-    scopes: Object.assign({}, TRASH_SCOPES, UNTRASHED_SCOPE),
+    scopes: Object.assign({}, TRASH_SCOPES/*, UNTRASHED_SCOPE*/),
   });
   const {models} = sequelize;
 
