@@ -140,9 +140,9 @@ module.exports = (app, models, Client) => {
 
     Promise
       .resolve(/@/.test(values.clientId) ?
-        scoped.findOne({ where: { email: values.clientId } }) :
-        scoped.findById(values.clientId))
-      .then((client) => {
+        scoped.findAll({ where: { email: values.clientId } }) :
+        scoped.findAll({ where: {id: values.clientId} }))
+      .then(([client]) => {
         return client.createMetadatum({
           name: 'rentalAttachments',
           value: JSON.stringify(values),
@@ -169,13 +169,13 @@ module.exports = (app, models, Client) => {
 
         return Promise.all([
           /@/.test(clientId) ?
-            scoped.findOne({ where: { email: clientId } }) :
-            scoped.findById(clientId),
+            scoped.findAll({ where: { email: clientId } }) :
+            scoped.findAll({ where: { id : clientId} }),
           fieldsToUpdate,
           identityRecord,
         ]);
       })
-      .then(([client, fieldsToUpdate, identityRecord]) => {
+      .then(([[client], fieldsToUpdate, identityRecord]) => {
         const { year, month, day, hour, min } = identityRecord.checkinDate;
         const startDate = `${year}-${month}-${day} ${hour}:${min}`;
 
