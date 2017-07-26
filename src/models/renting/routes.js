@@ -144,7 +144,7 @@ module.exports = function(app, models, Renting) {
         ).findById(ids[0]);
       })
       .then((renting) => {
-        return renting[`findOrCreate${_.capitalize(type)}Event`](values.dateAndTime);
+        return renting[`findOrCreate${_.capitalize(type)}Event`](values.dateAndTime, {});
       })
       .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} event`))
       .catch(Utils.logAndSend(res));
