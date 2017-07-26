@@ -49,7 +49,10 @@ module.exports = function({Room}) {
           where: () => {
             return Room.scope('latestRenting')
               .findAll({
-                where: { '$Apartment.addressCity$' : `${city}` },
+                where: {
+                  '$Rentings.status$': 'active',
+                  '$Apartment.addressCity$' : `${city}`,
+                },
               })
               .filter((room) => {
                 if (room.Rentings.length === 0) {
