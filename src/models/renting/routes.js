@@ -144,7 +144,9 @@ module.exports = function(app, models, Renting) {
         ).findById(ids[0]);
       })
       .then((renting) => {
-        return renting[`findOrCreate${_.capitalize(type)}Event`](values.dateAndTime);
+        return renting[`findOrCreate${_.capitalize(type)}Event`](
+          values.dateAndTime, {}
+        );
       })
       .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} event`))
       .catch(Utils.logAndSend(res));
@@ -190,27 +192,27 @@ module.exports = function(app, models, Renting) {
         .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} order`))
         .catch(Utils.logAndSend(res));
       });
+  });
 
-      app.post('/forest/actions/update-do-not-cash-deposit-option', LEA, (req, res) => {
-        const {ids, values} = req.body.data.attributes;
+  app.post('/forest/actions/update-do-not-cash-deposit-option', LEA, (req, res) => {
+    const {ids, values} = req.body.data.attributes;
 
-        Promise.resolve()
-          .then(() => {
-            if ( ids.length > 1 ) {
-              throw new Error('Can\'t create multiple deposit order');
-            }
-            if ( values.option == null ) {
-              throw new Error('"Option" field is required');
-            }
+    Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple deposit order');
+        }
+        if ( values.option == null ) {
+          throw new Error('"Option" field is required');
+        }
 
-            return Renting.build({ id: ids[0] }, { isNewRecord: false })
-              .changeDepositOption(values.option);
-          })
-          .then(() => {
-            return res.send({success: 'Deposit option successfuly updated'});
-          })
-          .catch(Utils.logAndSend(res));
-      });
+        return Renting.build({ id: ids[0] }, { isNewRecord: false })
+          .changeDepositOption(values.option);
+      })
+      .then(() => {
+        return res.send({success: 'Deposit option successfuly updated'});
+      })
+      .catch(Utils.logAndSend(res));
   });
 
   app.post('/forest/actions/create-room-switch-order', LEA, (req, res) => {
