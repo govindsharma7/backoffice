@@ -214,6 +214,7 @@ module.exports = (sequelize, DataTypes) => {
 
     return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
       where: {
+        status: 'active',
         ClientId: this.id,
         bookingDate: { $lte: D.endOfMonth(date) },
         $and: sequelize.literal(
