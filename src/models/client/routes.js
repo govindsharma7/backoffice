@@ -141,7 +141,7 @@ module.exports = (app, models, Client) => {
     Promise
       .resolve(/@/.test(values.clientId) ?
         scoped.findAll({ where: { email: values.clientId } }) :
-        scoped.findAll({ where: {id: values.clientId} }))
+        scoped.findAll({ where: { id: values.clientId } }))
       .then(([client]) => {
         return client.createMetadatum({
           name: 'rentalAttachments',
@@ -170,7 +170,7 @@ module.exports = (app, models, Client) => {
         return Promise.all([
           /@/.test(clientId) ?
             scoped.findAll({ where: { email: clientId } }) :
-            scoped.findAll({ where: { id : clientId} }),
+            scoped.findAll({ where: { id : clientId } }),
           fieldsToUpdate,
           identityRecord,
         ]);
