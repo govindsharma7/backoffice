@@ -1,9 +1,10 @@
 const Promise        = require('bluebird');
+const fetch          = require('node-fetch');
 const Ninja          = require('../../vendor/invoiceninja');
 const {
   WORDPRESS_AJAX_URL,
   REST_API_SECRET,
-}                 = require('../../config');
+}                    = require('../../config');
 const Utils          = require('../../utils');
 const {
   TRASH_SCOPES,
