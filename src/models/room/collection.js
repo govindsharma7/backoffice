@@ -63,12 +63,9 @@ module.exports = function({Room}) {
             //     problem with a Renting scope
             //   - Switch to TypeORM and see if that makes things simpler for us
             //     using subrequest probably
-            return Room.scope('Renting+checkoutDate', 'apartment')
+            return Room.scope('activeRenting+checkoutDate', 'apartment')
               .findAll({
-                where: {
-                  '$Rentings.status$': 'active',
-                  '$Apartment.addressCity$' : `${city}`,
-                },
+                where: { '$Apartment.addressCity$' : `${city}` },
               })
               .filter((room) => {
                 return room.checkAvailability();

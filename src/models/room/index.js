@@ -40,7 +40,10 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Room.addScope('Renting+checkoutDate', {
+    Room.addScope('activeRenting+checkoutDate', {
+      // for some reason, placing the following condition in the Renting include
+      // fails
+      where: { '$Rentings.status$': 'active' },
       include: [{
         model: models.Renting,
         required: false,

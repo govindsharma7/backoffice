@@ -48,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
       required: false,
       validate: {
         isRoomAvailable(date) {
-          return models.Room.scope('latestRenting')
+          return models.Room.scope('activeRenting+checkoutDate')
             .findById(this.RoomId)
             .then((room) => {
               return room.checkAvailability(date);
