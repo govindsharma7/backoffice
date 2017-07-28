@@ -24,7 +24,7 @@ module.exports = function(models) {
           .then(models.Renting.getPeriod);
       },
     }, {
-      field: 'Housing Pack',
+      field: 'Housing Pack (optionnal)',
       type: 'Enum',
       enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
       set(object, value) {
@@ -32,11 +32,20 @@ module.exports = function(models) {
         return object;
       },
     }, {
-      field: 'Pack Discount',
+      field: 'Pack Discount (optionnal)',
+      description: 'optionnal',
       type: 'Number',
       set(object, value) {
         object.packDiscount = value;
         return object;
+      },
+    }, {
+      field: 'bookingDate (to fill if it differ from room\'s availabilty date)',
+      description: 'optionnal',
+      type: 'Date',
+      set(obejct, value) {
+        obejct.bookingDate = value;
+        return obejct;
       },
     }],
     actions: [{
