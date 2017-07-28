@@ -20,7 +20,7 @@ const hooks           = require('./hooks');
 
 const _ = { mapKeys };
 const Translate = Promise.promisify(
-  GoogleTranslate(config.GOOGLE_TRANSLATE_API).translate
+  GoogleTranslate(config.GOOGLE_TRANSLATE_API_KEY).translate
 );
 
 module.exports = (sequelize, DataTypes) => {
