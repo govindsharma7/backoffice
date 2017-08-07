@@ -49,6 +49,12 @@ module.exports = function(models) {
         return null;
       },
     }, {
+      field: 'Identity Record Form',
+      type: 'String',
+      get(object) {
+        return `https://forms.chez-nestor.com/50392735671964?clientId=${object.id}`;
+      },
+    }, {
       field: 'Description En',
       type: 'String',
       get(object) {

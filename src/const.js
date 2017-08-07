@@ -60,6 +60,16 @@ module.exports = {
       privilege: 119000,
     },
   },
+  ROOM_SWITCH_PRICES: {
+    privilege:     0,
+    comfort:   19000,
+    basic:     29000,
+  },
+  DEPOSIT_PRICES: {
+    lyon:        69000,
+    paris:       89000,
+    montpellier: 49000,
+  },
 
   SPECIAL_CHECKIN_PRICE: 7900,
 
@@ -79,18 +89,6 @@ module.exports = {
   },
 
   LATE_FEES: 1000,
-
-  ROOM_SWITCH_PRICES: {
-    privilege:     0,
-    comfort:   19000,
-    basic:     29000,
-  },
-
-  DEPOSIT_PRICES: {
-    lyon:        69000,
-    paris:       89000,
-    montpellier: 49000,
-  },
 
   DEPOSIT_REFUND_DELAYS: {
     basic:     60,
