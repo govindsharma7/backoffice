@@ -29,7 +29,12 @@ app.use(checkToken);
 
 // CORS
 app.use(Cors({
-  origin: [/^http:\/\/127\.0\.0\.1:/, /^http:\/\/localhost:/, /\.forestadmin\.com$/],
+  origin: [
+    /^http:\/\/0\.0\.0\.0:/,
+    /^http:\/\/127\.0\.0\.1:/,
+    /^http:\/\/localhost:/,
+    /\.forestadmin\.com$/,
+  ],
   allowedHeaders: [
     'Authorization',
     'X-Requested-With',

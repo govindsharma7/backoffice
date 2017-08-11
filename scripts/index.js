@@ -40,9 +40,6 @@ const claudiaUpdate = 'claudia update --config .env.json > /tmp/claudia.log';
 
 const common = {
   'start': nodemonInspect,
-  'migration:create': sequelizeMigrationCreate,
-  'migration:do': sequelizeMigrationDo,
-  'migration:undo': sequelizeMigrationUndo,
   'db:sync': dbSync,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
@@ -69,9 +66,16 @@ const tests = {
   'test:full': [lint, 'jest'],
 };
 
+const others = {
+  'migration:create': sequelizeMigrationCreate,
+  'migration:do': sequelizeMigrationDo,
+  'migration:undo': sequelizeMigrationUndo,
+};
+
 module.exports = Object.assign(
   {},
   envify(tests, 'test'),
+  envify(others, 'development'),
   envify(common, 'development', 'dev'),
   envify(common, 'staging', 'stag'),
   envify(common, 'production', 'prod')

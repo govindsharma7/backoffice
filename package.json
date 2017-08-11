@@ -56,7 +56,7 @@
     "mysqldump": "^1.4.2",
     "nodemon": "^1.11.0",
     "sequelize-cli": "^2.7.0",
-    "sqlite3": "^3.1.8",
+    "sqlite3": "^3.1.9",
     "wpapi": "^1.1.1"
   },
   "scripts": {

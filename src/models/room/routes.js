@@ -5,8 +5,9 @@ const Utils            = require('../../utils');
 
 
 module.exports = function(app, models, Room) {
-  // Make the room listing endpoint public, for chez-nestor.com
+  // Make the room listing and details endpoint public, for chez-nestor.com
   app.get('/forest/Room', makePublic);
+  app.get('/forest/Room/:recordId', makePublic);
 
   app.get('/forest/Room/:recordId/relationships/Pictures', makePublic, (req, res) => {
     Room

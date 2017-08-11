@@ -8,18 +8,21 @@ module.exports = (sequelize, DataTypes) => {
   const Room = sequelize.define('Room', {
     id: {
       primaryKey: true,
-      type:                     DataTypes.UUID,
-      defaultValue:             DataTypes.UUIDV4,
+      type:                   DataTypes.UUID,
+      defaultValue:           DataTypes.UUIDV4,
     },
     reference: {
-      type:                     DataTypes.STRING,
+      type:                   DataTypes.STRING,
       unique: true,
     },
-    name:                       DataTypes.STRING,
-    floorArea:                  DataTypes.FLOAT,
-    basePrice:                  DataTypes.FLOAT,
+    name:                     DataTypes.STRING,
+    floorArea:                DataTypes.FLOAT,
+    basePrice:                DataTypes.FLOAT,
+    beds:                     DataTypes.ENUM(
+                                'double', 'simple', 'sofa', 'double+sofa', 'simple+sofa'
+                              ),
     status: {
-      type:                     DataTypes.ENUM('draft', 'active'),
+      type:                   DataTypes.ENUM('draft', 'active'),
       required: true,
       defaultValue: 'active',
       allowNull: false,
