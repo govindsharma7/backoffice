@@ -68,19 +68,19 @@ module.exports = (sequelize, DataTypes) => {
     },
     price: {
       type:                     DataTypes.INTEGER,
-      required: true,
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
     serviceFees: {
       type:                     DataTypes.INTEGER,
-      required: true,
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
-      required: true,
       defaultValue: 'draft',
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
     comfortLevel: {
       type:                     DataTypes.VIRTUAL,

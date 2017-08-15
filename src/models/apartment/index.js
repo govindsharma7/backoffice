@@ -31,9 +31,9 @@ module.exports = (sequelize, DataTypes) => {
     floorArea:                DataTypes.FLOAT,
     status: {
       type:                   DataTypes.ENUM('draft', 'active'),
-      required: true,
-      allowNull: false,
       defaultValue: 'active',
+      // required: true,
+      // allowNull: false,
     },
     district:                 DataTypes.STRING,
   }, {

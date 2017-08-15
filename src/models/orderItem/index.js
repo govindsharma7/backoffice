@@ -30,18 +30,18 @@ module.exports = (sequelize, DataTypes) => {
     },
     vatRate: {
       type:                     DataTypes.ENUM('0', '0.2'),
-      required: true,
       defaultValue: '0',
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
       get() {
         return parseFloat(this.getDataValue('vatRate'));
       },
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
-      required: true,
       defaultValue: 'active',
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
   }, {
     paranoid: true,

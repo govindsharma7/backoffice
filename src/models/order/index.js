@@ -25,9 +25,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     type: {
       type:                     DataTypes.ENUM('debit', 'credit', 'deposit'),
-      required: true,
       defaultValue: 'debit',
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
     receiptNumber: {
       type:                     DataTypes.STRING,
@@ -35,23 +35,23 @@ module.exports = (sequelize, DataTypes) => {
     },
     label: {
       type:                     DataTypes.STRING,
-      required: true,
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
     ninjaId: {
       type:                     DataTypes.INTEGER,
     },
     dueDate: {
       type:                     DataTypes.DATEONLY,
-      required: true,
       defaultValue: Date.now(),
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active'),
-      required: true,
       defaultValue: 'active',
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
   }, {
     paranoid: true,

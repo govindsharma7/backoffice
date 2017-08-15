@@ -23,9 +23,9 @@ module.exports = (sequelize, DataTypes) => {
                               ),
     status: {
       type:                   DataTypes.ENUM('draft', 'active'),
-      required: true,
       defaultValue: 'active',
-      allowNull: false,
+      // required: true,
+      // allowNull: false,
     },
   }, {
     paranoid: true,
