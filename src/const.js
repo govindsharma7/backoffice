@@ -50,14 +50,14 @@ module.exports = {
       privilege:  99000,
     },
     montpellier: {
-      basic:      49000,
-      comfort:    69000,
-      privilege:  89000,
+      basic:      59000,
+      comfort:    79000,
+      privilege:  99000,
     },
     paris: {
-      basic:      79000,
-      comfort:    99000,
-      privilege: 119000,
+      basic:      89000,
+      comfort:   109000,
+      privilege: 129000,
     },
   },
   ROOM_SWITCH_PRICES: {
