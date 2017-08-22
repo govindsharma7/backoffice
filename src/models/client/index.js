@@ -1,5 +1,6 @@
 const Promise         = require('bluebird');
 const mapKeys         = require('lodash/mapKeys');
+const capitalize      = require('lodash/capitalize');
 const D               = require('date-fns');
 const Payline         = require('payline');
 const Country         = require('countryjs');
@@ -18,7 +19,7 @@ const collection      = require('./collection');
 const routes          = require('./routes');
 const hooks           = require('./hooks');
 
-const _ = { mapKeys };
+const _ = { mapKeys, capitalize };
 const Translate = Promise.promisify(
   GoogleTranslate(config.GOOGLE_TRANSLATE_API_KEY).translate
 );
@@ -39,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.STRING,
       required: true,
       allowNull: false,
+      set(val) {
+        this.setDataValue(
+          'lastName', val.split(' ').map(_.capitalize).join(' ')
+        );
+      },
     },
     email: {
       type:                     DataTypes.STRING,

@@ -27,7 +27,7 @@ module.exports = function(models) {
       field: 'Full Name',
       type: 'String',
       get(object) {
-        return `${object.firstName} ${object.lastName}`;
+        return `${object.firstName} ${object.lastName.toUpperCase()}`;
       },
       search(query, search) {
         const split = search.split(' ');
