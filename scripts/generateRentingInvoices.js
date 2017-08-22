@@ -37,6 +37,13 @@ return Client.scope({ method: ['rentOrdersFor', month] }, 'uncashedDepositCount'
     // rentings-orders should be created one after the other, otherwise they all
     // pick the same receiptNumber
     return Promise.reduce(tuples, (prev, [client, rentings]) => {
+      console.log(
+        `>>>>>>>>> Generating rent-order for ${client.firstName} ${client.lastName}`
+      );
+      rentings.forEach((renting) => {
+        console.log(`>>>>>>>>>>> ${renting.Room.name}`);
+      });
+
       return client
         .findOrCreateRentOrder(rentings, month)
         .tap(([order]) => {

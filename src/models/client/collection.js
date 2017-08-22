@@ -61,7 +61,8 @@ module.exports = function(models) {
         return getIdentyMemoized(object)
           .then((identity) => {
             return Client.getDescriptionEn(Object.assign({ identity }, object));
-          });
+          })
+          .catch((e) => { handleDescriptionError(e, object); });
       },
     }, {
       field: 'Description Fr',
@@ -70,7 +71,8 @@ module.exports = function(models) {
         return getIdentyMemoized(object)
           .then((identity) => {
             return Client.getDescriptionFr(Object.assign({ identity }, object));
-          });
+          })
+          .catch((e) => { handleDescriptionError(e, object); });
       },
     }, {
       field: 'Invoices',
@@ -145,3 +147,8 @@ module.exports = function(models) {
     segments: TRASH_SEGMENTS,
   };
 };
+
+function handleDescriptionError(error, client) {
+  console.error(client, error);
+  return `An error occured while generating the description: ${error.message}`;
+}

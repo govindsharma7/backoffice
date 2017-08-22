@@ -46,7 +46,6 @@ const common = {
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
   'db:dump': dbDump,
-  'db:fill': dbFill,
   'deploy': [env2json, dbSeed, claudiaUpdate],
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
@@ -57,7 +56,6 @@ const common = {
   'update:lateFees': updateLateFees,
   'archive:pastRentings': archivePastRentings,
   'remove:deletedAt': removeDeletedAt,
-  'fixRoomCount': 'node scripts/fixRoomCount.js',
 };
 
 const tests = {
@@ -70,6 +68,7 @@ const tests = {
 
 const others = {
   'migration:create': sequelizeMigrationCreate,
+  'dev:db:fill': dbFill,
 };
 
 module.exports = Object.assign(

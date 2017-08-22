@@ -19,8 +19,8 @@ module.exports = (sequelize, DataTypes) => {
     floorArea:                DataTypes.FLOAT,
     basePrice:                DataTypes.FLOAT,
     beds:                     DataTypes.ENUM(
-                                'double', 'simple', 'sofa', 'double+sofa', 'simple+sofa'
-                              ),
+      'double', 'simple', 'sofa', 'double+sofa', 'simple+sofa', 'simple+simple'
+    ),
     status: {
       type:                   DataTypes.ENUM('draft', 'active'),
       defaultValue: 'active',

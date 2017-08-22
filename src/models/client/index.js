@@ -423,7 +423,7 @@ module.exports = (sequelize, DataTypes) => {
           return null;
         }
 
-        const identity  = JSON.parse(metadata.value);
+        const identity = JSON.parse(metadata.value.replace(/\r?\n|\r/g, ''));
         const {day, month, year} = identity.birthDate;
 
         identity.age =
