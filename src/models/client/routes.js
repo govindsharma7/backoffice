@@ -96,7 +96,7 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
-  app.get('/forest/Client/:recordId/relationships/rentalAttachments',
+  app.get('/forest/Client/:recordId/relationships/jotform-attachments',
     LEA,
     (req, res) => {
     models.Metadata
@@ -109,6 +109,10 @@ module.exports = (app, models, Client) => {
         limit: 1,
       })
       .then((metadata) => {
+        if ( !metadata.length ) {
+          return res.send({ data: [], meta: { count: 0 } });
+        }
+
         let rUrl = /https:\/\/www\.jotformeu\.com\/uploads\/cheznestor\//g;
         const values = _.pickBy(JSON.parse(metadata[0].value), (value) => {
           return rUrl.test(value);
@@ -124,7 +128,7 @@ module.exports = (app, models, Client) => {
               },
             };
           }),
-          meta: {count: Object.keys(values).length},
+          meta: { count: Object.keys(values).length },
         });
       })
       .catch(Utils.logAndSend(res));
@@ -198,28 +202,6 @@ module.exports = (app, models, Client) => {
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
   });
-
-  // Utils.addInternalRelationshipRoute({
-  //   app,
-  //   sourceModel: Client,
-  //   associatedModel: models.Renting,
-  //   routeName: 'Rentings',
-  //   scope: 'untrashed',
-  //   where: (req) => {
-  //     return { ClientId: req.params.recordId };
-  //   },
-  // });
-  //
-  // Utils.addInternalRelationshipRoute({
-  //   app,
-  //   sourceModel: Client,
-  //   associatedModel: models.Order,
-  //   routeName: 'Orders',
-  //   scope: 'untrashed',
-  //   where: (req) => {
-  //     return { ClientId: req.params.recordId };
-  //   },
-  // });
 
   Utils.addRestoreAndDestroyRoutes(app, Client);
 };

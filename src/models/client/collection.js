@@ -97,7 +97,7 @@ module.exports = function(models) {
       type: ['String'],
       reference: 'Order.id',
     },*/ {
-      field: 'rentalAttachments',
+      field: 'jotform-attachments',
       type: ['String'],
       reference: 'RentalAttachment.id',
     }],
