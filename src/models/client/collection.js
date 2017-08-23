@@ -55,6 +55,16 @@ module.exports = function(models) {
         return `https://forms.chez-nestor.com/50392735671964?clientId=${object.id}`;
       },
     }, {
+      field: 'Download Identity Record',
+      type: 'String',
+      get(object) {
+        return getIdentyMemoized(object)
+          .then((identity) => {
+            return Client.getIdentityRecordUrl(identity);
+          })
+          .catch((e) => { handleDescriptionError(e, object); });
+      },
+    }, {
       field: 'Description En',
       type: 'String',
       get(object) {

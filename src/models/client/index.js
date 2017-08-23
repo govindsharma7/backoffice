@@ -439,6 +439,16 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+  Client.getIdentityRecordUrl = function(identity) {
+    const passport =
+      identity && identity.passport.match(/uploads\/cheznestor\/(.+?)\/(.+?)\//);
+
+    return passport && `
+      https://eu.jotform.com/server.php?action=getSubmissionPDF\
+      &formID=${passport[1]}&sid=${passport[2]}
+    `.replace(/\s+/g, '');
+  };
+
   Client.getDescriptionEn = function(client) {
     return client && client.identity && Utils.toSingleLine(`
       ${client.firstName},
