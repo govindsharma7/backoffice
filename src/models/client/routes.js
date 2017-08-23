@@ -69,6 +69,22 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
+  app.post('/forest/actions/add-note', LEA, (req, res) => {
+    const {values, ids, collection_name: metadatable} =
+      req.body.data.attributes;
+
+      models.Metadata.bulkCreate(ids.map((MetadatableId) => {
+          return {
+            name: 'note',
+            metadatable,
+            MetadatableId,
+            value: values.content,
+          };
+        }))
+        .then(Utils.createSuccessHandler(res, `${metadatable} Note`))
+        .catch(Utils.logAndSend(res));
+  });
+
   app.get('/forest/Client/:recordId/relationships/Invoices', LEA, (req, res) => {
     Client
       .findById(req.params.recordId)
@@ -201,6 +217,16 @@ module.exports = (app, models, Client) => {
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
+  });
+
+  Utils.addInternalRelationshipRoute({
+    app,
+    sourceModel: Client,
+    associatedModel: models.Metadata,
+    routeName: 'Notes',
+    where: (req) => {
+      return { MetadatableId: req.params.recordId, name: 'note' };
+    },
   });
 
   Utils.addRestoreAndDestroyRoutes(app, Client);

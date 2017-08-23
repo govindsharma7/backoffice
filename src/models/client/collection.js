@@ -88,15 +88,11 @@ module.exports = function(models) {
       field: 'Invoices',
       type: ['String'],
       reference: 'Invoice.id',
-    }, /*{
-      field: 'Rentings',
-      type: ['String'],
-      reference: 'Renting.id',
     }, {
-      field: 'Orders',
+      field: 'Notes',
       type: ['String'],
-      reference: 'Order.id',
-    },*/ {
+      reference: 'Metadata.id',
+    }, {
       field: 'jotform-attachments',
       type: ['String'],
       reference: 'RentalAttachment.id',
@@ -148,6 +144,12 @@ module.exports = function(models) {
         field: 'for',
         type: 'Enum',
         enums: ['current month', 'next month'],
+      }],
+    }, {
+      name: 'Add Note',
+      fields: [{
+        field: 'content',
+        type: 'String',
       }],
     }, {
       name: 'Restore Client',
