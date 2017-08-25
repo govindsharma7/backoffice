@@ -1,4 +1,5 @@
 const capitalize       = require('lodash/capitalize');
+const pictures         = require('../../pictures.json');
 const {TRASH_SEGMENTS} = require('../../const');
 const Utils            = require('../../utils');
 
@@ -36,6 +37,12 @@ module.exports = function({Room}) {
       field: 'Pictures',
       type: ['String'],
       reference: 'Picture.id',
+    }, {
+      field: 'cover picture',
+      type: 'String',
+      get(object) {
+        return (pictures[object.reference] || [])[0];
+      },
     }],
     actions: [{
       name: 'Restore Room',

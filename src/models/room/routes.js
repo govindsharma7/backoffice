@@ -13,7 +13,7 @@ module.exports = function(app, models, Room) {
     Room
       .findById(req.params.recordId)
       .then((room) => {
-        const roomPictures = pictures[room.reference];
+        const roomPictures = pictures[room.reference] || [];
 
         return res.send({
           data: roomPictures.map((picture) => {
