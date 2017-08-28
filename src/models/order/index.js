@@ -43,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     dueDate: {
       type:                     DataTypes.DATEONLY,
-      defaultValue: Date.now(),
+      defaultValue: new Date(),
       // required: true,
       // allowNull: false,
     },

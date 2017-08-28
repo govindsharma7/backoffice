@@ -36,7 +36,7 @@ const defaultMessageAttributes = {
   },
 };
 
-function sendSms(phoneNumbers, text, date = Date.now()) {
+function sendSms(phoneNumbers, text, date = new Date()) {
   return sns
     .createTopic({
       Name: `DATE_${D.format(date, 'YYYY-MM-DD')}_TIME_${D.format(date, 'HH-mm-ss')}`,

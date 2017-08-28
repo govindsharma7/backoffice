@@ -35,6 +35,8 @@ module.exports = {
   //   },
   // },
 
+  UNAVAILABLE_DATE: new Date(1E14),
+
   DATETIME_FORMAT: 'YYYY-MM-DD HH:mm:ss.SSSZ',
 
   INVOICENINJA_URL:

@@ -99,7 +99,7 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
     // TODO: one of the following two scopes is useless. Get rid of it
-    Client.addScope('ordersFor', (date = Date.now()) => {
+    Client.addScope('ordersFor', (date = new Date()) => {
       return {
         where: {
           '$Order.type$': 'debit',
@@ -107,7 +107,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       };
     });
-    Client.addScope('rentOrdersFor', (date = Date.now()) => {
+    Client.addScope('rentOrdersFor', (date = new Date()) => {
       return {
         include: [{
           model : models.Order,
@@ -155,7 +155,7 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Client.id'],
     });
 
-    Client.addScope('currentApartment', function(date = Date.now()) {
+    Client.addScope('currentApartment', function(date = new Date()) {
       return {
         where: { $or: [
             { '$Rentings.Events.id$': null },
@@ -198,7 +198,7 @@ module.exports = (sequelize, DataTypes) => {
 
   // This was the reliable method used by generateInvoice
   // TODO: get rid of it once we're certain that script still works
-  // Client.prototype.getRentingOrdersFor = function(date = Date.now()) {
+  // Client.prototype.getRentingOrdersFor = function(date = new Date()) {
   //   return this.getOrders({
   //       where: {
   //         type: 'debit',
@@ -215,7 +215,7 @@ module.exports = (sequelize, DataTypes) => {
   // };
 
   // TODO: this can probably be improved to use a Client scope
-  Client.prototype.getRentingsFor = function(date = Date.now()) {
+  Client.prototype.getRentingsFor = function(date = new Date()) {
     const startOfMonth = D.format(D.startOfMonth(date), DATETIME_FORMAT);
 
     return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
@@ -232,7 +232,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Client.prototype.findOrCreateRentOrder =
-    function(rentings, date = Date.now(), number) {
+    function(rentings, date = new Date(), number) {
       return models.Order
         .findItemOrCreate({
           where: { ProductId: 'rent' },
@@ -263,7 +263,7 @@ module.exports = (sequelize, DataTypes) => {
         });
   };
 
-  Client.createRentOrders = function(clients, date = Date.now()) {
+  Client.createRentOrders = function(clients, date = new Date()) {
     return Promise
       .mapSeries(clients, (client) => {
         return Promise.all([
@@ -382,7 +382,7 @@ module.exports = (sequelize, DataTypes) => {
         .findAll({
           where: {
             ClientId: this.id,
-            dueDate: {$lt: Date.now()},
+            dueDate: {$lt: new Date()},
           },
         })
         .filter((order) => {
@@ -393,10 +393,10 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Client.prototype.applyLateFees = function() {
+  Client.prototype.applyLateFees = function(now = new Date()) {
     return this.findUnpaidOrders()
       .map((order) => {
-        const lateFees = D.differenceInDays(Date.now(), order.dueDate);
+        const lateFees = D.differenceInDays(now, order.dueDate);
 
         return order.getOrderItems({
           where: {ProductId: 'late-fees'},
@@ -417,7 +417,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   // the last argument is only used for testing purpose
-  Client.getIdentity = function(client, Metadata = models.Metadata) {
+  Client.getIdentity = function(client, Metadata = models.Metadata, now = new Date()) {
     return Metadata.findOne({
         where: {
           MetadatableId: client.id,
@@ -433,7 +433,7 @@ module.exports = (sequelize, DataTypes) => {
         const {day, month, year} = identity.birthDate;
 
         identity.age =
-          D.differenceInYears(Date.now(), `${year}-${month}-${day} Z`);
+          D.differenceInYears(now, `${year}-${month}-${day} Z`);
 
         return identity;
       });

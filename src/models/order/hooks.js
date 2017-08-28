@@ -1,7 +1,7 @@
 module.exports = function(models, Order) {
 //  Order.hook('beforeCreate', (order) => {
 //    if ( order.status !== 'active' ) {
-//      order.setDataValue('deletedAt', Date.now());
+//      order.setDataValue('deletedAt', new Date());
 //    /}
 //  });
 

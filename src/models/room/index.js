@@ -1,10 +1,14 @@
 const Promise          = require('bluebird');
 const Utils            = require('../../utils');
-const {TRASH_SCOPES}   = require('../../const');
+const {
+  TRASH_SCOPES,
+  UNAVAILABLE_DATE,
+}                      = require('../../const');
 const collection       = require('./collection');
 const routes           = require('./routes');
 
 module.exports = (sequelize, DataTypes) => {
+  const {models} = sequelize;
   const Room = sequelize.define('Room', {
     id: {
       primaryKey: true,
@@ -27,50 +31,53 @@ module.exports = (sequelize, DataTypes) => {
       // required: true,
       // allowNull: false,
     },
+    availableAt: {
+      type:                   DataTypes.VIRTUAL(DataTypes.DATE),
+      get() {
+        return this.Rentings && ( this.Rentings.length === 0 ?
+          new Date() :
+          models.Renting.getLatest(this.Rentings).get('checkoutDate') || UNAVAILABLE_DATE
+        );
+      },
+    },
   }, {
     paranoid: true,
     scopes: TRASH_SCOPES,
   });
-  const {models} = sequelize;
 
   Room.associate = () => {
+    const availableAt = {
+      model: models.Renting.scope('checkoutDate'),
+      required: false,
+      attributes: { include: [
+        [sequelize.literal('`Rentings->Events`.`startDate`'), 'checkoutDate'],
+      ]},
+      where: { status: 'active' },
+    };
+    const apartment = {
+      model: models.Apartment,
+    };
+
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
 
     Room.addScope('apartment', {
-      include: [{
-        model: models.Apartment,
-      }],
+      include: [apartment],
     });
 
-    Room.addScope('activeRenting+checkoutDate', {
-      include: [{
-        model: models.Renting,
-        required: false,
-        attributes: { include: [
-          [sequelize.literal('`Rentings->Events`.`startDate`'), 'checkoutDate'],
-        ]},
-        where: { status: 'active' },
-        include: [{
-          model: models.Event,
-          required: false,
-          include: [{
-            model: models.Term,
-            attributes: [],
-            where: {
-              taxonomy: 'event-category',
-              name: 'checkout',
-            },
-          }],
-        }],
-      }],
+    Room.addScope('availableAt', {
+      include: [availableAt],
+    });
+
+    Room.addScope('apartment+availableAt', {
+      include: [apartment, availableAt],
     });
   };
 
   // calculate periodPrice and serviceFees for the room
-  Room.prototype.getCalculatedProps = function(date = Date.now()) {
+  Room.prototype.getCalculatedProps = function(now = new Date()) {
     return Promise.all([
-        Utils.getPeriodCoef(date),
+        Utils.getPeriodCoef(now),
         // For some reason, Forest sometimes triggers calls to getCalculatedProps
         // and doesn't load the appropriate scope.
         // TODO: find when/why that happens and implement a real fix
@@ -84,18 +91,16 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Room.prototype.checkAvailability = function(date = Date.now()) {
+  Room.prototype.checkAvailability = function(date = new Date()) {
     return Room.checkAvailability(this, date);
   };
-  Room.checkAvailability = function(room, date = Date.now()) {
+  Room.checkAvailability = function(room, date = new Date()) {
     if ( room.Rentings.length === 0 ) {
       return Promise.resolve(true);
     }
 
-    const latestRenting = room.Rentings.reduce((acc, curr) => {
-      return curr.bookingDate > acc.bookingDate ? curr : acc;
-    }, room.Rentings[0]);
-    const checkoutDate = latestRenting.get('checkoutDate');
+    const checkoutDate =
+      models.Renting.getLatest(room.Rentings).get('checkoutDate');
 
     return Promise.resolve( checkoutDate && checkoutDate <= date ? true : false );
   };

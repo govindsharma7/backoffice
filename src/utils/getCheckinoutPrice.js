@@ -13,7 +13,7 @@ function isWorkingHours(date) {
   return D.isWithinRange(
     date,
     D.addHours(startOfDay, 9),
-    D.addHours(startOfDay, 19)
+    D.addHours(startOfDay, 18)
   );
 }
 

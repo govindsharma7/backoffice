@@ -188,7 +188,7 @@ describe('Renting', () => {
     };
 
     const commonExpected = {
-      fullName: 'John Doe',
+      fullName: 'John DOE',
       fullAddress: '16 rue Conde, Lyon, 69002',
       birthDate: '23/07/1986',
       birthPlace: 'New York (Etats-unis)',

@@ -20,8 +20,8 @@ module.exports = (app, models, Client) => {
   app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
     const month = values.for === 'current month' ?
-      D.startOfMonth(Date.now()) :
-      D.addMonths(Date.now(), 1);
+      D.startOfMonth(new Date()) :
+      D.addMonths(new Date(), 1);
 
     Promise.resolve()
       .then(() => {

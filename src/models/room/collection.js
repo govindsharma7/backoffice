@@ -6,7 +6,9 @@ const Utils            = require('../../utils');
 const _ = { capitalize };
 
 module.exports = function({Room}) {
-  const memoizer = new Utils.calculatedPropsMemoizer( Room.scope('apartment') );
+  const memoizer = new Utils.calculatedPropsMemoizer(
+    Room.scope('availableAt', 'apartment')
+  );
 
   return {
     fields: [{
@@ -50,9 +52,14 @@ module.exports = function({Room}) {
       name: 'Destroy Room',
     }],
     segments: TRASH_SEGMENTS.concat(
+      {
+        name: 'Availability',
+        scope: 'availableAt',
+      },
       ['lyon', 'montpellier', 'paris'].map((city) => {
         return {
           name: `Available Rooms ${_.capitalize(city)}`,
+          scope: 'apartment+availableAt',
           where: () => {
             // TODO: this query is awfull. We join an all rentings that ever
             // existed when we know only the one with the latest bookingDate
@@ -70,7 +77,7 @@ module.exports = function({Room}) {
             //     problem with a Renting scope
             //   - Switch to TypeORM and see if that makes things simpler for us
             //     using subrequest probably
-            return Room.scope('activeRenting+checkoutDate', 'apartment')
+            return Room.scope('availableAt', 'apartment')
               .findAll({
                 where: { '$Apartment.addressCity$' : `${city}` },
               })

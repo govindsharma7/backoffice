@@ -1,6 +1,5 @@
 const Promise                     = require('bluebird');
 const bodyParser                  = require('body-parser');
-const D                           = require('date-fns');
 const Liana                       = require('forest-express-sequelize');
 const Aws                         = require('../../vendor/aws');
 const Utils                       = require('../../utils');
@@ -45,7 +44,7 @@ module.exports = function(app, models, Apartment) {
     where: (req) => {
       return {
         '$Rentings->Room.ApartmentId$': req.params.recordId,
-        '$Rentings.bookingDate$': { $lte:  D.format(Date.now()) },
+        '$Rentings.bookingDate$': { $lte:  new Date() },
       };
     },
   });

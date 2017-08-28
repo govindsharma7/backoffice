@@ -1,4 +1,3 @@
-const D                = require('date-fns');
 const makePublic       = require('../../middlewares/makePublic');
 const pictures         = require('../../pictures.json');
 const Utils            = require('../../utils');
@@ -40,7 +39,7 @@ module.exports = function(app, models, Room) {
     where: (req) => {
       return {
         '$Rentings.RoomId$': req.params.recordId,
-        '$Rentings.bookingDate$': { $lte:  D.format(Date.now()) },
+        '$Rentings.bookingDate$': { $lte:  new Date() },
       };
     },
   });

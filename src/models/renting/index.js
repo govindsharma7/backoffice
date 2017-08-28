@@ -48,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
       required: false,
       validate: {
         isRoomAvailable(date) {
-          return models.Room.scope('activeRenting+checkoutDate')
+          return models.Room.scope('availableAt')
             .findById(this.RoomId)
             .then((room) => {
               return room.checkAvailability(date);
@@ -244,7 +244,7 @@ module.exports = (sequelize, DataTypes) => {
     }, order);
   };
 
-  Renting.prototype.toOrderItems = function(date = Date.now()) {
+  Renting.prototype.toOrderItems = function(date = new Date()) {
     const prorated = this.prorate(date);
     const room = this.Room;
     const apartment = room.Apartment;
@@ -265,7 +265,7 @@ module.exports = (sequelize, DataTypes) => {
     }];
   };
 
-  Renting.prototype.findOrCreateRentOrder = function(date = Date.now(), number) {
+  Renting.prototype.findOrCreateRentOrder = function(date = new Date(), number) {
     return models.Order
       .findItemOrCreate({
         where: {
@@ -274,12 +274,12 @@ module.exports = (sequelize, DataTypes) => {
         },
         include: [{
           model: models.Order,
-          where: { dueDate: Math.max(Date.now(), D.startOfMonth(date)) },
+          where: { dueDate: Math.max(new Date(), D.startOfMonth(date)) },
 //          paranoid: false, // include drafts
         }],
         defaults: this.normalizeOrder({
           label: `${D.format(date, 'MMMM')} Invoice`,
-          dueDate: Math.max(Date.now(), D.startOfMonth(date)),
+          dueDate: Math.max(new Date(), D.startOfMonth(date)),
           OrderItems: this.toOrderItems(date),
           number,
         }),
@@ -303,7 +303,7 @@ module.exports = (sequelize, DataTypes) => {
             },
             defaults: this.normalizeOrder({
               label: 'Housing Pack',
-              dueDate: Math.max(Date.now(), D.startOfMonth(this.bookingDate)),
+              dueDate: Math.max(new Date(), D.startOfMonth(this.bookingDate)),
               OrderItems: [
                 {
                   label: `Housing Pack ${addressCity} ${comfortLevel}`,
@@ -678,7 +678,7 @@ module.exports = (sequelize, DataTypes) => {
     const {Client, Terms, Room} = renting;
     const {Apartment} = Room;
     const {name, addressStreet, addressZip, addressCity} = Apartment;
-    const bookingDate = renting.bookingDate || Date.now();
+    const bookingDate = renting.bookingDate || new Date();
     const identity = JSON.parse(Client.Metadata[0].value);
     const fullAddress = _.values(identity.address).filter(Boolean).join(', ');
     const birthDate = _.values(identity.birthDate).join('/');
@@ -701,7 +701,7 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     return Promise.resolve({
-      fullName: `${Client.firstName} ${Client.lastName}`,
+      fullName: `${Client.firstName} ${Client.lastName.toUpperCase()}`,
       fullAddress,
       birthDate,
       birthPlace: Utils.toSingleLine(`
@@ -725,7 +725,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Renting.getPeriod = function(renting, date = Date.now()) {
+  Renting.getPeriod = function(renting, date = new Date()) {
     const checkoutDate = renting.get('checkoutDate');
     const {bookingDate} = renting;
 
@@ -737,6 +737,12 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     return 'current';
+  };
+
+  Renting.getLatest = function(rentings) {
+    return rentings.reduce((acc, curr) => {
+      return curr.bookingDate > acc.bookingDate ? curr : acc;
+    }, rentings[0]);
   };
 
   Renting.collection = collection;

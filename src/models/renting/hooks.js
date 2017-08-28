@@ -25,7 +25,7 @@ module.exports = function(models, Renting) {
   // to set the deletedAt value themselves
 //  Renting.hook('beforeCreate', (renting) => {
 //    if ( renting.status !== 'active' ) {
-//      renting.setDataValue('deletedAt', Date.now());
+//      renting.setDataValue('deletedAt', new Date());
 //    }
 //
 //    return renting;
