@@ -287,4 +287,23 @@ describe('Renting', () => {
     });
   });
 
+  describe('.calculatePriceAndFees', () => {
+    test('it should calculate the price and service fees for the renting', () => {
+      const room = {
+        basePrice: 9500, // rounding-safe price
+        Apartment: { roomCount: 3 },
+      };
+      const bookingDate = D.parse('2017-08-04 Z'); // 100% date
+      const hasTwoOccupants = true;
+
+      return Renting
+        .calculatePriceAndFees({ room, bookingDate, hasTwoOccupants })
+        .then(({ price, serviceFees }) => {
+          expect(price).toEqual(18500);
+          expect(serviceFees).toEqual(3000);
+          return null;
+        });
+    });
+  });
+
 });

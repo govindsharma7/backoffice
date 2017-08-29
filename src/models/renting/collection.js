@@ -38,6 +38,13 @@ module.exports = function(models) {
         object.packDiscount = value;
         return object;
       },
+    }, {
+      field: '2 occupants ?',
+      type: 'Boolean',
+      set(object, value) {
+        object.hasTwoOccupants = value;
+        return object;
+      },
     }],
     actions: [{
       name: 'Create First Rent Order',

@@ -100,6 +100,8 @@ module.exports = {
 
   UNCASHED_DEPOSIT_FEE: 2900,
 
+  TWO_OCCUPANTS_FEES: 9000,
+
   RENT_COEFS: {
     '01-01': 0.95, // January
     '01-02': 0.96,

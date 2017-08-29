@@ -12,12 +12,7 @@ module.exports = function(models, Renting) {
     return models.Room.scope('apartment')
       .findById(renting.RoomId)
       .then((room) => {
-        return room.getCalculatedProps(renting.bookingDate);
-      })
-      .then(({periodPrice, serviceFees}) => {
-        renting.setDataValue('price', periodPrice);
-        renting.setDataValue('serviceFees', serviceFees);
-        return renting;
+        return renting.calculatePriceAndFees(room);
       });
   });
 

@@ -9,12 +9,13 @@ const {
   // UNTRASHED_SCOPE,
   DEPOSIT_PRICES,
   DEPOSIT_REFUND_DELAYS,
+  TWO_OCCUPANTS_FEES,
 }                           = require('../../const');
 const {
   NODE_ENV,
   WEBMERGE_DOCUMENT_ID,
   WEBMERGE_DOCUMENT_KEY,
-}                = require('../../config');
+}                           = require('../../config');
 const {GOOGLE_CALENDAR_IDS} = require('../../config');
 const routes                = require('./routes');
 const hooks                 = require('./hooks');
@@ -86,7 +87,11 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.VIRTUAL,
     },
     packDiscount: {
-      type:                     DataTypes.VIRTUAL,
+      type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
+    },
+    hasTwoOccupants: {
+      type:                     DataTypes.VIRTUAL(DataTypes.BOOLEAN),
+      defaultValue: false,
     },
     checkinDate: {
       type:                     DataTypes.VIRTUAL(DataTypes.DATE),
@@ -743,6 +748,34 @@ module.exports = (sequelize, DataTypes) => {
     return rentings.reduce((acc, curr) => {
       return curr.bookingDate > acc.bookingDate ? curr : acc;
     }, rentings[0]);
+  };
+
+  Renting.calculatePriceAndFees = function({ room, bookingDate, hasTwoOccupants }) {
+    return models.Room
+      .getCalculatedProps(
+        room.basePrice,
+        room.Apartment && room.Apartment.roomCount,
+        bookingDate
+      )
+      .then(({periodPrice, serviceFees}) => {
+        return {
+          serviceFees,
+          price: periodPrice + ( hasTwoOccupants ? TWO_OCCUPANTS_FEES : 0 ),
+        };
+      });
+  };
+  Renting.prototype.calculatePriceAndFees = function(room) {
+    return Renting
+      .calculatePriceAndFees({
+        room,
+        bookingDate: this.bookingDate,
+        hasTwoOccupants: this.hasTwoOccupants,
+      })
+      .then(({price, serviceFees}) => {
+        this.setDataValue('price', price);
+        this.setDataValue('serviceFees', serviceFees);
+        return this;
+      });
   };
 
   Renting.collection = collection;

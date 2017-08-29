@@ -1,46 +1,34 @@
 const Promise  = require('bluebird');
 const D        = require('date-fns');
 const models   = require('../../src/models');
-const fixtures = require('../../__fixtures__/room');
 const Utils    = require('../../src/utils');
+const { Room } = require('../../src/models');
 
-const now = Date.now();
-var room1;
+const now = new Date();
 
 describe('Room', () => {
-  beforeAll(() => {
-    return fixtures()
-      .then(({instances}) => {
-        return room1 = instances['room-1'];
-      });
-  });
-
-  describe('#getCalculatedProps()', () => {
+  describe('.getCalculatedProps()', () => {
     test('it calculates the period price using Utils.getPeriodPrice', () => {
-      return models.Room.scope('apartment')
-        .findById(room1.id)
-        .then((room) => {
-          return Promise.all([
-            Utils.getPeriodCoef(now),
-            room.getCalculatedProps(now),
-          ]);
-        })
+      const basePrice = 100;
+
+      return Promise.all([
+          Utils.getPeriodCoef(now),
+          Room.getCalculatedProps( basePrice, 3, now ),
+        ])
         .then(([periodCoef, { periodPrice, serviceFees }]) => {
           return expect(periodPrice).toEqual(
-            Utils.getPeriodPrice( room1.basePrice, periodCoef, serviceFees )
+            Utils.getPeriodPrice( basePrice, periodCoef, serviceFees )
           );
         });
     });
 
     test('it calculates correct serviceFees using Utils.getServiceFees', () => {
-      return models.Room.scope('apartment')
-        .findById(room1.id)
-        .then((room) => {
-          return Promise.all([
-            Utils.getServiceFees(2),
-            room.getCalculatedProps(now),
-          ]);
-        })
+      const roomCount = 2;
+
+      return Promise.all([
+          Utils.getServiceFees(roomCount),
+          Room.getCalculatedProps( 100, roomCount, now),
+        ])
         .then(([expected, { serviceFees }]) => {
           return expect(serviceFees).toEqual(expected);
         });

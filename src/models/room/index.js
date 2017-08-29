@@ -74,21 +74,25 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  // calculate periodPrice and serviceFees for the room
-  Room.prototype.getCalculatedProps = function(now = new Date()) {
+  Room.getCalculatedProps = function(basePrice, roomCount, now = new Date()) {
     return Promise.all([
         Utils.getPeriodCoef(now),
-        // For some reason, Forest sometimes triggers calls to getCalculatedProps
-        // and doesn't load the appropriate scope.
-        // TODO: find when/why that happens and implement a real fix
-        this.Apartment ? Utils.getServiceFees(this.Apartment.roomCount) : 0,
+        Utils.getServiceFees(roomCount),
       ])
       .then(([periodCoef, serviceFees]) => {
         return {
-          periodPrice: Utils.getPeriodPrice( this.basePrice, periodCoef, serviceFees ),
+          periodPrice: Utils.getPeriodPrice( basePrice, periodCoef, serviceFees ),
           serviceFees,
         };
       });
+  };
+  // calculate periodPrice and serviceFees for the room
+  Room.prototype.getCalculatedProps = function(now = new Date()) {
+    return Room.getCalculatedProps(
+      this.basePrice,
+      this.Apartment && this.Apartment.roomCount,
+      now
+    );
   };
 
   Room.prototype.checkAvailability = function(date = new Date()) {

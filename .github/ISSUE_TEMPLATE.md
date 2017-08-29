@@ -1,3 +1,3 @@
-_As a_
-_I want_
-_So that_
+_As a_ <type of user>
+_I want_ <some goal>
+_So that_ <some reason>
