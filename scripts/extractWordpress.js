@@ -10,9 +10,11 @@ const fixedNames = {
   '4230 2': '40 verdun',
 };
 
-return WPAPI.discover('http://localhost:8080/wp-json')
+return WPAPI.discover('http://localhost:8080/wp-json/')
   .then((nestor) => {
     return recursePaginate(
+      // /!\ If this fails, in node_modules/wpapi/wpapi.js
+      // replace `apiRootURL` with `url`
       nestor.property().embed()
     );
   })

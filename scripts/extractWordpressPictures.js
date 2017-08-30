@@ -20,7 +20,7 @@ return Promise
     pictures[reference] = [];
     while ( (url = pictureRegex.exec(html)) ) {
       pictures[reference].push(
-        url[1].replace('http://localhost:8080/wp-content/uploads', '')
+        url[1].replace('https?://[^/]+?/wp-content/uploads', '')
       );
     }
     return true;

@@ -1,9 +1,12 @@
-const Promise     = require('bluebird');
-const capitalize  = require('lodash/capitalize');
-const Liana       = require('forest-express-sequelize');
-const Utils       = require('../../utils');
+const Promise         = require('bluebird');
+const Liana           = require('forest-express-sequelize');
+const capitalize      = require('lodash/capitalize');
+const pick            = require('lodash/pick');
+const D               = require('date-fns');
+const Utils           = require('../../utils');
+const makePublic      = require('../../middlewares/makePublic');
 
-const _ = { capitalize };
+const _ = { capitalize, pick };
 
 module.exports = function(app, models, Renting) {
   const LEA = Liana.ensureAuthenticated;
@@ -192,6 +195,54 @@ module.exports = function(app, models, Renting) {
         .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} order`))
         .catch(Utils.logAndSend(res));
       });
+  });
+
+  app.post('/forest/actions/public/create-client-and-renting', makePublic, (req, res) => {
+    const { roomId, pack: comfortLevel, client, currentPrice, bookingDate } =
+      req.body;
+
+    models.Room.scope('apartment', 'availableAt')
+      .findById(roomId)
+      .then((room) => {
+        if ( !room ) {
+          throw new Error(`Room "${roomId}" not found`);
+        }
+
+        if ( D.compareAsc(room.availableAt, bookingDate ) !== 0 ) {
+          throw new Error(`Room "${roomId}" unavailable on ${bookingDate}`);
+        }
+
+        return Promise.all([
+          room.getCalculatedProps(room.availableAt),
+          models.Client.findOrCreate({
+            where: { email: client.email },
+            defaults: _.pick(client, ['firstName', 'lastName', 'email']),
+          }),
+        ]);
+      })
+      .then(([{periodPrice, serviceFees}, [client]]) => {
+        if ( periodPrice !== currentPrice ) {
+          throw new Error(`Room "${roomId}" is now priced ${periodPrice}`);
+        }
+
+        return Renting.findOrCreate({
+          where: { ClientId: client.id, RoomId: roomId },
+          defaults: {
+            ClientId: client.id,
+            RoomId: roomId,
+            price: periodPrice,
+            serviceFees,
+            comfortLevel,
+          },
+        });
+      })
+      .tap(([renting, isCreated]) => {
+        return isCreated && renting.createQuoteOrders({ comfortLevel });
+      })
+      .then(([renting]) => {
+        return res.send({ rentingId: renting.id });
+      })
+      .catch(Utils.logAndSend(res));
   });
 
   app.post('/forest/actions/update-do-not-cash-deposit-option', LEA, (req, res) => {

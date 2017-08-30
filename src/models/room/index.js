@@ -35,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
       type:                   DataTypes.VIRTUAL(DataTypes.DATE),
       get() {
         return this.Rentings && ( this.Rentings.length === 0 ?
-          new Date() :
+          new Date(0) :
           models.Renting.getLatest(this.Rentings).get('checkoutDate') || UNAVAILABLE_DATE
         );
       },
