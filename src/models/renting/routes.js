@@ -11,6 +11,9 @@ const _ = { capitalize, pick };
 module.exports = function(app, models, Renting) {
   const LEA = Liana.ensureAuthenticated;
 
+  // Make this route completely public
+  app.get('/forest/Renting/:rentingId', makePublic);
+
   app.post('/forest/actions/create-pack-order', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
 

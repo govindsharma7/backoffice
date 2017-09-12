@@ -393,8 +393,9 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Client.prototype.applyLateFees = function(now = new Date()) {
-    return this.findUnpaidOrders()
+  Client.prototype.applyLateFees = function(orders, now = new Date()) {
+    // return this.findUnpaidOrders()
+    return orders
       .map((order) => {
         const lateFees = D.differenceInDays(now, order.dueDate);
 

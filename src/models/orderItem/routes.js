@@ -1,9 +1,20 @@
-const Promise = require('bluebird');
-const Liana   = require('forest-express-sequelize');
-const Utils   = require('../../utils');
+const Promise     = require('bluebird');
+const Liana       = require('forest-express-sequelize');
+const makePublic  = require('../../middlewares/makePublic');
+const Utils       = require('../../utils');
 
 module.exports = function(app, models, OrderItem) {
   const LEA = Liana.ensureAuthenticated;
+
+  // Make responses to fetchOrdersByRenting public
+  app.get('/forest/OrderItem', (req, res, next) => {
+    return (
+      req.query.filterType === 'and' &&
+      Object.keys(req.query.filter).join('') === 'RentingId'
+    ) ?
+      makePublic(req, res, next) :
+      LEA(req, res, next);
+  });
 
   app.post('/forest/actions/add-discount', LEA, (req, res) => {
     const {ids, values} = req.body.data.attributes;
