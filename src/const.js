@@ -58,8 +58,8 @@ module.exports = {
     },
     paris: {
       basic:      89000,
-      comfort:   109000,
-      privilege: 129000,
+      comfort:   119000,
+      privilege: 149000,
     },
   },
   ROOM_SWITCH_PRICES: {
@@ -68,9 +68,9 @@ module.exports = {
     basic:     29000,
   },
   DEPOSIT_PRICES: {
-    lyon:        69000,
-    paris:       89000,
-    montpellier: 49000,
+    lyon:        70000,
+    paris:       90000,
+    montpellier: 50000,
   },
 
   SPECIAL_CHECKIN_PRICE: 7900,
