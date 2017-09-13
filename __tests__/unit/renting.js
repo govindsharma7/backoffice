@@ -195,7 +195,7 @@ describe('Renting', () => {
       nationality: 'américain',
       rent: 600,
       serviceFees: 40,
-      deposit: 690,
+      deposit: 700,
       depositOption: 'd\'encaissement du montant',
       packLevel: 'Basique',
       roomNumber: 'la chambre privée nº3',
