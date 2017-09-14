@@ -39,6 +39,8 @@ module.exports = {
 
   DATETIME_FORMAT: 'YYYY-MM-DD HH:mm:ss.SSSZ',
 
+  LEASE_DURATION: '6',
+
   INVOICENINJA_URL:
     `${config.INVOICENINJA_PROTOCOL || 'http'}://${config.INVOICENINJA_HOST}`,
 

@@ -10,6 +10,7 @@ const {
   DEPOSIT_PRICES,
   DEPOSIT_REFUND_DELAYS,
   TWO_OCCUPANTS_FEES,
+  LEASE_DURATION,
 }                           = require('../../const');
 const {
   NODE_ENV,
@@ -725,7 +726,8 @@ module.exports = (sequelize, DataTypes) => {
       address: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
       floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
       bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
-      endDate: D.format(D.addYears(D.subDays(bookingDate, 1), 1), 'DD/MM/YYYY'),
+      endDate: D.format(D.addMonths(
+        D.subDays(bookingDate, 1), LEASE_DURATION), 'DD/MM/YYYY'),
       email: Client.email,
     });
   };
