@@ -2,6 +2,10 @@ const D         = require('date-fns');
 const fixtures  = require('../../__fixtures__/renting');
 const Utils     = require('../../src/utils');
 const models    = require('../../src/models');
+const {
+  DEPOSIT_PRICES,
+  LEASE_DURATION,
+}                           = require('../../src/const');
 
 const {Renting} = models;
 var renting1;
@@ -195,7 +199,7 @@ describe('Renting', () => {
       nationality: 'américain',
       rent: 600,
       serviceFees: 40,
-      deposit: 700,
+      deposit: DEPOSIT_PRICES.lyon / 100,
       depositOption: 'd\'encaissement du montant',
       packLevel: 'Basique',
       roomNumber: 'la chambre privée nº3',
@@ -204,7 +208,8 @@ describe('Renting', () => {
       address: '16 rue Condé, Lyon, 69002',
       floor: 'rez-de-chausée',
       bookingDate: D.format(Date.now(), 'DD/MM/YYYY'),
-      endDate: D.format(D.addYears(D.subDays(Date.now(), 1), 1), 'DD/MM/YYYY'),
+      endDate: D.format(D.addMonths(
+        D.subDays(Date.now(), 1), LEASE_DURATION), 'DD/MM/YYYY'),
       email: 'john@doe.com',
     };
 
@@ -252,13 +257,15 @@ describe('Renting', () => {
         }],
       });
 
+      const bookingDate = D.parse('2017-05-14 Z');
       const expected = Object.assign({}, commonExpected, {
         floorArea: 15,
         floor: 4,
         roomNumber: 'l\'appartement entier',
         depositOption: 'de non encaissement du chèque',
-        bookingDate: '14/05/2017',
-        endDate: '13/05/2018',
+        bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
+        endDate: D.format(D.addMonths(
+            D.subDays(bookingDate, 1), LEASE_DURATION), 'DD/MM/YYYY'),
       });
 
       return Renting.webmergeSerialize(renting)
