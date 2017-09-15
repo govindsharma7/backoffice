@@ -34,6 +34,7 @@ app.use(Cors({
     /^http:\/\/127\.0\.0\.1:/,
     /^http:\/\/localhost:/,
     /\.forestadmin\.com$/,
+    /\.chez-nestor\.com$/,
   ],
   allowedHeaders: [
     'Authorization',
