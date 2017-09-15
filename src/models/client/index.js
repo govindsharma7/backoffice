@@ -250,7 +250,7 @@ module.exports = (sequelize, DataTypes) => {
             dueDate: D.startOfMonth(date),
             OrderItems:
               rentings.reduce((all, renting) => {
-                return all.concat(renting.toOrderItems(date));
+                return all.concat(renting.toOrderItems({ date }));
               }, [])
               .concat(this.get('uncashedDepositCount') > 0 && {
                 label: 'Option Liberté',

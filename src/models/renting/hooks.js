@@ -27,10 +27,10 @@ module.exports = function(models, Renting) {
 //  });
 
   // Create quote orders if the housing pack has been set when creating the renting
-  Renting.hook('afterCreate', (_renting) => {
+  Renting.hook('afterCreate', (_renting, { transaction }) => {
     if (_renting.comfortLevel) {
       return Renting.scope('room+apartment')
-        .findById(_renting.id)
+        .findById(_renting.id, { transaction })
         .then((renting) => {
           return renting.createQuoteOrders(_renting);
         });

@@ -250,9 +250,8 @@ module.exports = (sequelize, DataTypes) => {
     }, order);
   };
 
-  Renting.prototype.toOrderItems = function(date = new Date()) {
+  Renting.prototype.toOrderItems = function({ date = new Date(), room = this.Room }) {
     const prorated = this.prorate(date);
-    const room = this.Room;
     const apartment = room.Apartment;
     const month = D.format(date, 'MMMM');
 
@@ -271,7 +270,9 @@ module.exports = (sequelize, DataTypes) => {
     }];
   };
 
-  Renting.prototype.findOrCreateRentOrder = function(date = new Date(), number) {
+  Renting.prototype.findOrCreateRentOrder = function(args) {
+    const { date = new Date(), room, number } = args;
+
     return models.Order
       .findItemOrCreate({
         where: {
@@ -286,14 +287,15 @@ module.exports = (sequelize, DataTypes) => {
         defaults: this.normalizeOrder({
           label: `${D.format(date, 'MMMM')} Invoice`,
           dueDate: Math.max(new Date(), D.startOfMonth(date)),
-          OrderItems: this.toOrderItems(date),
+          OrderItems: this.toOrderItems({ date, room }),
           number,
         }),
       });
   };
 
-  Renting.prototype.findOrCreatePackOrder = function(comfortLevel, discount, number) {
-    const {addressCity} = this.Room.Apartment;
+  Renting.prototype.findOrCreatePackOrder = function(args) {
+    const { comfortLevel, discount, number, room = this.Room } = args;
+    const {addressCity} = room.Apartment;
     const ProductId = `${comfortLevel}-pack`;
 
     return Utils
@@ -334,8 +336,9 @@ module.exports = (sequelize, DataTypes) => {
         });
   };
 
-  Renting.prototype.findOrCreateDepositOrder = function(number) {
-    const {addressCity} = this.Room.Apartment;
+  Renting.prototype.findOrCreateDepositOrder = function(args) {
+    const { room = this.Room, number} = args;
+    const {addressCity} = room.Apartment;
     const ProductId = `${addressCity}-deposit`;
 
     return models.Order
@@ -666,13 +669,15 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Renting.prototype.createQuoteOrders = function({comfortLevel, packDiscount}) {
+  Renting.prototype.createQuoteOrders = function(args) {
+    const {comfortLevel, packDiscount, room } = args;
+
     return Promise.mapSeries([
-        { suffix: 'RentOrder', args: [this.bookingDate] },
-        { suffix: 'DepositOrder' },
-        { suffix: 'PackOrder', args: [comfortLevel, packDiscount] },
+        { suffix: 'RentOrder', args: { date: this.bookingDate, room } },
+        { suffix: 'DepositOrder', args: { room } },
+        { suffix: 'PackOrder', args: { comfortLevel, packDiscount, room } },
       ], (def) => {
-        return this[`findOrCreate${def.suffix}`].apply(this, def.args);
+        return this[`findOrCreate${def.suffix}`](def.args);
       })
       .then(([[rentOrder], [depositOrder], [packOrder]]) => {
         return models.Order

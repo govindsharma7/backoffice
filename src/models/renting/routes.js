@@ -99,7 +99,7 @@ module.exports = function(app, models, Renting) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => {
-        return renting.findOrCreateRentOrder(renting.bookingDate);
+        return renting.findOrCreateRentOrder({ date: renting.bookingDate });
       })
       .then(Utils.findOrCreateSuccessHandler(res, 'Rent order'))
       .catch(Utils.logAndSend(res));
@@ -211,7 +211,7 @@ module.exports = function(app, models, Renting) {
           throw new Error(`Room "${roomId}" not found`);
         }
 
-        if ( D.compareAsc(room.availableAt, bookingDate ) !== 0 ) {
+        if ( D.compareAsc(room.availableAt, new Date(bookingDate) ) > -1 ) {
           throw new Error(`Room "${roomId}" unavailable on ${bookingDate}`);
         }
 
@@ -221,28 +221,33 @@ module.exports = function(app, models, Renting) {
             where: { email: client.email },
             defaults: _.pick(client, ['firstName', 'lastName', 'email']),
           }),
+          room,
         ]);
       })
-      .then(([{periodPrice, serviceFees}, [client]]) => {
+      .then(([{periodPrice, serviceFees}, [client], room]) => {
         if ( periodPrice !== currentPrice ) {
-          throw new Error(`Room "${roomId}" is now priced ${periodPrice}`);
+          throw new Error(
+            `Room "${roomId}"'s price has changed and is now ${periodPrice}`
+          );
         }
 
-        return Renting.findOrCreate({
-          where: { ClientId: client.id, RoomId: roomId },
-          defaults: {
-            ClientId: client.id,
-            RoomId: roomId,
-            price: periodPrice,
-            serviceFees,
-            comfortLevel,
-          },
-        });
+        return Promise.all([
+          Renting.findOrCreate({
+            where: { ClientId: client.id, RoomId: roomId },
+            defaults: {
+              ClientId: client.id,
+              RoomId: roomId,
+              price: periodPrice,
+              serviceFees,
+            },
+          }),
+          room,
+        ]);
       })
-      .tap(([renting, isCreated]) => {
-        return isCreated && renting.createQuoteOrders({ comfortLevel });
+      .tap(([[renting, isCreated], room]) => {
+        return isCreated && renting.createQuoteOrders({ comfortLevel, room });
       })
-      .then(([renting]) => {
+      .then(([[renting]]) => {
         return res.send({ rentingId: renting.id });
       })
       .catch(Utils.logAndSend(res));

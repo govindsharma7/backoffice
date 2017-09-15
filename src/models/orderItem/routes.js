@@ -6,11 +6,12 @@ const Utils       = require('../../utils');
 module.exports = function(app, models, OrderItem) {
   const LEA = Liana.ensureAuthenticated;
 
-  // Make responses to fetchOrdersByRenting public
+  // Make retrieving OrderItems and associated Orders by OrderId or rentingId
+  // public
   app.get('/forest/OrderItem', (req, res, next) => {
     return (
       req.query.filterType === 'and' &&
-      Object.keys(req.query.filter).join('') === 'RentingId'
+      /(Renting|Order)Id/.test(Object.keys(req.query.filter).join(''))
     ) ?
       makePublic(req, res, next) :
       LEA(req, res, next);
