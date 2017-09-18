@@ -60,6 +60,11 @@ module.exports = (sequelize, DataTypes) => {
 
   Apartment.associate = () => {
     Apartment.hasMany(models.Room);
+    Apartment.hasMany(models.Picture, {
+      foreignKey: 'PicturableId',
+      constraints: false,
+      scope: { picturable: 'Apartment' },
+    });
 
     Apartment.addScope('_roomCount', {
       attributes: { include: [

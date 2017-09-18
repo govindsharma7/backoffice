@@ -1,11 +1,10 @@
 const capitalize       = require('lodash/capitalize');
-const pictures         = require('../../pictures.json');
 const {TRASH_SEGMENTS} = require('../../const');
 const Utils            = require('../../utils');
 
 const _ = { capitalize };
 
-module.exports = function({Room}) {
+module.exports = function({Room, Picture}) {
   const memoizer = new Utils.calculatedPropsMemoizer(
     Room.scope('availableAt', 'apartment')
   );
@@ -36,14 +35,17 @@ module.exports = function({Room}) {
       type: ['String'],
       reference: 'Client.id',
     }, {
-      field: 'Pictures',
-      type: ['String'],
-      reference: 'Picture.id',
-    }, {
       field: 'cover picture',
       type: 'String',
       get(object) {
-        return (pictures[object.reference] || [])[0];
+        return Picture.findOne({
+          where: {
+            PicturableId: object.id,
+          },
+        })
+        .then((picture) => {
+          return picture ? picture.url : null;
+        });
       },
     }],
     actions: [{

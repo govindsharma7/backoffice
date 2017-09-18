@@ -24,17 +24,18 @@ Use "--force" if you're certain you want to do that.
 }
 
 /* eslint-disable promise/no-nesting */
-return models.sequelize.sync({ force: true })
+return models.sequelize.sync(/*{ force: true }*/)
   .then(() => {
     // We used to just load all files in the folder, but the order we load them
     // is important because of references constraints
     const tuples = [
-      'apartments.json',
-      'rooms.json',
-      'clients.json',
-      'products.json',
-      'rentings.json',
-      'settings.json',
+//      'apartments.json',
+//      'rooms.json',
+//      'clients.json',
+//      'products.json',
+//      'rentings.json',
+//      'settings.json',
+      'pictures.json',
 
     ].map((file) => {
       const {model, records} = require(path.join('..', 'data', file));
@@ -77,31 +78,31 @@ return models.sequelize.sync({ force: true })
       records: [],
     };
 
-    (tuples.find(({model}) => {
-      return model === 'Renting';
-    })).records.forEach((record) => {
-      record.id = `${record.ClientId}-${record.RoomId}`;
-
-      if ( record.checkoutDate == null ) {
-        return;
-      }
-
-      const eventId = `${record.id}>checkout`;
-
-      eventsTuple.records.push({
-        id: eventId,
-        startDate: record.checkoutDate,
-        eventable: 'Renting',
-        EventableId: record.id,
-      });
-
-      termsTuple.records.push({
-        taxonomy: 'event-category',
-        name: 'checkout',
-        TermableId: eventId,
-        termable: 'Event',
-      });
-    });
+//    (tuples.find(({model}) => {
+//      return model === 'Renting';
+//    })).records.forEach((record) => {
+//      record.id = `${record.ClientId}-${record.RoomId}`;
+//
+//      if ( record.checkoutDate == null ) {
+//        return;
+//      }
+//
+//      const eventId = `${record.id}>checkout`;
+//
+//      eventsTuple.records.push({
+//        id: eventId,
+//        startDate: record.checkoutDate,
+//        eventable: 'Renting',
+//        EventableId: record.id,
+//      });
+//
+//      termsTuple.records.push({
+//        taxonomy: 'event-category',
+//        name: 'checkout',
+//        TermableId: eventId,
+//        termable: 'Event',
+//      });
+//    });
 
     tuples.push(eventsTuple, termsTuple);
 

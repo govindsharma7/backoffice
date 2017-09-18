@@ -60,6 +60,11 @@ module.exports = (sequelize, DataTypes) => {
 
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
+    Room.hasMany(models.Picture, {
+      foreignKey: 'PicturableId',
+      constraints: false,
+      scope: { picturable: 'Room' },
+    });
 
     Room.addScope('apartment', {
       include: [apartment],

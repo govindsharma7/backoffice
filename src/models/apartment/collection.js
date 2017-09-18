@@ -1,11 +1,24 @@
 const {TRASH_SEGMENTS} = require('../../const');
 
-module.exports = function() {
+module.exports = function({Picture}) {
   return {
     fields: [{
       field: 'current-clients',
       type: ['String'],
       reference: 'Client.id',
+    }, {
+      field: 'cover picture',
+      type: 'String',
+      get(object) {
+        return Picture.findOne({
+          where: {
+            PicturableId: object.id,
+          },
+        })
+        .then((picture) => {
+          return picture ? picture.url : null;
+        });
+      },
     }],
     actions: [{
       name: 'Restore Apartment',

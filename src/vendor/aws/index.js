@@ -3,8 +3,36 @@ const Promise = require('bluebird');
 const D       = require('date-fns');
 const config  = require('../../config');
 
+//Global AWS config
+var AWSconfig =  {
+  accessKeyId: config.AWS_ACCESS_KEY_ID,
+  secretAccessKey: config.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS_REGION,
+  s3ForcePathStyle: true,
+};
+
+AWS.config.update(AWSconfig);
+
 // Use bluebird Promises, not native ones
 AWS.config.setPromisesDependency(Promise);
+
+function uploadFiles(bucket, data) {
+  const s3Bucket = new AWS.S3( { params: {Bucket: bucket} });
+
+  return s3Bucket.upload(data).promise()
+    .then((result) => {
+      return result.Location;
+    });
+}
+
+function deleteFiles(bucket, data) {
+  const s3Bucket = new AWS.S3({ params: {Bucket: bucket} });
+
+  return s3Bucket.deleteObject(data).promise()
+    .then(() => {
+      return true;
+  });
+}
 
 const sns = new AWS.SNS({
   apiVersion: config.AWS_SNS_API_VERSION,
@@ -12,6 +40,7 @@ const sns = new AWS.SNS({
   secretAccessKey: config.AWS_SNS_SECRET_ACCESS_KEY,
   region: config.AWS_REGION,
 });
+
 const defaultMessageAttributes = {
 /* MonthlySpendLimit could be usefull if we want to
   limit sms cost each month
@@ -79,4 +108,6 @@ function sendSms(phoneNumbers, text, date = new Date()) {
 
 module.exports = {
   sendSms,
+  uploadFiles,
+  deleteFiles,
 };
