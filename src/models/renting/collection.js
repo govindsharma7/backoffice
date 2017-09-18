@@ -103,6 +103,15 @@ module.exports = function(models) {
         type: 'Number',
       }],
     }, {
+      name: 'Next Month Order Credit',
+      fields: [{
+        field: 'discount',
+        type: 'Number',
+      }, {
+        field: 'label',
+        type: 'String',
+      }],
+    }, {
       name: 'Restore Renting',
     }, {
       name: 'Destroy Renting',

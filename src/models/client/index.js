@@ -266,6 +266,9 @@ module.exports = (sequelize, DataTypes) => {
               .filter(Boolean),
             number,
           },
+        })
+        .tap(([order]) => {
+          return models.Renting.findOrphanOrderItems(rentings, order);
         });
   };
 

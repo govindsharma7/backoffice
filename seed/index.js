@@ -51,5 +51,8 @@ module.exports = {
   }, {
     id: 'service-overcharging-fees',
     name: 'Service Overcharging Fees',
+  }, {
+    id: 'discount',
+    name: 'Discount',
   }],
 };

@@ -304,5 +304,27 @@ module.exports = function(app, models, Renting) {
     return null;
   });
 
+  app.post('/forest/actions/next-month-order-credit', LEA, (req, res) => {
+    const {ids, values} = req.body.data.attributes;
+
+    if ( values.discount != null ) {
+      values.discount *= -100;
+    }
+
+    Promise.resolve()
+    .then(() => {
+      if ( ids.length > 1 ) {
+        throw new Error('Can\'t credit multiple rentings');
+      }
+
+      return Renting.findById(ids[0]);
+    })
+    .then((renting) => {
+      return renting.addNextMonthCredit(values);
+    })
+    .then(Utils.createSuccessHandler(res, 'Next month credit'))
+    .catch(Utils.logAndSend(res));
+  });
+
   Utils.addRestoreAndDestroyRoutes(app, Renting);
 };
