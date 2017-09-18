@@ -122,9 +122,16 @@ describe('Client', () => {
           );
         })
         .then(([order, isCreated]) => {
+        console.log(order.OrderItems.length);
+          return Promise.all([
+            order.reload(),
+            isCreated,
+            ]);
+        })
+        .then(([order, isCreated]) => {
           return (
             expect(isCreated).toEqual(true),
-            expect(order.OrderItems.length).toEqual(5)
+            expect(order.OrderItems.length).toEqual(6)
           );
         });
     });

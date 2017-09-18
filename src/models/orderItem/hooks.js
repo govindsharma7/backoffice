@@ -8,9 +8,12 @@ module.exports = function(models, OrderItem) {
   // Run Order's afterUpdate hook when an orderItem is updated
   ['afterCreate', 'afterUpdate', 'afterDelete'].forEach((hookName) => {
     OrderItem.hook(hookName, (orderItem, { transaction }) => {
-      return orderItem
-        .getOrder({ transaction })
-        .then(models.Order.afterUpdate);
+      if ( orderItem.OrderId ) {
+        return orderItem
+          .getOrder({ transaction })
+          .then(models.Order.afterUpdate);
+      }
+      return null;
     });
   });
 };

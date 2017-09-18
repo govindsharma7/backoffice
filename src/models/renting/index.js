@@ -270,6 +270,29 @@ module.exports = (sequelize, DataTypes) => {
     }];
   };
 
+  Renting.findOrphanOrderItems = function(rentings, order) {
+    return Promise.map(rentings, (renting) => {
+      return models.OrderItem
+        .findAll({
+          where: {
+            RentingId: renting.id,
+            status: 'draft',
+            OrderId: null,
+          },
+        })
+        .then((orderItems) => {
+          return orderItems.map((orderItem) => {
+            return orderItem.update({
+              status: renting.status,
+              OrderId: order.id,
+            }, {
+              fields: ['status', 'OrderId'],
+            });
+          });
+        });
+    });
+  };
+
   Renting.prototype.findOrCreateRentOrder = function(args) {
     const { date = new Date(), room, number } = args;
 
@@ -683,6 +706,19 @@ module.exports = (sequelize, DataTypes) => {
         return models.Order
           .ninjaCreateInvoices([rentOrder, depositOrder, packOrder]);
       });
+  };
+
+  Renting.prototype.addNextMonthCredit = function(args) {
+    const {discount, label} = args;
+
+    return models.OrderItem.create({
+      label,
+      quantity: 1,
+      unitPrice: discount,
+      status: 'draft',
+      RentingId: this.id,
+      ProductId: 'discount',
+    });
   };
 
   Renting.webmergeSerialize = function(renting) {

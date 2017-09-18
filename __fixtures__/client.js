@@ -222,6 +222,13 @@ module.exports = fixtures((u) => {
       unitPrice: 2000,
       OrderId: u.id('order-9'),
       ProductId: 'rent',
+    }, {
+      id: u.id('orderitem-10'),
+      label: 'test item 10',
+      unitPrice: -10000,
+      ProductId: 'discount',
+      status: 'draft',
+      RentingId: u.id('renting-2'),
     }],
     Event: [{
       id: u.id('event-1'),
