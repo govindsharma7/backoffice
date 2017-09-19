@@ -9,7 +9,7 @@
           })
           .then((clients) => {
             if ( clients.length > 0) {
-              throw new Error('Impossible to delete this room due to a current client');
+              throw new Error('Cannot delete Room: it\'s not empty.');
             }
             return true;
         });

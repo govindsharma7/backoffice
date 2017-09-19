@@ -39,7 +39,7 @@ module.exports = function(models, Apartment) {
       })
       .then((clients) => {
         if ( clients.length > 0) {
-          throw new Error('Impossible to delete this apartment due to current clients');
+          throw new Error('Cannot delete Apartment: it\'s not empty.');
         }
         return true;
       });
