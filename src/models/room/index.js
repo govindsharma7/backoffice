@@ -6,6 +6,7 @@ const {
 }                      = require('../../const');
 const collection       = require('./collection');
 const routes           = require('./routes');
+const hooks            = require('./hooks');
 
 module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
@@ -116,6 +117,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Room.collection = collection;
   Room.routes = routes;
+  Room.hooks = hooks;
 
   return Room;
 };
