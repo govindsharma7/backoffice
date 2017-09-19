@@ -16,15 +16,23 @@ const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
 const dumpFile = 'data/data.sql';
 const devDb = '.dev.sqlite';
 
-const dbSync =           'node scripts/dbSync.js';
-const dbSeed =           'node scripts/dbSeed.js';
-const dbFixture =        'node scripts/dbFixture.js';
+const dbSync =
+  'node scripts/dbSync.js';
+const dbSeed =
+  'node scripts/dbSeed.js';
+const dbFixture =
+  'node scripts/dbFixture.js';
 // TODO: Make filenames configurable for the two following commands
-const dbDump =           `node scripts/dbDump.js ${dumpFile}`;
-const dbFill = `rm ${devDb} && ./scripts/mysql2sqlite ${dumpFile} | sqlite3 ${devDb}`;
-const createCalendar =   'node scripts/createCalendar.js';
-const extractClients =   'node scripts/extractInvoiceninja.js > data/clients.json';
-const extractPortfolio = 'node scripts/extractWordpress.js > data/portfolio.json';
+const dbDump =
+  `node scripts/dbDump.js ${dumpFile}`;
+const dbFill =
+  `rm -f ${devDb} && ./scripts/mysql2sqlite.sh ${dumpFile} | sqlite3 ${devDb}`;
+const createCalendar =
+  'node scripts/createCalendar.js';
+const extractClients =
+  'node scripts/extractInvoiceninja.js > data/clients.json';
+const extractPortfolio =
+  'node scripts/extractWordpress.js > data/portfolio.json';
 const extractPictures = 'node scripts/extractWordpressPictures.js > src/pictures.json';
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
 const updateDraftRentOrders = 'node scripts/updateDraftRentOrders.js';
@@ -68,7 +76,10 @@ const tests = {
 
 const others = {
   'migration:create': sequelizeMigrationCreate,
-  'dev:db:fill': dbFill,
+  'dev:db:copyprod':
+    `cross-env NODE_ENV=production env-cmd ./.env.js ${dbDump} && ${dbFill}`,
+  'stag:db:copyprod':
+    'cross-env NODE_ENV=production env-cmd ./.env.js bash ./scripts/mysqlcopy.sh',
 };
 
 module.exports = Object.assign(
