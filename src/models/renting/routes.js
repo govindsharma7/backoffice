@@ -216,7 +216,7 @@ module.exports = function(app, models, Renting) {
         }
 
         return Promise.all([
-          room.getCalculatedProps(room.availableAt),
+          room.getCalculatedProps(Math.max(room.availableAt, new Date())),
           models.Client.findOrCreate({
             where: { email: client.email },
             defaults: _.pick(client, ['firstName', 'lastName', 'email']),
