@@ -39,7 +39,6 @@ module.exports = (sequelize, DataTypes) => {
       COUNTRY: data.nationalityEn,
       WORK:  data.isStudent ? 'study' : 'work',
     };
-
     const emailFr = [];
     const emailEn = [];
 
