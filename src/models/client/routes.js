@@ -6,9 +6,11 @@ const D           = require('date-fns');
 const Multer      = require('multer');
 const Liana       = require('forest-express-sequelize');
 const Ninja       = require('../../vendor/invoiceninja');
+const SendinBlue  = require('../../vendor/sendinblue');
 const Utils       = require('../../utils');
 const {
   INVOICENINJA_URL,
+  SENDINBLUE_TEMPLATE_ID,
 }                 = require('../../const');
 
 const _ = { pickBy, mapKeys };
@@ -195,7 +197,7 @@ module.exports = (app, models, Client) => {
           identityRecord,
         ]);
       })
-      .then(([[client], fieldsToUpdate, identityRecord]) => {
+      .tap(([[client], fieldsToUpdate, identityRecord]) => {
         const { year, month, day, hour, min } = identityRecord.checkinDate;
         const startDate = `${year}-${month}-${day} ${hour}:${min}`;
 
@@ -213,6 +215,36 @@ module.exports = (app, models, Client) => {
             client,
             room: client.Rentings[0].Room,
           }),
+        ]);
+      })
+      .then(([[client]]) => {
+        return Promise.all([
+          Client.scope('currentApartment').findAll({
+            where: {
+              '$Rentings->Room.ApartmentId$': client.Rentings[0].Room.ApartmentId,
+              '$Rentings.bookingDate$': { $lte:  new Date() },
+              'id': { $ne: client.id },
+            },
+          }),
+          models.Metadata.findOne({
+            where: {
+              name: 'clientIdentity',
+              MetadatableId: client.id,
+            },
+          }),
+        ]);
+      })
+      .then(([houseMates, metadata]) => {
+        return metadata.newHouseMateSerialized(houseMates);
+      })
+      .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
+        return Promise.all([
+          SendinBlue.sendEmail(
+            SENDINBLUE_TEMPLATE_ID.newHousemate.fr,
+            Object.assign({}, {emailTo: emailToFr}, {attributes: attributesFr})),
+          SendinBlue.sendEmail(
+            SENDINBLUE_TEMPLATE_ID.newHousemate.en,
+            Object.assign({}, {emailTo: emailToEn}, {attributes: attributesEn})),
         ]);
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))

@@ -104,6 +104,29 @@ module.exports = {
 
   TWO_OCCUPANTS_FEES: 9000,
 
+  ADDRESS_AGENCY: {
+    lyon: '16 rue de Condé 69002 Lyon',
+    montpellier: '4 rue Paul Lacroix, 34070 Montpellier',
+    paris: '42 rue de la Pompe, 75116 Paris',
+  },
+
+  SUPPORT_EMAIL: 'support@chez-nestor.com',
+
+  SENDINBLUE_TEMPLATE_ID: {
+    welcome: {
+      fr: 7,
+      en: 6,
+    },
+    deposit: {
+      fr: 4,
+      en: 5,
+    },
+    newHousemate: {
+      fr: 3,
+      en: 2,
+    },
+  },
+
   RENT_COEFS: {
     '01-01': 0.95, // January
     '01-02': 0.96,

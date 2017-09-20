@@ -178,10 +178,15 @@ module.exports = (sequelize, DataTypes) => {
           }, {
             model: models.Room,
             attributes: ['id', 'ApartmentId'],
+            include: [{
+              model: models.Apartment,
+              attributes: ['addressCity'],
+            }],
           }],
         }],
       };
     });
+
     Client.addScope('latestClientRenting', {
       attributes: { include: [
         [fn('max', col('Rentings.bookingDate')), 'latestBookingDate'],
