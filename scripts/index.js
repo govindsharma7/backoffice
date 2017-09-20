@@ -46,15 +46,15 @@ const intTest = 'jest __tests__/integration';
 const env2json = 'node .env.js --log > .env.json';
 const claudiaUpdate = 'claudia update --config .env.json > /tmp/claudia.log';
 
+const buildHolidays = 'node scripts/serializeFrenchHolidays > src/holidays.json';
+
 const common = {
-  'start': nodemonInspect,
   'migration:do': sequelizeMigrationDo,
   'migration:undo': sequelizeMigrationUndo,
   'db:sync': dbSync,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
   'db:dump': dbDump,
-  'deploy': [env2json, dbSeed, claudiaUpdate],
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
   'extract:portfolio': extractPortfolio,
@@ -75,11 +75,20 @@ const tests = {
 };
 
 const others = {
+  'start':
+    'touch server.js && NODE_ENV=development webpack --watch --config webpack.config.js & nodemon --watch server.js --inspect server.js',
+  'logs': 'up logs -s 45m',
   'migration:create': sequelizeMigrationCreate,
   'dev:db:copyprod':
     `cross-env NODE_ENV=production env-cmd ./.env.js ${dbDump} && ${dbFill}`,
   'stag:db:copyprod':
     'cross-env NODE_ENV=production env-cmd ./.env.js bash ./scripts/mysqlcopy.sh',
+  'build:holidays': buildHolidays,
+  'dev:deploy': 'cross-env NODE_ENV=staging up deploy',
+  'stag:deploy': 'cross-env NODE_ENV=staging up deploy staging',
+  'prod:deploy': 'cross-env NODE_ENV=production up deploy production',
+  'stag:url': 'cross-env NODE_ENV=staging up url staging',
+  'prod:url': 'cross-env NODE_ENV=production up url production',
 };
 
 module.exports = Object.assign(

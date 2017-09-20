@@ -1,15 +1,12 @@
-#!/usr/bin/env node
-
 /* eslint-disable no-console */
 const http = require('http');
 const app = require('./app');
 const models = require('./models');
-const config = require('./config');
 
 /*
  * Initialize server
  */
-const port = normalizePort(config.SERVER_PORT || '3000');
+const port = normalizePort(process.env.PORT || '3000');
 
 app.set('port', port);
 const server = http.createServer(app);
@@ -17,14 +14,16 @@ const server = http.createServer(app);
 /*
  * Load models
  */
-return models.sequelize.sync().then(() => {
-  server.listen(port, function() {
-    console.log(`Express server listening on port ${server.address().port}`);
-  });
-  server.on('error', onError);
-  server.on('listening', onListening);
-  return null;
-});
+models.sequelize.sync()
+  .then(() => {
+    server.listen(port, function() {
+      console.log(`Express server listening on port ${server.address().port}`);
+    });
+    server.on('error', onError);
+    server.on('listening', onListening);
+    return null;
+  })
+  .catch(console.error);
 
 /*
  * Utils

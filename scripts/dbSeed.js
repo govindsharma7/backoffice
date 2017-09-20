@@ -23,7 +23,7 @@ return models.sequelize.sync()
     // use Promise.map instead of Promise.all, as .map limits paralellism
     // (while .all results in "database is locked" sqlite errors)
     //TODO try to make this run with .map and concurrency
-    return Promise.mapSeries(tuples, ([modelName, record]) => {
+    return Promise.mapSeries(tuples, ([modelName, record]) => {console.log(modelName);
       return models[modelName]
         .findOrCreate({
           where: { id: record.id },
