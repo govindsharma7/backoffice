@@ -76,7 +76,11 @@ module.exports = {
     montpellier: 50000,
   },
 
-  SPECIAL_CHECKIN_PRICE: 7900,
+  SPECIAL_CHECKIN_PRICE: {
+    lyon: 7900,
+    montpellier: 7900,
+    paris: 12900,
+  },
 
   SERVICE_FEES: {
     1:       5000, // 1 room

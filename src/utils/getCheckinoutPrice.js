@@ -23,17 +23,17 @@ function isSpecialDate(date) {
   return D.isWeekend(date) || !isWorkingHours(date) || h.isHoliday(date);
 }
 
-module.exports.getCheckinPrice = function(date, level) {
+module.exports.getCheckinPrice = function(date, level, city) {
   if ( level === BASIC_PACK && isSpecialDate(date) ) {
-    return Promise.resolve(SPECIAL_CHECKIN_PRICE);
+    return Promise.resolve(SPECIAL_CHECKIN_PRICE[city]);
   }
 
   return Promise.resolve(0);
 };
 
-module.exports.getCheckoutPrice = function(date, level) {
+module.exports.getCheckoutPrice = function(date, level, city) {
   if ( level !== PRIVILEGE_PACK && isSpecialDate(date) ) {
-    return Promise.resolve(SPECIAL_CHECKIN_PRICE);
+    return Promise.resolve(SPECIAL_CHECKIN_PRICE[city]);
   }
 
   return Promise.resolve(0);
