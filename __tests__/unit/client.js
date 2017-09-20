@@ -8,6 +8,8 @@ let client;
 let client2;
 let client3;
 
+let apartment;
+
 let renting2;
 let renting3;
 let u;
@@ -22,6 +24,7 @@ describe('Client', () => {
           client3 = instances['client-3'],
           renting2 = instances['renting-2'],
           renting3 = instances['renting-3'],
+          apartment = instances['apartment-1'],
           u = unique
         );
       });
@@ -70,6 +73,20 @@ describe('Client', () => {
         .findById(client.id)
         .then((client) => {
           return expect(client.Rentings[0].Room.id).toEqual(u.id('room-1'));
+        });
+    });
+
+    test('currentApartment scope should return current clients of an Apartment', () => {
+      return models.Client.scope('currentApartment')
+        .findAll({
+          where: {
+            '$Rentings->Room.ApartmentId$': apartment.id,
+            '$Rentings.bookingDate$': { $lte:  new Date() },
+            'id': { $ne: client.id },
+          },
+        })
+        .then((clients) => {
+         return expect(clients[0].Rentings[0].Room.id).toEqual(u.id('room-2'));
         });
     });
     test('currentApartment scope return no Renting as client already checkout', () => {
