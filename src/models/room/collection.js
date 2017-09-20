@@ -73,7 +73,7 @@ module.exports = function({Room, Picture}) {
           name: `Available Rooms ${_.capitalize(city)}`,
           scope: 'apartment+availableAt',
           where: () => {
-            // TODO: this query is awfull. We join an all rentings that ever
+            // TODO: this query is awfull. We join on all rentings that ever
             // existed when we know only the one with the latest bookingDate
             // are valuable. For now, the performances are acceptable though.
             // Here are the alternatives we considered and rejected:

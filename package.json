@@ -16,7 +16,6 @@
     "cors": "^2.8.3",
     "countryjs": "^1.8.0",
     "date-fns": "^1.28.5",
-    "date-holidays": "^0.2.1",
     "deasync": "^0.1.10",
     "express": "^4.15.3",
     "express-jwt": "^5.3.0",
@@ -38,9 +37,15 @@
     "webmerge": "^1.0.1"
   },
   "devDependencies": {
+    "@webpack-blocks/babel6": "^0.4.1",
+    "@webpack-blocks/webpack2": "^0.4.0",
     "babel-eslint": "^7.2.3",
+    "babel-minify-webpack-plugin": "^0.2.0",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-minify": "^0.2.0",
     "claudia": "^2.13.0",
     "cross-env": "^5.0.1",
+    "date-holidays": "^0.2.1",
     "deptree": "^1.0.0",
     "env-cmd": "^5.1.0",
     "eslint": "^4.0.0",
@@ -59,13 +64,15 @@
     "nodemon": "^1.11.0",
     "sequelize-cli": "^2.7.0",
     "sqlite3": "3.1.8",
+    "up": "^1.0.1",
     "wpapi": "^1.1.1"
   },
   "scripts": {
     "gulp": "gulp",
     "help": "gulp --tasks",
-    "start": "gulp dev:start",
-    "test": "gulp test"
+    "test": "gulp test",
+    "start": "gulp start",
+    "up": "up"
   },
   "author": "@louis_remi",
   "license": "MPLv2.0"

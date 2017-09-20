@@ -1,0 +1,5 @@
+!server.js
+.node_modules
+__fixtures__
+__tests__
+package-lock.json

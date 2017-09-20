@@ -20,6 +20,7 @@ const {
 const getLateNoticeFees            = require('./getLateNoticeFees');
 const getLeaseEndDate              = require('./getLeaseEndDate');
 const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
+const isHoliday                    = require('./isHoliday');
 const isValidPhoneNumber           = require('./isValidPhoneNumber');
 const logAndSend                   = require('./logAndSend');
 const parseDBDate                  = require('./parseDBDate');
@@ -45,6 +46,7 @@ module.exports = {
   getLateNoticeFees,
   getLeaseEndDate,
   getRoomSwitchPrice,
+  isHoliday,
   isValidPhoneNumber,
   logAndSend,
   parseDBDate,

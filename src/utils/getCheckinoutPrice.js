@@ -1,11 +1,11 @@
 const Promise                 = require('bluebird');
 const D                       = require('date-fns');
-const Holidays                = require('date-holidays');
 const {
   BASIC_PACK,
   PRIVILEGE_PACK,
   SPECIAL_CHECKIN_PRICES,
 }                             = require('../const');
+const isHoliday               = require('./isHoliday');
 
 function isWorkingHours(date) {
   const startOfDay = D.startOfDay(date);
@@ -17,10 +17,8 @@ function isWorkingHours(date) {
   );
 }
 
-const h = new Holidays('FR');
-
 function isSpecialDate(date) {
-  return D.isWeekend(date) || !isWorkingHours(date) || h.isHoliday(date);
+  return D.isWeekend(date) || !isWorkingHours(date) || isHoliday(date);
 }
 
 module.exports.getCheckinPrice = function(date, level, city) {

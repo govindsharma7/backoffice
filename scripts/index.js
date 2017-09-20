@@ -11,8 +11,10 @@ const sequelizeMigrationDo =
 const sequelizeMigrationUndo =
   `sequelize db:migrate:undo ${sequelizeFlags}`;
 
-const watched = '--watch src --watch forest --watch __tests__';
-const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
+// const watched = '--watch src --watch forest --watch __tests__';
+// const nodemonInspect = `nodemon ${watched} --inspect src/index.js`;
+const webpack = 'webpack --watch --config webpack.config.js';
+const nodemon = 'nodemon --watch server.js --inspect server.js';
 const dumpFile = 'data/data.sql';
 const devDb = '.dev.sqlite';
 
@@ -46,18 +48,18 @@ const lint = 'eslint src forest __tests__ scripts scripts.js';
 const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
-const env2json = 'node .env.js --log > .env.json';
-const claudiaUpdate = 'claudia update --config .env.json > /tmp/claudia.log';
+const buildHolidays = 'node scripts/serializeFrenchHolidays > src/vendor/holidays.json';
+const up = (env) => {
+  return `cross-env NODE_ENV=${env} up deploy ${env !== 'development' ? env : ''}`;
+};
 
 const common = {
-  'start': nodemonInspect,
   'migration:do': sequelizeMigrationDo,
   'migration:undo': sequelizeMigrationUndo,
   'db:sync': dbSync,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
   'db:dump': dbDump,
-  'deploy': [env2json, dbSeed, claudiaUpdate],
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
   'extract:portfolio': extractPortfolio,
@@ -79,23 +81,35 @@ const tests = {
 };
 
 const others = {
+  'start':
+    `touch server.js && NODE_ENV=development ${webpack} & ${nodemon}`,
+  'logs': 'up logs -s 45m',
   'migration:create': sequelizeMigrationCreate,
   'dev:db:copyprod':
     `cross-env NODE_ENV=production env-cmd ./.env.js ${dbDump} && ${dbFill}`,
   'stag:db:copyprod':
     'cross-env NODE_ENV=production env-cmd ./.env.js bash ./scripts/mysqlcopy.sh',
+  'build:holidays': buildHolidays,
+  'dev:deploy':
+    up('development'),
+  'stag:deploy':
+    `${envify(dbSeed, 'staging')} && ${up('staging')}`,
+  'prod:deploy':
+    `${envify(dbSeed, 'production')} && ${up('production')}`,
+  'stag:url': 'cross-env NODE_ENV=staging up url staging',
+  'prod:url': 'cross-env NODE_ENV=production up url production',
 };
 
 module.exports = Object.assign(
   {},
-  envify(tests, 'test'),
-  envify(others, 'development'),
-  envify(common, 'development', 'dev'),
-  envify(common, 'staging', 'stag'),
-  envify(common, 'production', 'prod')
+  envifyAll(tests, 'test'),
+  envifyAll(others, 'development'),
+  envifyAll(common, 'development', 'dev'),
+  envifyAll(common, 'staging', 'stag'),
+  envifyAll(common, 'production', 'prod')
 );
 
-function envify(scripts, targetEnv, prefix) {
+function envifyAll(scripts, targetEnv, prefix) {
   const results = {};
 
   for (let scriptName in scripts) {
@@ -103,9 +117,7 @@ function envify(scripts, targetEnv, prefix) {
     let result = [];
 
     (Array.isArray(cmds) ? cmds : [cmds]).forEach((cmd) => {
-      result.push(
-        `cross-env NODE_ENV=${targetEnv} env-cmd ./.env.js ${cmd} ${argv.join(' ')}`
-      );
+      result.push( envify(cmd, targetEnv) );
     });
 
     results[prefix ? `${prefix}:${scriptName}` : scriptName] = result.join(' && ');
@@ -114,11 +126,6 @@ function envify(scripts, targetEnv, prefix) {
   return results;
 }
 
-// To create a new deploying environment, run:
-// claudia create --handler=src/lambda.handler --role=chez-nestor_com-executor \
-// --name=chez-nestor-<new env>_com --config=claudia.<new env>.json \
-// --region=eu-west-1 --memory=256 --deploy-proxy-api
-// But set AWS env variables through 'export' first, as env-cmd doesn't help here
-// then create an env variable in lambda console set to <new env>
-// after the creation succeeded, transfer the content of claudia.<new env>.json
-// to env.js
+function envify(cmd, env) {
+  return `cross-env NODE_ENV=${env} env-cmd ./.env.js ${cmd} ${argv.join(' ')}`;
+}

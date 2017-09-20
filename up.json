@@ -1,0 +1,19 @@
+{
+  "name": "cheznestor-backoffice",
+  "regions": ["eu-west-1"],
+  "lambda": {
+    "memory": 512,
+    "timeout": 15
+  },
+  "hooks": {
+    "build": [
+      "webpack --config webpack.config.js",
+      "mv node_modules .node_modules",
+      "npm install --only=prod"
+    ],
+    "clean": "[ -d .node_modules ] && rm -rf node_modules && mv .node_modules node_modules"
+  },
+  "proxy": {
+    "command": "node server.js"
+  }
+}

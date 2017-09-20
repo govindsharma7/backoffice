@@ -309,7 +309,6 @@ module.exports = (sequelize, DataTypes) => {
         include: [{
           model: models.Order,
           where: { dueDate: Math.max(new Date(), D.startOfMonth(date)) },
-//          paranoid: false, // include drafts
         }],
         defaults: this.normalizeOrder({
           label: `${D.format(date, 'MMMM')} Invoice`,

@@ -19,8 +19,10 @@ data
 # Temporary files
 tmp
 
-# Build files
+# build
 build
+server.js
+server.js.map
 
 # Local sqlite storage file
 *.sqlite
@@ -32,3 +34,6 @@ node_modules
 # secrets
 .env.js
 .env.json
+
+# pre-built holidays
+src/holidays.json
