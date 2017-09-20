@@ -170,7 +170,7 @@ module.exports = function(app, models, Renting) {
           }
 
           return Renting.scope(
-            'room', // required to create checkin/out order
+            'room+apartment', // required to create checkin/out order
             'client', // required to create the refund event,
             `${type}Date`, // required below
             'comfortLevel' // required below

@@ -11,6 +11,8 @@ const {
   DEPOSIT_REFUND_DELAYS,
   TWO_OCCUPANTS_FEES,
   LEASE_DURATION,
+  SPECIAL_CHECKIN_PRICE,
+  ADDRESS_AGENCY,
 }                           = require('../../const');
 const {
   NODE_ENV,
@@ -396,11 +398,13 @@ module.exports = (sequelize, DataTypes) => {
     Renting.prototype[`findOrCreate${_.capitalize(type)}Order`] =
       function(number) {
         const {name} = this.Room;
+        const {Apartment} = this.Room;
 
         return Promise.all([
             Utils[`get${_.capitalize(type)}Price`](
               this.get(`${type}Date`),
-              this.get('comfortLevel')
+              this.get('comfortLevel'),
+              Apartment.addressCity
             ),
             Utils.getLateNoticeFees(type, this.get(`${type}Date`)),
           ])
@@ -600,7 +604,8 @@ module.exports = (sequelize, DataTypes) => {
   Renting.prototype.handleEventUpdate = function(event, options) {
     const type = event.get('category');
 
-    return Renting.scope(type === 'refund-deposit' ? 'client' : `${type}Order`)
+    return Renting.scope(type === 'refund-deposit' ? 'client' :
+                         [`${type}Order`, 'room+apartment'])
       .findById(this.id)
       .then((renting) => {
         if ( !renting ) {
@@ -611,7 +616,8 @@ module.exports = (sequelize, DataTypes) => {
         return Promise.all([
             type !== 'refund-deposit' ? Utils[`getC${type.substr(1)}Price`](
               event.startDate,
-              this.getComfortLevel()) : 0,
+              this.getComfortLevel(),
+              this.Room.Apartment.addressCity) : 0,
             Orders && Orders.length ? Orders[0].id : null,
             Utils.getLateNoticeFees(type, event.startDate),
         ]);
@@ -759,6 +765,32 @@ module.exports = (sequelize, DataTypes) => {
           include: models.Term,
         });
       });
+  };
+
+  Renting.prototype.welcomeEmailSerialized = function () {
+    const {Apartment} = this.Room;
+    const {name, addressStreet, addressZip, addressCity} = Apartment;
+
+    return {
+      emailTo: [this.Client.email],
+      attributes: {
+        APARTMENT: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
+        FIRSTNAME: _.capitalize(this.Client.firstName),
+        BOOKINGDATE: D.format(this.bookingDate, 'DD/MM/YYYY'),
+        RENT: (this.price / 100) + (this.serviceFees / 100),
+        EMAIL: this.Client.email,
+        DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
+        ADDRESSAGENCY: ADDRESS_AGENCY[addressCity],
+        SPECIALCHECKIN: SPECIAL_CHECKIN_PRICE[addressCity] / 100,
+        ROOM: {
+          fr: name.split(' ').splice(-1)[0] === 'studio' ?
+          'l\'appartement entier<strong>' :
+          `la chambre nº<strong>${this.Room.reference.slice(-1)}`,
+          en: name.split(' ').splice(-1)[0] === 'studio' ?
+            'our studio<strong>' : `bedroom nº<strong>${this.Room.reference.slice(-1)}`,
+        },
+      },
+    };
   };
 
   Renting.webmergeSerialize = function(renting) {
