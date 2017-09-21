@@ -46,25 +46,25 @@ module.exports = function(models, Renting) {
     return null;
   });
 
-  Renting.hook('beforeUpdate', (_renting) => {
-    if ( _renting.dataValues.status === 'active' &&
-        _renting._previousDataValues.status !== _renting.dataValues.status) {
-      return Renting.scope(['room+apartment', 'client'])
-        .findById(_renting.id)
-        .then((renting) => {
-          return Promise.all([
-            renting.welcomeEmailSerialized(),
-            renting.Client.preferredLanguage,
-            ]);
-        })
-        .then(([data, language]) => {
-          data.attributes.ROOM = language === 'fr' ? data.attributes.ROOM.fr :
-          data.attributes.ROOM.en;
-
-          return SendinBlue.sendEmail(SENDINBLUE_TEMPLATE_ID.welcome[language], data);
-      });
-    }
-
-    return true;
-  });
+//  Renting.hook('beforeUpdate', (_renting) => {
+//    if ( _renting.dataValues.status === 'active' &&
+//        _renting._previousDataValues.status !== _renting.dataValues.status) {
+//      return Renting.scope(['room+apartment', 'client'])
+//        .findById(_renting.id)
+//        .then((renting) => {
+//          return Promise.all([
+//            renting.welcomeEmailSerialized(),
+//            renting.Client.preferredLanguage,
+//            ]);
+//        })
+//        .then(([data, language]) => {
+//          data.attributes.ROOM = language === 'fr' ? data.attributes.ROOM.fr :
+//          data.attributes.ROOM.en;
+//
+//          return SendinBlue.sendEmail(SENDINBLUE_TEMPLATE_ID.welcome[language], data);
+//      });
+//    }
+//
+//    return true;
+//  });
 };
