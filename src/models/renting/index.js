@@ -404,8 +404,7 @@ module.exports = (sequelize, DataTypes) => {
             Utils[`get${_.capitalize(type)}Price`](
               this.get(`${type}Date`),
               this.get('comfortLevel'),
-              Apartment.addressCity
-            ),
+              Apartment.addressCity),
             Utils.getLateNoticeFees(type, this.get(`${type}Date`)),
           ])
           .then(([price, lateNoticeFees]) => {
