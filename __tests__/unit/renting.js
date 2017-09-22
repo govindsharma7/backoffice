@@ -1,11 +1,8 @@
-const D         = require('date-fns');
-const fixtures  = require('../../__fixtures__/renting');
-const Utils     = require('../../src/utils');
-const models    = require('../../src/models');
-const {
-  DEPOSIT_PRICES,
-  LEASE_DURATION,
-}                           = require('../../src/const');
+const D                  = require('date-fns');
+const fixtures           = require('../../__fixtures__/renting');
+const Utils              = require('../../src/utils');
+const models             = require('../../src/models');
+const { DEPOSIT_PRICES } = require('../../src/const');
 
 const {Renting} = models;
 var renting1;
@@ -191,6 +188,7 @@ describe('Renting', () => {
         },
     };
 
+    const now = new Date();
     const commonExpected = {
       fullName: 'John DOE',
       fullAddress: '16 rue Conde, Lyon, 69002',
@@ -207,9 +205,8 @@ describe('Renting', () => {
       floorArea: 47,
       address: '16 rue Condé, Lyon, 69002',
       floor: 'rez-de-chausée',
-      bookingDate: D.format(Date.now(), 'DD/MM/YYYY'),
-      endDate: D.format(D.addMonths(
-        D.subDays(Date.now(), 1), LEASE_DURATION), 'DD/MM/YYYY'),
+      bookingDate: D.format(now, 'DD/MM/YYYY'),
+      endDate: D.format(Utils.getLeaseEndDate(now), 'DD/MM/YYYY'),
       email: 'john@doe.com',
     };
 
@@ -232,7 +229,7 @@ describe('Renting', () => {
 
       return Renting.webmergeSerialize(renting)
         .then((result) => {
-         return expect(result).toEqual(commonExpected);
+          return expect(result).toEqual(commonExpected);
         });
     });
 
@@ -264,8 +261,7 @@ describe('Renting', () => {
         roomNumber: 'l\'appartement entier',
         depositOption: 'de non encaissement du chèque',
         bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
-        endDate: D.format(D.addMonths(
-            D.subDays(bookingDate, 1), LEASE_DURATION), 'DD/MM/YYYY'),
+        endDate: D.format(Utils.getLeaseEndDate(bookingDate), 'DD/MM/YYYY'),
       });
 
       return Renting.webmergeSerialize(renting)

@@ -18,6 +18,7 @@ const {
   getCheckoutEndDate,
 }                                  = require('./getCheckinoutEndDate');
 const getLateNoticeFees            = require('./getLateNoticeFees');
+const getLeaseEndDate              = require('./getLeaseEndDate');
 const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
 const isValidPhoneNumber           = require('./isValidPhoneNumber');
 const logAndSend                   = require('./logAndSend');
@@ -41,6 +42,7 @@ module.exports = {
   getCheckinEndDate,
   getCheckoutEndDate,
   getLateNoticeFees,
+  getLeaseEndDate,
   getRoomSwitchPrice,
   isValidPhoneNumber,
   logAndSend,
