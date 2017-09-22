@@ -379,6 +379,10 @@ module.exports = (sequelize, DataTypes) => {
         { status: 'active', deletedAt: null },
         { where: { id: order.OrderItems[0].RentingId } }
       ),
+      models.Client.update(
+        { status: 'active', deletedAt: null },
+        { where: { id: order.ClientId } }
+      ),
       // Mark renting as unavailable in WordPress
       order.OrderItems && order.OrderItems[0] && fetch(WORDPRESS_AJAX_URL, {
         method: 'POST',
