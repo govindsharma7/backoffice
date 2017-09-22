@@ -1,5 +1,5 @@
 const gapis = require('googleapis');
-const config = require('../../config');
+const config = require('../config');
 
 const scopes = ['https://www.googleapis.com/auth/calendar'];
 
