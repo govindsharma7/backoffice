@@ -1,5 +1,5 @@
 const Payline = require('payline');
-const config  = require('../../config');
+const config  = require('../config');
 
 const payline = new Payline(
   config.PAYLINE_MERCHANT_ID,

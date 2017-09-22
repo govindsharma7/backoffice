@@ -1,5 +1,5 @@
 const Promise        = require('bluebird');
-const fetch          = require('node-fetch');
+const fetch          = require('../../vendor/fetch');
 const Ninja          = require('../../vendor/invoiceninja');
 const {
   WORDPRESS_AJAX_URL,

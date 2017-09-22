@@ -1,6 +1,6 @@
 const fetch                 = require('node-fetch');
 const urlencode             = require('urlencode');
-const {GOOGLE_MAPS_API_KEY} = require('../../config');
+const {GOOGLE_MAPS_API_KEY} = require('../config');
 
 const endpoint = 'https://maps.googleapis.com/maps/api/geocode/json';
 

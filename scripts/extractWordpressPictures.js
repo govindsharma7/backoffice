@@ -10,7 +10,6 @@ const intersectionWith   = require('lodash/intersectionWith');
 const pull               = require('lodash/pull');
 const Aws                = require('../src/vendor/aws');
 const rooms              = require('../data/rooms.json');
-const config             = require('../src/config');
 
 const _ = { forEach, isEqual, intersectionWith, pull, capitalize, find };
 const pictureRegex = /data-src="(.*?)"(?:.*?)title="(.*?)"/g;
@@ -92,20 +91,10 @@ function dataToJSON(file) {
 
 function compressPictures(file) {
   Promise.map(file.records, (data, index) => {
-    return fetch(`https://im2.io/${config.IMAGE_OPTIM_KEY}/1920x1080,fit/${data.url}`,
-      { method: 'POST'})
-    .then((r) => { return r.buffer(); })
-    .then((compress) => {
-        return Aws.uploadFiles(config.AWS_BUCKET_PICTURES, {
-          Key: data.id,
-          Body: compress,
-          ACL: 'public-read',
-          ContentType: 'image/jpeg',
-        });
-    })
-    .then((AwsUrl) => {
-      return file.records[index].url = AwsUrl;
-    });
+    return Aws.uploadPicture(data)
+      .then((AwsUrl) => {
+        return file.records[index].url = AwsUrl;
+      });
   }, { concurrency: 20})
   .then(() => {
     return console.log(JSON.stringify(file, null, '  '));
