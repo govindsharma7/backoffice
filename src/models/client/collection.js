@@ -1,10 +1,13 @@
 const find              = require('lodash/find');
+const capitalize        = require('lodash/capitalize');
+const map               = require('lodash/map');
+
 const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
 }                       = require('../../const');
 
-const _ = { find };
+const _ = { find, capitalize, map };
 
 module.exports = function(models) {
   const {Client} = models;
@@ -156,7 +159,24 @@ module.exports = function(models) {
     }, {
       name: 'Destroy Client',
     }],
-    segments: TRASH_SEGMENTS,
+    segments:
+     ['lyon', 'paris', 'montpellier'].map((city) => {
+        return {
+          name: `Currrent Clients ${_.capitalize(city)}`,
+          where: () => {
+            return Client.scope('currentApartment')
+            .findAll({
+              where: {
+                status: 'active',
+                '$Rentings->Room->Apartment.addressCity$': city,
+              },
+            })
+            .then((clients) => {
+              return { id: { $in: _.map(clients, 'id') }};
+            });
+          },
+        };
+      }).concat(TRASH_SEGMENTS),
   };
 };
 

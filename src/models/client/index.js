@@ -163,6 +163,9 @@ module.exports = (sequelize, DataTypes) => {
         ] },
         include: [{
           model: models.Renting,
+          where: {
+            status: 'active',
+          },
           include: [{
             model: models.Event,
             attributes: ['id', 'startDate'],
@@ -178,6 +181,9 @@ module.exports = (sequelize, DataTypes) => {
           }, {
             model: models.Room,
             attributes: ['id', 'ApartmentId'],
+            include: [{
+              model: models.Apartment,
+            }],
           }],
         }],
       };

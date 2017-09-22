@@ -23,6 +23,7 @@ module.exports = {
 //      paranoid: false,
     },
   },
+
   // UNTRASHED_SCOPE: {
   //   untrashed: {
   //     where : { $or: [{
