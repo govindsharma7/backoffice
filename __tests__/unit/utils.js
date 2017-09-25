@@ -16,6 +16,60 @@ describe('Utils', () => {
     });
   });
 
+  describe('.newHouseMateSerialized', () => {
+    const {newHouseMateSerialized} = Utils;
+    const data = JSON.stringify({
+      checkinDate: {
+        day: '04',
+        month: 12,
+        year: 2018,
+      },
+      fullName: {
+        first: 'John',
+      },
+      email: 'john.doe@gmail.com',
+      nationalityFr: 'Americain',
+      nationalityEn: 'American',
+      isStudent: false,
+    });
+    const houseMates = [{
+      email: 'toto@gmail.com',
+      preferredLanguage: 'fr',
+      Rentings: [{
+        Room: {
+          Apartment: {
+            addressCity: 'montpellier',
+          },
+        },
+      }],
+    }];
+    const commonExpected = {
+      FIRSTNAME: 'John',
+      CITY: 'montpellier',
+      ARRIVAL: '04/12/2018',
+      EMAIL: 'john.doe@gmail.com',
+    };
+    const fr = {
+      COUNTRY: 'Americain',
+      WORK: 'travailler',
+    };
+    const en = {
+      COUNTRY: 'American',
+      WORK: 'work',
+    };
+
+    test('serialized data for sendinblue', () => {
+      return newHouseMateSerialized(houseMates, data)
+        .then(([dataFr, dataEn, emailFr, emailEn]) => {
+          expect(dataFr).toEqual(Object.assign({}, commonExpected, fr));
+          expect(dataEn).toEqual(Object.assign({}, commonExpected, en));
+          expect(emailFr).toEqual(['toto@gmail.com']);
+          expect(emailEn.length).toEqual(0);
+          return true;
+        });
+    });
+  });
+
   describe('.toSingleLine', () => {
     const {toSingleLine} = Utils;
 

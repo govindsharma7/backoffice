@@ -113,7 +113,7 @@ module.exports = {
 
   SUPPORT_EMAIL: 'support@chez-nestor.com',
 
-  SENDINBLUE_TEMPLATE_ID: {
+  SENDINBLUE_TEMPLATE_IDS: {
     welcome: {
       fr: 7,
       en: 6,
@@ -128,7 +128,7 @@ module.exports = {
     },
   },
 
-  SENDINBLUE_LIST_ID: {
+  SENDINBLUE_LIST_IDS: {
     lyon: {
       fr: 15,
       en: 16,
