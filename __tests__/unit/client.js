@@ -122,11 +122,10 @@ describe('Client', () => {
           );
         })
         .then(([order, isCreated]) => {
-        console.log(order.OrderItems.length);
           return Promise.all([
             order.reload(),
             isCreated,
-            ]);
+          ]);
         })
         .then(([order, isCreated]) => {
           return (
