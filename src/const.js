@@ -128,6 +128,31 @@ module.exports = {
     },
   },
 
+  SENDINBLUE_LIST_ID: {
+    lyon: {
+      fr: 15,
+      en: 16,
+      all: 14,
+    },
+    montpellier: {
+      fr: 17,
+      en: 18,
+      all: 13,
+    },
+    paris: {
+      fr: 20,
+      en: 19,
+      all: 12,
+    },
+    prospects: {
+      fr: 21,
+      en: 27,
+    },
+    archived: 25,
+    en: 9,
+    fr: 8,
+  },
+
   RENT_COEFS: {
     '01-01': 0.95, // January
     '01-02': 0.96,

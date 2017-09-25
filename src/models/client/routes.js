@@ -10,7 +10,7 @@ const SendinBlue  = require('../../vendor/sendinblue');
 const Utils       = require('../../utils');
 const {
   INVOICENINJA_URL,
-  SENDINBLUE_TEMPLATE_ID,
+  SENDINBLUE_LIST_ID,
 }                 = require('../../const');
 
 const _ = { pickBy, mapKeys };
@@ -153,8 +153,7 @@ module.exports = (app, models, Client) => {
   });
 
   app.post('/forest/actions/rental-attachments', multer, LEA, (req, res) => {
-    const values = _.mapKeys(
-      JSON.parse(req.body.rawRequest),
+    const values = _.mapKeys(JSON.parse(req.body.rawRequest),
       (value, key) => {
         return key.replace(/(q[\d]*_)/g, '');
       });
@@ -179,7 +178,76 @@ module.exports = (app, models, Client) => {
     in order to collect more information for a new client
   */
   app.post('/forest/actions/client-identity', multer, LEA, (req, res) => {
-    Client.normalizeIdentityRecord(JSON.parse(req.body.rawRequest))
+    Client.normalizeIdentityRecord({
+	'slug': 'submit\/50392735671964\/',
+	'input_language': 'English (US)',
+	'q4_fullName': {
+		'first': 'Louis-Rmi',
+		'last': 'Babe',
+	},
+	'q10_nationality': 'Faroe Islands',
+	'q209_birthDate': {
+		'day': '23',
+		'month': '07',
+		'year': '1986',
+	},
+	'q101_birthPlace': {
+		'first': 'Lyon',
+		'last': 'France',
+	},
+	'q190_frenchStatus': 'Worker',
+	'q12_frenchCompany': 'Lyon 3',
+	'q8_email': 'lrbabe@gmail.com',
+	'q197_phoneNumber': {
+		'area': '33',
+		'phone': '671114171',
+	},
+	'q6_address': {
+		'addr_line1': '45 rue L\u00e9on Jouhaux',
+		'addr_line2': '',
+		'city': 'Lyon',
+		'state': '',
+		'postal': '69003',
+		'country': 'Faroe Islands',
+	},
+	'q207_bookedApartment': '13 Vaubecour',
+	'q36_checkinDate': {
+		'day': '03',
+		'month': '07',
+		'year': '2017',
+		'hour': '12',
+		'min': '12',
+	},
+	'q203_howI203': 'Le Bon Coin',
+	'q188_anyComments': '',
+	'q38_dateOf': {
+		'day': '',
+		'month': '',
+		'year': '',
+	},
+	'q9_xxx': {
+		'day': '',
+		'month': '',
+		'year': '',
+	},
+	'q198_europeanCitizenship': '',
+	'q206_homeUniversity206': '',
+	'q195_inWhich': '',
+	'q17_frenchAddress': {
+		'addr_line1': '',
+		'addr_line2': '',
+		'city': '',
+		'state': '',
+		'postal': '',
+		'country': 'France',
+	},
+	'q16_iDo': '',
+	'q205_hostUniversity205': '',
+	'q208_clientId': 'louis-remi-babe',
+	'event_id': '1499095709730_50392735671964_2zktXft',
+	'q201_arrivalIn201': '',
+	'q202_departureFrom': '',
+})//JSON.parse(req.body.rawRequest))
       .then((identityRecord) => {
         const { fullName, phoneNumber, clientId } = identityRecord;
         const fieldsToUpdate = {
@@ -200,6 +268,8 @@ module.exports = (app, models, Client) => {
       .tap(([[client], fieldsToUpdate, identityRecord]) => {
         const { year, month, day, hour, min } = identityRecord.checkinDate;
         const startDate = `${year}-${month}-${day} ${hour}:${min}`;
+        const {addressCity} = client.Rentings[0].Room.Apartment;
+        const {preferredLanguage} = client;
 
         return Promise.all([
           client.update(
@@ -215,6 +285,13 @@ module.exports = (app, models, Client) => {
             client,
             room: client.Rentings[0].Room,
           }),
+          SendinBlue.updateContact(
+            client.email,
+            [SENDINBLUE_LIST_ID[preferredLanguage],
+             SENDINBLUE_LIST_ID[addressCity].all,
+             SENDINBLUE_LIST_ID[addressCity][preferredLanguage],
+            ],
+            [SENDINBLUE_LIST_ID.prospects[preferredLanguage]]),
         ]);
       })
       .then(([[client]]) => {
@@ -237,16 +314,16 @@ module.exports = (app, models, Client) => {
       .then(([houseMates, metadata]) => {
         return metadata.newHouseMateSerialized(houseMates);
       })
-      .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
-        return Promise.all([
-          SendinBlue.sendEmail(
-            SENDINBLUE_TEMPLATE_ID.newHousemate.fr,
-            Object.assign({}, {emailTo: emailToFr}, {attributes: attributesFr})),
-          SendinBlue.sendEmail(
-            SENDINBLUE_TEMPLATE_ID.newHousemate.en,
-            Object.assign({}, {emailTo: emailToEn}, {attributes: attributesEn})),
-        ]);
-      })
+//      .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
+//        return Promise.all([
+//          SendinBlue.sendEmail(
+//            SENDINBLUE_TEMPLATE_ID.newHousemate.fr,
+//            Object.assign({}, {emailTo: emailToFr}, {attributes: attributesFr})),
+//          SendinBlue.sendEmail(
+//            SENDINBLUE_TEMPLATE_ID.newHousemate.en,
+//            Object.assign({}, {emailTo: emailToEn}, {attributes: attributesEn})),
+//        ]);
+//      })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
   });
