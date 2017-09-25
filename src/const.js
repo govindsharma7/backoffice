@@ -104,7 +104,7 @@ module.exports = {
 
   TWO_OCCUPANTS_FEES: 9000,
 
-  ADDRESS_AGENCY: {
+  AGENCY_ADDRESSES: {
     lyon: '16 rue de Condé 69002 Lyon',
     montpellier: '4 rue Paul Lacroix, 34070 Montpellier',
     paris: '42 rue de la Pompe, 75116 Paris',
