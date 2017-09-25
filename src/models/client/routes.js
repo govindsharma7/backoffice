@@ -247,7 +247,17 @@ module.exports = (app, models, Client) => {
         ]);
       })
       .then(([houseMates, metadata]) => {
-        return metadata.newHouseMateSerialized(houseMates);
+        return Utils.newHouseMateSerialized(houseMates, metadata);
+      })
+      .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
+        return Promise.all([
+          SendinBlue.sendEmail(
+            SENDINBLUE_TEMPLATE_IDS.newHousemate.fr,
+            Object.assign({}, {emailTo: emailToFr}, {attributes: attributesFr})),
+          SendinBlue.sendEmail(
+            SENDINBLUE_TEMPLATE_IDS.newHousemate.en,
+            Object.assign({}, {emailTo: emailToEn}, {attributes: attributesEn})),
+        ]);
       })
       .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
         return Promise.all([
