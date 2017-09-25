@@ -12,7 +12,7 @@ const {
   TWO_OCCUPANTS_FEES,
   LEASE_DURATION,
   SPECIAL_CHECKIN_PRICE,
-  ADDRESS_AGENCY,
+  AGENCY_ADDRESSES,
 }                           = require('../../const');
 const {
   NODE_ENV,
@@ -779,7 +779,7 @@ module.exports = (sequelize, DataTypes) => {
         RENT: (this.price / 100) + (this.serviceFees / 100),
         EMAIL: this.Client.email,
         DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
-        ADDRESSAGENCY: ADDRESS_AGENCY[addressCity],
+        ADDRESSAGENCY: AGENCY_ADDRESSES[addressCity],
         SPECIALCHECKIN: SPECIAL_CHECKIN_PRICE[addressCity] / 100,
         ROOM: {
           fr: name.split(' ').splice(-1)[0] === 'studio' ?
