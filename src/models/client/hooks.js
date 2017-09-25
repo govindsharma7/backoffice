@@ -57,7 +57,9 @@ module.exports = function(models, Client) {
         });
     }
     else {
-      SendinBlue.updateContact(client.email, { client });
+      SendinBlue.updateContact(client.email, {
+        attributes: SendinBlue.serializedClient(client),
+      });
     }
     if (
       client.ninjaId && (
