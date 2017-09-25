@@ -1,30 +1,25 @@
 const SendinBlueApi = require('sendinblue-apiv3');
-const config        = require('../../config');
+const config        = require('../config');
 const {
   SUPPORT_EMAIL,
   SENDINBLUE_LIST_IDS,
-}                   = require('../../const');
+}                   = require('../const');
 
-const defaultClient = SendinBlueApi.ApiClient.instance;
-const apiKey = defaultClient.authentications['api-key'];
-
-apiKey.apiKey = config.SENDINBLUE_API_KEY;
+SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
+  config.SENDINBLUE_API_KEY;
 
 const SMTPApi = new SendinBlueApi.SMTPApi();
-
 const ContactsApi = new SendinBlueApi.ContactsApi();
+const defaults = { replyTo: SUPPORT_EMAIL };
 
-const defaults = {
-  replyTo: SUPPORT_EMAIL,
-};
-
-function serializedClient(client) {
+function serializeClient(client) {
   return {
     FIRSTNAME: client.firstName,
     LASTNAME: client.lastName,
     SMS: client.phoneNumber === null ? null : client.phoneNumber,
   };
 }
+
 function sendEmail(id, data = {}) {
   const options = Object.assign({}, defaults, data);
 
@@ -45,20 +40,23 @@ function getContact(email) {
 function createContact(email, {client, listIds}) {
   return ContactsApi.createContact({
     email,
-    attributes: serializedClient(client),
+    attributes: serializeClient(client),
     listIds: listIds === null ?
-    [SENDINBLUE_LIST_IDS.prospects[client.preferredLanguage]] : listIds,
+      [SENDINBLUE_LIST_IDS.prospects[client.preferredLanguage]] : listIds,
   });
 }
 
-
-
-function updateContact(email, {listIds, unlinkListIds, attributes}) {
-  return ContactsApi.updateContact(email, {
+function updateContact(email, {listIds, unlinkListIds, client}) {
+  const params = {
     listIds,
     unlinkListIds,
-    attributes,
-  });
+  };
+
+  if ( client != null ) {
+    params.attributes = serializeClient(client);
+  }
+
+  return ContactsApi.updateContact(email, params);
 }
 
 module.exports = {
@@ -66,5 +64,5 @@ module.exports = {
   updateContact,
   createContact,
   getContact,
-  serializedClient,
+  serializeClient,
 };

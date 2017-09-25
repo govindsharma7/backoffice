@@ -16,8 +16,8 @@ describe('Utils', () => {
     });
   });
 
-  describe('.newHouseMateSerialized', () => {
-    const {newHouseMateSerialized} = Utils;
+  describe('.serializeHousemate', () => {
+    const {serializeHousemate} = Utils;
     const data = JSON.stringify({
       checkinDate: {
         day: '04',
@@ -59,7 +59,7 @@ describe('Utils', () => {
     };
 
     test('serialized data for sendinblue', () => {
-      return newHouseMateSerialized(houseMates, data)
+      return serializeHousemate(houseMates, data)
         .then(([dataFr, dataEn, emailFr, emailEn]) => {
           expect(dataFr).toEqual(Object.assign({}, commonExpected, fr));
           expect(dataEn).toEqual(Object.assign({}, commonExpected, en));

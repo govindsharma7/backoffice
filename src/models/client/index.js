@@ -184,10 +184,7 @@ module.exports = (sequelize, DataTypes) => {
             attributes: ['id', 'ApartmentId'],
             include: [{
               model: models.Apartment,
-<<<<<<< HEAD
-=======
               attributes: ['addressCity'],
->>>>>>> send email to housemate when a new jotform is fill
             }],
           }],
         }],

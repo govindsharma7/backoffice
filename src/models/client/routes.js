@@ -247,7 +247,7 @@ module.exports = (app, models, Client) => {
         ]);
       })
       .then(([houseMates, metadata]) => {
-        return Utils.newHouseMateSerialized(houseMates, metadata);
+        return Utils.serializeHousemate(houseMates, metadata);
       })
       .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
         return Promise.all([

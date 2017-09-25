@@ -16,7 +16,9 @@ module.exports = (app) => {
         })
         .then((AWSurl) => {
           req.body.data.attributes.url = AWSurl;
+          /* eslint-disable promise/no-callback-in-promise */
           return next();
+          /* eslint-enable promise/no-callback-in-promise */
         })
         .catch(Utils.logAndSend(res));
     }
