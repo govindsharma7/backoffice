@@ -279,6 +279,14 @@ module.exports = (sequelize, DataTypes) => {
             status: 'draft',
             OrderId: null,
           },
+          include: [{
+            model: models.Term,
+            where: {
+              name: 'Next Rent Invoice',
+              taxonomy: 'orderItem-category',
+              termable: 'OrderItem',
+            },
+          }],
         })
         .then((orderItems) => {
           return orderItems.map((orderItem) => {
@@ -708,7 +716,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Renting.prototype.addNextMonthCredit = function(args) {
+  Renting.prototype.futureCredit = function(args) {
     const {discount, label} = args;
 
     return models.OrderItem.create({
@@ -718,6 +726,29 @@ module.exports = (sequelize, DataTypes) => {
       status: 'draft',
       RentingId: this.id,
       ProductId: 'discount',
+      Terms: [{
+        name: 'Next Rent Invoice',
+        taxonomy: 'order-category',
+        termable: 'OrderItem',
+      }],
+    });
+  };
+
+  Renting.prototype.futureDebit = function(args) {
+    const {amount, reason, label, invoiceWith} = args;
+
+    return models.OrderItem.create({
+      label,
+      quantity: 1,
+      unitPrice: amount,
+      status: 'draft',
+      RentingId: this.id,
+      ProductId: reason,
+      Terms: [{
+        name: invoiceWith,
+        taxonomy: 'orderItem-category',
+        termable: 'OrderItem',
+      }],
     });
   };
 

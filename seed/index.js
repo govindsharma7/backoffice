@@ -54,5 +54,8 @@ module.exports = {
   }, {
     id: 'discount',
     name: 'Discount',
+  }, {
+    id: 'other',
+    name: 'Other',
   }],
 };

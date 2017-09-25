@@ -246,6 +246,11 @@ module.exports = fixtures((u) => {
       EventableId: u.id('renting-2'),
     }],
     Term: [{
+      name: 'Next Rent Invoice',
+      taxonomy: 'orderItem-category',
+      termable: 'OrderItem',
+      TermableId: u.id('orderitem-10'),
+    }, {
       name: 'checkout',
       taxonomy: 'event-category',
       termable: 'Event',

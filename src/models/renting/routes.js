@@ -304,7 +304,7 @@ module.exports = function(app, models, Renting) {
     return null;
   });
 
-  app.post('/forest/actions/next-month-order-credit', LEA, (req, res) => {
+  app.post('/forest/actions/future-credit', LEA, (req, res) => {
     const {ids, values} = req.body.data.attributes;
 
     if ( values.discount != null ) {
@@ -320,10 +320,32 @@ module.exports = function(app, models, Renting) {
       return Renting.findById(ids[0]);
     })
     .then((renting) => {
-      return renting.addNextMonthCredit(values);
+      return renting.futureCredit(values);
     })
-    .then(Utils.createSuccessHandler(res, 'Next month credit'))
+    .then(Utils.createSuccessHandler(res, 'Future credit'))
     .catch(Utils.logAndSend(res));
+  });
+
+  app.post('/forest/actions/future-debit', LEA, (req, res) => {
+    const {ids, values} = req.body.data.attributes;
+
+    if ( values.amount != null ) {
+      values.amount *= 100;
+    }
+
+    Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1) {
+          throw new Error('Can\'t debit multiple rentings');
+        }
+
+        return Renting.findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.futureDebit(values);
+      })
+      .then(Utils.createSuccessHandler(res, 'Future debit'))
+      .catch(Utils.logAndSend(res));
   });
 
   Utils.addRestoreAndDestroyRoutes(app, Renting);

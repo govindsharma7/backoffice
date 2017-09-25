@@ -5,6 +5,7 @@ const {
   TRASH_SEGMENTS,
 }                 = require('../../const');
 const Utils       = require('../../utils');
+const Products    = require('../../../seed');
 
 module.exports = function(models) {
   return {
@@ -103,10 +104,32 @@ module.exports = function(models) {
         type: 'Number',
       }],
     }, {
-      name: 'Next Month Order Credit',
+      name: 'Future Credit',
       fields: [{
         field: 'discount',
         type: 'Number',
+      }, {
+        field: 'label',
+        type: 'String',
+      }],
+    }, {
+      name: 'Future Debit',
+      fields: [{
+        field: 'amount',
+        isRequired: true,
+        type: 'Number',
+      }, {
+        field: 'reason',
+        type: 'Enum',
+        isRequired: true,
+        enums: Products.Product.map((product) => {
+          return product.name;
+        }),
+      }, {
+        field: 'invoiceWith',
+        isRequired: true,
+        type: 'Enum',
+        enums: ['Next Rent Invoice', 'Account Balance Invoice'],
       }, {
         field: 'label',
         type: 'String',
