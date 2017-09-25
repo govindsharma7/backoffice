@@ -195,6 +195,10 @@ module.exports = (sequelize, DataTypes) => {
         model: models.Renting,
         include: [{
           model: models.Room,
+          include: [{
+            model: models.Apartment,
+            attributes: ['addressCity'],
+          }],
         }],
       }],
       group: ['Client.id'],
