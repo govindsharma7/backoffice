@@ -24,6 +24,7 @@ const logAndSend                   = require('./logAndSend');
 const parseDBDate                  = require('./parseDBDate');
 const toSingleLine                 = require('./toSingleLine');
 const wrapHookPromise              = require('./wrapHookPromise');
+const newHouseMateSerialized       = require('./newHouseMateSerialized');
 
 module.exports = {
   addInternalRelationshipRoute,
@@ -48,4 +49,5 @@ module.exports = {
   toSingleLine,
   stripIndent,
   wrapHookPromise,
+  newHouseMateSerialized,
 };

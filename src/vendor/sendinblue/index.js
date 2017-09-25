@@ -2,7 +2,7 @@ const SendinBlueApi = require('sendinblue-apiv3');
 const config        = require('../../config');
 const {
   SUPPORT_EMAIL,
-  SENDINBLUE_LIST_ID,
+  SENDINBLUE_LIST_IDS,
 }                   = require('../../const');
 
 const defaultClient = SendinBlueApi.ApiClient.instance;
@@ -14,15 +14,22 @@ const SMTPApi = new SendinBlueApi.SMTPApi();
 
 const ContactsApi = new SendinBlueApi.ContactsApi();
 
-let commonData = {
+const defaults = {
   replyTo: SUPPORT_EMAIL,
 };
 
+function serializedClient(client) {
+  return {
+    FIRSTNAME: client.firstName,
+    LASTNAME: client.lastName,
+    SMS: client.phoneNumber === null ? null : client.phoneNumber,
+  };
+}
 function sendEmail(id, data = {}) {
-  const email = Object.assign({}, commonData, data);
+  const options = Object.assign({}, defaults, data);
 
-  if (email.emailTo.length > 0) {
-    return SMTPApi.sendTemplate(id, email)
+  if (options.emailTo.length > 0) {
+    return SMTPApi.sendTemplate(id, options)
       .then(() => {
         return true ;
       });
@@ -35,20 +42,18 @@ function getContact(email) {
   return ContactsApi.getContactInfo(email);
 }
 
-function createContact(client, listIds) {
+function createContact(email, {client, listIds}) {
   return ContactsApi.createContact({
-    email: client.email,
-    attributes: {
-      NOM: client.lastName,
-      PRENOM: client.firstName,
-      SMS: client.phoneNumber ? client.phoneNumber : null,
-    },
+    email,
+    attributes: serializedClient(client),
     listIds: listIds === null ?
-    [SENDINBLUE_LIST_ID.prospects[client.preferredLanguage]] : listIds,
+    [SENDINBLUE_LIST_IDS.prospects[client.preferredLanguage]] : listIds,
   });
 }
 
-function updateContact(email, listIds, unlinkListIds, attributes = {}) {
+
+
+function updateContact(email, {listIds, unlinkListIds, attributes}) {
   return ContactsApi.updateContact(email, {
     listIds,
     unlinkListIds,
@@ -61,4 +66,5 @@ module.exports = {
   updateContact,
   createContact,
   getContact,
+  serializedClient,
 };
