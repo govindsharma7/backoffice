@@ -1,9 +1,7 @@
-const Promise        = require('bluebird');
-const Liana          = require('forest-express-sequelize');
 const payline        = require('../../vendor/payline');
-const Utils          = require('../../utils');
 const {TRASH_SCOPES} = require('../../const');
 const collection     = require('./collection');
+const routes         = require('./routes');
 
 module.exports = (sequelize, DataTypes) => {
   const Payment = sequelize.define('Payment', {
@@ -68,33 +66,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Payment.collection = collection;
-  Payment.routes = (app) => {
-    const LEA = Liana.ensureAuthenticated;
-
-    app.post('/forest/actions/refund', LEA, (req, res) => {
-      var {values, ids} = req.body.data.attributes;
-
-      Promise.resolve()
-        .then(() => {
-          if (!values.amount) {
-            throw new Error('Please specify an amount');
-          }
-          if (ids.length > 1) {
-            throw new Error('Can\'t refund multiple payments');
-          }
-
-          values.amount *= 100;
-
-          return Payment.paylineRefund(ids[0], values);
-        })
-        .then(() => {
-          return res.send({success: 'Payment Successfully Refund'});
-        })
-        .catch(Utils.logAndSend(res));
-    });
-
-    Utils.addRestoreAndDestroyRoutes(app, Payment);
-  };
+  Payment.routes = routes;
 
   return Payment;
 };
