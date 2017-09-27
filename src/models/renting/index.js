@@ -715,7 +715,6 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-<<<<<<< 6c5e1f9deade52907b4011cded02afca06349381
   Renting.prototype.futureCredit = function(args) {
     const {discount, label} = args;
 
@@ -764,34 +763,6 @@ module.exports = (sequelize, DataTypes) => {
         });
       });
   };
-
-  Renting.prototype.welcomeEmailSerialized = function () {
-    const {Apartment} = this.Room;
-    const {name, addressStreet, addressZip, addressCity} = Apartment;
-
-    return {
-      emailTo: [this.Client.email],
-      attributes: {
-        APARTMENT: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
-        FIRSTNAME: _.capitalize(this.Client.firstName),
-        BOOKINGDATE: D.format(this.bookingDate, 'DD/MM/YYYY'),
-        RENT: (this.price / 100) + (this.serviceFees / 100),
-        EMAIL: this.Client.email,
-        DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
-        ADDRESSAGENCY: AGENCY_ADDRESSES[addressCity],
-        SPECIALCHECKIN: SPECIAL_CHECKIN_PRICE[addressCity] / 100,
-        ROOM: {
-          fr: name.split(' ').splice(-1)[0] === 'studio' ?
-          'l\'appartement entier<strong>' :
-          `la chambre nº<strong>${this.Room.reference.slice(-1)}`,
-          en: name.split(' ').splice(-1)[0] === 'studio' ?
-            'our studio<strong>' : `bedroom nº<strong>${this.Room.reference.slice(-1)}`,
-        },
-      },
-    };
-  };
-=======
->>>>>>> PR review
 
   Renting.webmergeSerialize = function(renting) {
     const {Client, Terms, Room} = renting;
