@@ -1,7 +1,7 @@
 const SendinBlueApi = require('sendinblue-apiv3');
 const capitalize    = require('lodash/capitalize');
 const D             = require('date-fns');
-const config        = require('../../config');
+const config        = require('../config');
 const {
   SUPPORT_EMAIL,
   SENDINBLUE_LIST_IDS,
