@@ -1,3 +1,5 @@
+const Utils      = require('../../utils');
+
 module.exports = function(models, Renting) {
   Renting.hook('beforeValidate', (renting) => {
     // Only calculate the price and fees on creation
@@ -29,11 +31,13 @@ module.exports = function(models, Renting) {
   // Create quote orders if the housing pack has been set when creating the renting
   Renting.hook('afterCreate', (_renting, { transaction }) => {
     if (_renting.comfortLevel) {
-      return Renting.scope('room+apartment')
+      const promise = Renting.scope('room+apartment')
         .findById(_renting.id, { transaction })
         .then((renting) => {
           return renting.createQuoteOrders(_renting);
         });
+
+      return Utils.wrapHookPromise(promise);
     }
 
     return null;

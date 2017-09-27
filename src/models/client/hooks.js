@@ -11,19 +11,15 @@ module.exports = function(models, Client) {
    * in Forest.
    */
   Client.hook('afterCreate', (client) => {
-    SendinBlue.createContact(client.email, { client })
-      .catch((err) => {
-        if ( err.response.body.code === 'duplicate_parameter' ) {
-          throw new Error('SendInBlue Contact already exists');
-        }
+    const promises = [
+      SendinBlue.createContact(client.email, { client }),
+    ];
 
-        throw err;
-      });
     if ( !client.ninjaId ) {
-      return Utils.wrapHookPromise(client.ninjaCreate());
+      promises.push(client.ninjaCreate());
     }
 
-    return true;
+    return Utils.wrapHookPromise(Promise.all(promises));
   });
 
   Client.hook('afterUpdate', (client) => {
