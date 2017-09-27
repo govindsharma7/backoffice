@@ -25,7 +25,7 @@ const logAndSend                   = require('./logAndSend');
 const parseDBDate                  = require('./parseDBDate');
 const toSingleLine                 = require('./toSingleLine');
 const wrapHookPromise              = require('./wrapHookPromise');
-const serializeHousemate       = require('./serializeHousemate');
+const serializeHousemate           = require('./serializeHousemate');
 
 module.exports = {
   addInternalRelationshipRoute,
