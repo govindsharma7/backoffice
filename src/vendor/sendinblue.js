@@ -15,7 +15,6 @@ SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
   config.SENDINBLUE_API_KEY;
 
 const _ = { capitalize };
-
 const SMTPApi = new SendinBlueApi.SMTPApi();
 const ContactsApi = new SendinBlueApi.ContactsApi();
 const defaults = { replyTo: SUPPORT_EMAIL };
