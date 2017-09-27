@@ -11,8 +11,6 @@ const {
   DEPOSIT_REFUND_DELAYS,
   TWO_OCCUPANTS_FEES,
   LEASE_DURATION,
-  SPECIAL_CHECKIN_PRICE,
-  AGENCY_ADDRESSES,
 }                           = require('../../const');
 const {
   NODE_ENV,
@@ -717,6 +715,7 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
+<<<<<<< 6c5e1f9deade52907b4011cded02afca06349381
   Renting.prototype.futureCredit = function(args) {
     const {discount, label} = args;
 
@@ -791,6 +790,8 @@ module.exports = (sequelize, DataTypes) => {
       },
     };
   };
+=======
+>>>>>>> PR review
 
   Renting.webmergeSerialize = function(renting) {
     const {Client, Terms, Room} = renting;

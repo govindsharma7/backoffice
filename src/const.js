@@ -76,7 +76,7 @@ module.exports = {
     montpellier: 50000,
   },
 
-  SPECIAL_CHECKIN_PRICE: {
+  SPECIAL_CHECKIN_PRICES: {
     lyon: 7900,
     montpellier: 7900,
     paris: 12900,

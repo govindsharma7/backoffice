@@ -1,10 +1,16 @@
 const SendinBlueApi = require('sendinblue-apiv3');
+const capitalize    = require('lodash/capitalize');
+const D             = require('date-fns');
 const config        = require('../../config');
 const {
   SUPPORT_EMAIL,
   SENDINBLUE_LIST_IDS,
+  SPECIAL_CHECKIN_PRICES,
+  AGENCY_ADDRESSES,
+  DEPOSIT_PRICES,
 }                   = require('../../const');
 
+const _ = { capitalize };
 const defaultClient = SendinBlueApi.ApiClient.instance;
 const apiKey = defaultClient.authentications['api-key'];
 
@@ -61,10 +67,13 @@ function updateContact(email, {listIds, unlinkListIds, attributes}) {
   });
 }
 
+
+
 module.exports = {
   sendEmail,
   updateContact,
   createContact,
   getContact,
   serializedClient,
+  serializeWelcomeEmail,
 };

@@ -1,13 +1,20 @@
 const SendinBlueApi = require('sendinblue-apiv3');
-const config        = require('../config');
+const capitalize    = require('lodash/capitalize');
+const D             = require('date-fns');
+const config        = require('../../config');
 const {
   SUPPORT_EMAIL,
   SENDINBLUE_LIST_IDS,
+  SPECIAL_CHECKIN_PRICES,
+  AGENCY_ADDRESSES,
+  DEPOSIT_PRICES,
 }                   = require('../const');
 const { NODE_ENV }  = require('../config');
 
 SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
   config.SENDINBLUE_API_KEY;
+
+const _ = { capitalize };
 
 const SMTPApi = new SendinBlueApi.SMTPApi();
 const ContactsApi = new SendinBlueApi.ContactsApi();
@@ -64,11 +71,36 @@ function updateContact(email, {listIds, unlinkListIds, client}) {
 
   return ContactsApi.updateContact(email, params);
 }
+function serializeWelcomeEmail(renting) {
+  const {Apartment} = renting.Room;
+  const {name, addressStreet, addressZip, addressCity} = Apartment;
 
+  return {
+    emailTo: [renting.Client.email],
+    attributes: {
+      APARTMENT: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
+      FIRSTNAME: _.capitalize(renting.Client.firstName),
+      BOOKINGDATE: D.format(renting.bookingDate, 'DD/MM/YYYY'),
+      RENT: (renting.price / 100) + (renting.serviceFees / 100),
+      EMAIL: renting.Client.email,
+      DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
+      ADDRESSAGENCY: AGENCY_ADDRESSES[addressCity],
+      SPECIALCHECKIN: SPECIAL_CHECKIN_PRICES[addressCity] / 100,
+      ROOM: {
+        fr: name.split(' ').splice(-1)[0] === 'studio' ?
+        'l\'appartement entier<strong>' :
+        `la chambre nº<strong>${renting.Room.reference.slice(-1)}`,
+        en: name.split(' ').splice(-1)[0] === 'studio' ?
+        'our studio<strong>' : `bedroom nº<strong>${renting.Room.reference.slice(-1)}`,
+      },
+    },
+  };
+}
 module.exports = {
   sendEmail,
   updateContact,
   createContact,
   getContact,
   serializeClient,
+  serializeWelcomeEmail,
 };
