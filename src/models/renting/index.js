@@ -288,14 +288,10 @@ module.exports = (sequelize, DataTypes) => {
             },
           }],
         })
-        .then((orderItems) => {
-          return orderItems.map((orderItem) => {
-            return orderItem.update({
-              status: renting.status,
-              OrderId: order.id,
-            }, {
-              fields: ['status', 'OrderId'],
-            });
+        .map((orderItem) => {
+          return orderItem.update({
+            status: renting.status,
+            OrderId: order.id,
           });
         });
     });
@@ -728,9 +724,11 @@ module.exports = (sequelize, DataTypes) => {
       ProductId: 'discount',
       Terms: [{
         name: 'Next Rent Invoice',
-        taxonomy: 'order-category',
+        taxonomy: 'orderItem-category',
         termable: 'OrderItem',
       }],
+    }, {
+      include: models.Term,
     });
   };
 
@@ -757,6 +755,8 @@ module.exports = (sequelize, DataTypes) => {
             taxonomy: 'orderItem-category',
             termable: 'OrderItem',
           }],
+        }, {
+          include: models.Term,
         });
       });
   };
