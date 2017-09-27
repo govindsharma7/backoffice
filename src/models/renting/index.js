@@ -737,19 +737,28 @@ module.exports = (sequelize, DataTypes) => {
   Renting.prototype.futureDebit = function(args) {
     const {amount, reason, label, invoiceWith} = args;
 
-    return models.OrderItem.create({
-      label,
-      quantity: 1,
-      unitPrice: amount,
-      status: 'draft',
-      RentingId: this.id,
-      ProductId: reason,
-      Terms: [{
-        name: invoiceWith,
-        taxonomy: 'orderItem-category',
-        termable: 'OrderItem',
-      }],
-    });
+    return models.Product
+      .find({
+        where: {
+          name: reason,
+        },
+        attributes: ['id'],
+      })
+      .then((product) => {
+        return models.OrderItem.create({
+          label,
+          quantity: 1,
+          unitPrice: amount,
+          status: 'draft',
+          RentingId: this.id,
+          ProductId: product.id,
+          Terms: [{
+            name: invoiceWith,
+            taxonomy: 'orderItem-category',
+            termable: 'OrderItem',
+          }],
+        });
+      });
   };
 
   Renting.webmergeSerialize = function(renting) {
