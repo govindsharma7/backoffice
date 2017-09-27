@@ -4,7 +4,7 @@ module.exports = function(models, Renting) {
     if (
       !( 'RoomId' in renting.dataValues ) ||
       !( 'bookingDate' in renting.dataValues ) ||
-      ( renting.price != null && !isNaN(renting.price) )
+      ( renting.price != null && renting.price > 0 && !isNaN(renting.price) )
     ) {
       return renting;
     }

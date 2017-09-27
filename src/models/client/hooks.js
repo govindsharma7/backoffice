@@ -14,8 +14,10 @@ module.exports = function(models, Client) {
     SendinBlue.createContact(client.email, { client })
       .catch((err) => {
         if ( err.response.body.code === 'duplicate_parameter' ) {
-          throw new Error('SendInBlue Contact already exist');
+          throw new Error('SendInBlue Contact already exists');
         }
+
+        throw err;
       });
     if ( !client.ninjaId ) {
       return Utils.wrapHookPromise(client.ninjaCreate());
@@ -45,7 +47,8 @@ module.exports = function(models, Client) {
           if ( err.response.body.code === 'document_not_found' ) {
             return SendinBlue.createContact(client.email, { client });
           }
-          return console.error(err.response.body);
+
+          throw err;
         });
     }
     else {
