@@ -53,7 +53,7 @@ module.exports = function(models, Renting) {
 //        .findById(_renting.id)
 //        .then((renting) => {
 //          return Promise.all([
-//            renting.welcomeEmailSerialized(),
+//            SendinBlue.SerializeWelcomeEmail(renting),
 //            renting.Client.preferredLanguage,
 //            ]);
 //        })
