@@ -11,7 +11,7 @@ module.exports = function(models, Client) {
    * in Forest.
    */
   Client.hook('afterCreate', (client) => {
-    SendinBlue.createContact(client)
+    SendinBlue.createContact(client.email, { client })
       .catch((err) => {
         if ( err.response.body.code === 'duplicate_parameter' ) {
           throw new Error('SendInBlue Contact already exist');
@@ -35,12 +35,15 @@ module.exports = function(models, Client) {
                 listIds: [SENDINBLUE_LIST_IDS.archived],
                 unlinkListIds: _client.listIds,
               }),
-            SendinBlue.createContact(client.email, {client, listIds: _client.listIds}),
-            ]);
+            SendinBlue.createContact(client.email, {
+              client,
+              listIds: _client.listIds,
+            }),
+          ]);
         })
         .catch((err) => {
           if ( err.response.body.code === 'document_not_found' ) {
-            return SendinBlue.createContact(client.email, {client});
+            return SendinBlue.createContact(client.email, { client });
           }
           return console.error(err.response.body);
         });
