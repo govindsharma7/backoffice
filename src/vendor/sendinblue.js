@@ -44,7 +44,7 @@ function createContact(email, {client, listIds}) {
     // with our own, to make sure we never send an email to a real client
     email: email.replace(
       /@(.*)\.[^.]+$/,
-      NODE_ENV === 'production' ? '$0' : '_$1@chez-nestor.com'
+      NODE_ENV === 'production' ? '$&' : '_$1@chez-nestor.com'
     ),
     attributes: serializeClient(client),
     listIds: listIds === null ?

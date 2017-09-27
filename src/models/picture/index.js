@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       allowNull: false,
     },
+    order:                  DataTypes.INTEGER,
   });
 
   Picture.associate = () => {
