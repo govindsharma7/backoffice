@@ -58,4 +58,12 @@ module.exports = {
     id: 'other',
     name: 'Other',
   }],
+  Client: [{
+    id: 'maintenance',
+    firstName: 'Chez',
+    lastName: 'Nestor',
+    email: 'support@chez-nestor.com',
+    status: 'draft',
+    phoneNumber: '0000000',
+  }],
 };

@@ -52,6 +52,16 @@ module.exports = function({Room, Picture}) {
       name: 'Restore Room',
     }, {
       name: 'Destroy Room',
+    }, {
+      name: 'Maintenance Period',
+      fields: [{
+        field: 'from',
+        type: 'Date',
+        isRequired: true,
+      }, {
+        field: 'to',
+        type: 'Date',
+      }],
     }],
     segments: TRASH_SEGMENTS.concat(
       {

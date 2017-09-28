@@ -114,6 +114,33 @@ module.exports = (sequelize, DataTypes) => {
     return Promise.resolve( checkoutDate && checkoutDate <= date ? true : false );
   };
 
+  Room.prototype.createMaintenancePeriod = function(args) {
+    const {from, to} = args;
+
+    return models.Renting
+      .create({
+        bookingDate: from,
+        status: 'active',
+        ClientId: 'maintenance',
+        RoomId: this.id,
+        Events: [].concat(to && {
+          startDate: to,
+          endDate: to,
+          eventable: 'Renting',
+          summary: 'End of maintenance',
+          description: `${this.name}`,
+          Terms: [{
+            name: 'Checkout',
+            taxonomy: 'event-category',
+            termable: 'Event',
+          }],
+        })
+        .filter(Boolean),
+      }, {
+      include: [models.Event, models.Term],
+    });
+  };
+
   Room.collection = collection;
   Room.routes = routes;
   Room.hooks = hooks;

@@ -24,6 +24,16 @@ module.exports = function({Picture}) {
       name: 'Restore Apartment',
     }, {
       name: 'Destroy Apartment',
+    }, {
+      name: 'Maintenance Period',
+      fields: [{
+        field: 'from',
+        type: 'Date',
+        isRequired: true,
+      }, {
+        field: 'to',
+        type: 'Date',
+      }],
     }],
     segments: TRASH_SEGMENTS.concat([{
       name: 'Lyon',
