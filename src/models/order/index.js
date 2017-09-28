@@ -85,7 +85,6 @@ module.exports = (sequelize, DataTypes) => {
     Order.addScope('packItems', {
       include: [{
         model: models.OrderItem,
-        required: false,
         where: { ProductId: { $like: '%-pack' } },
         include: [{
           model: models.Renting,
@@ -382,6 +381,10 @@ module.exports = (sequelize, DataTypes) => {
       models.Client.update(
         { status: 'active', deletedAt: null },
         { where: { id: order.ClientId } }
+      ),
+      models.Order.update(
+        { status: 'active', deletedAt: null },
+        { where: { ClientId: order.ClientId } }
       ),
       // Mark renting as unavailable in WordPress
       order.OrderItems && order.OrderItems[0] && fetch(WORDPRESS_AJAX_URL, {

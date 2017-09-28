@@ -87,15 +87,21 @@ module.exports = function(app, models, Payment) {
         ]);
       })
       .then(([{transactionId}, amount]) => {
-        return models.Payment
-          .create({
-            type: 'card',
-            amount,
-            paylineId: transactionId,
-            OrderId: orderId,
-          });
+        return Promise.all([
+          models.Payment
+            .create({
+              type: 'card',
+              amount,
+              paylineId: transactionId,
+              OrderId: orderId,
+            }),
+          models.Order.scope('packItems').findById(orderId),
+          ]);
       })
-      .then((payment) => {
+      .then(([payment, packOrder]) => {
+        if (packOrder) {
+          packOrder.markAsPaid();
+        }
         return res.send({paymentId: payment.id});
       })
       .catch(Utils.logAndSend(res));
