@@ -35,6 +35,25 @@ module.exports = function(app, models, Apartment) {
       .catch(Utils.logAndSend(res));
   });
 
+  app.post('/forest/actions/maintenance-period', LEA, (req, res) => {
+    const {values, ids} = req.body.data.attributes;
+
+    const where = req.body.data.attributes['collection_name'] === 'Apartment' ?
+          { ApartmentId : { $in : ids } } :
+          { id : { $in : ids} } ;
+
+    return models.Room.scope('availableAt')
+      .findAll({ where })
+      .filter((room) => {
+        return room.checkAvailability(new Date(values.from));
+      })
+      .map((room) => {
+        return room.createMaintenancePeriod(values);
+      })
+      .then(Utils.createSuccessHandler(res, 'Maintenance period'))
+      .catch(Utils.logAndSend(res));
+  });
+
   Utils.addInternalRelationshipRoute({
     app,
     sourceModel: Apartment,
