@@ -43,7 +43,7 @@ module.exports = function(app, models, Payment) {
 
     const rVisa = /^4[0-9]{12}(?:[0-9]{3})?$/;
     const rMastercard =
-/^(?:5[1-5][\d]{2}|222[1-9]|22[3-9][\d]|2[3-6][\d]{2}|27[01][\d]|2720)[\d]{12}$/;
+      /^(?:5[1-5][\d]{2}|222[1-9]|22[3-9][\d]|2[3-6][\d]{2}|27[01][\d]|2720)[\d]{12}$/;
     let type;
 
     if ( number.match(rVisa) ) {
@@ -70,14 +70,16 @@ module.exports = function(app, models, Payment) {
         }
 
         if ( packOrder ) {
-         return models.Room.scope('availableAt')
+          /* eslint-disable promise/no-nesting */
+          return models.Room.scope('availableAt')
             .findById(packOrder.OrderItems[0].Renting.RoomId)
             .then((isAvailable) => {
-              if ( isAvailable && isAvailable.availableAt > Date.now()) {
-                throw new Error('This room has been booked by someone else.');
+              if ( isAvailable && isAvailable.availableAt > Date.now() ) {
+                throw new Error('This room is no longer available.');
               }
               return order;
             });
+          /* eslint-enable promise/no-nesting */
         }
 
         return order;
@@ -86,9 +88,10 @@ module.exports = function(app, models, Payment) {
         return order.getCalculatedProps();
       })
       .then(({balance}) => {
-        if (balance === 0 ) {
-          throw new Error('Balance is null');
+        if (balance >= 0 ) {
+          throw new Error('Order is already fully paid.');
         }
+
         return Promise.all([
           payline.doPurchase(
             uuid(),
@@ -99,11 +102,12 @@ module.exports = function(app, models, Payment) {
               holder,
               cvx,
             },
-            Math.abs(balance)),
-          Math.abs(balance),
+            -balance
+          ),
+          -balance,
         ]);
       })
-      .then(([{transactionId}, amount]) => {
+      .then(([{ transactionId }, amount]) => {
         return Promise.all([
           models.Payment
             .create({
@@ -113,7 +117,7 @@ module.exports = function(app, models, Payment) {
               OrderId: orderId,
             }),
           models.Order.scope('packItems').findById(orderId),
-          ]);
+        ]);
       })
       .then(([payment, packOrder]) => {
         if ( packOrder ) {
