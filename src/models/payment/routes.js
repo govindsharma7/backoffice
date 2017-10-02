@@ -55,23 +55,40 @@ module.exports = function(app, models, Payment) {
 
     Promise.resolve()
       .then(() => {
-        if ( !type) {
+        if ( !type ) {
           throw new Error('Invalid Card Type');
         }
 
-        return models.Order.scope('orderItems').findById(orderId);
+        return Promise.all([
+          models.Order.scope('orderItems').findById(orderId),
+          models.Order.scope('packItems').findById(orderId),
+        ]);
       })
-      .then((order) => {
-        if ( !order) {
+      .then(([order, packOrder]) => {
+        if ( !order ) {
           throw new Error(`Order "${orderId}" not found`);
         }
+
+        if ( packOrder ) {
+         return models.Room.scope('availableAt')
+            .findById(packOrder.OrderItems[0].Renting.RoomId)
+            .then((isAvailable) => {
+              if ( isAvailable && isAvailable.availableAt > Date.now()) {
+                throw new Error('This room has been booked by someone else.');
+              }
+              return order;
+            });
+        }
+
+        return order;
+      })
+      .then((order) => {
         return order.getCalculatedProps();
       })
       .then(({balance}) => {
         if (balance === 0 ) {
           throw new Error('Balance is null');
         }
-
         return Promise.all([
           payline.doPurchase(
             uuid(),
@@ -99,7 +116,7 @@ module.exports = function(app, models, Payment) {
           ]);
       })
       .then(([payment, packOrder]) => {
-        if (packOrder) {
+        if ( packOrder ) {
           packOrder.markAsPaid();
         }
         return res.send({paymentId: payment.id});
