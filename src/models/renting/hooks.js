@@ -1,7 +1,7 @@
-const Promise                    = require('bluebird');
+//const Promise                    = require('bluebird');
 const Utils                      = require('../../utils');
-const SendinBlue                 = require('../../vendor/sendinblue');
-const {SENDINBLUE_TEMPLATE_ID}   = require('../../const');
+//const SendinBlue                 = require('../../vendor/sendinblue');
+//const {SENDINBLUE_TEMPLATE_ID}   = require('../../const');
 
 module.exports = function(models, Renting) {
   Renting.hook('beforeValidate', (renting) => {
