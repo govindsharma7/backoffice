@@ -66,7 +66,11 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { picturable: 'Room' },
     });
-
+    Room.hasMany(models.Term, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      scope: { termable: 'Room' },
+    });
     Room.addScope('apartment', {
       include: [apartment],
     });

@@ -1,4 +1,6 @@
 const Promise = require('bluebird');
+const makePublic  = require('../../middlewares/makePublic');
+
 
 module.exports = (sequelize, DataTypes) => {
   const Term = sequelize.define('Term', {
@@ -24,6 +26,16 @@ module.exports = (sequelize, DataTypes) => {
   // const taxonomies = {};
 
   Term.associate = () => {
+    Term.belongsTo(models.Room, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      as: 'Room',
+    });
+    Term.belongsTo(models.Apartment, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      as: 'Apartment',
+    });
     Term.belongsTo(models.OrderItem, {
       foreignKey: 'TermableId',
       constraints: false,
@@ -82,6 +94,11 @@ module.exports = (sequelize, DataTypes) => {
           }, {transaction});
         });
     });
+  };
+
+  Term.routes = (app) => {
+    app.get('/forest/Term', makePublic);
+
   };
 
   return Term;
