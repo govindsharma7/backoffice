@@ -171,10 +171,12 @@ describe('Client', () => {
 
   describe('#applyLateFees()', () => {
     test('it should create a draft order with late fees', () => {
+      const now = new Date();
+
       return models.Client
         .findById(client2.id)
         .then((client) => {
-          return client.applyLateFees();
+          return client.applyLateFees(now);
         })
         .map((order) => {
           return order.getOrderItems({
@@ -182,12 +184,14 @@ describe('Client', () => {
           })
           .then((orderItems) => {
             return expect(orderItems[0].quantity)
-              .toEqual(D.differenceInDays(Date.now(), order.dueDate));
+              .toEqual(D.differenceInDays(now, order.dueDate));
           });
         });
     });
 
     test('it shouldn\'t increment late fees as it has been update today', () => {
+      const now = new Date();
+
       return models.Client
         .findById(client2.id)
         .then((client) => {
@@ -199,7 +203,7 @@ describe('Client', () => {
           })
           .then((orderItems) => {
             return expect(orderItems[0].quantity)
-              .toEqual(D.differenceInDays(Date.now(), order.dueDate));
+              .toEqual(D.differenceInDays(now, order.dueDate));
           });
         });
       });
@@ -217,7 +221,7 @@ describe('Client', () => {
         .then((identity) => {
           return expect(identity).toEqual({
             birthDate: { year: '1986', month: '07', day: '23' },
-            age: D.differenceInYears(Date.now(), '1986-07-23 Z'),
+            age: D.differenceInYears(new Date(), '1986-07-23 Z'),
           });
         });
     });
