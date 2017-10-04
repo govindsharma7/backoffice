@@ -179,8 +179,11 @@ describe('Client', () => {
           return client.applyLateFees(now);
         })
         .map((order) => {
-          return order.getOrderItems({
-            where: {ProductId: 'late-fees'},
+          return models.OrderItem.findAll({
+            where: {
+              OrderId: order.id,
+              ProductId: 'late-fees',
+            },
           })
           .then((orderItems) => {
             return expect(orderItems[0].quantity)
@@ -195,11 +198,14 @@ describe('Client', () => {
       return models.Client
         .findById(client2.id)
         .then((client) => {
-          return client.applyLateFees();
+          return client.applyLateFees(now);
         })
         .map((order) => {
-          return order.getOrderItems({
-            where: {ProductId: 'late-fees'},
+          return models.OrderItem.findAll({
+            where: {
+              OrderId: order.id,
+              ProductId: 'late-fees',
+            },
           })
           .then((orderItems) => {
             return expect(orderItems[0].quantity)
