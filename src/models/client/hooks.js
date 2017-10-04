@@ -12,7 +12,7 @@ module.exports = function(models, Client) {
    * in Forest.
    */
   Client.hook('afterCreate', (client) => {
-    if ( NODE_ENV === 'test' ) {
+    if ( NODE_ENV === 'test' || client.id === 'maintenance' ) {
       return client;
     }
 
