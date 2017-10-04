@@ -30,7 +30,7 @@
     "node-fetch": "^1.7.1",
     "payline": "github:chez-nestor/payline#vquesnel",
     "sendinblue-apiv3": "^2.0.2",
-    "sequelize": "^4.11.7",
+    "sequelize": "4.11.7",
     "strip-indent": "^2.0.0",
     "swagger-client": "^2.1.32",
     "urlencode": "^1.1.0",
