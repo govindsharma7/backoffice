@@ -400,6 +400,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Order.afterUpdate = (order) => {
+    // No need to prevent ninja update when NODE_ENV === 'test', as ninjaId == null
     if ( order.ninjaId != null ) {
       return Utils.wrapHookPromise(order.ninjaUpdate());
     }

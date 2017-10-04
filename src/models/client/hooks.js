@@ -1,9 +1,10 @@
-const Promise    = require('bluebird');
-const SendinBlue = require('../../vendor/sendinblue');
-const Utils      = require('../../utils');
+const Promise       = require('bluebird');
+const SendinBlue    = require('../../vendor/sendinblue');
+const Utils         = require('../../utils');
 const {
   SENDINBLUE_LIST_IDS,
-}                = require('../../const');
+}                   = require('../../const');
+const { NODE_ENV }  = require('../../config');
 
 module.exports = function(models, Client) {
   /*
@@ -11,6 +12,10 @@ module.exports = function(models, Client) {
    * in Forest.
    */
   Client.hook('afterCreate', (client) => {
+    if ( NODE_ENV === 'test' ) {
+      return client;
+    }
+
     const promises = [
       SendinBlue.createContact(client.email, { client }),
     ];
@@ -23,6 +28,10 @@ module.exports = function(models, Client) {
   });
 
   Client.hook('afterUpdate', (client) => {
+    if ( NODE_ENV === 'test' ) {
+      return client;
+    }
+
     if ( client.changed('email') ) {
       SendinBlue.getContact(client._previousDataValues.email)
         .then((_client) => {

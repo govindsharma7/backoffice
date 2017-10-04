@@ -1,4 +1,5 @@
-const Promise = require('bluebird');
+const Promise       = require('bluebird');
+const { NODE_ENV }  = require('../../config');
 
 module.exports = function(models, Event) {
   function wrapHookHandler(event, callback) {
@@ -12,6 +13,10 @@ module.exports = function(models, Event) {
   }
 
   Event.hook('afterCreate', (event, options) => {
+    if ( NODE_ENV === 'test' ) {
+      return event;
+    }
+
     return wrapHookHandler(event, (event) => {
       return event.googleCreate(options);
     });
@@ -19,6 +24,10 @@ module.exports = function(models, Event) {
 
   Event.hook('afterUpdate', (event, options) => {
     const {eventable, EventableId} = event;
+
+    if ( NODE_ENV === 'test' ) {
+      return event;
+    }
 
     return wrapHookHandler(event, (event) => {
       return Promise.all([
