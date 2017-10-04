@@ -601,8 +601,9 @@ module.exports = (sequelize, DataTypes) => {
   Renting.prototype.handleEventUpdate = function(event, options) {
     const type = event.get('category');
 
-    return Renting.scope(type === 'refund-deposit' ? 'client' :
-                         [`${type}Order`, 'room+apartment'])
+    return Renting.scope(
+        type === 'refund-deposit' ? 'client' : [`${type}Order`, 'room+apartment']
+      )
       .findById(this.id)
       .then((renting) => {
         if ( !renting ) {
