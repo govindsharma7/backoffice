@@ -49,6 +49,7 @@ module.exports = (sequelize, DataTypes) => {
   Room.associate = () => {
     const availableAt = {
       model: models.Renting.scope('checkoutDate'),
+      required: false,
       attributes: { include: [
         [sequelize.literal('`Rentings->Events`.`startDate`'), 'checkoutDate'],
       ]},
