@@ -17,10 +17,10 @@ deploy:
   - provider: script
     on:
       branch: master
-    script: npm run gulp -- stag:deploy
+    script: npm run gulp -- stag:db:seed && ./bin/up staging
     skip_cleanup: true
   - provider: script
     on:
       branch: release
-    script: npm run gulp -- prod:deploy
+    script: npm run gulp -- prod:db:seed && .bin/up production
     skip_cleanup: true
