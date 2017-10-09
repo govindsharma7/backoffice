@@ -12,6 +12,7 @@ before_install:
 install:
 - sh install.sh -b ./bin v0.2.7
 - ./bin/up version
+- npm install
 deploy:
   - provider: script
     on:
