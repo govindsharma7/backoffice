@@ -2,8 +2,7 @@
   "name": "cheznestor-backoffice",
   "regions": ["eu-west-1"],
   "lambda": {
-    "memory": 512,
-    "timeout": 15
+    "memory": 512
   },
   "hooks": {
     "build": [
