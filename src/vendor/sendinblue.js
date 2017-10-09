@@ -1,4 +1,4 @@
-const SendinBlueApi = require('sendinblue-apiv3');
+const SendinBlueApi = require('sib-api-v3-sdk');
 const capitalize    = require('lodash/capitalize');
 const D             = require('date-fns');
 const config        = require('../config');

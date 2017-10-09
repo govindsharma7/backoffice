@@ -103,7 +103,7 @@ const others = {
 module.exports = Object.assign(
   {},
   envifyAll(tests, 'test'),
-  envifyAll(others, 'development'),
+  others,
   envifyAll(common, 'development', 'dev'),
   envifyAll(common, 'staging', 'stag'),
   envifyAll(common, 'production', 'prod')
