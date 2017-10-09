@@ -89,7 +89,7 @@ const others = {
     'cross-env NODE_ENV=production env-cmd ./.env.js bash ./scripts/mysqlcopy.sh',
   'build:holidays': buildHolidays,
   'dev:deploy':
-    up('development'),
+    './bin/up',
   'stag:deploy':
     `${envify(dbSeed, 'staging')} && ${envify(up)} staging`,
   'prod:deploy':
