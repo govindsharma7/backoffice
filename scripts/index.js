@@ -93,9 +93,9 @@ const others = {
   'dev:deploy':
     up('development'),
   'stag:deploy':
-    `${envify(dbSeed, 'staging')} && ${up('staging')}`,
+    `${envify(dbSeed, 'staging')}&& ${up('staging')}`,
   'prod:deploy':
-    `${envify(dbSeed, 'production')} && ${up('production')}`,
+    `${envify(dbSeed, 'production')}&& ${up('production')}`,
   'stag:url': 'cross-env NODE_ENV=staging up url staging',
   'prod:url': 'cross-env NODE_ENV=production up url production',
 };
