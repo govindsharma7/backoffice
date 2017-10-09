@@ -49,9 +49,7 @@ const unitTest = 'jest __tests__/unit';
 const intTest = 'jest __tests__/integration';
 
 const buildHolidays = 'node scripts/serializeFrenchHolidays > src/vendor/holidays.json';
-const up = (env) => {
-  return `cross-env NODE_ENV=${env} up deploy ${env !== 'development' ? env : ''}`;
-};
+const up = './bin/up';
 
 const common = {
   'migration:do': sequelizeMigrationDo,
@@ -93,9 +91,9 @@ const others = {
   'dev:deploy':
     up('development'),
   'stag:deploy':
-    `${envify(dbSeed, 'staging')}&& ${up('staging')}`,
+    `${envify(dbSeed, 'staging')} && ${envify(up)} staging`,
   'prod:deploy':
-    `${envify(dbSeed, 'production')}&& ${up('production')}`,
+    `${envify(dbSeed, 'production')} && ${envify(up)} production`,
   'stag:url': 'cross-env NODE_ENV=staging up url staging',
   'prod:url': 'cross-env NODE_ENV=production up url production',
 };
