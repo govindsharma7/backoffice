@@ -79,21 +79,15 @@ const tests = {
 };
 
 const others = {
-  'start':
-    `touch server.js && NODE_ENV=development ${webpack} & ${nodemon}`,
-  'logs': 'up logs -s 45m',
+  'start': `touch server.js && NODE_ENV=development ${webpack} & ${nodemon}`,
+  'logs': envify('up logs -s 45m', 'development'),
   'migration:create': sequelizeMigrationCreate,
-  'dev:db:copyprod':
-    `cross-env NODE_ENV=production env-cmd ./.env.js ${dbDump} && ${dbFill}`,
-  'stag:db:copyprod':
-    'cross-env NODE_ENV=production env-cmd ./.env.js bash ./scripts/mysqlcopy.sh',
+  'dev:db:copyprod': `${envify(dbDump, 'production')} && ${dbFill}`,
+  'stag:db:copyprod': envify('bash ./scripts/mysqlcopy.sh', 'production'),
   'build:holidays': buildHolidays,
-  'dev:deploy':
-    './bin/up',
-  'stag:deploy':
-    `${envify(dbSeed, 'staging')} && ${envify(up)} staging`,
-  'prod:deploy':
-    `${envify(dbSeed, 'production')} && ${envify(up)} production`,
+  'dev:deploy': './bin/up',
+  'stag:deploy': `${envify(dbSeed, 'staging')} && ${envify(up)} staging`,
+  'prod:deploy': `${envify(dbSeed, 'production')} && ${envify(up)} production`,
   'stag:url': 'cross-env NODE_ENV=staging up url staging',
   'prod:url': 'cross-env NODE_ENV=production up url production',
 };

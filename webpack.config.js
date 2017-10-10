@@ -14,9 +14,10 @@ const {
 }                   = require('@webpack-blocks/webpack2');
 const babel         = require('@webpack-blocks/babel6');
 
-const commonPlugins = [
-];
+// const commonPlugins = [
+// ];
 
+// Minify after concat
 const productionPlugins = [
   new BabelMinifyPlugin({
     mangle: true,
@@ -57,6 +58,7 @@ module.exports = createConfig([
   env('production', [
     babel({ presets: [
       'env',
+      // Don't minify at the file level
       ['minify', {
         mangle: false,
         deadcode: false,
@@ -64,9 +66,13 @@ module.exports = createConfig([
     ] }),
     addPlugins(productionPlugins),
   ]),
+  env('staging', [
+    babel({ presets: ['env'] }),
+    sourceMaps(),
+  ]),
   env('development', [
     babel({ presets: ['env'] }),
     sourceMaps(),
   ]),
-  addPlugins(commonPlugins),
+  // addPlugins(commonPlugins),
 ]);
