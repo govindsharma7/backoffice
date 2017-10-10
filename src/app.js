@@ -62,20 +62,22 @@ _.values(models).forEach(function(model) {
 
 // Global route used to verify that the backend is up, running and connected to
 // the DB and all external services
-app.get('/ping', makePublic, (req, res) => {
-  Promise.all([
-    models.Client.findOne(),
-    aws.pingService(),
-    geocode('16 rue de Condé, 69002, Lyon'),
-    payline.pingService(),
-    sendinblue.pingService(),
-    webmerge.pingService(),
-  ]).then(() => {
-    return res.send('pong');
-
-  }).catch((e) => {
+app.get('/ping', makePublic, async (req, res) => {
+  try {
+    await Promise.all([
+      models.Client.findOne(),
+      aws.pingService(),
+      geocode('16 rue de Condé, 69002, Lyon'),
+      payline.pingService(),
+      sendinblue.pingService(),
+      webmerge.pingService(),
+    ]);
+  }
+  catch (e) {
     return res.status(500).send(e);
-  });
+  }
+
+  return res.send('pong');
 });
 
 parentApp.use(app);

@@ -1,5 +1,5 @@
 // Config inspired from https://github.com/andywer/webpack-blocks#usage
-const fs = require('fs');
+const fs                = require('fs');
 const BabelMinifyPlugin = require('babel-minify-webpack-plugin');
 
 const {
@@ -9,10 +9,10 @@ const {
   setOutput,
   defineConstants,
   env,
-  sourceMaps,
   addPlugins,
-}                   = require('@webpack-blocks/webpack2');
-const babel         = require('@webpack-blocks/babel6');
+}                       = require('@webpack-blocks/webpack2');
+const serverSourceMap   = require('webpack-blocks-server-source-map');
+const babel             = require('@webpack-blocks/babel6');
 
 // const commonPlugins = [
 // ];
@@ -68,10 +68,10 @@ module.exports = createConfig([
     addPlugins(productionPlugins),
   ]),
   env('staging', [
-    sourceMaps(),
+    serverSourceMap(),
   ]),
   env('development', [
-    sourceMaps(),
+    serverSourceMap(),
   ]),
   // addPlugins(commonPlugins),
 ]);

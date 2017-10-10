@@ -64,6 +64,7 @@
     "nodemon": "^1.11.0",
     "sequelize-cli": "^2.7.0",
     "sqlite3": "3.1.8",
+    "webpack-blocks-server-source-map": "^0.2.0",
     "wpapi": "^1.1.1"
   },
   "optionalDependencies": {
