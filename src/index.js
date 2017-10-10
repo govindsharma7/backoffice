@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 const http = require('http');
 const app = require('./app');
-const models = require('./models');
 
 /*
  * Initialize server
@@ -14,16 +13,11 @@ const server = http.createServer(app);
 /*
  * Load models
  */
-models.sequelize.sync()
-  .then(() => {
-    server.listen(port, function() {
-      console.log(`Express server listening on port ${server.address().port}`);
-    });
-    server.on('error', onError);
-    server.on('listening', onListening);
-    return null;
-  })
-  .catch(console.error);
+server.listen(port, function() {
+  console.log(`Express server listening on port ${server.address().port}`);
+});
+server.on('error', onError);
+server.on('listening', onListening);
 
 /*
  * Utils

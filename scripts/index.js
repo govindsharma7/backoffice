@@ -18,8 +18,6 @@ const nodemon = 'nodemon --watch server.js --inspect server.js';
 const dumpFile = 'data/data.sql';
 const devDb = '.dev.sqlite';
 
-const dbSync =
-  'node scripts/dbSync.js';
 const dbSeed =
   'node scripts/dbSeed.js';
 const dbFixture =
@@ -54,7 +52,6 @@ const up = './bin/up';
 const common = {
   'migration:do': sequelizeMigrationDo,
   'migration:undo': sequelizeMigrationUndo,
-  'db:sync': dbSync,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
   'db:dump': dbDump,
