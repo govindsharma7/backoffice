@@ -24,3 +24,6 @@ deploy:
       branch: release
     script: npm run gulp -- prod:deploy
     skip_cleanup: true
+after_deploy:
+  - '[ $TRAVIS_BRANCH == master ] && npm run gulp -- stag:ping'
+  - '[ $TRAVIS_BRANCH == release ] && npm run gulp -- prod:ping'

@@ -95,6 +95,11 @@ function serializeWelcomeEmail(renting) {
     },
   };
 }
+
+function pingService() {
+  return new SendinBlueApi.AccountApi().getAccount();
+}
+
 module.exports = {
   sendEmail,
   updateContact,
@@ -102,4 +107,5 @@ module.exports = {
   getContact,
   serializeClient,
   serializeWelcomeEmail,
+  pingService,
 };

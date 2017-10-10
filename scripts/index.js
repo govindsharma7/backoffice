@@ -68,6 +68,7 @@ const common = {
   'update:lateFees': updateLateFees,
   'archive:pastRentings': archivePastRentings,
   'remove:deletedAt': removeDeletedAt,
+  'ping': 'node scripts/pingBackend.js',
 };
 
 const tests = {

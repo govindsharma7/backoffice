@@ -7,4 +7,14 @@ const payline = new Payline(
   config.PAYLINE_CONTRACT_NUMBER
 );
 
+payline.pingService = function() {
+  return payline
+    .getWallet(123456)
+    .catch((error) => {
+      if ( error.code !== '02532' ) {
+        throw error;
+      }
+    });
+};
+
 module.exports = payline;

@@ -1,13 +1,20 @@
-const Express          = require('express');
-const Jwt              = require('express-jwt');
-const Cors             = require('cors');
-const BodyParser       = require('body-parser');
-const Liana            = require('forest-express-sequelize');
-const values           = require('lodash/values');
-const config           = require('./config');
-const models           = require('./models');
-const checkToken       = require('./middlewares/checkToken');
-const smartCollections = require('./smart-collections');
+const Express           = require('express');
+const Jwt               = require('express-jwt');
+const Cors              = require('cors');
+const BodyParser        = require('body-parser');
+const Liana             = require('forest-express-sequelize');
+const values            = require('lodash/values');
+const Promise           = require('bluebird');
+const config            = require('./config');
+const models            = require('./models');
+const aws               = require('./vendor/aws');
+const geocode           = require('./vendor/geocode');
+const payline           = require('./vendor/payline');
+const sendinblue        = require('./vendor/sendinblue');
+const webmerge          = require('./vendor/webmerge');
+const checkToken        = require('./middlewares/checkToken');
+const makePublic        = require('./middlewares/makePublic');
+const smartCollections  = require('./smart-collections');
 
 
 const parentApp = Express();
@@ -51,6 +58,24 @@ _.values(models).forEach(function(model) {
   if ('routes' in model) {
     model.routes(app, models, model);
   }
+});
+
+// Global route used to verify that the backend is up, running and connected to
+// the DB and all external services
+app.get('/ping', makePublic, (req, res) => {
+  Promise.all([
+    models.Client.findOne(),
+    aws.pingService(),
+    geocode('16 rue de Condé, 69002, Lyon'),
+    payline.pingService(),
+    sendinblue.pingService(),
+    webmerge.pingService(),
+  ]).then(() => {
+    return res.send('pong');
+
+  }).catch((e) => {
+    return res.status(500).send(e);
+  });
 });
 
 parentApp.use(app);

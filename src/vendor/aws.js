@@ -34,7 +34,7 @@ function deleteFile(bucket, data) {
 }
 
 const rBase64Image = /^data:image\/\w+;base64,/;
-const imageBucket = new AWS.S3( { params: { Bucket: AWS_BUCKET_PICTURES } });
+const picturesBucket = new AWS.S3( { params: { Bucket: AWS_BUCKET_PICTURES } });
 
 function uploadPicture({ id, url }) {
   let body;
@@ -61,7 +61,7 @@ function uploadPicture({ id, url }) {
       return response.buffer();
     })
     .then((Body) => {
-      return imageBucket.upload({
+      return picturesBucket.upload({
         Key: id,
         Body,
         ACL: 'public-read',
@@ -69,6 +69,11 @@ function uploadPicture({ id, url }) {
       }).promise();
     })
     .then(({ Location }) => { return Location; });
+}
+
+// This function is used to make sure we have access to the pictures bucket
+function pingService() {
+  return picturesBucket.headBucket().promise();
 }
 
 /* Following code is deprecated as we're switching to SendInBlue to send
@@ -151,4 +156,5 @@ module.exports = {
   uploadFile,
   deleteFile,
   uploadPicture,
+  pingService,
 };
