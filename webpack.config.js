@@ -55,6 +55,7 @@ module.exports = createConfig([
   defineConstants({
     'process.env.NODE_ENV': process.env.NODE_ENV,
   }),
+  babel({ presets: ['env'] }),
   env('production', [
     babel({ presets: [
       'env',
@@ -67,11 +68,9 @@ module.exports = createConfig([
     addPlugins(productionPlugins),
   ]),
   env('staging', [
-    babel({ presets: ['env'] }),
     sourceMaps(),
   ]),
   env('development', [
-    babel({ presets: ['env'] }),
     sourceMaps(),
   ]),
   // addPlugins(commonPlugins),
