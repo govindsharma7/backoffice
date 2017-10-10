@@ -1,21 +1,18 @@
 // Config inspired from https://github.com/andywer/webpack-blocks#usage
 const fs                = require('fs');
 const BabelMinifyPlugin = require('babel-minify-webpack-plugin');
+const webpack           = require('webpack');
 
 const {
   customConfig,
   createConfig,
   entryPoint,
   setOutput,
-  defineConstants,
+  setEnv,
   env,
   addPlugins,
-}                       = require('@webpack-blocks/webpack2');
-const serverSourceMap   = require('webpack-blocks-server-source-map');
-const babel             = require('@webpack-blocks/babel6');
-
-// const commonPlugins = [
-// ];
+}                       = require('@webpack-blocks/webpack');
+const babel             = require('@webpack-blocks/babel');
 
 // Minify after concat
 const productionPlugins = [
@@ -52,13 +49,13 @@ module.exports = createConfig([
   }),
   entryPoint('./src/index.js'),
   setOutput('./server.js'),
-  defineConstants({
-    'process.env.NODE_ENV': process.env.NODE_ENV,
-  }),
-  babel({ presets: ['env'] }),
+  setEnv(['NODE_ENV']),
+  babel({ presets: [
+    ['env', { targets: { node: '6.10' } }],
+  ]}),
   env('production', [
     babel({ presets: [
-      'env',
+      ['env', { targets: { node: '6.10' } }],
       // Don't minify at the file level
       ['minify', {
         mangle: false,
@@ -73,5 +70,19 @@ module.exports = createConfig([
   env('development', [
     serverSourceMap(),
   ]),
-  // addPlugins(commonPlugins),
 ]);
+
+function serverSourceMap(devtool = 'source-map') {
+  return (context, { addPlugin }) => {
+    return (prevConfig) => {
+      return Object.assign(
+        addPlugin(new webpack.BannerPlugin({
+          banner: 'require("source-map-support").install();',
+          raw: true,
+          entryOnly: false,
+        }))(prevConfig),
+        { devtool }
+      );
+    };
+  };
+}
