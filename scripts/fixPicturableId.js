@@ -25,5 +25,11 @@ function updatePicturableId(pictures) {
       }
       return picture.update({PicturableId: category.id });
     });
+  })
+  .then(() => {
+      return process.exit(0);
+  })
+  .catch((e) => {
+    console.error(e);
   });
 }

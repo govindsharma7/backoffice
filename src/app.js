@@ -5,6 +5,7 @@ const BodyParser        = require('body-parser');
 const Liana             = require('forest-express-sequelize');
 const values            = require('lodash/values');
 const Promise           = require('bluebird');
+const cookieParser      = require('cookie-parser');
 const config            = require('./config');
 const models            = require('./models');
 const aws               = require('./vendor/aws');
@@ -16,7 +17,6 @@ const checkToken        = require('./middlewares/checkToken');
 const makePublic        = require('./middlewares/makePublic');
 const smartCollections  = require('./smart-collections');
 
-
 const parentApp = Express();
 const app       = Express();
 const {Schemas} = Liana;
@@ -25,10 +25,19 @@ const _         = { values };
 /*
  * Middleware that will handle our custom Forest routes
  */
+app.use(cookieParser());
+
 // JWT authentication
 app.use(Jwt({
   secret: config.FOREST_AUTH_SECRET,
   credentialsRequired: false,
+  getToken(request) {
+    if (request.cookies && request.cookies.authorized
+      && request.cookies.authorized.split(' ')[0] === 'Bearer') {
+      return request.cookies.authorized.split(' ')[1];
+    }
+    return null;
+  },
 }));
 
 // Token authentication
@@ -48,11 +57,15 @@ app.use(Cors({
     'X-Requested-With',
     'Content-Type',
     'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Credentials',
+    'Set-Cookie',
   ],
+  credentials: true,
 }));
 
 // Mime type
 app.use(BodyParser.json({limit: '10mb'}));
+
 
 _.values(models).forEach(function(model) {
   if ('routes' in model) {

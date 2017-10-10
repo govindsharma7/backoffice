@@ -239,7 +239,6 @@ module.exports = function(app, models, Renting) {
               RoomId: roomId,
               price: periodPrice,
               serviceFees,
-              bookingDate,
             },
           }),
           room,
