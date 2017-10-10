@@ -41,11 +41,18 @@ module.exports = createConfig([
     output: {
       libraryTarget: 'commonjs2',
     },
+    // This block is required to get sendinblue's SDK to work. Waaat?
+    // see https://github.com/sendinblue/APIv3-nodejs-library/issues/13
+    module: {
+      rules: [{
+        parser: { amd: false },
+      }],
+    },
   }),
   entryPoint('./src/index.js'),
   setOutput('./server.js'),
   defineConstants({
-    'process.env.NODE_ENV': process.env.NODE_ENV
+    'process.env.NODE_ENV': process.env.NODE_ENV,
   }),
   env('production', [
     babel({ presets: [
