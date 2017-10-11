@@ -48,12 +48,12 @@ module.exports = function(models, Client) {
             }),
           ]);
         })
-        .catch((err) => {
-          if ( err.response.body.code === 'document_not_found' ) {
+        .catch((wtf) => {
+          if ( wtf.response.body.code === 'document_not_found' ) {
             return SendinBlue.createContact(client.email, { client });
           }
 
-          throw err;
+          throw wtf;
         });
     }
     else {
