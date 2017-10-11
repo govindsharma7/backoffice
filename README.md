@@ -1,6 +1,6 @@
 # Chez Nestor Backoffice
 
-Our brand new back-office built with Forest and hosted on Lambda.
+Our brand new back-office built with Forest, hosted on Lambda and deployed with up.
 You can use this project to take inspiration, but we're keeping a few secrets for us.
 
 ## Installation
