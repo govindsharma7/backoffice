@@ -52,7 +52,7 @@ app.use(Cors({
 }));
 
 // Mime type
-app.use(BodyParser.json({limit: '6mb'}));
+// app.use(BodyParser.json({limit: '6mb'}));
 
 _.values(models).forEach(function(model) {
   if ('routes' in model) {
