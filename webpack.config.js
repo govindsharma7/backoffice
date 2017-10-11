@@ -8,7 +8,7 @@ const {
   createConfig,
   entryPoint,
   setOutput,
-  setEnv,
+  defineConstants,
   env,
   addPlugins,
 }                       = require('@webpack-blocks/webpack');
@@ -49,7 +49,9 @@ module.exports = createConfig([
   }),
   entryPoint('./src/index.js'),
   setOutput('./server.js'),
-  setEnv(['NODE_ENV']),
+  defineConstants({
+    'process.env.NODE_ENV': process.env.NODE_ENV,
+  }),
   babel({ presets: [
     ['env', { targets: { node: '6.10' } }],
   ]}),
