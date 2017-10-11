@@ -78,6 +78,7 @@ const tests = {
 
 const others = {
   'start': `touch server.js && NODE_ENV=development ${webpack} & ${nodemon}`,
+  'upstart': envify('up start', 'development'),
   'logs': envify('up logs -s 45m', 'development'),
   'migration:create': sequelizeMigrationCreate,
   'dev:db:copyprod': `${envify(dbDump, 'production')} && ${dbFill}`,

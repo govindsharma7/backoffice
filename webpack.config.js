@@ -28,14 +28,14 @@ module.exports = createConfig([
     externals:
       // make all node modules external
       fs.readdirSync('node_modules')
-        .filter((name) => { return name !== '.bin'; })
+        .filter((name) => { return name !== '.bin'; }),
         // replace effing Winston-based logger in forest-express with the console
-        .concat((context, request, callback) => {
-          if (/\.\/(services\/)?(logger)$/.test(request)) {
-            return callback(null, 'console');
-          }
-          return callback();
-        }),
+        // .concat((context, request, callback) => {
+        //   if (/\.\/(services\/)?(logger)$/.test(request)) {
+        //     return callback(null, 'console');
+        //   }
+        //   return callback();
+        // }),
     output: {
       libraryTarget: 'commonjs2',
     },
