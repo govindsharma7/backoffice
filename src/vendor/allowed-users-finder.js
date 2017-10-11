@@ -2,6 +2,8 @@
 var P = require('bluebird');
 var request = require('superagent');
 
+var allowedUsers = [];
+
 function AllowedUsersFinder(renderingId, opts) {
   this.perform = function () {
     return new P(function (resolve) {
