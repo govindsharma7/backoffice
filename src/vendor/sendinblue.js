@@ -4,12 +4,14 @@ const D             = require('date-fns');
 const config        = require('../config');
 const {
   SUPPORT_EMAIL,
-  SENDINBLUE_LIST_IDS,
   SPECIAL_CHECKIN_PRICES,
   AGENCY_ADDRESSES,
   DEPOSIT_PRICES,
 }                   = require('../const');
-const { NODE_ENV }  = require('../config');
+const {
+  NODE_ENV,
+  SENDINBLUE_LIST_IDS,
+}                   = require('../config');
 
 SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
   config.SENDINBLUE_API_KEY;
@@ -28,7 +30,11 @@ function serializeClient(client) {
 }
 
 function sendEmail(id, data = {}) {
-  const options = Object.assign({}, defaults, data);
+  const options = Object.assign(
+    {},
+    defaults,
+    data,
+    NODE_ENV !== 'production' ? {emailTo: ['vquesnel@chez-nestor.com']} : {});
 
   if (options.emailTo.length > 0) {
     return SMTPApi.sendTemplate(id, options)

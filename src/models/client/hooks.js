@@ -2,9 +2,9 @@ const Promise       = require('bluebird');
 const SendinBlue    = require('../../vendor/sendinblue');
 const Utils         = require('../../utils');
 const {
+  NODE_ENV,
   SENDINBLUE_LIST_IDS,
-}                   = require('../../const');
-const { NODE_ENV }  = require('../../config');
+}                    = require('../../config');
 
 module.exports = function(models, Client) {
   /*
