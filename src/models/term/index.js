@@ -109,7 +109,7 @@ module.exports = (sequelize, DataTypes) => {
     app.post('/forest/amIAdmin', makePublic, (req, res) => {
       return Promise.resolve()
       .then(() => {
-        return fetch(`${config.api.url}/forest/sessions`, {
+        return fetch(`${config.REST_API_URL}/forest/sessions`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -117,7 +117,7 @@ module.exports = (sequelize, DataTypes) => {
           body: JSON.stringify(Object.assign(
             {},
             req.body,
-            { renderingId: config.api.renderingId })),
+            { renderingId: config.FOREST_RENDERING_ID })),
         });
       })
       .then((response) => {
