@@ -83,7 +83,7 @@ app.get('/ping', makePublic, async (req, res) => {
 parentApp.use(app);
 
 parentApp.post('/forest/sessions', (req, res, next) => {
-  console.log(req);
+  console.log(req.body);
   next();
 });
 
