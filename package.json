@@ -30,6 +30,7 @@
     "payline": "github:chez-nestor/payline#vquesnel",
     "sequelize": "4.11.7",
     "sib-api-v3-sdk": "^3.1.0",
+    "source-map-support": "^0.5.0",
     "strip-indent": "^2.0.0",
     "swagger-client": "^2.1.32",
     "urlencode": "^1.1.0",
