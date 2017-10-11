@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
-const Promise = require('bluebird');
-const D       = require('date-fns');
-const _       = require('lodash');
-const models  = require('../src/models');
+const Promise               = require('bluebird');
+const D                     = require('date-fns');
+const _                     = require('lodash');
+const models                = require('../src/models');
+const SendinBlue            = require('../src/vendor/sendinblue');
+const {
+  SENDINBLUE_TEMPLATE_IDS,
+  PAYMENT_URL,
+}                           =  require('../src/config');
+
 
 const {Client} = models;
 const month = D.addMonths(Date.now(), 1);
@@ -49,9 +55,30 @@ return Client.scope({ method: ['rentOrdersFor', month] }, 'uncashedDepositCount'
         .tap(([order]) => {
           return order.pickReceiptNumber();
         })
-        .then(([order]) => {
+        .tap(([order]) => {
           return order.ninjaCreate();
         })
+        .then(([order]) => {
+          return Promise.all([
+            models.Order.scope('amount').findById(order.id),
+            order.id,
+          ]);
+        })
+        .then(([order, id]) => {
+          const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+
+          return SendinBlue.sendEmail(
+            SENDINBLUE_TEMPLATE_IDS.rentInvoice,
+            {
+              emailTo: [client.email],
+              attributes: {
+                NAME: `${client.firstName} ${client.lastName}`,
+                AMOUNT: order.get('amount') / 100,
+                LINK: `${PAYMENT_URL}/${lang}/payment/${id}`,
+              },
+          });
+        })
+
         .catch((err) => {
           console.log(err);
           console.log(client);

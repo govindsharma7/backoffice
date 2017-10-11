@@ -1,18 +1,18 @@
-const Promise     = require('bluebird');
-const uuid        = require('uuid/v4');
-const pickBy      = require('lodash/pickBy');
-const mapKeys     = require('lodash/mapKeys');
-const D           = require('date-fns');
-const Multer      = require('multer');
-const Liana       = require('forest-express-sequelize');
-const Ninja       = require('../../vendor/invoiceninja');
-const SendinBlue  = require('../../vendor/sendinblue');
-const Utils       = require('../../utils');
+const Promise              = require('bluebird');
+const uuid                 = require('uuid/v4');
+const pickBy               = require('lodash/pickBy');
+const mapKeys              = require('lodash/mapKeys');
+const D                    = require('date-fns');
+const Multer               = require('multer');
+const Liana                = require('forest-express-sequelize');
+const Ninja                = require('../../vendor/invoiceninja');
+const SendinBlue           = require('../../vendor/sendinblue');
+const Utils                = require('../../utils');
+const { INVOICENINJA_URL } = require('../../const');
 const {
-  INVOICENINJA_URL,
   SENDINBLUE_LIST_IDS,
   SENDINBLUE_TEMPLATE_IDS,
-}                 = require('../../const');
+}                         = require('../../config');
 
 const _ = { pickBy, mapKeys };
 
