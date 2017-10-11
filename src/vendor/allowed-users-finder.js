@@ -1,6 +1,7 @@
 /* eslint-disable */
 var P = require('bluebird');
 var request = require('superagent');
+var config = require('../config');
 
 var allowedUsers = [];
 
@@ -11,10 +12,9 @@ function AllowedUsersFinder(renderingId, opts) {
         'https://forestadmin-server.herokuapp.com';
 
       request
-        .get(forestUrl + '/forest/renderings/' + renderingId +
-          '/allowed-users')
+        .get(forestUrl + '/forest/renderings/' + config.FOREST_RENDERING_ID + '/allowed-users')
         .set('forest-secret-key', opts.envSecret)
-        .end(function (error, result) {console.log('YOOOOOOOOOOOOOOOOOOOOO!');
+        .end(function (error, result) {
           allowedUsers = [];
           if (result.status === 200 && result.body && result.body.data) {
             result.body.data.forEach(function (userData) {
@@ -35,7 +35,6 @@ function AllowedUsersFinder(renderingId, opts) {
               console.log('Cannot retrieve any users for the project ' +
                 'you\'re trying to unlock. An error occured in Forest API.',
                 error);
-              console.log(error);
               console.log(result);
             }
           }
