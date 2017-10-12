@@ -20,5 +20,26 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  Metadata.createOrUpdate = function({name, value, metadatable, MetadatableId}) {
+    return Metadata.findOrCreate({
+      where: {
+        name,
+        MetadatableId,
+      },
+      defaults: {
+        name,
+        value,
+        metadatable,
+        MetadatableId,
+      },
+    })
+    .then(([metadata, isCreated]) => {
+      if ( !isCreated ) {
+        return metadata.update({value});
+      }
+      return metadata;
+    });
+  };
+
   return Metadata;
 };

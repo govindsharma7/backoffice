@@ -34,7 +34,8 @@ module.exports = (app, models, Client) => {
 
         return Client.scope(
           { method: ['rentOrdersFor', month] }, // required by createRentOrders
-          'uncashedDepositCount' // required by findOrCreateRentOrder
+          'uncashedDepositCount', // required by findOrCreateRentOrder
+          'paymentMetadata', // required by findOrCreateRentOrder
         ).findAll({ where: { id: { $in: ids } } });
       })
       .then((clients) => {
@@ -44,6 +45,28 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
 
     return null;
+  });
+
+  app.post('/forest/actions/change-due-date', LEA, (req, res) => {
+    const { values, ids } = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+        if ( !values.addDelay ) {
+          throw new Error('You must specify a delay');
+        }
+        return Client.findAll({ where: { id: { $in: ids } } });
+      })
+      .mapSeries((client) => {
+        return models.Metadata.createOrUpdate({
+          name: 'payment-delay',
+          value: values.addDelay,
+          metadatable: 'Client',
+          MetadatableId: client.id,
+        });
+      })
+      .then(Utils.createSuccessHandler(res, 'New Due Date'))
+      .catch(Utils.logAndSend(res));
   });
 
   app.post('/forest/actions/credit-client', LEA, (req, res) => {
