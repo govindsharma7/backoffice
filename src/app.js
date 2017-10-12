@@ -82,6 +82,7 @@ app.get('/ping', makePublic, async (req, res) => {
 
 app.post('/ping', makePublic, (req, res) => {
   console.log(req.body);
+  console.log(config.FOREST_AUTH_SECRET);
   res.send(req.body);
 });
 
