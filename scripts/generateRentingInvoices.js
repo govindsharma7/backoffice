@@ -8,7 +8,10 @@ const models  = require('../src/models');
 const {Client} = models;
 const month = D.addMonths(Date.now(), 1);
 
-return Client.scope({ method: ['rentOrdersFor', month] }, 'uncashedDepositCount')
+return Client.scope(
+  { method: ['rentOrdersFor', month] },
+  'uncashedDepositCount',
+  'paymentMetadata')
   .findAll()
   // Filter-out clients who already have an order for this month
   .then((clients) => {

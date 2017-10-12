@@ -122,7 +122,7 @@ describe('Client', () => {
     test('it should create an order with appropriate orderitems', () => {
       const _Renting = models.Renting.scope('room+apartment');
 
-      return models.Client.scope('uncashedDepositCount')
+      return models.Client.scope('uncashedDepositCount', 'paymentMetadata')
         .findById(client.id)
         .then((client) => {
           return Promise.all([

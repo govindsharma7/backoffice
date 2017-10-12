@@ -207,6 +207,16 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Client.id'],
     });
+
+    Client.addScope('paymentMetadata', {
+      include: [{
+        required: false,
+        model: models.Metadata,
+        where: {
+          name: 'payment-delay',
+        },
+      }],
+    });
   };
 
   // This was the reliable method used by generateInvoice
@@ -253,14 +263,18 @@ module.exports = (sequelize, DataTypes) => {
             model: models.Order,
             where: {
               ClientId: this.id,
-              dueDate: D.startOfMonth(date),
+              dueDate: this.Metadata.length ?
+                D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
+                D.startOfMonth(date),
             },
           }],
           defaults: {
             label: `${D.format(date, 'MMMM')} Invoice`,
             type: 'debit',
             ClientId: this.id,
-            dueDate: D.startOfMonth(date),
+            dueDate: this.Metadata.length ?
+              D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
+              D.startOfMonth(date),
             OrderItems:
               rentings.reduce((all, renting) => {
                 return all.concat(renting.toOrderItems({ date }));

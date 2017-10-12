@@ -188,6 +188,17 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
+
+    Renting.addScope('clientPaymentMetadata', {
+      include: [{
+        model: models.Client,
+        include: [{
+          required: false,
+          model: models.Metadata,
+          where: { name: 'payment-delay'},
+        }],
+      }],
+    });
   };
 
   // Prorate the price and service fees of a renting for a given month
@@ -302,11 +313,15 @@ module.exports = (sequelize, DataTypes) => {
         },
         include: [{
           model: models.Order,
-          where: { dueDate: Math.max(new Date(), D.startOfMonth(date)) },
+          where: { dueDate: Math.max(new Date(), this.Client.Metadata.length ?
+            D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
+            D.startOfMonth(date)) },
         }],
         defaults: this.normalizeOrder({
           label: `${D.format(date, 'MMMM')} Invoice`,
-          dueDate: Math.max(new Date(), D.startOfMonth(date)),
+          dueDate: Math.max(new Date(), this.Client.Metadata.length ?
+            D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
+            D.startOfMonth(date)),
           OrderItems: this.toOrderItems({ date, room }),
           number,
         }),

@@ -155,6 +155,14 @@ module.exports = function(models) {
         type: 'String',
       }],
     }, {
+      name: 'Change Due Date',
+      fields: [{
+        field: 'addDelay',
+        type: 'Enum',
+        enums: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        isRequired: true,
+      }],
+    }, {
       name: 'Restore Client',
     }, {
       name: 'Destroy Client',
