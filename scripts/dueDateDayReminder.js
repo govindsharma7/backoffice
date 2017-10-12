@@ -33,7 +33,7 @@ return Order.scope('rentOrders')
         const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
         return SendinBlue.sendEmail(
-          SENDINBLUE_TEMPLATE_IDS.unpaidRent[client.preferredLanguage],
+          SENDINBLUE_TEMPLATE_IDS.dueDate[client.preferredLanguage],
           {
             emailTo: [client.email],
             attributes: {
