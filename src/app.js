@@ -1,7 +1,7 @@
 const Express           = require('express');
 const Jwt               = require('express-jwt');
 const Cors              = require('cors');
-// const BodyParser        = require('body-parser');
+const BodyParser        = require('body-parser');
 const Liana             = require('forest-express-sequelize');
 const values            = require('lodash/values');
 const Promise           = require('bluebird');
@@ -52,7 +52,7 @@ app.use(Cors({
 }));
 
 // Mime type
-// app.use(BodyParser.json({limit: '6mb'}));
+app.use(BodyParser.json({limit: '6mb'}));
 
 _.values(models).forEach(function(model) {
   if ('routes' in model) {
@@ -81,11 +81,6 @@ app.get('/ping', makePublic, async (req, res) => {
 });
 
 parentApp.use(app);
-
-parentApp.post('/forest/sessions', (req, res, next) => {
-  console.log(req.body);
-  next();
-});
 
 // - Hijack Schemas.perform to load Liana collections ourselves
 //   → definitely prevent forest-express from trapping our errors, YAY!

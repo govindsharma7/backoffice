@@ -1,6 +1,5 @@
 // Config inspired from https://github.com/andywer/webpack-blocks#usage
 const fs                = require('fs');
-const path              = require('path');
 const BabelMinifyPlugin = require('babel-minify-webpack-plugin');
 const webpack           = require('webpack');
 
@@ -32,7 +31,7 @@ module.exports = createConfig([
     externals:
       // make all node modules external
       fs.readdirSync('node_modules')
-        .filter((name) => { return name !== '.bin' && !/^forest-express/.test(name); })
+        .filter((name) => { return name !== '.bin'; })
         // replace effing Winston-based logger in forest-express with the console
         .concat((context, request, callback) => {
           if (/\.\/(services\/)?(logger)$/.test(request)) {
@@ -40,12 +39,6 @@ module.exports = createConfig([
           }
           return callback();
         }),
-    resolve: {
-      alias: {
-        '../services/allowed-users-finder':
-          path.resolve(__dirname, 'src/vendor/allowed-users-finder'),
-      },
-    },
     // This block is required to get sendinblue's SDK to work. Waaat?
     // see https://github.com/sendinblue/APIv3-nodejs-library/issues/13
     module: {
@@ -53,6 +46,14 @@ module.exports = createConfig([
         parser: { amd: false },
       }],
     },
+    // This is an example of how to replace a file in a dependency with one of
+    // our own.
+    // resolve: {
+    //   alias: {
+    //     '../services/allowed-users-finder':
+    //       path.resolve(__dirname, 'src/vendor/allowed-users-finder'),
+    //   },
+    // },
   }),
   entryPoint('./src/index.js'),
   setOutput('./server.js'),
