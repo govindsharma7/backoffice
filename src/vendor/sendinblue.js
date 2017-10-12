@@ -28,7 +28,11 @@ function serializeClient(client) {
 }
 
 function sendEmail(id, data = {}) {
-  const options = Object.assign({}, defaults, data);
+  const options = Object.assign(
+    {},
+    defaults,
+    data,
+    NODE_ENV !== 'production' ? {emailTo: ['vquesnel@chez-nestor.com']} : {});
 
   if (options.emailTo.length > 0) {
     return SMTPApi.sendTemplate(id, options)
