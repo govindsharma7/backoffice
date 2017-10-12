@@ -85,8 +85,10 @@ const others = {
   'stag:db:copyprod': envify('bash ./scripts/mysqlcopy.sh', 'production'),
   'build:holidays': buildHolidays,
   'dev:deploy': './bin/up',
-  'stag:deploy': `${envify(dbSeed, 'staging')} && ${envify(up, 'staging')} staging`,
-  'prod:deploy': `${envify(dbSeed, 'production')} && ${envify(up, 'staging')} production`,
+  'stag:deploy':
+    `${envify(dbSeed, 'staging')} && ${envify(up, 'staging')} staging`,
+  'prod:deploy':
+    `${envify(dbSeed, 'production')} && ${envify(up, 'production')} production`,
   'stag:url': 'cross-env NODE_ENV=staging up url staging',
   'prod:url': 'cross-env NODE_ENV=production up url production',
 };

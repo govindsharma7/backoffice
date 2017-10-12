@@ -80,12 +80,6 @@ app.get('/ping', makePublic, async (req, res) => {
   return res.send('pong');
 });
 
-app.post('/ping', makePublic, (req, res) => {
-  console.log(req.body);
-  console.log(config.FOREST_AUTH_SECRET);
-  res.send(req.body);
-});
-
 parentApp.use(app);
 
 // - Hijack Schemas.perform to load Liana collections ourselves
