@@ -1,7 +1,5 @@
-//const Promise                    = require('bluebird');
 const Utils                      = require('../../utils');
-//const SendinBlue                 = require('../../vendor/sendinblue');
-//const {SENDINBLUE_TEMPLATE_ID}   = require('../../const');
+//const Sendinblue                 = require('../../vendor/sendinblue');
 
 module.exports = function(models, Renting) {
   Renting.hook('beforeValidate', (renting) => {
@@ -52,17 +50,8 @@ module.exports = function(models, Renting) {
 //      return Renting.scope(['room+apartment', 'client'])
 //        .findById(_renting.id)
 //        .then((renting) => {
-//          return Promise.all([
-//            SendinBlue.serializeWelcomeEmail(renting),
-//            renting.Client.preferredLanguage,
-//            ]);
-//        })
-//        .then(([data, language]) => {
-//          data.attributes.ROOM = language === 'fr' ? data.attributes.ROOM.fr :
-//          data.attributes.ROOM.en;
-//
-//          return SendinBlue.sendEmail(SENDINBLUE_TEMPLATE_ID.welcome[language], data);
-//      });
+//          return Sendinblue.sendWelcomeEmail(renting);
+//        });
 //    }
 //
 //    return true;

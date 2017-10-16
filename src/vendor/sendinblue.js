@@ -10,7 +10,8 @@ const {
 }                   = require('../const');
 const {
   NODE_ENV,
-  SENDINBLUE_LIST_IDS,
+  SENDINBLUE_TEMPLATE_IDS,
+  SENDINBLUE_LIST_IDS
 }                   = require('../config');
 
 SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
@@ -76,28 +77,34 @@ function updateContact(email, {listIds, unlinkListIds, client}) {
 
   return ContactsApi.updateContact(email, params);
 }
+
+function sendWelcomeEmail(renting) {
+  return SendinBlueApi.sendEmail(
+    SENDINBLUE_TEMPLATE_IDS.welcome[renting.Client.preferredLanguage],
+    serializeWelcomeEmail(renting)
+  );
+}
+
 function serializeWelcomeEmail(renting) {
-  const {Apartment} = renting.Room;
-  const {name, addressStreet, addressZip, addressCity} = Apartment;
+  const { Client, Room: { Apartment }, Room } = renting;
+  const { name, addressStreet, addressZip, addressCity } = Apartment;
+  const isStudio = name.split(' ').splice(-1)[0] === 'studio';
+  const roomNumber = Room.reference.slice(-1);
 
   return {
-    emailTo: [renting.Client.email],
+    emailTo: [Client.email],
     attributes: {
       APARTMENT: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
-      FIRSTNAME: _.capitalize(renting.Client.firstName),
+      FIRSTNAME: _.capitalize(Client.firstName),
       BOOKINGDATE: D.format(renting.bookingDate, 'DD/MM/YYYY'),
       RENT: (renting.price / 100) + (renting.serviceFees / 100),
-      EMAIL: renting.Client.email,
+      EMAIL: Client.email,
       DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
       ADDRESSAGENCY: AGENCY_ADDRESSES[addressCity],
       SPECIALCHECKIN: SPECIAL_CHECKIN_PRICES[addressCity] / 100,
-      ROOM: {
-        fr: name.split(' ').splice(-1)[0] === 'studio' ?
-        'l\'appartement entier<strong>' :
-        `la chambre nº<strong>${renting.Room.reference.slice(-1)}`,
-        en: name.split(' ').splice(-1)[0] === 'studio' ?
-        'our studio<strong>' : `bedroom nº<strong>${renting.Room.reference.slice(-1)}`,
-      },
+      ROOM: renting.Client.preferredLanguage === 'en' ?
+        ( isStudio ? 'our studio<b>' : `bedroom nº<b>${roomNumber}` ) :
+        ( isStudio ? 'l\'appartement entier<b>' : `la chambre nº<b>${roomNumber}` ),
     },
   };
 }
@@ -112,6 +119,6 @@ module.exports = {
   createContact,
   getContact,
   serializeClient,
-  serializeWelcomeEmail,
+  sendWelcomeEmail,
   pingService,
 };

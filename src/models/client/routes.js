@@ -247,16 +247,19 @@ module.exports = (app, models, Client) => {
         ]);
       })
       .then(([houseMates, metadata]) => {
+        // TODO: this belongs in Sendinblue.js
+        // and should be merged with the code in the following then.
+        // see sendWelcomeEmail for example
         return Utils.serializeHousemate(houseMates, metadata);
       })
       .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
         return Promise.all([
           SendinBlue.sendEmail(
             SENDINBLUE_TEMPLATE_IDS.newHousemate.fr,
-            Object.assign({}, {emailTo: emailToFr}, {attributes: attributesFr})),
+            { emailTo: emailToFr, attributes: attributesFr }),
           SendinBlue.sendEmail(
             SENDINBLUE_TEMPLATE_IDS.newHousemate.en,
-            Object.assign({}, {emailTo: emailToEn}, {attributes: attributesEn})),
+            { emailTo: emailToEn, attributes: attributesEn}),
         ]);
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))
