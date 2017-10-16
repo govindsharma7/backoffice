@@ -1,6 +1,7 @@
 const SendinBlueApi = require('sib-api-v3-sdk');
 const capitalize    = require('lodash/capitalize');
 const D             = require('date-fns');
+const fr         = require('date-fns/locale/fr');
 const config        = require('../config');
 const {
   SUPPORT_EMAIL,
@@ -11,7 +12,8 @@ const {
 const {
   NODE_ENV,
   SENDINBLUE_TEMPLATE_IDS,
-  SENDINBLUE_LIST_IDS
+  SENDINBLUE_LIST_IDS,
+  PAYMENT_URL,
 }                   = require('../config');
 
 SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
@@ -109,6 +111,24 @@ function serializeWelcomeEmail(renting) {
   };
 }
 
+function sendRentReminder(order, amount) {
+  const { Client } = order;
+
+  return sendEmail(
+    SENDINBLUE_TEMPLATE_IDS.dueDate[Client.preferredLanguage],
+    {
+      emailTo: [Client.email],
+      attributes: {
+        FIRSTNAME: Client.firstName,
+        MONTH: Client.preferredLanguage === 'en' ?
+          D.format(order.dueDate, 'MMMM') :
+          D.format(order.dueDate, 'MMMM', {locale: fr}),
+        AMOUNT: amount / 100,
+        LINK: `${PAYMENT_URL}/${Client.preferredLanguage}/payment/${order.id}`,
+      },
+  });
+}
+
 function pingService() {
   return new SendinBlueApi.AccountApi().getAccount();
 }
@@ -120,5 +140,6 @@ module.exports = {
   getContact,
   serializeClient,
   sendWelcomeEmail,
+  sendRentReminder,
   pingService,
 };
