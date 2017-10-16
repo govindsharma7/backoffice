@@ -54,7 +54,6 @@ const common = {
   'migration:undo': sequelizeMigrationUndo,
   'db:seed': dbSeed,
   'db:fixture': dbFixture,
-  'db:dump': dbDump,
   'create:calendar': createCalendar,
   'extract:clients': extractClients,
   'extract:portfolio': extractPortfolio,
@@ -79,7 +78,9 @@ const tests = {
 const others = {
   'start': `touch server.js && NODE_ENV=development ${webpack} & ${nodemon}`,
   'upstart': envify('up start', 'development'),
-  'logs': envify('up logs -s 45m', 'development'),
+  'logs': envify('up logs -s 15m', 'development'),
+  'stag:logs': envify('up logs -s 15m -f staging', 'development'),
+  'prod:logs': envify('up logs -s 15m -f production', 'development'),
   'migration:create': sequelizeMigrationCreate,
   'dev:db:copyprod': `${envify(dbDump, 'production')} && ${dbFill}`,
   'stag:db:copyprod': envify('bash ./scripts/mysqlcopy.sh', 'production'),

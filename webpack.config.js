@@ -11,8 +11,8 @@ const {
   defineConstants,
   env,
   addPlugins,
-}                       = require('@webpack-blocks/webpack');
-const babel             = require('@webpack-blocks/babel');
+  babel,
+}                       = require('webpack-blocks');
 
 // Minify after concat
 const productionPlugins = [
