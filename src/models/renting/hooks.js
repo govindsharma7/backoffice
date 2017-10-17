@@ -32,7 +32,7 @@ module.exports = function(models, Renting) {
   // Create quote orders if the housing pack has been set when creating the renting
   Renting.hook('afterCreate', (_renting, { transaction }) => {
     if (_renting.comfortLevel) {
-      const promise = Renting.scope('room+apartment', 'clientPaymentMetadata')
+      const promise = Renting.scope('room+apartment', 'client+paymentDelay')
         .findById(_renting.id, { transaction })
         .then((renting) => {
           return renting.createQuoteOrders(_renting);

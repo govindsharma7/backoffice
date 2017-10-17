@@ -35,7 +35,7 @@ module.exports = (app, models, Client) => {
         return Client.scope(
           { method: ['rentOrdersFor', month] }, // required by createRentOrders
           'uncashedDepositCount', // required by findOrCreateRentOrder
-          'paymentMetadata', // required by findOrCreateRentOrder
+          'paymentDelay', // required by findOrCreateRentOrder
         ).findAll({ where: { id: { $in: ids } } });
       })
       .then((clients) => {

@@ -96,7 +96,7 @@ module.exports = function(app, models, Renting) {
           throw new Error('Can\'t create multiple rent orders');
         }
 
-        return Renting.scope('room+apartment', 'clientPaymentMetadata').findById(ids[0]);
+        return Renting.scope('room+apartment', 'client+paymentDelay').findById(ids[0]);
       })
       .then((renting) => {
         return renting.findOrCreateRentOrder({ date: renting.bookingDate });
@@ -117,7 +117,7 @@ module.exports = function(app, models, Renting) {
           throw new Error('Can\'t create multiple housing-pack orders');
         }
 
-        return Renting.scope('room+apartment', 'clientPaymentMetadata').findById(ids[0]);
+        return Renting.scope('room+apartment', 'client+paymentDelay').findById(ids[0]);
       })
       .then((renting) => {
         return renting.createQuoteOrders({

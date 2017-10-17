@@ -208,13 +208,11 @@ module.exports = (sequelize, DataTypes) => {
       group: ['Client.id'],
     });
 
-    Client.addScope('paymentMetadata', {
+    Client.addScope('paymentDelay', {
       include: [{
         required: false,
         model: models.Metadata,
-        where: {
-          name: 'payment-delay',
-        },
+        where: { name: 'payment-delay' },
       }],
     });
   };

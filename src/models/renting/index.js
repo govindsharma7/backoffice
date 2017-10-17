@@ -189,7 +189,7 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Renting.addScope('clientPaymentMetadata', {
+    Renting.addScope('client+paymentDelay', {
       include: [{
         model: models.Client,
         include: [{
