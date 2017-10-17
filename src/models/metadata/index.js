@@ -1,3 +1,6 @@
+const Liana       = require('forest-express-sequelize');
+const makePublic  = require('../../middlewares/makePublic');
+
 module.exports = (sequelize, DataTypes) => {
   const Metadata = sequelize.define('Metadata', {
     id: {
@@ -38,6 +41,20 @@ module.exports = (sequelize, DataTypes) => {
         return metadata.update({value});
       }
       return metadata;
+    });
+  };
+
+  Metadata.routes = (app) => {
+    const LEA = Liana.ensureAuthenticated;
+
+    app.get('/forest/Metadata', (req, res, next) => {
+      return (
+        req.query.filterType === 'and' &&
+        /MetadatableIdnamemetadatable/.test(Object.keys(req.query.filter).join(''))
+      ) ?
+        makePublic(req, res, next) :
+        LEA(req, res, next);
+
     });
   };
 
