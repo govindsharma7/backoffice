@@ -20,6 +20,33 @@ module.exports = (app, models, Client) => {
   const LEA = Liana.ensureAuthenticated;
   const multer = Multer().fields([{ name: 'passport', maxCount: 1 }]);
 
+  app.delete('/forest/Client/:clientId/relationships/Orders', LEA, (req, res) => {
+    const ids = [];
+
+    req.body.data
+      .filter((_data) => {
+        return _data.type === 'order';
+      })
+      .map((order) => {
+        return ids.push(order.id);
+    });
+
+    models.Order
+      .findAll({ where: { id: { $in: ids } } })
+      .map((order) => {
+        return Promise.all([
+          order,
+          order.getCalculatedProps(),
+          ]);
+      })
+      .filter(([, { totalPaid }]) => { return totalPaid === null; })
+      .map(([order]) => {
+        return order.destroy();
+      })
+      .then(Utils.createSuccessHandler(res, 'Orders'))
+      .catch(Utils.logAndSend(res));
+  });
+
   app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
     const month = values.for === 'current month' ?
