@@ -14,37 +14,36 @@ module.exports = (app, models, Term) => {
   app.post('/forest/amIAdmin', makePublic, (req, res) => {
     return Promise.resolve()
       .then(() => {
-      return fetch(`${config.REST_API_URL}/forest/sessions`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-        body: JSON.stringify(Object.assign(
-          {},
-          req.body,
-          { renderingId: config.FOREST_RENDERING_ID })),
-      });
-    })
-      .then((response) => {
-      if ( !response.ok ) {
-        /* eslint-disable promise/no-nesting */
-        return response.text()
-          .then((message) => {
-          throw new Error(message);
+        return fetch(`${config.REST_API_URL}/forest/sessions`, {
+          method: 'POST',
+          body: JSON.stringify(Object.assign(
+            {},
+            req.body,
+            { renderingId: config.FOREST_RENDERING_ID }
+          )),
         });
-        /* eslint-enable promise/no-nesting */
-      }
-      return response.json();
-    })
+      })
+      .then((response) => {
+        if ( !response.ok ) {
+          /* eslint-disable promise/no-nesting */
+          return response.text()
+            .then((message) => {
+              throw new Error(message);
+            });
+          /* eslint-enable promise/no-nesting */
+        }
+        return response.json();
+      })
       .then((result) => {
-      return res.cookie(
-        'authorized',
-        `Bearer ${result.token}`,
-        { expires: D.addDays(Date.now(), 30) }).send(result);
-    })
+        return res.cookie(
+          'authorized',
+          `Bearer ${result.token}`,
+          { expires: D.addDays(Date.now(), 30) }
+        ).send(result);
+      })
       .catch((e) => {
-      return res.status(400).send(e);
-    });
+        return res.status(400).send(e);
+      });
   });
 
   app.post('/forest/actions/public/updateTerms', LEA, (req, res) => {
