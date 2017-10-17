@@ -37,7 +37,7 @@ module.exports = (app, models, Client) => {
         return Promise.all([
           order,
           order.getCalculatedProps(),
-          ]);
+        ]);
       })
       .filter(([, { totalPaid }]) => { return totalPaid === null; })
       .map(([order]) => {
