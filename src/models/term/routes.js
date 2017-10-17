@@ -15,7 +15,8 @@ module.exports = (app, models, Term) => {
     return Promise.resolve()
       .then(() => {
         return fetch(`${config.REST_API_URL}/forest/sessions`, {
-          method: 'POST',
+          method: 'post',
+          headers: { ContentType: 'application/json' },
           body: JSON.stringify(Object.assign(
             {},
             req.body,

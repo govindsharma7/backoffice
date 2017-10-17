@@ -388,7 +388,7 @@ module.exports = (sequelize, DataTypes) => {
       ),
       // Mark renting as unavailable in WordPress
       order.OrderItems && order.OrderItems[0] && fetch(WORDPRESS_AJAX_URL, {
-        method: 'POST',
+        method: 'post',
         body: {
           action: 'update_availability',
           privateKey: REST_API_SECRET,

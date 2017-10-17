@@ -49,7 +49,7 @@ function uploadPicture({ id, url }) {
   return fetch(
       `https://im2.io/${IMAGE_OPTIM_KEY}/1920x1080,fit${body ? '' : `/${url}`}`,
       {
-        method: 'POST',
+        method: 'post',
         body,
       }
     )
