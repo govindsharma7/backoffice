@@ -1,6 +1,7 @@
-const capitalize       = require('lodash/capitalize');
-const {TRASH_SEGMENTS} = require('../../const');
-const Utils            = require('../../utils');
+const capitalize          = require('lodash/capitalize');
+const { WEBSITE_URL }     = require('../../config');
+const { TRASH_SEGMENTS }  = require('../../const');
+const Utils               = require('../../utils');
 
 const _ = { capitalize };
 
@@ -46,6 +47,12 @@ module.exports = function({Room, Picture}) {
         .then((picture) => {
           return picture ? picture.url : null;
         });
+      },
+    }, {
+      field: 'preview',
+      type: 'String',
+      get(object) {
+        return `${WEBSITE_URL}/en-US/room/${object.id}`;
       },
     }],
     actions: [{

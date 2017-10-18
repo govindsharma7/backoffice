@@ -30,7 +30,8 @@ module.exports = function(app) {
     return res.send('pong');
   });
 
-  app.post('/forest/login', makePublic, (req, res) => {
+  app.post('/forest/log-in', makePublic, (req, res) => {
+    console.log(req.body);
     return Promise.resolve()
       .then(() => {
         return fetch(`${config.REST_API_URL}/forest/sessions`, {
