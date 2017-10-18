@@ -1,5 +1,6 @@
 const Promise           = require('bluebird');
 const D                 = require('date-fns');
+const fetch             = require('node-fetch');
 const aws               = require('./vendor/aws');
 const geocode           = require('./vendor/geocode');
 const payline           = require('./vendor/payline');
@@ -30,8 +31,7 @@ module.exports = function(app) {
     return res.send('pong');
   });
 
-  app.post('/forest/log-in', makePublic, (req, res) => {
-    console.log(req.body);
+  app.post('/forest/login', makePublic, (req, res) => {
     return Promise.resolve()
       .then(() => {
         return fetch(`${config.REST_API_URL}/forest/sessions`, {
