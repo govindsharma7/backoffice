@@ -4,17 +4,11 @@ const Cors              = require('cors');
 const BodyParser        = require('body-parser');
 const Liana             = require('forest-express-sequelize');
 const values            = require('lodash/values');
-const Promise           = require('bluebird');
 const cookieParser      = require('cookie-parser');
 const config            = require('./config');
 const models            = require('./models');
-const aws               = require('./vendor/aws');
-const geocode           = require('./vendor/geocode');
-const payline           = require('./vendor/payline');
-const sendinblue        = require('./vendor/sendinblue');
-const webmerge          = require('./vendor/webmerge');
+const routes            = require('./routes');
 const checkToken        = require('./middlewares/checkToken');
-const makePublic        = require('./middlewares/makePublic');
 const smartCollections  = require('./smart-collections');
 
 const parentApp = Express();
@@ -72,25 +66,8 @@ _.values(models).forEach(function(model) {
   }
 });
 
-// Global route used to verify that the backend is up, running and connected to
-// the DB and all external services
-app.get('/ping', makePublic, async (req, res) => {
-  try {
-    await Promise.all([
-      models.Client.findOne(),
-      aws.pingService(),
-      geocode('16 rue de Condé, 69002, Lyon'),
-      payline.pingService(),
-      sendinblue.pingService(),
-      webmerge.pingService(),
-    ]);
-  }
-  catch (e) {
-    return res.status(500).send(e);
-  }
-
-  return res.send('pong');
-});
+// Register non-model-specific routes (e.g. ping and login)
+routes(app);
 
 parentApp.use(app);
 
