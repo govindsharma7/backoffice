@@ -14,6 +14,7 @@ payline.pingService = function() {
       if ( error.code !== '02532' ) {
         throw error;
       }
+      console.error(error);
     });
 };
 

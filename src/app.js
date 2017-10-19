@@ -26,11 +26,19 @@ app.use(Jwt({
   secret: config.FOREST_AUTH_SECRET,
   credentialsRequired: false,
   getToken(request) {
-    if (request.cookies && request.cookies.authorized
-      && request.cookies.authorized.split(' ')[0] === 'Bearer') {
+    if (
+      request.cookies && request.cookies.authorized &&
+      request.cookies.authorized.split(' ')[0] === 'Bearer'
+    ) {
       return request.cookies.authorized.split(' ')[1];
     }
-    if (request.query && request.query.sessionToken) {
+    if (
+      request.headers && request.headers.authorization &&
+      request.headers.authorization.split(' ')[0] === 'Bearer'
+    ) {
+      return request.headers.authorization.split(' ')[1];
+    }
+    if ( request.query && request.query.sessionToken ) {
       return request.query.sessionToken;
     }
     return null;
