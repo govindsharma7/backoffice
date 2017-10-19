@@ -50,6 +50,7 @@ module.exports = function({Room, Picture}) {
       },
     }, {
       field: 'preview',
+      description: 'frontend preview url',
       type: 'String',
       get(object) {
         return `${WEBSITE_URL}/en-US/room/${object.id}`;

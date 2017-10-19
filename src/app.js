@@ -30,6 +30,9 @@ app.use(Jwt({
       && request.cookies.authorized.split(' ')[0] === 'Bearer') {
       return request.cookies.authorized.split(' ')[1];
     }
+    if (request.query && request.query.sessionToken) {
+      return request.query.sessionToken;
+    }
     return null;
   },
 }));
