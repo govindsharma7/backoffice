@@ -41,6 +41,9 @@ module.exports = (sequelize, DataTypes) => {
         );
       },
     },
+    roomNumber: {
+      type:                   DataTypes.VIRTUAL(DataTypes.INTEGER),
+    },
   }, {
     paranoid: true,
     scopes: TRASH_SCOPES,

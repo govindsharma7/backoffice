@@ -69,6 +69,7 @@ module.exports = function(app, models, Renting) {
       .then(Utils.createSuccessHandler(res, 'Lease'))
       .catch(Utils.logAndSend(res));
   });
+
   app.post('/forest/actions/create-deposit-order', LEA, (req, res) => {
     const {ids} = req.body.data.attributes;
 

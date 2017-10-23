@@ -55,6 +55,14 @@ module.exports = function({Room, Picture}) {
       get(object) {
         return `${WEBSITE_URL}/en-US/room/${object.id}`;
       },
+    }, {
+      field: 'Room Number',
+      type: 'Number',
+      set(object, value) {
+        object.roomNumber = value;
+        console.log(object);
+        return object;
+      },
     }],
     actions: [{
       name: 'Restore Room',
