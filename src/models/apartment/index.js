@@ -22,11 +22,7 @@ module.exports = (sequelize, DataTypes) => {
     addressCountry:           DataTypes.ENUM('france'),
     code:                     DataTypes.STRING,
     floor:                    DataTypes.INTEGER,
-    roomCount: {
-      type:                   DataTypes.INTEGER,
-      required: true,
-      allowNull: false,
-    },
+    roomCount:                DataTypes.INTEGER,
     latLng:                   DataTypes.STRING,
     floorArea:                DataTypes.FLOAT,
     status: {
