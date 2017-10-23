@@ -52,8 +52,9 @@ module.exports = (app, models, Order) => {
   });
 
   app.get('/forest/actions/pdf-invoice/:filename', makePublic, (req, res) => {
-    const { lang, orderId } = req.params;
+    const { lang, orderId } = req.query;
 
+    console.log(lang, orderId);
     return Chromeless
       .invoiceAsPdf(orderId, lang)
       .then((pdf) => {
