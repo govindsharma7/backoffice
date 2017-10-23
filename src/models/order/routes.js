@@ -51,12 +51,14 @@ module.exports = (app, models, Order) => {
       .catch(Utils.logAndSend(res));
   });
 
-  app.get('/forest/actions/pdf-invoice/:filename', makePublic, async(req, res) => {
+  app.get('/forest/actions/pdf-invoice/:filename', makePublic, (req, res) => {
     const { lang, orderId } = req.params;
 
-    const pdf = await Chromeless.invoiceAsPdf(orderId, lang);
-
-    res.redirect(pdf);
+    return Chromeless
+      .invoiceAsPdf(orderId, lang)
+      .then((pdf) => {
+        return res.redirect(pdf);
+      });
   });
 
   app.post('/forest/actions/payment-notification', checkToken, (req, res) => {
