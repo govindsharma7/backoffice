@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
       // allowNull: false,
     },
     district:                 DataTypes.STRING,
+    descriptionEn:            DataTypes.TEXT,
+    descriptionFr:            DataTypes.TEXT,
+    elevator:                 DataTypes.BOOLEAN,
+    floorPlan:                DataTypes.STRING,
   }, {
     paranoid: true,
     scopes: Object.assign({
