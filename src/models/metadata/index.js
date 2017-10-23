@@ -48,9 +48,12 @@ module.exports = (sequelize, DataTypes) => {
     const LEA = Liana.ensureAuthenticated;
 
     app.get('/forest/Metadata', (req, res, next) => {
+      console.log(req.query);
       return (
         req.query.filterType === 'and' &&
-        /MetadatableIdnamemetadatable/.test(Object.keys(req.query.filter).join(''))
+        req.query.filter &&
+        req.query.filter.name === 'clientIdentity' &&
+        req.query.filter.metadatable === 'Client'
       ) ?
         makePublic(req, res, next) :
         LEA(req, res, next);

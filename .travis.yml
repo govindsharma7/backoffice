@@ -10,7 +10,7 @@ before_install:
   -in .env.js.enc -out .env.js -d
 - curl -sfLO https://raw.githubusercontent.com/apex/up/master/install.sh
 install:
-- sh install.sh -b ./bin v0.2.10
+- sh install.sh -b ./bin v0.3.0
 - ./bin/up version
 - npm install
 deploy:
