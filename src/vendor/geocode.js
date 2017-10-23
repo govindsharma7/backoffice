@@ -14,10 +14,10 @@ function geocode(address) {
     .then((json) => {
       return json.results[0].geometry.location;
     });
-};
+}
 
 geocode.pingService = function() {
   return geocode('16 Rue de Condé, 69007, Lyon');
-}
+};
 
-module.exports =
+module.exports = geocode;
