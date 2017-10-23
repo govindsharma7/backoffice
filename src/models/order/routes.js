@@ -1,9 +1,12 @@
-const Liana       = require('forest-express-sequelize');
-const Promise     = require('bluebird');
-const makePublic  = require('../../middlewares/makePublic');
-const checkToken  = require('../../middlewares/checkToken');
-const Utils       = require('../../utils');
-const { destroySuccessHandler } = require('../../utils/destroyAndRestoreSuccessHandler');
+const Liana             = require('forest-express-sequelize');
+const Promise           = require('bluebird');
+const Chromeless        = require('../../vendor/chromeless');
+const makePublic        = require('../../middlewares/makePublic');
+const checkToken        = require('../../middlewares/checkToken');
+const Utils             = require('../../utils');
+const {
+  destroySuccessHandler,
+}                       = require('../../utils/destroyAndRestoreSuccessHandler');
 
 const Serializer  = Liana.ResourceSerializer;
 
@@ -40,14 +43,20 @@ module.exports = (app, models, Order) => {
     Order
       .findAll(
         { where: { id: { $in: req.body.data.attributes.ids } },
-        // include draft orders
-//        paranoid: false,
       })
       .then((orders) => {
         return Order.ninjaCreateInvoices(orders);
       })
       .then(Utils.createSuccessHandler(res, 'Ninja invoice'))
       .catch(Utils.logAndSend(res));
+  });
+
+  app.get('/forest/actions/pdf-invoice/:filename', makePublic, async(req, res) => {
+    const { lang, orderId } = req.params;
+
+    const pdf = await Chromeless.invoiceAsPdf(orderId, lang);
+
+    res.redirect(pdf);
   });
 
   app.post('/forest/actions/payment-notification', checkToken, (req, res) => {
