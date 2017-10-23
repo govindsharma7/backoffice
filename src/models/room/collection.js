@@ -60,7 +60,6 @@ module.exports = function({Room, Picture}) {
       type: 'Number',
       set(object, value) {
         object.roomNumber = value;
-        console.log(object);
         return object;
       },
     }],
