@@ -15,16 +15,18 @@ function connect() {
   });
 }
 
-async function invoiceAsPdf(orderId, lang) {
+function invoiceAsPdf(orderId, lang) {
   const chromeless = connect();
-  const pdf = await chromeless
+
+  return chromeless
     .goto(`${WEBSITE_URL}/${lang}/invoice/${orderId}`)
     .wait('div.invoice-content')
-    .pdf();
+    .pdf()
+    .then((pdf) => {
+      chromeless.end();
 
-  chromeless.end();
-
-  return pdf;
+      return pdf;
+    });
 }
 
 function pingService() {
