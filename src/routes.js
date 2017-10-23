@@ -6,22 +6,24 @@ const geocode           = require('./vendor/geocode');
 const payline           = require('./vendor/payline');
 const sendinblue        = require('./vendor/sendinblue');
 const webmerge          = require('./vendor/webmerge');
+const chromeless        = require('./vendor/chromeless');
 const config            = require('./config');
 const models            = require('./models');
 const makePublic        = require('./middlewares/makePublic');
 
 module.exports = function(app) {
   // Global route used to verify that the backend is up, running and connected to
-  // the DB and all external services
+  // the DB as well as all external services
   app.get('/ping', makePublic, async (req, res) => {
     try {
       await Promise.all([
         models.Client.findOne(),
         aws.pingService(),
-        geocode('16 rue de Condé, 69002, Lyon'),
+        geocode.pingService(),
         payline.pingService(),
         sendinblue.pingService(),
         webmerge.pingService(),
+        chromeless.pingService(),
       ]);
     }
     catch (e) {

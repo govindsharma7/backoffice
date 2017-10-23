@@ -6,20 +6,35 @@ const {
   WEBSITE_URL,
 }                 = require('../config');
 
-const chromeless = new Chromeless( NODE_ENV === 'development' ? undefined : {
-  remote: {
-    endpointUrl: CHROMELESS_ENDPOINT,
-    apiKey: CHROMELESS_SESSION_KEY,
-  },
-});
+function connect() {
+  return new Chromeless( NODE_ENV === 'development' ? undefined : {
+    remote: {
+      endpointUrl: CHROMELESS_ENDPOINT,
+      apiKey: CHROMELESS_SESSION_KEY,
+    },
+  });
+}
 
-function invoiceAsPdf(orderId, lang) {
-  return chromeless
+async function invoiceAsPdf(orderId, lang) {
+  const chromeless = connect();
+  const pdf = await chromeless
     .goto(`${WEBSITE_URL}/${lang}/invoice/${orderId}`)
     .wait('div.invoice-content')
     .pdf();
+
+  chromeless.end();
+
+  return pdf;
+}
+
+function pingService() {
+  return connect()
+    .goto('https://www.google.com')
+    .await('body')
+    .end();
 }
 
 module.exports = {
   invoiceAsPdf,
+  pingService,
 };
