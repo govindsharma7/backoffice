@@ -29,6 +29,7 @@ module.exports = function(app, models, Room) {
             beds: room.beds,
             descriptionFr: room.descriptionFr,
             descriptionEn: room.descriptionEn,
+            descriptionEs: room.descriptionEs,
           }),
           _apartment.update({
             addressStreet: apartment.addressStreet,
@@ -36,12 +37,13 @@ module.exports = function(app, models, Room) {
             addressCity: apartment.addressCity,
             addressCountry: apartment.addressCountry,
             floor: apartment.floor,
-            district: apartment.district,
+            DistrictId: `${apartment.addressCity}-${apartment.district}`,
             elevator: apartment.elevator,
             floorArea: apartment.floorArea,
             code: apartment.code,
             descriptionFr: apartment.descriptionFr,
             descriptionEn: apartment.descriptionEn,
+            descriptionEs: apartment.descriptionEs,
           }),
         ]);
       })

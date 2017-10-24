@@ -14,6 +14,7 @@ const renting     = require('./renting');
 const room        = require('./room');
 const setting     = require('./setting');
 const term        = require('./term');
+const district    = require('./district');
 
 const sequelize = new Sequelize(
   config.SEQUELIZE_DATABASE,
@@ -48,6 +49,7 @@ const db = {
   Room: room(sequelize, Sequelize.DataTypes),
   Setting: setting(sequelize, Sequelize.DataTypes),
   Term: term(sequelize, Sequelize.DataTypes),
+  District: district(sequelize, Sequelize.DataTypes),
 };
 
 // When querying a specific record by its id, remove the default paranoid scope

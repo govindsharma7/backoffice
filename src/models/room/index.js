@@ -34,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     descriptionEn:            DataTypes.TEXT,
     descriptionFr:            DataTypes.TEXT,
+    descriptionEs:            DataTypes.TEXT,
     availableAt: {
       type:                   DataTypes.VIRTUAL(DataTypes.DATE),
       get() {
