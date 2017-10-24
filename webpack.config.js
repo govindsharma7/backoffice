@@ -1,5 +1,6 @@
 // Config inspired from https://github.com/andywer/webpack-blocks#usage
 const fs                = require('fs');
+const path              = require('path');
 const BabelMinifyPlugin = require('babel-minify-webpack-plugin');
 const webpack           = require('webpack');
 
@@ -25,6 +26,10 @@ const productionPlugins = [
 module.exports = createConfig([
   customConfig({
     target: 'node',
+    // This is required for __dirname to be correct in src/vendor/payline/index.js
+    node: {
+      __dirname: true,
+    },
     output: {
       libraryTarget: 'commonjs2',
     },
