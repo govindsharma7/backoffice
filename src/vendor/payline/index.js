@@ -5,6 +5,9 @@ const config  = require('../../config');
 
 const wsdlPath = path.resolve(__dirname, 'WebPaymentAPI-v4-production.wsdl');
 
+// Webpack needs a special config to get path.resolve(__dirname, ...) to work
+// This test should prevent pushing to prod if that config ever breaks
+// (needless to say, if this test throws, removing it isn't the solution!)
 if ( !fs.existsSync(wsdlPath) ) {
   throw new Error('Payline\'s WSDL file not found');
 }
