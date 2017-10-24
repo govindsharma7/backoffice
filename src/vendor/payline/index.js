@@ -16,7 +16,7 @@ const payline = new Payline(
   config.PAYLINE_MERCHANT_ID,
   config.PAYLINE_ACCESS_KEY,
   config.PAYLINE_CONTRACT_NUMBER,
-  config.PAYLINE_HOMOLOGATION === true ? undefined : wsdlPath
+  config.PAYLINE_MODE === 'homologation' ? undefined : wsdlPath
 );
 
 payline.pingService = function() {
