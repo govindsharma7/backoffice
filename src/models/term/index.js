@@ -55,6 +55,11 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       as: 'Renting',
     });
+    Term.belongsTo(models.District, {
+      foreignKey: 'TermableId',
+      constraints: false,
+      as: 'District',
+    });
   };
 
   // Term.addTaxonomy = function(options) {

@@ -31,9 +31,9 @@ module.exports = (sequelize, DataTypes) => {
       // required: true,
       // allowNull: false,
     },
-    district:                 DataTypes.STRING,
     descriptionEn:            DataTypes.TEXT,
     descriptionFr:            DataTypes.TEXT,
+    descriptionEs:            DataTypes.TEXT,
     elevator:                 DataTypes.BOOLEAN,
     floorPlan:                DataTypes.STRING,
   }, {
@@ -59,6 +59,9 @@ module.exports = (sequelize, DataTypes) => {
   const {models} = sequelize;
 
   Apartment.associate = () => {
+    Apartment.belongsTo(models.District, {
+      constraints: false,
+    });
     Apartment.hasMany(models.Room);
     Apartment.hasMany(models.Picture, {
       foreignKey: 'PicturableId',
@@ -84,10 +87,15 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Apartment.prototype.calculateLatLng = function(addressValues = this.dataValues) {
+    if ( !addressValues.addressStreet && !addressValues.addressZip
+        && !addressValues.addressCountry ) {
+      return this;
+    }
+
     return Geocode([
-        addressValues.addressStreet,
-        addressValues.addressZip,
-        addressValues.addressCountry,
+      addressValues.addressStreet,
+      addressValues.addressZip,
+      addressValues.addressCountry,
       ].join(','))
       .then(({lat, lng}) => {
         this.set('latLng', `${lat},${lng}`);
