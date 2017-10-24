@@ -6,7 +6,7 @@ const models     = require('../src/models');
 const SendinBlue = require('../src/vendor/sendinblue');
 const {
   SENDINBLUE_TEMPLATE_IDS,
-  PAYMENT_URL,
+  WEBSITE_URL,
 }                = require('../src/config');
 
 const { Client } = models;
@@ -39,7 +39,7 @@ return Client
                 D.format(order.dueDate, 'MMMM', {locale: fr}),
                 AMOUNT: amount / 100,
                 LATE_FEES: orderItems[0].unitPrice * orderItems[0].quantity / 100,
-                LINK: `${PAYMENT_URL}/${lang}/payment/${order.id}`,
+                LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
               },
           });
         });

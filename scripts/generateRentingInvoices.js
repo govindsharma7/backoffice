@@ -7,7 +7,7 @@ const models                = require('../src/models');
 const SendinBlue            = require('../src/vendor/sendinblue');
 const {
   SENDINBLUE_TEMPLATE_IDS,
-  PAYMENT_URL,
+  WEBSITE_URL,
 }                           =  require('../src/config');
 
 
@@ -60,7 +60,7 @@ return Client.scope(
           return order.pickReceiptNumber();
         })
         .tap(([order]) => {
-          return order.ninjaCreate();
+          return order.ninjaId ? order : order.ninjaCreate();
         })
         .then(([order]) => {
           return Promise.all([
@@ -78,7 +78,7 @@ return Client.scope(
               attributes: {
                 NAME: `${client.firstName} ${client.lastName}`,
                 AMOUNT: order.get('amount') / 100,
-                LINK: `${PAYMENT_URL}/${lang}/payment/${id}`,
+                LINK: `${WEBSITE_URL}/${lang}/payment/${id}`,
               },
           });
         })

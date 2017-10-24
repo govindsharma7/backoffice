@@ -245,6 +245,10 @@ module.exports = (sequelize, DataTypes) => {
     var settingId;
     var strNumber;
 
+    if ( this.receiptNumber ) {
+      return Promise.resolve(this);
+    }
+
     switch (this.type) {
       case 'deposit':
         settingId = 'deposit-counter';
@@ -360,7 +364,7 @@ module.exports = (sequelize, DataTypes) => {
         return order.ninjaId == null && order.amount !== 0;
       })
       .mapSeries((order) => {
-        return ( order.receiptNumber ? order : order.pickReceiptNumber() );
+        return order.pickReceiptNumber();
       })
       .mapSeries((order) => {
         return order.ninjaCreate();

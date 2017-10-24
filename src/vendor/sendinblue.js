@@ -37,7 +37,10 @@ function sendEmail(id, data = {}) {
     {},
     defaults,
     data,
-    NODE_ENV !== 'production' ? {emailTo: ['vquesnel@chez-nestor.com']} : {});
+    { emailTo: NODE_ENV === 'production' ?
+      data.emailTo : getSandboxEmail(data.emailTo),
+    }
+  );
 
   if (options.emailTo.length > 0) {
     return SMTPApi.sendTemplate(id, options)
@@ -49,18 +52,19 @@ function sendEmail(id, data = {}) {
   return true;
 }
 
+// In any environment but production, we always replace the email domain
+// with our own, to make sure we never send an email to a real client
+function getSandboxEmail(email) {
+  return `lrbabe+${email.replace(/@(.*)\.[^.]+$/, '_at_$1')}@chez-nestor.com`;
+}
+
 function getContact(email) {
   return ContactsApi.getContactInfo(email);
 }
 
 function createContact(email, {client, listIds}) {
   return ContactsApi.createContact({
-    // In any environment but production, we always replace the email domain
-    // with our own, to make sure we never send an email to a real client
-    email: email.replace(
-      /@(.*)\.[^.]+$/,
-      NODE_ENV === 'production' ? '$&' : '_$1@chez-nestor.com'
-    ),
+    email: NODE_ENV === 'production' ? email : getSandboxEmail(email),
     attributes: serializeClient(client),
     listIds: listIds === null ?
       [SENDINBLUE_LIST_IDS.prospects[client.preferredLanguage]] : listIds,
