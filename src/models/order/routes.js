@@ -21,7 +21,7 @@ module.exports = (app, models, Order) => {
   // "cannot send headers" error in the console, and no error displayed in
   // Forest
   app.delete('/forest/Order/:orderId', LEA, (req, res) => {
-    Order
+    return Order
       .findById(req.params.orderId)
       .then((order) => {
         return Promise.all([
@@ -40,7 +40,7 @@ module.exports = (app, models, Order) => {
   });
 
   app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
-    Order
+    return Order
       .findAll(
         { where: { id: { $in: req.body.data.attributes.ids } },
       })
@@ -48,6 +48,24 @@ module.exports = (app, models, Order) => {
         return Order.ninjaCreateInvoices(orders);
       })
       .then(Utils.createSuccessHandler(res, 'Ninja invoice'))
+      .catch(Utils.logAndSend(res));
+  });
+
+  app.get('/forest/Invoice/:orderId', makePublic, (req, res) => {
+    return Order.scope('invoice')
+      .findById(req.params.orderId)
+      .then((order) => {
+        return Promise.all([
+          order.toJSON(),
+          order.getCalculatedProps(),
+        ]);
+      })
+      .then(([order, calculatedProps]) => {
+        return res.send(Object.assign(
+          order,
+          calculatedProps
+        ));
+      })
       .catch(Utils.logAndSend(res));
   });
 
@@ -83,7 +101,7 @@ module.exports = (app, models, Order) => {
   });
 
   app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) => {
-    models.Credit.scope('order')
+    return models.Credit.scope('order')
       .findAll({ where: { '$Payment.OrderId$': req.params.orderId } })
       .then((credits) => {
         return new Serializer(Liana, models.Credit, credits, {}, {
@@ -99,7 +117,7 @@ module.exports = (app, models, Order) => {
   app.post('/forest/actions/cancel-invoice', LEA, (req, res) => {
     const {ids} = req.body.data.attributes;
 
-    Promise.resolve()
+    return Promise.resolve()
       .then(() => {
         if ( ids.length > 1 ) {
           throw new Error('Can\'t cancel multiple orders');

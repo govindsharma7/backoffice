@@ -148,6 +148,29 @@ module.exports = (sequelize, DataTypes) => {
       }],
       group: ['Order.id'],
     });
+
+    Order.addScope('invoice', {
+      include: [{
+        model: models.Client,
+        include: [{
+          model: models.Metadata,
+          required: false,
+          where: { name: 'clientIdentity' },
+        }],
+      }, {
+        model: models.OrderItem,
+        include: [{
+          model: models.Renting,
+          required: false,
+          include: [{
+            model: models.Room,
+            include: [{
+              model: models.Apartment,
+            }],
+          }],
+        }],
+      }],
+    });
   };
 
   Order.prototype.getTotalPaidAndRefund = function() {
