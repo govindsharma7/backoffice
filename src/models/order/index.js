@@ -137,6 +137,7 @@ module.exports = (sequelize, DataTypes) => {
 
     Order.addScope('amount', {
       attributes: [
+        'id',
         [sequelize.fn('sum', sequelize.literal(
           `${unitPrice} * ${quantity} * ( 1 + IFNULL(${vatRate}, 0) )`
         )), 'amount'],

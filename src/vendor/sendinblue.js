@@ -38,7 +38,7 @@ function sendEmail(id, data = {}) {
     defaults,
     data,
     { emailTo: NODE_ENV === 'production' ?
-      data.emailTo : getSandboxEmail(data.emailTo),
+      data.emailTo : data.emailTo.map(getSandboxEmail),
     }
   );
 

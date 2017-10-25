@@ -83,7 +83,7 @@ module.exports = (app, models, Order) => {
       });
   });
 
-  app.get('/forest/actions/send-rent-request', LEA, (req, res) => {
+  app.post('/forest/actions/send-rent-request', LEA, (req, res) => {
     return Order.scope('amount')
       .findAll({
         where: { id: { $in: req.body.data.attributes.ids } },

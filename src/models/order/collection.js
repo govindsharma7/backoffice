@@ -67,6 +67,8 @@ module.exports = function({Order}) {
       name: 'Destroy Order',
     }, {
       name: 'Cancel Invoice',
+    }, {
+      name: 'Send Rent Request',
     }],
     segments: TRASH_SEGMENTS,
   };
