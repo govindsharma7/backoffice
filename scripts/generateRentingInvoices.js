@@ -5,10 +5,6 @@ const D                     = require('date-fns');
 const _                     = require('lodash');
 const models                = require('../src/models');
 const Sendinblue            = require('../src/vendor/sendinblue');
-const {
-  SENDINBLUE_TEMPLATE_IDS,
-  WEBSITE_URL,
-}                           =  require('../src/config');
 
 
 const {Client} = models;
@@ -63,12 +59,9 @@ return Client.scope(
           return order.ninjaId ? order : order.ninjaCreate();
         })
         .then(([order]) => {
-          return Promise.all([
-            models.Order.scope('amount').findById(order.id),
-            order.id,
-          ]);
+          return models.Order.scope('amount').findById(order.id);
         })
-        .then(([order, id]) => {
+        .then((order) => {
           return Sendinblue.sendRentRequest(
             { order, client, amount: order.get('amount') }
           );
