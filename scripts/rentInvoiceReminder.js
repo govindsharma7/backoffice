@@ -26,5 +26,5 @@ return Order.scope('rentOrders')
   })
   .filter(([, { balance }]) => { return balance < 0; })
   .map(([order, { amount }]) => {
-    return Sendinblue.sendRentReminder(order, amount);
+    return Sendinblue.sendRentReminder({ order, client: order.Client, amount });
   });

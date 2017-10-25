@@ -1,6 +1,7 @@
 const Liana             = require('forest-express-sequelize');
 const Promise           = require('bluebird');
 const Chromeless        = require('../../vendor/chromeless');
+const Sendinblue        = require('../../vendor/sendinblue');
 const makePublic        = require('../../middlewares/makePublic');
 const checkToken        = require('../../middlewares/checkToken');
 const Utils             = require('../../utils');
@@ -41,8 +42,8 @@ module.exports = (app, models, Order) => {
 
   app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
     return Order
-      .findAll(
-        { where: { id: { $in: req.body.data.attributes.ids } },
+      .findAll({
+        where: { id: { $in: req.body.data.attributes.ids } },
       })
       .then((orders) => {
         return Order.ninjaCreateInvoices(orders);
@@ -71,13 +72,30 @@ module.exports = (app, models, Order) => {
 
   app.get('/forest/actions/pdf-invoice/:filename', makePublic, (req, res) => {
     const { lang, orderId } = req.query;
+    const { filename } = req.params;
 
-    console.log(lang, orderId);
     return Chromeless
       .invoiceAsPdf(orderId, lang)
       .then((pdf) => {
-        return res.redirect(pdf);
+        return res
+          .set('Content-Disposition', `filename=${filename}`)
+          .redirect(pdf);
       });
+  });
+
+  app.get('/forest/actions/send-rent-request', LEA, (req, res) => {
+    return Order.scope('amount')
+      .findAll({
+        where: { id: { $in: req.body.data.attributes.ids } },
+        include: [{ model: models.Client }],
+      })
+      .map((order) => {
+        return Sendinblue.sendRentRequest(
+          { order, amount: order.get('amount'), client: order.Client }
+        );
+      })
+      .then(Utils.createSuccessHandler(res, 'Rent Request'))
+      .catch(Utils.logAndSend(res));
   });
 
   app.post('/forest/actions/payment-notification', checkToken, (req, res) => {

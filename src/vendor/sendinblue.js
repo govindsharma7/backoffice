@@ -115,22 +115,36 @@ function serializeWelcomeEmail(renting) {
   };
 }
 
-function sendRentReminder(order, amount) {
-  const { Client } = order;
+function sendRentReminder({ order, client, amount }) {
+  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
   return sendEmail(
-    SENDINBLUE_TEMPLATE_IDS.dueDate[Client.preferredLanguage],
+    SENDINBLUE_TEMPLATE_IDS.dueDate[client.preferredLanguage],
     {
-      emailTo: [Client.email],
+      emailTo: [client.email],
       attributes: {
-        FIRSTNAME: Client.firstName,
-        MONTH: Client.preferredLanguage === 'en' ?
-          D.format(order.dueDate, 'MMMM') :
-          D.format(order.dueDate, 'MMMM', {locale: fr}),
+        FIRSTNAME: client.firstName,
+        MONTH: D.format(order.dueDate, 'MMMM', lang === 'fr-FR' ? { locale: fr } : null ),
         AMOUNT: amount / 100,
-        LINK: `${WEBSITE_URL}/${Client.preferredLanguage}/payment/${order.id}`,
+        LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
   });
+}
+
+function sendRentRequest({ order, client, amount }) {
+  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+
+  return sendEmail(
+    SENDINBLUE_TEMPLATE_IDS.rentInvoice[client.preferredLanguage],
+    {
+      emailTo: [client.email],
+      attributes: {
+        NAME: `${client.firstName} ${client.lastName}`,
+        AMOUNT: amount / 100,
+        LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
+      },
+    }
+  );
 }
 
 function pingService() {
@@ -145,5 +159,6 @@ module.exports = {
   serializeClient,
   sendWelcomeEmail,
   sendRentReminder,
+  sendRentRequest,
   pingService,
 };

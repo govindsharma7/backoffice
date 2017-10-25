@@ -106,7 +106,6 @@ module.exports = (sequelize, DataTypes) => {
           model: models.Renting,
         }],
       }],
-//      paranoid: false,
     });
 
     Order.addScope('totalPaidRefund', {
