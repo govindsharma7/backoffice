@@ -1,10 +1,12 @@
 const uuid           = require('uuid/v4');
 const Liana          = require('forest-express-sequelize');
 const Promise        = require('bluebird');
+const padStart       = require('lodash/padStart');
 const payline        = require('../../vendor/payline');
 const Utils          = require('../../utils');
 const makePublic     = require('../../middlewares/makePublic');
 
+const _ = { padStart };
 
 module.exports = function(app, models, Payment) {
   const LEA = Liana.ensureAuthenticated;
@@ -98,7 +100,7 @@ module.exports = function(app, models, Payment) {
             {
               number,
               type,
-              expirationDate: `${expiryMonth}${expiryYear}`.padStart(4, '0'),
+              expirationDate: _.padStart(`${expiryMonth}${expiryYear}`, 4, '0'),
               holder,
               cvx,
             },
