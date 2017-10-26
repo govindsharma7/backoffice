@@ -90,9 +90,18 @@ module.exports = (app, models, Order) => {
         include: [{ model: models.Client }],
       })
       .map((order) => {
-        return Sendinblue.sendRentRequest(
-          { order, amount: order.get('amount'), client: order.Client }
-        );
+        return Promise.all([
+          order,
+          Sendinblue.sendRentRequest(
+            { order, amount: order.get('amount'), client: order.Client }
+          ),
+        ]);
+      })
+      .then(([order, messageId]) => {
+        return order.createMetadatum({
+          name: 'messageId',
+          value: messageId,
+        });
       })
       .then(Utils.createSuccessHandler(res, 'Rent Request'))
       .catch(Utils.logAndSend(res));

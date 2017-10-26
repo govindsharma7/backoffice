@@ -6,7 +6,7 @@ const D                    = require('date-fns');
 const Multer               = require('multer');
 const Liana                = require('forest-express-sequelize');
 const Ninja                = require('../../vendor/invoiceninja');
-const SendinBlue           = require('../../vendor/sendinblue');
+const Sendinblue           = require('../../vendor/sendinblue');
 const Utils                = require('../../utils');
 const { INVOICENINJA_URL } = require('../../const');
 const {
@@ -267,7 +267,7 @@ module.exports = (app, models, Client) => {
             client,
             room: client.Rentings[0].Room,
           }),
-          SendinBlue.updateContact(
+          Sendinblue.updateContact(
             client.email,
             {
               listIds: [
@@ -304,12 +304,14 @@ module.exports = (app, models, Client) => {
       })
       .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
         return Promise.all([
-          SendinBlue.sendEmail(
+          emailToFr.length && Sendinblue.sendTemplateEmail(
             SENDINBLUE_TEMPLATE_IDS.newHousemate.fr,
-            { emailTo: emailToFr, attributes: attributesFr }),
-          SendinBlue.sendEmail(
+            { emailTo: emailToFr, attributes: attributesFr }
+          ),
+          emailToEn.length && Sendinblue.sendTemplateEmail(
             SENDINBLUE_TEMPLATE_IDS.newHousemate.en,
-            { emailTo: emailToEn, attributes: attributesEn}),
+            { emailTo: emailToEn, attributes: attributesEn }
+          ),
         ]);
       })
       .then(Utils.createSuccessHandler(res, 'Client metadata'))

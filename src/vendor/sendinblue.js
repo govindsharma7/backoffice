@@ -32,7 +32,7 @@ function serializeClient(client) {
   };
 }
 
-function sendEmail(id, data = {}) {
+function sendTemplateEmail(id, data = {}) {
   const options = Object.assign(
     {},
     defaults,
@@ -43,13 +43,10 @@ function sendEmail(id, data = {}) {
   );
 
   if (options.emailTo.length > 0) {
-    return SMTPApi.sendTemplate(id, options)
-      .then(() => {
-        return true ;
-      });
+    return SMTPApi.sendTemplate(id, options);
   }
 
-  return true;
+  return false;
 }
 
 // In any environment but production, we always replace the email domain
@@ -85,7 +82,7 @@ function updateContact(email, {listIds, unlinkListIds, client}) {
 }
 
 function sendWelcomeEmail(renting) {
-  return SendinBlueApi.sendEmail(
+  return SendinBlueApi.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.welcome[renting.Client.preferredLanguage],
     serializeWelcomeEmail(renting)
   );
@@ -118,7 +115,7 @@ function serializeWelcomeEmail(renting) {
 function sendRentReminder({ order, client, amount }) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
-  return sendEmail(
+  return sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.dueDate[client.preferredLanguage],
     {
       emailTo: [client.email],
@@ -134,7 +131,7 @@ function sendRentReminder({ order, client, amount }) {
 function sendRentRequest({ order, client, amount }) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
-  return sendEmail(
+  return sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.rentInvoice[client.preferredLanguage],
     {
       emailTo: [client.email],
@@ -152,7 +149,7 @@ function pingService() {
 }
 
 module.exports = {
-  sendEmail,
+  sendTemplateEmail,
   updateContact,
   createContact,
   getContact,

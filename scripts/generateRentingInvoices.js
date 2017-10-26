@@ -62,9 +62,16 @@ return Client.scope(
           return models.Order.scope('amount').findById(order.id);
         })
         .then((order) => {
-          return Sendinblue.sendRentRequest(
-            { order, client, amount: order.get('amount') }
-          );
+          return Promise.all([
+            order,
+            Sendinblue.sendRentRequest({ order, client, amount: order.get('amount') }),
+          ]);
+        })
+        .then(([order, messageId]) => {
+          return order.createMetadatum({
+            name: 'messageId',
+            value: messageId,
+          });
         })
         .catch((err) => {
           console.log(err);
