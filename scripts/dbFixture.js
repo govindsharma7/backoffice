@@ -35,7 +35,8 @@ return models.sequelize.sync(/*{ force: true }*/)
 //      'products.json',
 //      'rentings.json',
 //      'settings.json',
-      'pictures.json',
+//      'pictures.json',
+        'descriptionDistrict.json',
 
     ].map((file) => {
       const {model, records} = require(path.join('..', 'data', file));
@@ -126,7 +127,6 @@ return models.sequelize.sync(/*{ force: true }*/)
           });
         })
         .then((records) => {
-          console.log(`Loading ${records.length} records of model "${model}"`);
           return models[model].bulkCreate(records, { hooks: false });
         })
         .catch((err) => {
