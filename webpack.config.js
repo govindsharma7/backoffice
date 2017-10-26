@@ -66,11 +66,17 @@ module.exports = createConfig([
     'process.env.NODE_ENV': process.env.NODE_ENV,
   }),
   babel({ presets: [
-    ['env', { targets: { node: '6.10' } }],
+    ['env', {
+      targets: { node: '6.10' },
+      useBuiltIns: 'usage',
+    }],
   ]}),
   env('production', [
     babel({ presets: [
-      ['env', { targets: { node: '6.10' } }],
+      ['env', {
+        targets: { node: '6.10' },
+        useBuiltIns: 'usage',
+      }],
       // Don't minify at the file level
       ['minify', {
         mangle: false,
