@@ -98,7 +98,7 @@ module.exports = function(app, models, Payment) {
             {
               number,
               type,
-              expirationDate: expiryMonth + expiryYear,
+              expirationDate: `${expiryMonth}${expiryYear}`.padStart(4, '0'),
               holder,
               cvx,
             },
