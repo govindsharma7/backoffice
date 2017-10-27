@@ -226,7 +226,7 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     // Others must be 'cancelled'
-    return models.sequelize.transaction((transaction) => {
+    return sequelize.transaction((transaction) => {
       const cancelPromise = Order.create({
         type: 'credit',
         label: `Credit Order - #${this.receiptNumber}`,
