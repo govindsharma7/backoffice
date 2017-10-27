@@ -48,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
       // allowNull: false,
     },
     status: {
-      type:                     DataTypes.ENUM('draft', 'active'),
+      type:                     DataTypes.ENUM('draft', 'active', 'cancelled'),
       defaultValue: 'active',
       // required: true,
       // allowNull: false,
@@ -60,7 +60,12 @@ module.exports = (sequelize, DataTypes) => {
 
   Order.associate = () => {
     Order.hasMany(models.OrderItem);
-    Order.belongsTo(models.Client);
+    Order.belongsTo(models.Client, {
+      foreignKey: {
+        field: 'ClientId',
+        allowNull: false,
+      },
+    });
     Order.hasMany(models.Payment);
     Order.hasMany(models.Credit);
     Order.hasMany(models.Term, {
@@ -211,19 +216,25 @@ module.exports = (sequelize, DataTypes) => {
       });
   };
 
-  Order.prototype.findOrCreateCancelOrder = function() {
-    const order = {
-      type: 'credit',
-      // TODO: Searching existing order based on label is unreliable.
-      // We should rahter have a status:cancelled of some kind
-      // (and prevent cancelling an order that has already been cancelled)
-      label: `Credit Order - #${this.receiptNumber}`,
-      ClientId: this.ClientId,
-    };
+  Order.prototype.destroyOrCancel = function() {
+    if ( this.status === 'cancelled' || this.deletedAt ) {
+      throw new Error('This order is already destroyed or cancelled');
+    }
 
-    return Order.findOrCreate({
-      where: order,
-      defaults: Object.assign({}, order, {
+    // Some orders can be deleted straight away
+    if (
+      this.type !== 'debit' ||
+      ( !this.receiptNumber && !this.Payments.length )
+    ) {
+      return Promise.all([this.destroy()]); // resolve w/ [order] for consistency
+    }
+
+    // Others must be 'cancelled'
+    return models.sequelize.transaction((transaction) => {
+      const cancelPromise = Order.create({
+        type: 'credit',
+        label: `Credit Order - #${this.receiptNumber}`,
+        ClientId: this.ClientId,
         OrderItems: this.OrderItems.map((orderItem) => {
           return {
             label: orderItem.label,
@@ -234,10 +245,13 @@ module.exports = (sequelize, DataTypes) => {
             RentingId: orderItem.RentingId,
           };
         }),
-      }),
-      include: [{
-        model: models.OrderItem,
-      }],
+        include: [{
+          model: models.OrderItem,
+        }],
+      }, { transaction });
+      const updatePromise = this.update({ status: 'cancelled' }, { transaction });
+
+      return Promise.all([updatePromise, cancelPromise]);
     });
   };
 

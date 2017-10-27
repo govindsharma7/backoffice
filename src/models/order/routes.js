@@ -5,9 +5,9 @@ const Sendinblue        = require('../../vendor/sendinblue');
 const makePublic        = require('../../middlewares/makePublic');
 const checkToken        = require('../../middlewares/checkToken');
 const Utils             = require('../../utils');
-const {
-  destroySuccessHandler,
-}                       = require('../../utils/destroyAndRestoreSuccessHandler');
+// const {
+//   destroySuccessHandler,
+// }                       = require('../../utils/destroyAndRestoreSuccessHandler');
 
 const Serializer  = Liana.ResourceSerializer;
 
@@ -21,24 +21,25 @@ module.exports = (app, models, Order) => {
   // TODO: find out why, when throwing in that route, we get an
   // "cannot send headers" error in the console, and no error displayed in
   // Forest
-  app.delete('/forest/Order/:orderId', LEA, (req, res) => {
-    return Order
-      .findById(req.params.orderId)
-      .then((order) => {
-        return Promise.all([
-          order,
-          order.getCalculatedProps(),
-        ]);
-      })
-      .then(([order, {totalPaid}]) => {
-        if (totalPaid != null) {
-          throw new Error('This order is partially/fully paid');
-        }
-        return order.destroy();
-      })
-      .then(destroySuccessHandler(res, 'Order'))
-      .catch(Utils.logAndSend(res));
-  });
+  // TODO: actually: why isn't this a hook?
+  // app.delete('/forest/Order/:orderId', LEA, (req, res) => {
+  //   return Order
+  //     .findById(req.params.orderId)
+  //     .then((order) => {
+  //       return Promise.all([
+  //         order,
+  //         order.getCalculatedProps(),
+  //       ]);
+  //     })
+  //     .then(([order, {totalPaid}]) => {
+  //       if (totalPaid != null) {
+  //         throw new Error('This order is partially/fully paid');
+  //       }
+  //       return order.destroy();
+  //     })
+  //     .then(destroySuccessHandler(res, 'Order'))
+  //     .catch(Utils.logAndSend(res));
+  // });
 
   app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
     return Order
@@ -141,7 +142,7 @@ module.exports = (app, models, Order) => {
       .catch(Utils.logAndSend(res));
   });
 
-  app.post('/forest/actions/cancel-invoice', LEA, (req, res) => {
+  app.post('/forest/actions/cancel-order', LEA, (req, res) => {
     const {ids} = req.body.data.attributes;
 
     return Promise.resolve()
@@ -149,21 +150,18 @@ module.exports = (app, models, Order) => {
         if ( ids.length > 1 ) {
           throw new Error('Can\'t cancel multiple orders');
         }
-        return Order.scope('orderItems')
-          .findById(ids[0]);
+
+        return Order.findById(ids[0], {
+          include: [
+            { model: models.OrderItem },
+            { model: models.Payment },
+          ],
+        });
       })
-      .then((order) => {
-        if ( !order.receiptNumber ) {
-          throw new Error('This order is a draft and should be deleted instead.');
-        }
-        if ( order.type !== 'debit' ) {
-          throw new Error(`Only debit orders can be cancelled (found ${order.type})`);
-        }
-        return order.findOrCreateCancelOrder();
+      .tap((order) => {
+        return order.destroyOrCancel();
       })
       .then(Utils.findOrCreateSuccessHandler(res, 'Cancel invoice'))
       .catch(Utils.logAndSend(res));
   });
-
-  Utils.addRestoreAndDestroyRoutes(app, Order);
 };

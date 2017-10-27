@@ -8,6 +8,12 @@ module.exports = function(models, Order) {
   Order.hook('afterUpdate', Order.afterUpdate);
 
   Order.hook('beforeDelete', (order) => {
+    // Order that already have a receipt number cannot be deleted.
+    // They should be cancelled instead.
+    if ( order.receiptNumber ) {
+      throw new Error('Order already has a receipt number and can\'t be deleted');
+    }
+
     const isDeleted = order.deletedAt != null;
 
     return order.getOrderItems({paranoid: !isDeleted})

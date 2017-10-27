@@ -62,11 +62,7 @@ module.exports = function({Order}) {
     actions: [{
       name: 'Generate Invoice',
     }, {
-      name: 'Restore Order',
-    }, {
-      name: 'Destroy Order',
-    }, {
-      name: 'Cancel Invoice',
+      name: 'Cancel Order',
     }, {
       name: 'Send Rent Request',
     }],
