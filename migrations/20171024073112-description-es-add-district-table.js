@@ -36,8 +36,17 @@ module.exports = {
      ]);
     })
     .then(() => {
-      return queryInterface.sequelize.query(
-        'ALTER TABLE Apartment ADD COLUMN DistrictId STRING REFERENCES District(id);');
+      return queryInterface.addColumn(
+        'Apartment',
+        'DistrictId',
+        {
+          type: Sequelize.STRING,
+          references: {
+            model: 'District',
+            key: 'id',
+          },
+        }
+      );
     });
   },
   down(queryInterface, Sequelize) {
