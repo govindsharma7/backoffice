@@ -44,14 +44,10 @@ module.exports = (sequelize, DataTypes) => {
     dueDate: {
       type:                     DataTypes.DATEONLY,
       defaultValue: new Date(),
-      // required: true,
-      // allowNull: false,
     },
     status: {
       type:                     DataTypes.ENUM('draft', 'active', 'cancelled'),
       defaultValue: 'active',
-      // required: true,
-      // allowNull: false,
     },
   }, {
     paranoid: true,
