@@ -4,7 +4,7 @@ const Aws     = require('../../vendor/aws');
 const Utils   = require('../../utils');
 
 
-module.exports = (app, models) => {
+module.exports = (app, models, Picture) => {
   const LEA = Liana.ensureAuthenticated;
 
   app.put('/forest/Picture/:pictureId', LEA, (req, res, next) => {
@@ -27,7 +27,9 @@ module.exports = (app, models) => {
     return next();
   });
 
-  app.post('/forest/actions/public/updatePictures', LEA, (req, res) => {
+  // Updating the pictures of a Room / Apartement is done by deleting all
+  // existing pictures and creating them anew.
+  app.post('/forest/actions/update-pictures', LEA, (req, res) => {
     const {
       roomId,
       apartmentId,
@@ -35,65 +37,27 @@ module.exports = (app, models) => {
       ApartmentPictures,
     } = req.body;
     const rBase64Image = /^data:image\/\w+;base64,/;
+    const nextPictures = [].concat([RoomPictures, ApartmentPictures]);
 
     Promise.resolve()
       .then(() => {
-        return Promise.all([
-          ApartmentPictures.filter((pic) => {
-            return rBase64Image.test(pic.url);
-          }),
-          RoomPictures.filter((pic) => {
-            return rBase64Image.test(pic.url);
-          }),
-        ]);
-      })
-      .then(([ApartmentPicturesAdd, RoomPicturesAdd]) => {
-        return Promise.all([
-          ApartmentPicturesAdd.map(({ id, url, PicturableId, picturable, alt}) => {
-            return models.Picture.create({
-              id,
-              url,
-              PicturableId,
-              picturable,
-              alt,
-            });
-          }),
-          RoomPicturesAdd.map(({ id, url, PicturableId, picturable, alt}) => {
-            return models.Picture.create({
-              id,
-              url,
-              PicturableId,
-              picturable,
-              alt,
-            });
-          }),
-        ]);
+        const toCreate = nextPictures
+          .filter((picture) => { return rBase64Image.test(picture.url); });
+
+        return Picture.bulkCreate( toCreate );
       })
       .then(() => {
-        return Promise.all([
-          models.Picture.findAll({where: { PicturableId: roomId } }),
-          models.Picture.findAll({where: { PicturableId: apartmentId } }),
-        ]);
+        return Picture
+          .findAll({ where: { PicturableId: { $in: [roomId, apartmentId] } } });
       })
-      .then(([_RoomPictures, _ApartmentPictures]) => {
-        return Promise.all([
-          _RoomPictures.map((_picture) => {
-            if ( !( RoomPictures.some((picture) => {
-              return picture.id === _picture.id;
-            }))) {
-              return _picture.destroy();
-            }
-            return _picture;
-          }),
-          _ApartmentPictures.map((_picture) => {
-            if ( !( ApartmentPictures.some((picture) => {
-              return picture.id === _picture.id;
-            }))) {
-              return _picture.destroy();
-            }
-            return _picture;
-          }),
-        ]);
+      .then((currPictures) => {
+        // Destroy currPictures that are not present in nextPictures
+        const toDelete = currPictures
+          .filter((currPic) => {
+            return !nextPictures.some((nextPic) => { return currPic.id === nextPic.id; });
+          });
+
+        return Picture.destroy( toDelete );
       })
       .then(Utils.createSuccessHandler(res, 'Terms'))
       .catch((e) => {

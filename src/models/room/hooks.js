@@ -1,17 +1,17 @@
 module.exports = function(models, Room) {
   Room.hook('beforeCreate', (room) => {
+    const { ApartmentId, roomNumber } = room;
+
     return models.Apartment
-      .findById(room.ApartmentId)
+      .findById(ApartmentId)
       .then((apartment) => {
-        room.setDataValue(
-          'reference',
-          `${apartment.reference}${room.roomNumber}`);
-        room.setDataValue(
-          'name',
-          `${apartment.name} - chambre ${room.roomNumber}`);
-        if ( !apartment.roomCount || apartment.roomCount < room.roomNumber ) {
-          apartment.update({roomCount: room.roomNumber});
+        room.setDataValue('reference', `${apartment.reference}${roomNumber}`);
+        room.setDataValue('name', `${apartment.name} - chambre ${roomNumber}`);
+
+        if ( !apartment.roomCount || apartment.roomCount < roomNumber ) {
+          apartment.update({ roomCount: roomNumber });
         }
+
         return true;
       });
   });

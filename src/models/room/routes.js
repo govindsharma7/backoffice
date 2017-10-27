@@ -1,8 +1,10 @@
 const Promise          = require('bluebird');
+const pick             = require('lodash/pick');
 const Liana            = require('forest-express-sequelize');
 const makePublic       = require('../../middlewares/makePublic');
 const Utils            = require('../../utils');
 
+const _ = { pick };
 
 module.exports = function(app, models, Room) {
   const LEA = Liana.ensureAuthenticated;
@@ -12,7 +14,20 @@ module.exports = function(app, models, Room) {
   app.get('/forest/Room/:recordId', makePublic);
 
   app.post('/forest/actions/public/update-apartment-and-room', LEA, (req, res) => {
-    const {room, apartment } = req.body;
+    const { room, apartment } = req.body;
+    const descriptionFields =
+      ['Fr', 'En', 'Es'].map((lang) => { return `description${lang}`; });
+    const addressFields =
+      ['Street', 'Zip', 'City', 'Country'].map((name) => { return `address${name}`; });
+    const roomFields =
+      ['floorArea', 'basePrice', 'beds'].concat(descriptionFields);
+    const apartmentFields =
+      ['floor', 'DistrictId', 'elevator', 'floorArea', 'code'].concat(
+        descriptionFields,
+        addressFields
+      );
+
+    apartment.DistrictId = `${apartment.addressCity}-${apartment.district}`;
 
     Promise.resolve()
       .then(() => {
@@ -23,34 +38,12 @@ module.exports = function(app, models, Room) {
       })
       .then(([_room, _apartment]) => {
         return Promise.all([
-          _room.update({
-            floorArea: room.floorArea,
-            basePrice: room.basePrice,
-            beds: room.beds,
-            descriptionFr: room.descriptionFr,
-            descriptionEn: room.descriptionEn,
-            descriptionEs: room.descriptionEs,
-          }),
-          _apartment.update({
-            addressStreet: apartment.addressStreet,
-            addressZip: apartment.addressZip,
-            addressCity: apartment.addressCity,
-            addressCountry: apartment.addressCountry,
-            floor: apartment.floor,
-            DistrictId: `${apartment.addressCity}-${apartment.district}`,
-            elevator: apartment.elevator,
-            floorArea: apartment.floorArea,
-            code: apartment.code,
-            descriptionFr: apartment.descriptionFr,
-            descriptionEn: apartment.descriptionEn,
-            descriptionEs: apartment.descriptionEs,
-          }),
+          _room.update( _.pick(room, roomFields) ),
+          _apartment.update( _.pick(apartment, apartmentFields) ),
         ]);
       })
-      .then(Utils.createSuccessHandler(res, 'Terms'))
-      .catch((e) => {
-        return res.status(400).send(e);
-      });
+      .then(Utils.createSuccessHandler(res, 'Room and Apartment'))
+      .catch(Utils.logAndSend(res));
   });
 
   Utils.addInternalRelationshipRoute({

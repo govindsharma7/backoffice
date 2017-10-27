@@ -1,6 +1,6 @@
 module.exports = function(models, Apartment) {
   Apartment.hook('beforeUpdate', (apartment) => {
-    // if no address field has been updated…'
+    // if no address field has been updated…
     if (
       Object.keys(apartment._changed).every((name) => {
         return !/^address/.test(name);
@@ -8,15 +8,19 @@ module.exports = function(models, Apartment) {
     ) {
       return apartment;
     }
-    // We need to reload the existing apartment to make sure we have all address fields
+
+    // Reload the existing apartment to make sure we have all address fields
     return Apartment
       .findById(apartment.id)
-      .then((previousApartment) => {
-        return apartment.calculateLatLng(Object.assign(
-          {},
-          previousApartment.dataValues,
-          apartment.dataValues
-        ));
+      .then((prevApartment) => {
+        const dataValues =
+          Object.assign(prevApartment.dataValues, apartment.dataValues);
+
+        return (
+          dataValues.addressStreet &&
+          dataValues.addressZip &&
+          dataValues.addressCountry
+        ) ? apartment.calculateLatLng(dataValues) : apartment;
       });
   });
 

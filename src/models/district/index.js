@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       type:                   DataTypes.STRING,
     },
-    label:                     DataTypes.STRING,
+    label:                    DataTypes.STRING,
     descriptionEn:            DataTypes.TEXT,
     descriptionFr:            DataTypes.TEXT,
     descriptionEs:            DataTypes.TEXT,
