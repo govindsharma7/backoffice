@@ -69,6 +69,11 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { termable: 'Order' },
     });
+    Order.hasMany(models.Metadata, {
+      foreignKey: 'MetadatableId',
+      constraints: false,
+      scope: { metadatable: 'Order' },
+    });
 
     Order.addScope('orderItems', {
       include: [{
