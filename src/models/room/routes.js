@@ -13,7 +13,7 @@ module.exports = function(app, models, Room) {
   app.get('/forest/Room', makePublic);
   app.get('/forest/Room/:recordId', makePublic);
 
-  app.post('/forest/actions/public/update-apartment-and-room', LEA, (req, res) => {
+  app.post('/forest/actions/update-apartment-and-room', LEA, (req, res) => {
     const { room, apartment } = req.body;
     const descriptionFields =
       ['Fr', 'En', 'Es'].map((lang) => { return `description${lang}`; });

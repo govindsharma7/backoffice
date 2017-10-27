@@ -260,6 +260,7 @@ module.exports = (sequelize, DataTypes) => {
           include: [{
             model: models.Order,
             where: {
+              status: { $not: 'cancelled' },
               ClientId: this.id,
               dueDate: this.Metadata.length ?
                 D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
@@ -287,7 +288,7 @@ module.exports = (sequelize, DataTypes) => {
           },
         })
         .tap(([order]) => {
-          return models.Renting.findOrphanOrderItems(rentings, order);
+          return models.Renting.attachOrphanOrderItems(rentings, order);
         });
   };
 

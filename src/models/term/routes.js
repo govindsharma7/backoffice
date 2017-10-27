@@ -8,7 +8,7 @@ module.exports = (app, models, Term) => {
 
   app.get('/forest/Term', makePublic);
 
-  app.post('/forest/actions/public/updateTerms', LEA, (req, res) => {
+  app.post('/forest/actions/update-terms', LEA, (req, res) => {
     const { roomId, apartmentId, ApartmentFeatures, RoomFeatures } = req.body;
 
     Promise.resolve()

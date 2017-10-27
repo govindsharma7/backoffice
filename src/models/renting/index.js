@@ -275,7 +275,7 @@ module.exports = (sequelize, DataTypes) => {
     }];
   };
 
-  Renting.findOrphanOrderItems = function(rentings, order) {
+  Renting.attachOrphanOrderItems = function(rentings, order) {
     return Promise.map(rentings, (renting) => {
       return models.OrderItem
         .findAll({
@@ -313,15 +313,20 @@ module.exports = (sequelize, DataTypes) => {
         },
         include: [{
           model: models.Order,
-          where: { dueDate: Math.max(new Date(), this.Client.Metadata.length ?
-            D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
-            D.startOfMonth(date)) },
+          where: {
+            status: { $not: 'cancelled' },
+            dueDate: Math.max(new Date(), this.Client.Metadata.length ?
+              D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
+              D.startOfMonth(date)
+            ),
+          },
         }],
         defaults: this.normalizeOrder({
           label: `${D.format(date, 'MMMM')} Invoice`,
           dueDate: Math.max(new Date(), this.Client.Metadata.length ?
             D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
-            D.startOfMonth(date)),
+            D.startOfMonth(date)
+          ),
           OrderItems: this.toOrderItems({ date, room }),
           number,
         }),
