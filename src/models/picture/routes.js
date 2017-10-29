@@ -3,6 +3,36 @@ const Liana   = require('forest-express-sequelize');
 const Aws     = require('../../vendor/aws');
 const Utils   = require('../../utils');
 
+const rBase64Image = /^data:image\/\w+;base64,/;
+
+function findNewPictures(pictures) {
+  return pictures.filter((picture) => {
+    return rBase64Image.test(picture.url);
+  });
+}
+
+function createNewPictures(pictures, model) {
+  return pictures.map(({ id, url, PicturableId, picturable, alt}) => {
+    return model.create({
+      id,
+      url,
+      PicturableId,
+      picturable,
+      alt,
+    });
+  });
+}
+
+function deletePictures(oldPictures, newPictures) {
+  return oldPictures.map((_picture) => {
+    if ( !( newPictures.some((picture) => {
+      return picture.id === _picture.id;
+    }))) {
+      return _picture.destroy();
+    }
+    return _picture;
+  });
+}
 
 module.exports = (app, models) => {
   const LEA = Liana.ensureAuthenticated;
@@ -34,39 +64,18 @@ module.exports = (app, models) => {
       RoomPictures,
       ApartmentPictures,
     } = req.body;
-    const rBase64Image = /^data:image\/\w+;base64,/;
 
     Promise.resolve()
       .then(() => {
         return Promise.all([
-          ApartmentPictures.filter((pic) => {
-            return rBase64Image.test(pic.url);
-          }),
-          RoomPictures.filter((pic) => {
-            return rBase64Image.test(pic.url);
-          }),
+          findNewPictures(ApartmentPictures),
+          findNewPictures(RoomPictures),
         ]);
       })
       .then(([ApartmentPicturesAdd, RoomPicturesAdd]) => {
         return Promise.all([
-          ApartmentPicturesAdd.map(({ id, url, PicturableId, picturable, alt}) => {
-            return models.Picture.create({
-              id,
-              url,
-              PicturableId,
-              picturable,
-              alt,
-            });
-          }),
-          RoomPicturesAdd.map(({ id, url, PicturableId, picturable, alt}) => {
-            return models.Picture.create({
-              id,
-              url,
-              PicturableId,
-              picturable,
-              alt,
-            });
-          }),
+          createNewPictures(ApartmentPicturesAdd, models.Picture),
+          createNewPictures(RoomPicturesAdd, models.Picture),
         ]);
       })
       .then(() => {
@@ -75,24 +84,10 @@ module.exports = (app, models) => {
           models.Picture.findAll({where: { PicturableId: apartmentId } }),
         ]);
       })
-      .then(([_RoomPictures, _ApartmentPictures]) => {
+      .then(([oldRoomPictures, oldApartmentPictures]) => {
         return Promise.all([
-          _RoomPictures.map((_picture) => {
-            if ( !( RoomPictures.some((picture) => {
-              return picture.id === _picture.id;
-            }))) {
-              return _picture.destroy();
-            }
-            return _picture;
-          }),
-          _ApartmentPictures.map((_picture) => {
-            if ( !( ApartmentPictures.some((picture) => {
-              return picture.id === _picture.id;
-            }))) {
-              return _picture.destroy();
-            }
-            return _picture;
-          }),
+          deletePictures(oldRoomPictures, RoomPictures),
+          deletePictures(oldApartmentPictures, ApartmentPictures),
         ]);
       })
       .then(Utils.createSuccessHandler(res, 'Terms'))

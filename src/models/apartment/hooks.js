@@ -1,6 +1,6 @@
 module.exports = function(models, Apartment) {
   Apartment.hook('beforeUpdate', (apartment) => {
-    // if no address field has been updated…'
+    // if no address field has been updated…
     if (
       Object.keys(apartment._changed).every((name) => {
         return !/^address/.test(name);

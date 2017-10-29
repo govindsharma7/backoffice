@@ -87,15 +87,15 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Apartment.prototype.calculateLatLng = function(addressValues = this.dataValues) {
-    if ( !addressValues.addressStreet && !addressValues.addressZip
-        && !addressValues.addressCountry ) {
+    if ( !addressValues.addressStreet || !addressValues.addressZip
+        || !addressValues.addressCountry ) {
       return this;
     }
 
     return Geocode([
-      addressValues.addressStreet,
-      addressValues.addressZip,
-      addressValues.addressCountry,
+        addressValues.addressStreet,
+        addressValues.addressZip,
+        addressValues.addressCountry,
       ].join(','))
       .then(({lat, lng}) => {
         this.set('latLng', `${lat},${lng}`);
