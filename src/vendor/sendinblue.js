@@ -1,7 +1,7 @@
 const SendinBlueApi = require('sib-api-v3-sdk');
 const capitalize    = require('lodash/capitalize');
 const D             = require('date-fns');
-const fr         = require('date-fns/locale/fr');
+const fr            = require('date-fns/locale/fr');
 const config        = require('../config');
 const {
   SUPPORT_EMAIL,
@@ -114,9 +114,10 @@ function serializeWelcomeEmail(renting) {
 
 function sendRentReminder({ order, client, amount }) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+  const templateId = D.getDate(new Date()) === 1 ? 'dueDate' : 'unpaidRent';
 
   return sendTemplateEmail(
-    SENDINBLUE_TEMPLATE_IDS.dueDate[client.preferredLanguage],
+    SENDINBLUE_TEMPLATE_IDS[templateId][client.preferredLanguage],
     {
       emailTo: [client.email],
       attributes: {
