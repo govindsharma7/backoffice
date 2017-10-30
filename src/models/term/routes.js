@@ -10,6 +10,7 @@ module.exports = (app, models, Term) => {
 
   app.post('/forest/actions/update-terms', LEA, (req, res) => {
     const { roomId, apartmentId, ApartmentFeatures, RoomFeatures } = req.body;
+    const features = [].concat(RoomFeatures, ApartmentFeatures);
 
     Promise.resolve()
       .then(() => {
@@ -26,24 +27,14 @@ module.exports = (app, models, Term) => {
         });
       })
       .then(() => {
-        return Promise.all([
-          RoomFeatures.map(({name, taxonomy, termable }) => {
-            return Term.create({
-              name,
-              taxonomy,
-              termable,
-              TermableId: roomId,
-            });
-          }),
-          ApartmentFeatures.map(({name, taxonomy, termable }) => {
-            return Term.create({
-              name,
-              taxonomy,
-              termable,
-              TermableId: apartmentId,
-            });
-          }),
-        ]);
+        return Term.bulkCreate(features.map(({ name, taxonomy, termable }) => {
+          return {
+            name,
+            taxonomy,
+            termable,
+            TermableId: termable === 'Room' ? roomId : apartmentId,
+          };
+        }));
       })
       .then(Utils.createSuccessHandler(res, 'Terms'))
       .catch((e) => {

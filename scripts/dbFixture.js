@@ -29,14 +29,13 @@ return models.sequelize.sync(/*{ force: true }*/)
     // We used to just load all files in the folder, but the order we load them
     // is important because of references constraints
     const tuples = [
-//      'apartments.json',
-//      'rooms.json',
-//      'clients.json',
-//      'products.json',
-//      'rentings.json',
-//      'settings.json',
-//      'pictures.json',
-        'descriptionDistrict.json',
+      'apartments.json',
+      'rooms.json',
+      'clients.json',
+      'products.json',
+      'rentings.json',
+      'settings.json',
+      'pictures.json',
 
     ].map((file) => {
       const {model, records} = require(path.join('..', 'data', file));

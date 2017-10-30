@@ -66,4 +66,68 @@ module.exports = {
     status: 'draft',
     phoneNumber: '0000000',
   }],
+  District: [{
+    id: 'lyon-ainay',
+    label: 'Ainay - Presqu\'île',
+  }, {
+    id: 'lyon-confluence',
+    label: 'Confluence - Presqu\'île',
+  }, {
+    id: 'lyon-bellecour',
+    label: 'Bellecour - Presqu\'île',
+  }, {
+    id: 'lyon-hotel-de-ville',
+    label: 'Hôtel de Ville - Presqu\'île',
+  }, {
+    id: 'lyon-croix-rousse',
+    label: 'Croix Rousse',
+  }, {
+    id: 'lyon-tete-dor',
+    label: 'Tête d\'Or',
+  }, {
+    id: 'lyon-brotteaux',
+    label: 'Brotteaux',
+  }, {
+    id: 'lyon-foch',
+    label: 'Foch',
+  }, {
+    id: 'lyon-part-dieu',
+    label: 'Part Dieu',
+  }, {
+    id: 'lyon-manufacture',
+    label: 'Manufacture',
+  }, {
+    id: 'lyon-prefecture',
+    label: 'Prefecture',
+  }, {
+    id: 'lyon-quais-de-rhone',
+    label: 'Quais de Rhône',
+  }, {
+    id: 'lyon-guillotiere',
+    label: 'Guillotière',
+  }, {
+    id: 'lyon-universites',
+    label: 'Universités',
+  }, {
+    id: 'lyon-jean-mace',
+    label: 'Jean Macé',
+  }, {
+    id: 'lyon-garibaldi',
+    label: 'Garibaldi',
+  }, {
+    id: 'lyon-jet-deau',
+    label: 'Jet d\'Eau',
+  }, {
+    id: 'lyon-debourg-gerland',
+    label: 'Debourg - Gerland',
+  }, {
+    id: 'lyon-vieux-lyon',
+    label: 'Vieux Lyon',
+  }, {
+    id: 'lyon-vaise',
+    label: 'Vaise',
+  }, {
+    id: 'lyon-monchat',
+    label: 'Monchat',
+  }],
 };
