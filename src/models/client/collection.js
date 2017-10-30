@@ -99,6 +99,10 @@ module.exports = function(models) {
       field: 'jotform-attachments',
       type: ['String'],
       reference: 'RentalAttachment.id',
+    }, {
+      field: 'Payments',
+      type: ['String'],
+      reference: 'Payment.id',
     }],
     actions:[{
       name: 'Credit Client',

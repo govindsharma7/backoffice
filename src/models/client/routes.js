@@ -19,6 +19,7 @@ const _ = { pickBy, mapKeys };
 module.exports = (app, models, Client) => {
   const LEA = Liana.ensureAuthenticated;
   const multer = Multer().fields([{ name: 'passport', maxCount: 1 }]);
+  const Serializer = Liana.ResourceSerializer;
 
   app.delete('/forest/Client/:clientId/relationships/Orders', LEA, (req, res) => {
     const ids = [];
@@ -165,6 +166,25 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
+  app.get('/forest/Client/:recordId/relationships/Payments', LEA, (req, res) => {
+    models.Payment
+      .findAll({
+        include: [{
+          model: models.Order,
+          attributes: [],
+          where: { ClientId: req.params.recordId },
+        }],
+      })
+      .then((payments) => {
+        return new Serializer(Liana, models.Payment, payments, null, {}, {
+          count: payments.length,
+        }).perform();
+      })
+      .then((data) => {
+        return res.send(data);
+      })
+      .catch(Utils.logAndSend(res));
+  });
   app.get('/forest/Client/:recordId/relationships/jotform-attachments',
     LEA,
     (req, res) => {
