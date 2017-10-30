@@ -45,6 +45,16 @@ module.exports = function({Order}) {
         });
       },
     }, {
+      field: 'paymentStatus',
+      type: 'Enum',
+      enums: ['Pending', 'Paid'],
+      get(object) {
+        return memoizer.getCalculatedProps(object)
+          .then((result) => {
+            return result.balance === 0 ? 'Paid' : 'Pending';
+        });
+      },
+    }, {
       field: 'invoice',
       type: 'String',
       get(object) {
