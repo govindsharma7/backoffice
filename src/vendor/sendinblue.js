@@ -3,6 +3,7 @@ const capitalize    = require('lodash/capitalize');
 const D             = require('date-fns');
 const fr            = require('date-fns/locale/fr');
 const config        = require('../config');
+const Utils          = require('../utils');
 const {
   SUPPORT_EMAIL,
   SPECIAL_CHECKIN_PRICES,
@@ -14,6 +15,7 @@ const {
   SENDINBLUE_TEMPLATE_IDS,
   SENDINBLUE_LIST_IDS,
   WEBSITE_URL,
+  REST_API_URL,
 }                   = require('../config');
 
 SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
@@ -145,6 +147,22 @@ function sendRentRequest({ order, client, amount }) {
   );
 }
 
+function sendConfirmationPayment({ order, client, amount }) {
+  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+
+  return sendTemplateEmail(
+    SENDINBLUE_TEMPLATE_IDS.confirmation[client.preferredLanguage],
+    {
+      emailTo: [client.email],
+      attributes: {
+        NAME: `${client.firstName} ${client.lastName}`,
+        AMOUNT: amount / 100,
+        LABEL: order.label,
+        LINK: Utils.toSingleLine(`${REST_API_URL}/forest/actions/pdf-invoice
+        /invoice-${order.receiptNumber}.pdf?orderId=${order.id}&lang=${lang}`),
+      },
+    });
+}
 function pingService() {
   return new SendinBlueApi.AccountApi().getAccount();
 }
@@ -158,5 +176,6 @@ module.exports = {
   sendWelcomeEmail,
   sendRentReminder,
   sendRentRequest,
+  sendConfirmationPayment,
   pingService,
 };

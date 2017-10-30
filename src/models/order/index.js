@@ -81,6 +81,12 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
+    Order.addScope('client', {
+      include: [{
+        model: models.Client,
+      }],
+    });
+
     Order.addScope('rentOrders', {
       include: [{
         model: models.OrderItem,

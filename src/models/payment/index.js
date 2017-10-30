@@ -2,6 +2,7 @@ const payline        = require('../../vendor/payline');
 const {TRASH_SCOPES} = require('../../const');
 const collection     = require('./collection');
 const routes         = require('./routes');
+const hooks          = require('./hooks');
 
 module.exports = (sequelize, DataTypes) => {
   const Payment = sequelize.define('Payment', {
@@ -67,6 +68,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Payment.collection = collection;
   Payment.routes = routes;
+  Payment.hooks = hooks;
 
   return Payment;
 };
