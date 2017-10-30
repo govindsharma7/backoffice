@@ -46,7 +46,7 @@ module.exports = function({Order}) {
         });
       },
     }, {
-      field: 'payment',
+      field: 'paymentPage',
       type: 'String',
       get({ id, receiptNumber }) {
         if ( !receiptNumber ) {
@@ -56,7 +56,17 @@ module.exports = function({Order}) {
         return `${WEBSITE_URL}/en-US/payment/${id}`;
       },
     }, {
-      field: 'ninja-invoice',
+      field: 'isPaid',
+      type: 'Enum',
+      enums: ['pending', 'Paid'],
+      get(object) {
+        return memoizer.getCalculatedProps(object)
+          .then((result) => {
+            return result.balance === 0 ? 'Paid' : 'pending';
+        });
+      },
+    }, {
+      field: 'ninjaInvoice',
       type: 'String',
       get(object) {
         if (object.ninjaId !== null) {
