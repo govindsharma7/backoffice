@@ -27,8 +27,8 @@ module.exports = (app, models, Picture) => {
     return next();
   });
 
-  // Updating the pictures of a Room / Apartement is done by deleting all
-  // existing pictures and creating them anew.
+  // Updating the pictures of a Room / Apartement is done by creating all new
+  // pictures, and deleting the ones which need be deleted
   app.post('/forest/actions/update-pictures', LEA, (req, res) => {
     const {
       roomId,
@@ -37,7 +37,7 @@ module.exports = (app, models, Picture) => {
       ApartmentPictures,
     } = req.body;
     const rBase64Image = /^data:image\/\w+;base64,/;
-    const nextPictures = [].concat([RoomPictures, ApartmentPictures]);
+    const nextPictures = [].concat(RoomPictures, ApartmentPictures);
 
     Promise.resolve()
       .then(() => {
@@ -52,12 +52,12 @@ module.exports = (app, models, Picture) => {
       })
       .then((currPictures) => {
         // Destroy currPictures that are not present in nextPictures
-        const toDelete = currPictures
-          .filter((currPic) => {
-            return !nextPictures.some((nextPic) => { return currPic.id === nextPic.id; });
-          });
+        const currPicIds = currPictures.map((pic) => { return pic.id; });
+        const nextPicIds = nextPictures.map((pic) => { return pic.id; });
+        const toDeleteIds = currPicIds
+          .filter((currPicId) => { return !nextPicIds.includes(currPicId); });
 
-        return Picture.destroy( toDelete );
+        return Picture.destroy({ where: { id: { $in: toDeleteIds } } });
       })
       .then(Utils.createSuccessHandler(res, 'Terms'))
       .catch((e) => {

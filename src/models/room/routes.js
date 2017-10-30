@@ -27,8 +27,6 @@ module.exports = function(app, models, Room) {
         addressFields
       );
 
-    apartment.DistrictId = `${apartment.addressCity}-${apartment.district}`;
-
     Promise.resolve()
       .then(() => {
         return Promise.all([
