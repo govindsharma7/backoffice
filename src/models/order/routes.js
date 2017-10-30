@@ -95,7 +95,7 @@ module.exports = (app, models, Order) => {
           .sendRentRequest(
             { order, amount: order.get('amount'), client: order.Client }
           )
-          .then((messageId) => {
+          .then(({ messageId }) => {
             return order.createMetadatum({
               name: 'messageId',
               value: messageId,

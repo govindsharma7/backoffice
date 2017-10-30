@@ -28,7 +28,7 @@ return Order.scope('rentOrders')
   .map(([order, { amount }]) => {
     return Sendinblue
       .sendRentReminder({ order, client: order.Client, amount })
-      .then((messageId) => {
+      .then(({ messageId }) => {
         return order.createMetadatum({
           name: 'messageId',
           value: messageId,
