@@ -41,7 +41,6 @@ const generateInvoices = 'node scripts/generateRentingInvoices.js';
 const updateDraftRentOrders = 'node scripts/updateDraftRentOrders.js';
 const updateLateFees = 'node scripts/updateLateFees.js';
 const rentInvoiceReminder = 'node scripts/rentInvoiceReminder.js';
-const dueDateDayReminder = 'node scripts/dueDateDayReminder.js';
 const archivePastRentings = 'node scripts/archivePastRentings.js';
 const removeDeletedAt = 'node scripts/removeDeletedAt.js';
 const lint = 'eslint src forest __tests__ scripts scripts.js';
@@ -65,7 +64,6 @@ const common = {
   'update:draftRentOrders': updateDraftRentOrders,
   'update:lateFees': updateLateFees,
   'invoice:reminder': rentInvoiceReminder,
-  'duedate:reminder': dueDateDayReminder,
   'archive:pastRentings': archivePastRentings,
   'remove:deletedAt': removeDeletedAt,
   'ping': 'node scripts/pingBackend.js',
