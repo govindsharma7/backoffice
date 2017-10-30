@@ -239,6 +239,10 @@ module.exports = (app, models, Client) => {
         };
         const scoped = Client.scope('latestClientRenting');
 
+        if ( !clientId ) {
+          throw new Error('clientId is missing');
+        }
+
         return Promise.all([
           /@/.test(clientId) ?
             scoped.findAll({ where: { email: clientId } }) :
