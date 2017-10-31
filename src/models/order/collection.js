@@ -5,7 +5,7 @@ const {
 const { WEBSITE_URL } = require('../../config');
 const Utils           = require('../../utils');
 
-module.exports = function({Order}) {
+module.exports = function({ Order, Metadata }) {
   const memoizer = new Utils.calculatedPropsMemoizer(Order);
 
   return {
@@ -79,6 +79,18 @@ module.exports = function({Order}) {
       field: 'Refunds',
       type: ['String'],
       reference: 'Credit.id',
+    }, {
+      field: 'isSent',
+      type: 'Enum',
+      enums: ['pending', 'Sent'],
+      get(object) {
+        return Metadata.count({
+          where: { MetadatableId: object.id, name: 'messageId' },
+        })
+        .then((count) => {
+          return count > 0 ? 'Sent' : 'pending';
+        });
+      },
     }],
     actions: [{
       name: 'Generate Invoice',
