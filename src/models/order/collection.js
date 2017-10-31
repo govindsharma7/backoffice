@@ -46,14 +46,14 @@ module.exports = function({Order}) {
         });
       },
     }, {
-      field: 'invoice',
+      field: 'payment',
       type: 'String',
       get({ id, receiptNumber }) {
         if ( !receiptNumber ) {
           return null;
         }
 
-        return `${WEBSITE_URL}/en-US/invoice/${id}/invoice-${receiptNumber}.pdf`;
+        return `${WEBSITE_URL}/en-US/invoice/${id}`;
       },
     }, {
       field: 'ninja-invoice',
