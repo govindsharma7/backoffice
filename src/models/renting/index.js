@@ -334,10 +334,11 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Renting.prototype.findOrCreatePackOrder = function(args) {
-    const { comfortLevel, discount, number, room = this.Room } = args;
+    const { comfortLevel, packDiscount, number, room = this.Room } = args;
     const {addressCity} = room.Apartment;
     const ProductId = `${comfortLevel}-pack`;
 
+    console.log(packDiscount);
     return Utils
       .getPackPrice(addressCity, comfortLevel)
       .then((packPrice) => {
@@ -360,9 +361,9 @@ module.exports = (sequelize, DataTypes) => {
                   status: this.status,
                   ProductId,
                 },
-                discount != null && discount !== 0 && {
+                packDiscount != null && packDiscount !== 0 && {
                   label: 'Discount',
-                  unitPrice: -1 * discount,
+                  unitPrice: -100 * packDiscount,
                   RentingId: this.id,
                   status: this.status,
                   ProductId,
