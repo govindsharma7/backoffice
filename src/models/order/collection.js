@@ -1,8 +1,9 @@
 const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
-}                   = require('../../const');
-const Utils         = require('../../utils');
+}                     = require('../../const');
+const { WEBSITE_URL } = require('../../config');
+const Utils           = require('../../utils');
 
 module.exports = function({Order}) {
   const memoizer = new Utils.calculatedPropsMemoizer(Order);
@@ -46,6 +47,16 @@ module.exports = function({Order}) {
       },
     }, {
       field: 'invoice',
+      type: 'String',
+      get({ id, receiptNumber }) {
+        if ( !receiptNumber ) {
+          return null;
+        }
+
+        return `${WEBSITE_URL}/en-US/invoice/${id}/invoice-${receiptNumber}.pdf`;
+      },
+    }, {
+      field: 'ninja-invoice',
       type: 'String',
       get(object) {
         if (object.ninjaId !== null) {
