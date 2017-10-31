@@ -114,8 +114,11 @@ return models.sequelize.sync(/*{ force: true }*/)
           }
 
           return Promise.map(records, (record) => {
-            return models.Room.scope('apartment')
-              .findById(record.RoomId)
+            return models.Room
+              .findOne({
+                where: { id: record.RoomId },
+                include: [{ model: models.Apartment }],
+              })
               .then((room) => {
                 return Utils.getServiceFees(room.get('roomCount'));
               })

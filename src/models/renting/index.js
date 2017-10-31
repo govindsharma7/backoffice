@@ -165,18 +165,6 @@ module.exports = (sequelize, DataTypes) => {
       }],
     });
 
-    Renting.addScope('client', {
-      include: [{
-        model : models.Client,
-      }],
-    });
-
-    Renting.addScope('room', {
-      include: [{
-        model: models.Room,
-      }],
-    });
-
     Renting.addScope('client+identity', {
       include: [{
         model: models.Client,
@@ -615,9 +603,12 @@ module.exports = (sequelize, DataTypes) => {
     const type = event.get('category');
 
     return Renting.scope(
-        type === 'refund-deposit' ? 'client' : [`${type}Order`, 'room+apartment']
+        type === 'refund-deposit' ? [] : [`${type}Order`, 'room+apartment']
       )
-      .findById(this.id)
+      .findOne({
+        where: { id: this.id },
+        include: type === 'refund-deposit' ? [{ model: models.Client }] : undefined,
+      })
       .then((renting) => {
         if ( !renting ) {
           throw new Error('Client doesn\'t have a pack order yet');

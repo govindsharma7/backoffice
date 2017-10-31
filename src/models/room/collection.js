@@ -7,7 +7,7 @@ const _ = { capitalize };
 
 module.exports = function({Room, Picture}) {
   const memoizer = new Utils.calculatedPropsMemoizer(
-    Room.scope('availableAt', 'apartment')
+    Room.scope('apartment+availableAt')
   );
 
   return {
@@ -104,7 +104,7 @@ module.exports = function({Room, Picture}) {
             //     problem with a Renting scope
             //   - Switch to TypeORM and see if that makes things simpler for us
             //     using subrequest probably
-            return Room.scope('availableAt', 'apartment')
+            return Room.scope('apartment+availableAt')
               .findAll({
                 where: { '$Apartment.addressCity$' : `${city}` },
               })

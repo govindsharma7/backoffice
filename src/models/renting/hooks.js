@@ -1,5 +1,5 @@
 const Utils                      = require('../../utils');
-//const Sendinblue                 = require('../../vendor/sendinblue');
+// const Sendinblue                 = require('../../vendor/sendinblue');
 
 module.exports = function(models, Renting) {
   Renting.hook('beforeValidate', (renting) => {
@@ -12,8 +12,11 @@ module.exports = function(models, Renting) {
       return renting;
     }
 
-    return models.Room.scope('apartment')
-      .findById(renting.RoomId)
+    return models.Room
+      .findOne({
+        where: { id: renting.RoomId },
+        include: [{ model: models.Apartment }],
+      })
       .then((room) => {
         return renting.calculatePriceAndFees(room);
       });
@@ -44,16 +47,18 @@ module.exports = function(models, Renting) {
     return null;
   });
 
-//  Renting.hook('beforeUpdate', (_renting) => {
-//    if ( _renting.dataValues.status === 'active' &&
-//        _renting._previousDataValues.status !== _renting.dataValues.status) {
-//      return Renting.scope(['room+apartment', 'client'])
-//        .findById(_renting.id)
-//        .then((renting) => {
-//          return Sendinblue.sendWelcomeEmail(renting);
-//        });
-//    }
-//
-//    return true;
-//  });
+  //  Renting.hook('beforeUpdate', (_renting) => {
+  //   if ( _renting.status === 'active' && _renting.changed('status') ) {
+  //     return Renting.scope('room+apartment')
+  //       .findOne({
+  //         where: { id: _renting.id },
+  //         include: [{ model: models.Client }],
+  //       })
+  //       .then((renting) => {
+  //         return Sendinblue.sendWelcomeEmail(renting);
+  //       });
+  //   }
+  //
+  //   return true;
+  // });
 };

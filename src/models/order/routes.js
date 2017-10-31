@@ -129,8 +129,11 @@ module.exports = (app, models, Order) => {
   });
 
   app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) => {
-    return models.Credit.scope('order')
-      .findAll({ where: { '$Payment.OrderId$': req.params.orderId } })
+    return models.Credit
+      .findAll({
+        where: { '$Payment.OrderId$': req.params.orderId },
+        include: [{ model: models.Payment }],
+      })
       .then((credits) => {
         return new Serializer(Liana, models.Credit, credits, {}, {
           count: credits.length,

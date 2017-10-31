@@ -75,18 +75,6 @@ module.exports = (sequelize, DataTypes) => {
       scope: { metadatable: 'Order' },
     });
 
-    Order.addScope('orderItems', {
-      include: [{
-        model: models.OrderItem,
-      }],
-    });
-
-    Order.addScope('client', {
-      include: [{
-        model: models.Client,
-      }],
-    });
-
     Order.addScope('rentOrders', {
       include: [{
         model: models.OrderItem,

@@ -53,8 +53,11 @@ describe('Renting', () => {
 
   describe('#findOrCreateCheckinEvent()', () => {
     test('It should\'nt create a checkin event as it already exists', () => {
-      return Renting.scope('room+apartment', 'client')
-        .findById(renting1.id)
+      return Renting.scope('room+apartment')
+        .findOne({
+          where: { id: renting1.id },
+          include: [{ model: models.Client }],
+        })
         .then((renting) => {
           return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});
         })
@@ -64,8 +67,11 @@ describe('Renting', () => {
     });
 
     test('It should create a checkin event', () => {
-      return Renting.scope('room+apartment', 'client')
-        .findById(renting2.id)
+      return Renting.scope('room+apartment')
+        .findOne({
+          where: { id: renting2.id },
+          include: [{ model: models.Client }],
+        })
         .then((renting) => {
           return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});
         })

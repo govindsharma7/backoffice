@@ -32,8 +32,11 @@ module.exports = function(models, Event) {
     return wrapHookHandler(event, (event) => {
       return Promise.all([
           // TODO: remove these non-generic scopes doing here??
-          models[eventable].scope(`eventable${eventable}`, 'client', 'orderItems')
-            .findById(EventableId),
+          models[eventable].scope(`eventable${eventable}`)
+            .findOne({
+              where: { id: EventableId },
+              include: [{ model: models.Client }, { model: models.OrderItem }],
+            }),
           event.googleEventId != null && event.googleUpdate(),
         ])
         .then(([eventableInstance]) => {

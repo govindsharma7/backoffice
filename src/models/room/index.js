@@ -61,9 +61,6 @@ module.exports = (sequelize, DataTypes) => {
       ]},
       where: { status: 'active' },
     };
-    const apartment = {
-      model: models.Apartment,
-    };
 
     Room.belongsTo(models.Apartment);
     Room.hasMany(models.Renting);
@@ -77,16 +74,13 @@ module.exports = (sequelize, DataTypes) => {
       constraints: false,
       scope: { termable: 'Room' },
     });
-    Room.addScope('apartment', {
-      include: [apartment],
-    });
 
     Room.addScope('availableAt', {
       include: [availableAt],
     });
 
     Room.addScope('apartment+availableAt', {
-      include: [apartment, availableAt],
+      include: [{ model: models.Apartment }, availableAt],
     });
   };
 

@@ -145,10 +145,11 @@ module.exports = function(app, models, Renting) {
           throw new Error(`Can't create multiple ${type} events`);
         }
 
-        return Renting.scope(
-          'room+apartment', // required to create the event
-          'client' // required to create the event
-        ).findById(ids[0]);
+        return Renting.scope('room+apartment') // required to create the event
+          .findOne({
+            where: { id: ids[0] },
+            include: [{ model: models.Client }], // required to create the event
+          });
       })
       .then((renting) => {
         return renting[`findOrCreate${_.capitalize(type)}Event`](
@@ -172,10 +173,12 @@ module.exports = function(app, models, Renting) {
 
           return Renting.scope(
             'room+apartment', // required to create checkin/out order
-            'client', // required to create the refund event,
             `${type}Date`, // required below
             'comfortLevel' // required below
-          ).findById(ids[0]);
+          ).findOne({
+            where: { id: ids[0] },
+            include: [{ model: models.Client }], // required to create the refund event
+          });
         })
         .then((renting) => {
           if ( !renting.get(`${type}Date`) || !renting.get('comfortLevel') ) {
@@ -205,7 +208,7 @@ module.exports = function(app, models, Renting) {
     const { roomId, pack: comfortLevel, client, currentPrice, bookingDate } =
       req.body;
 
-    models.Room.scope('apartment', 'availableAt')
+    models.Room.scope('apartment+availableAt')
       .findById(roomId)
       .then((room) => {
         if ( !room ) {
