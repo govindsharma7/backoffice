@@ -91,10 +91,12 @@ module.exports = (app, models, Order) => {
         include: [{ model: models.Client }],
       })
       .map((order) => {
-        return Sendinblue
-          .sendRentRequest(
-            { order, amount: order.get('amount'), client: order.Client }
-          )
+        return order.pickReceiptNumber()
+          .then(() => {
+            return Sendinblue.sendRentRequest(
+              { order, amount: order.get('amount'), client: order.Client }
+            );
+          })
           .then(({ messageId }) => {
             return order.createMetadatum({
               name: 'messageId',

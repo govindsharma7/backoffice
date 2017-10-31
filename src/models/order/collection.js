@@ -53,7 +53,7 @@ module.exports = function({Order}) {
           return null;
         }
 
-        return `${WEBSITE_URL}/en-US/invoice/${id}`;
+        return `${WEBSITE_URL}/en-US/payment/${id}`;
       },
     }, {
       field: 'ninja-invoice',
