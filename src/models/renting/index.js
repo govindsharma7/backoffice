@@ -338,7 +338,6 @@ module.exports = (sequelize, DataTypes) => {
     const {addressCity} = room.Apartment;
     const ProductId = `${comfortLevel}-pack`;
 
-    console.log(packDiscount);
     return Utils
       .getPackPrice(addressCity, comfortLevel)
       .then((packPrice) => {
