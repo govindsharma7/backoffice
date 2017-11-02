@@ -1,7 +1,7 @@
 const Liana            = require('forest-express-sequelize');
 const makePublic       = require('../../middlewares/makePublic');
 
-module.exports = function(app, models, Room) {
+module.exports = function(app) {
   const LEA = Liana.ensureAuthenticated;
 
   app.get('/forest/District', (req, res, next) => {
