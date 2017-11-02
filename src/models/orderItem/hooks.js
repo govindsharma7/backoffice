@@ -4,7 +4,7 @@ module.exports = function(models, OrderItem) {
     OrderItem.hook(hookName, (orderItem) => {
       return models.Order.findById(orderItem.OrderId)
         .then((order) => {
-          if ( order.receiptNumber ) {
+          if ( order && order.receiptNumber ) {
             throw new Error('Cannot modify this order, it has a receipt number');
           }
 

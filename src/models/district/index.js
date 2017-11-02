@@ -1,3 +1,5 @@
+const routes = require('./routes');
+
 module.exports = (sequelize, DataTypes) => {
   const District = sequelize.define('District', {
     id: {
@@ -22,6 +24,6 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-
+  District.routes = routes;
   return District;
 };
