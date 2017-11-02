@@ -1,4 +1,5 @@
 const Promise        = require('bluebird');
+// const D              = require('date-fns');
 const fetch          = require('../../vendor/fetch');
 const Ninja          = require('../../vendor/invoiceninja');
 const {
@@ -48,6 +49,14 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type:                     DataTypes.ENUM('draft', 'active', 'cancelled'),
       defaultValue: 'active',
+    },
+    balance: {
+      type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return (
+          this.get('totalPaid') - this.get('amount') - this.get('totalRefund')
+        );
+      },
     },
   }, {
     paranoid: true,
@@ -434,6 +443,21 @@ module.exports = (sequelize, DataTypes) => {
       }),
     ]);
   };
+
+  // Order.findUnpaidRentOrders = function(now = new Date()) {
+  //   return Order.scope('rentOrders')
+  //     .findAll({
+  //       where: { $and: [
+  //           { status: 'active' },
+  //           { $or: [
+  //             { dueDate: now },
+  //             { dueDate: D.addDays(now, 3) },
+  //             { dueDate: D.addDays(now, 5) },
+  //           ] },
+  //       ] },
+  //       include: [{ model: models.Client }],
+  //     });
+  // };
 
   Order.afterUpdate = (order) => {
     // No need to prevent ninja update when NODE_ENV === 'test', as ninjaId == null

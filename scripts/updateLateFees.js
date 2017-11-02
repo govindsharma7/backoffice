@@ -3,7 +3,7 @@ const Promise    = require('bluebird');
 const D          = require('date-fns');
 const fr         = require('date-fns/locale/fr');
 const models     = require('../src/models');
-const SendinBlue = require('../src/vendor/sendinblue');
+const Sendinblue = require('../src/vendor/sendinblue');
 const {
   SENDINBLUE_TEMPLATE_IDS,
   WEBSITE_URL,
@@ -28,7 +28,7 @@ return Client
         .then(([{amount}, orderItems]) => {
           const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
-          return SendinBlue.sendEmail(
+          return Sendinblue.sendEmail(
             SENDINBLUE_TEMPLATE_IDS.lateFees[client.preferredLanguage],
             {
               emailTo: [client.email],

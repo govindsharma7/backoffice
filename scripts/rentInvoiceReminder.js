@@ -16,7 +16,10 @@ return Order.scope('rentOrders')
         { dueDate: D.addDays(now, 5) },
       ],
     },
-    include: [{ model: models.Client }],
+    include: [{
+      model: models.Client,
+      where: { status: 'active' },
+    }],
   })
   .map((order) => {
     return Promise.all([
