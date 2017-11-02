@@ -50,6 +50,9 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('draft', 'active', 'cancelled'),
       defaultValue: 'active',
     },
+    // TODO: this getter creates a lot of regression
+    // We can only use this and get rid of #getComputedProperties after we've
+    // improved our test coverage
     // balance: {
     //   type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
     //   get() {

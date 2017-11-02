@@ -18,29 +18,6 @@ module.exports = (app, models, Order) => {
   // Make this route completely public
   app.get('/forest/Order/:orderId', makePublic);
 
-  // TODO: find out why, when throwing in that route, we get an
-  // "cannot send headers" error in the console, and no error displayed in
-  // Forest
-  // TODO: actually: why isn't this a hook?
-  // app.delete('/forest/Order/:orderId', LEA, (req, res) => {
-  //   return Order
-  //     .findById(req.params.orderId)
-  //     .then((order) => {
-  //       return Promise.all([
-  //         order,
-  //         order.getCalculatedProps(),
-  //       ]);
-  //     })
-  //     .then(([order, {totalPaid}]) => {
-  //       if (totalPaid != null) {
-  //         throw new Error('This order is partially/fully paid');
-  //       }
-  //       return order.destroy();
-  //     })
-  //     .then(destroySuccessHandler(res, 'Order'))
-  //     .catch(Utils.logAndSend(res));
-  // });
-
   app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
     return Order
       .findAll({
