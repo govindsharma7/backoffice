@@ -50,14 +50,14 @@ module.exports = (sequelize, DataTypes) => {
       type:                     DataTypes.ENUM('draft', 'active', 'cancelled'),
       defaultValue: 'active',
     },
-    balance: {
-      type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
-      get() {
-        return (
-          this.get('totalPaid') - this.get('amount') - this.get('totalRefund')
-        );
-      },
-    },
+    // balance: {
+    //   type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
+    //   get() {
+    //     return (
+    //       this.get('totalPaid') - this.get('amount') - this.get('totalRefund')
+    //     );
+    //   },
+    // },
   }, {
     paranoid: true,
     scopes: Object.assign({}, TRASH_SCOPES/*, UNTRASHED_SCOPE*/),
