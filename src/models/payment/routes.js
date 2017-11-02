@@ -62,7 +62,10 @@ module.exports = function(app, models, Payment) {
         }
 
         return Promise.all([
-          models.Order.scope('orderItems').findById(orderId),
+          models.Order.findOne({
+            where: { id: orderId },
+            include: [{ model: models.OrderItem }],
+          }),
           models.Order.scope('packItems').findById(orderId),
         ]);
       })
