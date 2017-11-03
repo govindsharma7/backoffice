@@ -131,7 +131,8 @@ module.exports = (app, models, Order) => {
           throw new Error('Can\'t cancel multiple orders');
         }
 
-        return Order.findById(ids[0], {
+        return Order.findOne({
+          where: { id: ids[0] },
           include: [
             { model: models.OrderItem },
             { model: models.Payment },
@@ -141,7 +142,7 @@ module.exports = (app, models, Order) => {
       .tap((order) => {
         return order.destroyOrCancel();
       })
-      .then(Utils.findOrCreateSuccessHandler(res, 'Cancel invoice'))
+      .then(Utils.createSuccessHandler(res, 'Cancel invoice'))
       .catch(Utils.logAndSend(res));
   });
 };

@@ -5,6 +5,7 @@ const Ninja          = require('../../vendor/invoiceninja');
 const {
   WORDPRESS_AJAX_URL,
   REST_API_SECRET,
+  NODE_ENV,
 }                    = require('../../config');
 const Utils          = require('../../utils');
 const {
@@ -252,8 +253,10 @@ module.exports = (sequelize, DataTypes) => {
             RentingId: orderItem.RentingId,
           };
         }),
+      }, {
         include: [{ model: models.OrderItem }],
-      }, { transaction });
+        transaction,
+      });
       const updatePromise = this.update({ status: 'cancelled' }, { transaction });
 
       return Promise.all([updatePromise, cancelPromise]);
@@ -439,8 +442,7 @@ module.exports = (sequelize, DataTypes) => {
   // };
 
   Order.afterUpdate = (order) => {
-    // No need to prevent ninja update when NODE_ENV === 'test', as ninjaId == null
-    if ( order.ninjaId != null ) {
+    if ( NODE_ENV !== 'development' && order.ninjaId != null ) {
       return Utils.wrapHookPromise(order.ninjaUpdate());
     }
 
