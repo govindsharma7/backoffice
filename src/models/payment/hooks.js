@@ -25,4 +25,20 @@ module.exports = function(models, Payment) {
         });
       });
   });
+
+  Payment.hook('beforeDelete', (payment) => {
+    if ( payment.type !== 'manual' ) {
+      throw new Error('Only manual payments can be deleted');
+    }
+
+    return payment;
+  });
+
+  Payment.hook('beforeUpdate', (payment) => {
+    if ( payment.type !== 'manual' ) {
+      throw new Error('Only manual payments can be updated');
+    }
+
+    return payment;
+  });
 };

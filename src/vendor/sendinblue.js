@@ -97,7 +97,7 @@ function serializeWelcomeEmail(renting) {
   const roomNumber = Room.reference.slice(-1);
 
   return {
-    emailTo: [Client.email],
+    emailTo: [Client.email, Client.secondaryEmail],
     attributes: {
       APARTMENT: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
       FIRSTNAME: _.capitalize(Client.firstName),
@@ -121,7 +121,7 @@ function sendRentReminder({ order, client, amount }) {
   return sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS[templateId][client.preferredLanguage],
     {
-      emailTo: [client.email],
+      emailTo: [client.email, client.secondaryEmail],
       attributes: {
         FIRSTNAME: client.firstName,
         MONTH: D.format(order.dueDate, 'MMMM', lang === 'fr-FR' ? { locale: fr } : null ),
@@ -137,7 +137,7 @@ function sendRentRequest({ order, client, amount }) {
   return sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.rentInvoice[client.preferredLanguage],
     {
-      emailTo: [client.email],
+      emailTo: [client.email, client.secondaryEmail],
       attributes: {
         NAME: `${client.firstName} ${client.lastName}`,
         AMOUNT: amount / 100,
@@ -153,7 +153,7 @@ function sendConfirmationPayment({ order, client, amount }) {
   return sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.confirmation[client.preferredLanguage],
     {
-      emailTo: [client.email],
+      emailTo: [client.email, client.secondaryEmail],
       attributes: {
         NAME: `${client.firstName} ${client.lastName}`,
         AMOUNT: amount / 100,
@@ -163,6 +163,24 @@ function sendConfirmationPayment({ order, client, amount }) {
       },
     });
 }
+
+function sendLateFeesEmail({order, amount, orderItems, client}) {
+  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+
+  return sendTemplateEmail(
+    SENDINBLUE_TEMPLATE_IDS.lateFees[client.preferredLanguage],
+    {
+      emailTo: [client.email],
+      attributes: {
+        FIRSTNAME: client.firstName,
+        MONTH: D.format(order.dueDate, 'MMMM', lang === 'fr-FR' ? { locale: fr } : null ),
+        AMOUNT: amount / 100,
+        LATE_FEES: orderItems[0].unitPrice * orderItems[0].quantity / 100,
+        LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
+      },
+  });
+}
+
 function pingService() {
   return new SendinBlueApi.AccountApi().getAccount();
 }
@@ -177,5 +195,6 @@ module.exports = {
   sendRentReminder,
   sendRentRequest,
   sendConfirmationPayment,
+  sendLateFeesEmail,
   pingService,
 };
