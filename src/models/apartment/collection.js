@@ -17,6 +17,20 @@ module.exports = function({Picture}) {
           return picture ? picture.url : null;
         });
       },
+    }, {
+      field: 'floorPlan',
+      type: 'String',
+      get(object) {
+        return Picture.findOne({
+          where: {
+            PicturableId: object.id,
+            alt: 'floorPlan',
+          },
+        })
+        .then((picture) => {
+          return picture ? picture.url : null;
+        });
+      },
     }],
     actions: [{
       name: 'Restore Apartment',

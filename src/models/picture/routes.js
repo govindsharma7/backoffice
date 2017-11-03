@@ -1,8 +1,10 @@
 const Promise = require('bluebird');
 const Liana   = require('forest-express-sequelize');
+const pick    = require('lodash/pick');
 const Aws     = require('../../vendor/aws');
 const Utils   = require('../../utils');
 
+const _ = { pick };
 
 module.exports = (app, models, Picture) => {
   const LEA = Liana.ensureAuthenticated;
@@ -41,6 +43,17 @@ module.exports = (app, models, Picture) => {
 
     Promise.resolve()
       .then(() => {
+        const toUpdate = nextPictures
+          .filter((picture) => { return !rBase64Image.test(picture.url); });
+
+        return toUpdate.map((pic) => {
+          return Picture.update(
+            _.pick(pic, ['alt', 'order']),
+           { where: { id: pic.id }}
+          );
+        });
+      })
+      .then(() => {
         const toCreate = nextPictures
           .filter((picture) => { return rBase64Image.test(picture.url); });
 
@@ -51,6 +64,7 @@ module.exports = (app, models, Picture) => {
           .findAll({ where: { PicturableId: { $in: [roomId, apartmentId] } } });
       })
       .then((currPictures) => {
+
         // Destroy currPictures that are not present in nextPictures
         const currPicIds = currPictures.map((pic) => { return pic.id; });
         const nextPicIds = nextPictures.map((pic) => { return pic.id; });

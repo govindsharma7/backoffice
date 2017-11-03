@@ -53,6 +53,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Room.associate = () => {
+    const { fn, col } = sequelize;
     const availableAt = {
       model: models.Renting.scope('checkoutDate'),
       required: false,
@@ -77,6 +78,40 @@ module.exports = (sequelize, DataTypes) => {
 
     Room.addScope('availableAt', {
       include: [availableAt],
+    });
+
+    Room.addScope('renting+client', {
+      attributes:  [
+        'name',
+        'id',
+        [fn('max', col('Rentings.bookingDate')), 'latestBookingDate'],
+      ],
+      include: [{
+        model: models.Renting,
+        attributes: ['id'],
+        where: {
+          status: 'active',
+        },
+        required: false,
+        include: [{
+          model: models.Client,
+          attributes: ['id', 'firstName', 'lastName'],
+          required: false,
+        }, {
+          model: models.Event,
+          attributes: ['id', 'startDate'],
+          required: false,
+          include:[{
+            model: models.Term,
+            attributes: [],
+            where: {
+              taxonomy: 'event-category',
+              name: 'checkout',
+            },
+          }],
+        }],
+      }],
+      group: ['Room.id'],
     });
 
     Room.addScope('apartment+availableAt', {
