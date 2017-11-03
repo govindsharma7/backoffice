@@ -64,7 +64,6 @@ module.exports = (app, models, Picture) => {
           .findAll({ where: { PicturableId: { $in: [roomId, apartmentId] } } });
       })
       .then((currPictures) => {
-
         // Destroy currPictures that are not present in nextPictures
         const currPicIds = currPictures.map((pic) => { return pic.id; });
         const nextPicIds = nextPictures.map((pic) => { return pic.id; });
