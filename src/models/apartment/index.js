@@ -40,19 +40,13 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
     scopes: Object.assign({
       lyon: {
-        where: {
-          addressCity: 'lyon',
-        },
+        where: { addressCity: 'lyon' },
       },
       paris: {
-        where: {
-          addressCity: 'paris',
-        },
+        where: { addressCity: 'paris' },
       },
       montpellier: {
-        where: {
-          addressCity: 'montpellier',
-        },
+        where: { addressCity: 'montpellier' },
       },
     }, TRASH_SCOPES),
   });

@@ -11,9 +11,7 @@ module.exports = function({Picture}) {
       type: 'String',
       get(object) {
         return Picture.findOne({
-          where: {
-            PicturableId: object.id,
-          },
+          where: { PicturableId: object.id },
         })
         .then((picture) => {
           return picture ? picture.url : null;

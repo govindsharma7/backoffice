@@ -101,10 +101,10 @@ module.exports = (sequelize, DataTypes) => {
     // TODO: one of the following two scopes is useless. Get rid of it
     Client.addScope('ordersFor', (date = new Date()) => {
       return {
-        where: {
-          '$Order.type$': 'debit',
-          '$Order.dueDate$': { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
-        },
+        where: { $and: [
+          { '$Order.type$': 'debit' },
+          { '$Order.dueDate$': { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } },
+        ]},
       };
     });
     Client.addScope('rentOrdersFor', (date = new Date()) => {
@@ -112,10 +112,10 @@ module.exports = (sequelize, DataTypes) => {
         include: [{
           model : models.Order,
           required: false,
-          where: {
-            type: 'debit',
-            dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
-          },
+          where: { $and: [
+            { type: 'debit' },
+            { dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } },
+          ]},
           include: [{
             model: models.OrderItem,
             where: { ProductId: 'rent' },
@@ -146,10 +146,10 @@ module.exports = (sequelize, DataTypes) => {
         model: models.Renting,
         include: [{
           model: models.Term,
-          where: {
-            taxonomy: 'deposit-option',
-            name: 'do-not-cash',
-          },
+          where: { $and: [
+            { taxonomy: 'deposit-option' },
+            { name: 'do-not-cash' },
+          ]},
         }],
       }],
       group: ['Client.id'],
@@ -164,9 +164,7 @@ module.exports = (sequelize, DataTypes) => {
         include: [{
           model: models.Renting,
           required: false,
-          where: {
-            status: 'active',
-          },
+          where: { status: 'active' },
           include: [{
             model: models.Event,
             attributes: ['id', 'startDate'],
@@ -174,10 +172,10 @@ module.exports = (sequelize, DataTypes) => {
             include: [{
               model: models.Term,
               attributes: [],
-              where: {
-                taxonomy: 'event-category',
-                name: 'checkout',
-              },
+              where: { $and: [
+                { taxonomy: 'event-category' },
+                { name: 'checkout' },
+              ]},
             }],
           }, {
             model: models.Room,
@@ -217,75 +215,58 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  // This was the reliable method used by generateInvoice
-  // TODO: get rid of it once we're certain that script still works
-  // Client.prototype.getRentingOrdersFor = function(date = new Date()) {
-  //   return this.getOrders({
-  //       where: {
-  //         type: 'debit',
-  //         dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
-  //       },
-  //       include: [{
-  //         model: models.OrderItem,
-  //         where: {
-  //           RentingId: { $not: null },
-  //           ProductId: 'rent',
-  //         },
-  //       }],
-  //     });
-  // };
-
   // TODO: this can probably be improved to use a Client scope
   Client.prototype.getRentingsFor = function(date = new Date()) {
     const startOfMonth = D.format(D.startOfMonth(date), DATETIME_FORMAT);
 
     return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
-      where: {
-        status: 'active',
-        ClientId: this.id,
-        bookingDate: { $lte: D.endOfMonth(date) },
-        $and: sequelize.literal(
+      where: { $and: [
+        { status: 'active' },
+        { ClientId: this.id },
+        { bookingDate: { $lte: D.endOfMonth(date) } },
+        sequelize.literal(
           // /!\ startOfMonth must be formatted using DATETIME_FORMAT
           `(Events.id IS NULL OR Events.startDate >= '${startOfMonth}')`
         ),
-      },
+      ]},
     });
   };
 
   Client.prototype.findOrCreateRentOrder =
     function(rentings, date = new Date(), number) {
+      const dueDate = this.Metadata.length ?
+        D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
+        D.startOfMonth(date);
+      const defaults = {
+        label: `${D.format(date, 'MMMM')} Invoice`,
+        type: 'debit',
+        ClientId: this.id,
+        dueDate,
+        OrderItems:
+          [].concat.apply([], rentings.map((renting) => {
+            return renting.toOrderItems({ date });
+          }))
+          .concat(this.get('uncashedDepositCount') > 0 && {
+            label: 'Option Liberté',
+            unitPrice: UNCASHED_DEPOSIT_FEE,
+            ProductId: 'uncashed-deposit',
+          })
+          .filter(Boolean),
+        number,
+      };
+
       return models.Order
-        .findItemOrCreate({
-          where: { ProductId: 'rent' },
+        .findOrCreate({
+          where: { $and: [
+            { status: { $not: 'cancelled' } },
+            { ClientId: this.id },
+            { dueDate },
+          ]},
           include: [{
-            model: models.Order,
-            where: {
-              status: { $not: 'cancelled' },
-              ClientId: this.id,
-              dueDate: this.Metadata.length ?
-                D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
-                D.startOfMonth(date),
-            },
+            model: models.OrderItem,
+            where: { ProductId: 'rent' },
           }],
-          defaults: {
-            label: `${D.format(date, 'MMMM')} Invoice`,
-            type: 'debit',
-            ClientId: this.id,
-            dueDate: this.Metadata.length ?
-              D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
-              D.startOfMonth(date),
-            OrderItems:
-              rentings.reduce((all, renting) => {
-                return all.concat(renting.toOrderItems({ date }));
-              }, [])
-              .concat(this.get('uncashedDepositCount') > 0 && {
-                label: 'Option Liberté',
-                unitPrice: UNCASHED_DEPOSIT_FEE,
-                ProductId: 'uncashed-deposit',
-              })
-              .filter(Boolean),
-            number,
-          },
+          defaults,
         })
         .tap(([order]) => {
           return models.Renting.attachOrphanOrderItems(rentings, order);
@@ -409,10 +390,10 @@ module.exports = (sequelize, DataTypes) => {
 
      return Order.scope('rentOrders')
         .findAll({
-          where: {
-            ClientId: this.id,
-            dueDate: {$lt: new Date()},
-          },
+          where: { $and: [
+            { ClientId: this.id },
+            { dueDate: { $lt: new Date() } },
+          ]},
         })
         .filter((order) => {
           return order.getCalculatedProps()
@@ -428,7 +409,7 @@ module.exports = (sequelize, DataTypes) => {
         const lateFees = D.differenceInDays(now, order.dueDate);
 
         return order.getOrderItems({
-          where: {ProductId: 'late-fees'},
+          where: { ProductId: 'late-fees' },
         })
         .then((orderItem) => {
           return models.OrderItem
@@ -448,10 +429,10 @@ module.exports = (sequelize, DataTypes) => {
   // the last argument is only used for testing purpose
   Client.getIdentity = function(client, Metadata = models.Metadata, now = new Date()) {
     return Metadata.findOne({
-        where: {
-          MetadatableId: client.id,
-          name: 'clientIdentity',
-        },
+        where: { $and: [
+          { MetadatableId: client.id },
+          { name: 'clientIdentity' },
+        ]},
       })
       .then((metadata) => {
         if ( metadata == null ) {

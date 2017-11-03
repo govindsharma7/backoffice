@@ -177,10 +177,10 @@ module.exports = function(models) {
         where: () => {
           return Client.scope('currentApartment')
             .findAll({
-              where: {
-                status: 'active',
-                '$Rentings->Room->Apartment.addressCity$': city,
-              },
+              where: { $and: [
+                { status: 'active' },
+                { '$Rentings->Room->Apartment.addressCity$': city },
+              ]},
             })
             .then((clients) => {
               return { id: { $in: _.map(clients, 'id') }};

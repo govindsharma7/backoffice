@@ -140,7 +140,10 @@ describe('Client', () => {
         })
         .then(([order, isCreated]) => {
           return Promise.all([
-            order.reload(),
+            models.Order.findOne({
+              where: { id: order.id },
+              include: [{ model: models.OrderItem }],
+            }),
             isCreated,
           ]);
         })

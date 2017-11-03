@@ -10,17 +10,11 @@ module.exports = {
   }],
   TRASH_SCOPES: {
     trashed: {
-      where: {
-        deletedAt: { $not: null },
-      },
+      where: { deletedAt: { $not: null } },
       paranoid: false,
     },
     draft: {
-      where: {
-//        deletedAt: { $not: null },
-        status: 'draft',
-      },
-//      paranoid: false,
+      where: { status: 'draft' },
     },
   },
 

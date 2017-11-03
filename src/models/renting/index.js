@@ -292,29 +292,27 @@ module.exports = (sequelize, DataTypes) => {
 
   Renting.prototype.findOrCreateRentOrder = function(args) {
     const { date = new Date(), room, number } = args;
+    const dueDate = Math.max(new Date(), this.Client.Metadata.length ?
+      D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
+      D.startOfMonth(date)
+    );
 
     return models.Order
-      .findItemOrCreate({
+      .findOrCreate({
         where: {
-          RentingId: this.id,
-          ProductId: 'rent',
+          status: { $not: 'cancelled' },
+          dueDate,
         },
         include: [{
-          model: models.Order,
+          model: models.OrderItem,
           where: {
-            status: { $not: 'cancelled' },
-            dueDate: Math.max(new Date(), this.Client.Metadata.length ?
-              D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
-              D.startOfMonth(date)
-            ),
+            RentingId: this.id,
+            ProductId: 'rent',
           },
         }],
         defaults: this.normalizeOrder({
           label: `${D.format(date, 'MMMM')} Invoice`,
-          dueDate: Math.max(new Date(), this.Client.Metadata.length ?
-            D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
-            D.startOfMonth(date)
-          ),
+          dueDate,
           OrderItems: this.toOrderItems({ date, room }),
           number,
         }),
@@ -330,13 +328,15 @@ module.exports = (sequelize, DataTypes) => {
       .getPackPrice(addressCity, comfortLevel)
       .then((packPrice) => {
         return models.Order
-          .findItemOrCreate({
-            where: {
-              RentingId: this.id,
-              ProductId: {
-                $like: '%-pack',
+          .findOrCreate({
+            where: { status: { $not: 'cancelled' } },
+            include: [{
+              model: models.OrderItem,
+              where: {
+                RentingId: this.id,
+                ProductId: { $like: '%-pack' },
               },
-            },
+            }],
             defaults: this.normalizeOrder({
               label: 'Housing Pack',
               dueDate: Math.max(new Date(), D.startOfMonth(this.bookingDate)),
@@ -370,11 +370,15 @@ module.exports = (sequelize, DataTypes) => {
     const ProductId = `${addressCity}-deposit`;
 
     return models.Order
-      .findItemOrCreate({
-        where: {
-          RentingId: this.id,
-          ProductId,
-        },
+      .findOrCreate({
+        where: { status: { $not: 'cancelled' } },
+        include: [{
+          model: models.OrderItem,
+          where: {
+            RentingId: this.id,
+            ProductId,
+          },
+        }],
         defaults: this.normalizeOrder({
           type: 'deposit',
           status: 'draft',
@@ -424,11 +428,15 @@ module.exports = (sequelize, DataTypes) => {
             ].filter(Boolean);
 
             return models.Order
-              .findItemOrCreate({
-                where: {
-                  RentingId: this.id,
-                  ProductId,
-                },
+              .findOrCreate({
+                where: { status: { $not: 'cancelled' } },
+                include: [{
+                  model: models.OrderItem,
+                  where: {
+                    RentingId: this.id,
+                    ProductId,
+                  },
+                }],
                 defaults: {
                   type: 'debit',
                   label: _.capitalize(type),

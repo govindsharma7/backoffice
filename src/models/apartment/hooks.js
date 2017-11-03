@@ -27,10 +27,10 @@ module.exports = function(models, Apartment) {
   Apartment.hook('beforeDelete', (apartment) => {
     return models.Client.scope('currentApartment')
       .findAll({
-        where: {
-          '$Rentings->Room.ApartmentId$': apartment.id,
-          '$Rentings.bookingDate$': { $lte:  new Date() },
-        },
+        where: { $and: [
+          { '$Rentings->Room.ApartmentId$': apartment.id },
+          { '$Rentings.bookingDate$': { $lte:  new Date() } },
+        ]},
       })
       .then((clients) => {
         if ( clients.length > 0) {
