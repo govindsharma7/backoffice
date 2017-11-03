@@ -62,7 +62,7 @@ module.exports = function({ Order, Metadata }) {
       get(object) {
         return memoizer.getCalculatedProps(object)
           .then((result) => {
-            return result.balance === 0 ? 'Paid' : 'pending';
+            return result.balance >= 0 ? 'Paid' : 'pending';
         });
       },
     }, {
