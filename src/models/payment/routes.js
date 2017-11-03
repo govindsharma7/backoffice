@@ -74,6 +74,10 @@ module.exports = function(app, models, Payment) {
           throw new Error(`Order "${orderId}" not found`);
         }
 
+        if ( order.status === 'cancelled' ) {
+          throw new Error(`Order "${orderId}" has been cancelled`);
+        }
+
         if ( packOrder ) {
           /* eslint-disable promise/no-nesting */
           return models.Room.scope('availableAt')
@@ -92,8 +96,8 @@ module.exports = function(app, models, Payment) {
       .then((order) => {
         return order.getCalculatedProps();
       })
-      .then(({balance}) => {
-        if (balance >= 0 ) {
+      .then(({ balance }) => {
+        if ( balance >= 0 ) {
           throw new Error('Order is already fully paid.');
         }
 
@@ -130,7 +134,6 @@ module.exports = function(app, models, Payment) {
         }
 
         // TODO: pick receipt number
-
         return res.send({paymentId: payment.id});
       })
       .catch(Utils.logAndSend(res));
