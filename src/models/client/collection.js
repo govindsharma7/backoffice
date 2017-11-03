@@ -88,6 +88,15 @@ module.exports = function(models) {
           .catch((e) => { handleDescriptionError(e, object); });
       },
     }, {
+      field: 'gender',
+      type: 'String',
+      get(object) {
+        return getIdentyMemoized(object)
+          .then((identity) => {
+            return identity ? identity.gender : undefined;
+        });
+      },
+    }, {
       field: 'Invoices',
       type: ['String'],
       reference: 'Invoice.id',

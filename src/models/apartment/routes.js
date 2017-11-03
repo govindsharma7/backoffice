@@ -1,6 +1,7 @@
 const Promise                     = require('bluebird');
 const bodyParser                  = require('body-parser');
 const Liana                       = require('forest-express-sequelize');
+const makePublic                  = require('../../middlewares/makePublic');
 const Aws                         = require('../../vendor/aws');
 const Utils                       = require('../../utils');
 
@@ -31,6 +32,22 @@ module.exports = function(app, models, Apartment) {
         return res.status(200).send({
           success: `SMS successfully sent to ${clients.length} clients!`,
         });
+      })
+      .catch(Utils.logAndSend(res));
+  });
+
+  app.get('/forest/Apartment/house-mates', makePublic, (req, res) => {
+    const { ApartmentId } = req.query;
+
+    Promise.resolve()
+      .then(() => {
+        return models.Room.scope('renting+client')
+          .findAll({
+            where: { ApartmentId },
+        });
+      })
+      .then((rooms) => {
+        return res.send(rooms);
       })
       .catch(Utils.logAndSend(res));
   });
