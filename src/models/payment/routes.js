@@ -134,7 +134,7 @@ module.exports = function(app, models, Payment) {
         }
 
         // TODO: pick receipt number
-        return res.send({paymentId: payment.id});
+        return res.send({ paymentId: payment.id });
       })
       .catch(Utils.logAndSend(res));
   });

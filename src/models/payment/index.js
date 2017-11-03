@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     type: {
       type:                     DataTypes.ENUM('card', 'sepa', 'manual'),
       required: true,
-      defaultValue: 'card',
+      defaultValue: 'manual',
       allowNull: false,
     },
     amount: {
