@@ -25,7 +25,7 @@ module.exports = function(app, models, Payment) {
 
         values.amount *= 100;
 
-        return Payment.paylineRefund(ids[0], values);
+        return Payment.refund(ids[0], values);
       })
       .then(() => {
         return res.send({success: 'Payment Successfully Refund'});

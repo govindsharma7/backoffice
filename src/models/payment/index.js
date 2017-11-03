@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Payment.paylineRefund = (id, values) => {
+  Payment.refund = (id, values) => {
     const {Credit} = models;
 
     return Payment
@@ -53,6 +53,7 @@ module.exports = (sequelize, DataTypes) => {
         if (payment.paylineId == null) {
           throw new Error('This payment can\'t be refund online');
         }
+
         return payline.doRefund(payment.paylineId, values.amount);
       })
       .then((result) => {
