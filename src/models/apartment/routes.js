@@ -72,6 +72,8 @@ module.exports = function(app, models, Apartment) {
             name: room.Rentings[0].Client.firstName,
             descriptionEn: room.Rentings[0].Client.descriptionEn,
             descriptionFr: room.Rentings[0].Client.descriptionFr,
+            gender: room.Rentings[0].Client.identity &&
+            room.Rentings[0].Client.identity.gender,
           },
           availableAt: room.Rentings.length > 0 && room.Rentings[0].Events.length > 0 ?
           new Date(room.Rentings[0].Events[0].startDate) < new Date() ? new Date() :
