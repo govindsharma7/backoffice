@@ -46,6 +46,16 @@ module.exports = (sequelize, DataTypes) => {
         );
       },
     },
+    fullName: {
+      type:                     DataTypes.VIRTUAL(DataTypes.STRING),
+      required: true,
+      allowNull: false,
+      get() {
+        return (
+          `${this.dataValues.firstName} ${this.dataValues.lastName.capitalize()}`
+        );
+      },
+    },
     email: {
       type:                     DataTypes.STRING,
       required: true,
