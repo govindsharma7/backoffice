@@ -52,7 +52,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       get() {
         return (
-          `${this.dataValues.firstName} ${this.dataValues.lastName.capitalize()}`
+          `${this.dataValues.firstName} ${this.dataValues.lastName.toUpperCase()}`
         );
       },
     },
