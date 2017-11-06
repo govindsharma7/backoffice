@@ -80,7 +80,7 @@ module.exports = (sequelize, DataTypes) => {
       include: [availableAt],
     });
 
-    Room.addScope('renting+client', {
+    Room.addScope('latestHousemates', {
       attributes:  [
         'name',
         'id',

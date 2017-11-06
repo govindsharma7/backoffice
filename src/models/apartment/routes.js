@@ -41,7 +41,7 @@ module.exports = function(app, models, Apartment) {
 
     Promise.resolve()
       .then(() => {
-        return models.Room.scope('renting+client')
+        return models.Room.scope('latestHousemates')
           .findAll({ where: { ApartmentId } });
       })
       .map((room) => {
