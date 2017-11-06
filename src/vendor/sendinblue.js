@@ -35,13 +35,12 @@ function serializeClient(client) {
 }
 
 function sendTemplateEmail(id, data = {}) {
+  const emailTo = data.emailTo.filter(Boolean);
   const options = Object.assign(
     {},
     defaults,
     data,
-    { emailTo: NODE_ENV === 'production' ?
-      data.emailTo : data.emailTo.map(getSandboxEmail),
-    }
+    { emailTo: NODE_ENV === 'production' ? emailTo : emailTo.map(getSandboxEmail) }
   );
 
   if (options.emailTo.length > 0) {
