@@ -82,31 +82,36 @@ function updateContact(email, {listIds, unlinkListIds, client}) {
   return ContactsApi.updateContact(email, params);
 }
 
-function sendWelcomeEmail(renting) {
-  return SendinBlueApi.sendTemplateEmail(
-    SENDINBLUE_TEMPLATE_IDS.welcome[renting.Client.preferredLanguage],
-    serializeWelcomeEmail(renting)
+function sendWelcomeEmail({ rentOrder, depositOrder }) {
+  return sendTemplateEmail(
+    SENDINBLUE_TEMPLATE_IDS.welcome[rentOrder.Client.preferredLanguage],
+    serializeWelcomeEmail({ rentOrder, depositOrder })
   );
 }
 
-function serializeWelcomeEmail(renting) {
-  const { Client, Room: { Apartment }, Room } = renting;
+function serializeWelcomeEmail({rentOrder, depositOrder }) {
+  const { Client, OrderItems: [{ Renting }] } = rentOrder;
+  const { Room, Room: { Apartment }} = Renting;
   const { name, addressStreet, addressZip, addressCity } = Apartment;
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
   const roomNumber = Room.reference.slice(-1);
+  const lang = Client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+
 
   return {
     emailTo: [Client.email, Client.secondaryEmail],
     attributes: {
       APARTMENT: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
-      FIRSTNAME: _.capitalize(Client.firstName),
-      BOOKINGDATE: D.format(renting.bookingDate, 'DD/MM/YYYY'),
-      RENT: (renting.price / 100) + (renting.serviceFees / 100),
+      NAME: `${_.capitalize(Client.firstName)} ${Client.lastName}`,
+      BOOKINGDATE: D.format(Renting.bookingDate, 'DD/MM/YYYY'),
+      RENT: (Renting.price / 100) + (Renting.serviceFees / 100),
+      RENT_LINK: `${WEBSITE_URL}/${lang}/payment/${rentOrder.id}`,
       EMAIL: Client.email,
       DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
+      DEPOSIT_LINK: `${WEBSITE_URL}/${lang}/payment/${depositOrder.id}`,
       ADDRESSAGENCY: AGENCY_ADDRESSES[addressCity],
       SPECIALCHECKIN: SPECIAL_CHECKIN_PRICES[addressCity] / 100,
-      ROOM: renting.Client.preferredLanguage === 'en' ?
+      ROOM: Client.preferredLanguage === 'en' ?
         ( isStudio ? 'our studio<b>' : `bedroom nº<b>${roomNumber}` ) :
         ( isStudio ? 'l\'appartement entier<b>' : `la chambre nº<b>${roomNumber}` ),
     },
@@ -122,7 +127,7 @@ function sendRentReminder({ order, client, amount, now = new Date() }) {
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
-        FIRSTNAME: client.firstName,
+        NAME: `${client.firstName} ${client.lastName}`,
         MONTH: D.format(order.dueDate, 'MMMM', lang === 'fr-FR' ? { locale: fr } : null ),
         AMOUNT: amount / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
@@ -157,10 +162,25 @@ function sendConfirmationPayment({ order, client, amount }) {
         NAME: `${client.firstName} ${client.lastName}`,
         AMOUNT: amount / 100,
         LABEL: order.label,
-        LINK: Utils.toSingleLine(`${REST_API_URL}/forest/actions/pdf-invoice
-        /invoice-${order.receiptNumber}.pdf?orderId=${order.id}&lang=${lang}`),
+        LINK: `${REST_API_URL}/forest/actions/pdf-invoice/invoice-${order.receiptNumber}.pdf?orderId=${order.id}&lang=${lang}`,
       },
     });
+}
+
+function sendHousingPackRequest({ order, amount, client }) {
+  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+
+  return sendTemplateEmail(
+    SENDINBLUE_TEMPLATE_IDS.housingPack[client.preferredLanguage],
+    {
+      emailTo: [client.email, client.secondaryEmail],
+      attributes: {
+        NAME: `${client.firstName} ${client.lastName}`,
+        AMOUNT: amount / 100,
+        LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
+      },
+    }
+  );
 }
 
 function sendLateFeesEmail({order, amount, orderItems, client}) {
@@ -193,6 +213,7 @@ module.exports = {
   sendWelcomeEmail,
   sendRentReminder,
   sendRentRequest,
+  sendHousingPackRequest,
   sendConfirmationPayment,
   sendLateFeesEmail,
   pingService,

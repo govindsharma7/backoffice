@@ -85,6 +85,39 @@ module.exports = (app, models, Order) => {
       .catch(Utils.logAndSend(res));
   });
 
+  app.post('/forest/actions/send-housing-pack-request', LEA, (req, res) => {
+    const { ids } = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+      if ( ids.length > 1 ) {
+        throw new Error('Can\'t send multiple Housing Pack request');
+      }
+      //keep scopes in this order otherwise packItems scope is erase by amount scope
+      return Order.scope('amount', 'packItems')
+        .findById(ids[0], { include: [{ model: models.Client }] });
+      })
+      .then((order) => {
+        if ( !order ) {
+          throw new Error('This isn\'t a Housing Pack Order');
+        }
+        return Promise.all([
+          Sendinblue.sendHousingPackRequest(
+            { order, amount: order.get('amount'), client: order.Client }
+          ),
+          order,
+        ]);
+      })
+      .then(([{ messageId }, order]) => {
+        return order.createMetadatum({
+          name: 'messageId',
+          value: messageId,
+        });
+      })
+      .then(Utils.createSuccessHandler(res, 'Rent Request'))
+      .catch(Utils.logAndSend(res));
+  });
+
   app.post('/forest/actions/payment-notification', checkToken, (req, res) => {
     const ninjaId = rInvoiceUrl.exec(req.body.message);
 
