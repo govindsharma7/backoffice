@@ -5,7 +5,7 @@ const {
 const { WEBSITE_URL } = require('../../config');
 const Utils           = require('../../utils');
 
-module.exports = function({ Order, Metadata }) {
+module.exports = function({ Order, Metadata, Payment }) {
   const memoizer = new Utils.calculatedPropsMemoizer(Order);
 
   return {
@@ -60,10 +60,11 @@ module.exports = function({ Order, Metadata }) {
       type: 'Enum',
       enums: ['pending', 'Paid'],
       get(object) {
-        return memoizer.getCalculatedProps(object)
+        return object.type !== 'credit' ?
+        memoizer.getCalculatedProps(object)
           .then((result) => {
             return result.balance >= 0 ? 'Paid' : 'pending';
-        });
+        }) : null;
       },
     }, {
       field: 'ninjaInvoice',
@@ -99,6 +100,24 @@ module.exports = function({ Order, Metadata }) {
     }, {
       name: 'Send Rent Request',
     }],
-    segments: TRASH_SEGMENTS,
+    segments: TRASH_SEGMENTS.concat({
+      name: 'NoPayment',
+      where: () => {
+        return Order.findAll({
+          where: {
+            'status': 'active',
+            'type': 'debit',
+          },
+          include: [{ model: Payment }],
+        })
+        .filter((order) => {
+          return order.Payments.length === 0;
+        })
+        .reduce((acc, curr) => {
+          acc.id.push(curr.id);
+          return acc;
+        }, { id: [] });
+      },
+    }),
   };
 };
