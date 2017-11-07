@@ -48,11 +48,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     fullName: {
       type:                     DataTypes.VIRTUAL(DataTypes.STRING),
-      required: true,
-      allowNull: false,
       get() {
+        const { firstName, lastName } = this.dataValues;
+
         return (
-          `${this.dataValues.firstName} ${this.dataValues.lastName.toUpperCase()}`
+          `${firstName} ${(lastName || '').toUpperCase()}`
         );
       },
     },
