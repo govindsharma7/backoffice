@@ -56,7 +56,7 @@ module.exports = function(models) {
         type: 'Enum',
         enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
       }, {
-        field: 'discount',
+        field: 'packDiscount',
         type: 'Number',
       }],
     }, {

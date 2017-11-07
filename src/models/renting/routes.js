@@ -17,10 +17,6 @@ module.exports = function(app, models, Renting) {
   app.post('/forest/actions/create-pack-order', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
 
-    if ( values.discount != null ) {
-      values.discount *= 100;
-    }
-
     Promise.resolve()
       .then(() => {
         if ( !values.comfortLevel ) {
@@ -33,7 +29,9 @@ module.exports = function(app, models, Renting) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => {
-        return renting.findOrCreatePackOrder(values.comfortLevel, values.discount);
+        return renting.findOrCreatePackOrder({
+          comfortLevel: values.comfortLevel,
+          packDiscount: values.packDiscount});
       })
       .then(Utils.findOrCreateSuccessHandler(res, 'Housing pack order'))
       .catch(Utils.logAndSend(res));
