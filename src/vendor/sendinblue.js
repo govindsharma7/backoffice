@@ -113,9 +113,9 @@ function serializeWelcomeEmail(renting) {
   };
 }
 
-function sendRentReminder({ order, client, amount }) {
+function sendRentReminder({ order, client, amount, now = new Date() }) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
-  const templateId = D.getDate(new Date()) === 1 ? 'dueDate' : 'unpaidRent';
+  const templateId = D.getDate(now) === 1 ? 'dueDate' : 'unpaidRent';
 
   return sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS[templateId][client.preferredLanguage],

@@ -15,6 +15,7 @@ return Order.scope('rentOrders')
         { dueDate: D.addDays(now, 3) },
         { dueDate: D.addDays(now, 5) },
       ],
+      // dueDate: '2017-11-01',
     },
     include: [{
       model: models.Client,
