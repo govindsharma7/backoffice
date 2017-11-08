@@ -26,7 +26,7 @@ module.exports = (app, models, Order) => {
       .then((orders) => {
         return Order.ninjaCreateInvoices(orders);
       })
-      .then(Utils.createSuccessHandler(res, 'Ninja invoice'))
+      .then(Utils.createdSuccessHandler(res, 'Ninja invoice'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -61,27 +61,56 @@ module.exports = (app, models, Order) => {
       });
   });
 
-  app.post('/forest/actions/send-rent-request', LEA, (req, res) => {
-    return Order.scope('amount')
-      .findAll({
-        where: { id: { $in: req.body.data.attributes.ids } },
-        include: [{ model: models.Client }],
+  app.post('/forest/actions/send-payment-request', LEA, (req, res) => {
+    const { ids } = req.body.data.attributes;
+
+    return Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t send multiple payment requests');
+        }
+
+        return Order.findOne({
+          where: { id: ids[0] },
+          include: [{ model: models.Client }, { model: models.OrderItem }],
+        });
       })
-      .map((order) => {
-        return order.pickReceiptNumber()
-          .then(() => {
-            return Sendinblue.sendRentRequest(
-              { order, amount: order.get('amount'), client: order.Client }
-            );
-          })
-          .then(({ messageId }) => {
-            return order.createMetadatum({
-              name: 'messageId',
-              value: messageId,
-            });
-          });
+      .then((order) => {
+        return Promise.all([
+          order,
+          order.getCalculatedProps(),
+        ]);
       })
-      .then(Utils.createSuccessHandler(res, 'Rent Request'))
+      .then(([order, { amount, balance }]) => {
+        const { OrderItems, Client } = order;
+
+        if ( balance >= 0 ) {
+          throw new Error('Can\'t send payment request, the balance is positive');
+        }
+
+        if ( OrderItems.some(({ ProductId }) => { return ProductId === 'rent'; }) ) {
+          return Promise.all([
+            order,
+            Sendinblue.sendRentRequest({ order, amount, client: Client }),
+          ]);
+        }
+
+        if ( OrderItems.some(({ ProductId }) => { return /-pack$/.test(ProductId); }) ) {
+          return Promise.all([
+            order,
+            Sendinblue.sendHousingPackRequest({ order, amount, client: Client }),
+          ]);
+        }
+
+        throw new Error('Payment request not implemented for this type of order');
+      })
+      .then(([order, { messageId }]) => {
+        return order.createMetadatum({
+          name: 'messageId',
+          value: messageId,
+        });
+      })
+      .then(Utils.sentSuccessHandler(res, 'Payment Request'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -90,17 +119,19 @@ module.exports = (app, models, Order) => {
 
     Promise.resolve()
       .then(() => {
-      if ( ids.length > 1 ) {
-        throw new Error('Can\'t send multiple Housing Pack request');
-      }
-      //keep scopes in this order otherwise packItems scope is erase by amount scope
-      return Order.scope('amount', 'packItems')
-        .findById(ids[0], { include: [{ model: models.Client }] });
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t send multiple Housing Pack request');
+        }
+
+        // The order of these scopes matters!
+        return Order.scope('amount')
+          .findById(ids[0], { include: [{ model: models.Client }] });
       })
       .then((order) => {
         if ( !order ) {
           throw new Error('This isn\'t a Housing Pack Order');
         }
+
         return Promise.all([
           Sendinblue.sendHousingPackRequest(
             { order, amount: order.get('amount'), client: order.Client }
@@ -114,7 +145,7 @@ module.exports = (app, models, Order) => {
           value: messageId,
         });
       })
-      .then(Utils.createSuccessHandler(res, 'Rent Request'))
+      .then(Utils.sendSuccessHandler(res, 'Housing Pack Request'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -134,7 +165,7 @@ module.exports = (app, models, Order) => {
 
         return order.markAsPaid();
       })
-      .then(Utils.createSuccessHandler(res, 'Payment Notification'))
+      .then(Utils.createdSuccessHandler(res, 'Payment Notification'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -175,7 +206,7 @@ module.exports = (app, models, Order) => {
       .tap((order) => {
         return order.destroyOrCancel();
       })
-      .then(Utils.createSuccessHandler(res, 'Cancel invoice'))
+      .then(Utils.createdSuccessHandler(res, 'Cancel invoice'))
       .catch(Utils.logAndSend(res));
   });
 };

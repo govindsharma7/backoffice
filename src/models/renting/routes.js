@@ -35,7 +35,7 @@ module.exports = function(app, models, Renting) {
       .then((renting) => {
         return renting.findOrCreatePackOrder(values.comfortLevel, values.discount);
       })
-      .then(Utils.findOrCreateSuccessHandler(res, 'Housing pack order'))
+      .then(Utils.findOrcreatedSuccessHandler(res, 'Housing pack order'))
       .catch(Utils.logAndSend(res));
 
     return null;
@@ -66,7 +66,7 @@ module.exports = function(app, models, Renting) {
         }
         return renting.generateLease();
       })
-      .then(Utils.createSuccessHandler(res, 'Lease'))
+      .then(Utils.createdSuccessHandler(res, 'Lease'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -84,7 +84,7 @@ module.exports = function(app, models, Renting) {
       .then((renting) => {
         return renting.findOrCreateDepositOrder();
       })
-      .then(Utils.findOrCreateSuccessHandler(res, 'Deposit order'))
+      .then(Utils.findOrcreatedSuccessHandler(res, 'Deposit order'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -102,7 +102,7 @@ module.exports = function(app, models, Renting) {
       .then((renting) => {
         return renting.findOrCreateRentOrder({ date: renting.bookingDate });
       })
-      .then(Utils.findOrCreateSuccessHandler(res, 'Rent order'))
+      .then(Utils.findOrcreatedSuccessHandler(res, 'Rent order'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -126,7 +126,7 @@ module.exports = function(app, models, Renting) {
           discount: discount * 100,
         });
       })
-      .then(Utils.createSuccessHandler(res, 'Quote order'))
+      .then(Utils.createdSuccessHandler(res, 'Quote order'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -156,7 +156,7 @@ module.exports = function(app, models, Renting) {
           values.dateAndTime, {}
         );
       })
-      .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} event`))
+      .then(Utils.findOrcreatedSuccessHandler(res, `${_.capitalize(type)} event`))
       .catch(Utils.logAndSend(res));
 
       return null;
@@ -199,7 +199,7 @@ module.exports = function(app, models, Renting) {
             isCreated && models.Order.ninjaCreateInvoices([order]),
           ]);
         })
-        .then(Utils.findOrCreateSuccessHandler(res, `${_.capitalize(type)} order`))
+        .then(Utils.findOrcreatedSuccessHandler(res, `${_.capitalize(type)} order`))
         .catch(Utils.logAndSend(res));
       });
   });
@@ -303,7 +303,7 @@ module.exports = function(app, models, Renting) {
 
       return renting.createRoomSwitchOrder(values);
     })
-    .then(Utils.createSuccessHandler(res, 'Room switch order'))
+    .then(Utils.createdSuccessHandler(res, 'Room switch order'))
     .catch(Utils.logAndSend(res));
 
     return null;
@@ -327,7 +327,7 @@ module.exports = function(app, models, Renting) {
     .then((renting) => {
       return renting.futureCredit(values);
     })
-    .then(Utils.createSuccessHandler(res, 'Future credit'))
+    .then(Utils.createdSuccessHandler(res, 'Future credit'))
     .catch(Utils.logAndSend(res));
   });
 
@@ -349,7 +349,7 @@ module.exports = function(app, models, Renting) {
       .then((renting) => {
         return renting.futureDebit(values);
       })
-      .then(Utils.createSuccessHandler(res, 'Future debit'))
+      .then(Utils.createdSuccessHandler(res, 'Future debit'))
       .catch(Utils.logAndSend(res));
   });
 

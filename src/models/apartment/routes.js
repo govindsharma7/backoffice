@@ -100,7 +100,7 @@ module.exports = function(app, models, Apartment) {
       .map((room) => {
         return room.createMaintenancePeriod(values);
       })
-      .then(Utils.createSuccessHandler(res, 'Maintenance period'))
+      .then(Utils.createdSuccessHandler(res, 'Maintenance period'))
       .catch(Utils.logAndSend(res));
   });
 

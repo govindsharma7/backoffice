@@ -97,9 +97,7 @@ module.exports = function({ Order, Metadata }) {
     }, {
       name: 'Cancel Order',
     }, {
-      name: 'Send Rent Request',
-    }, {
-      name: 'Send Housing Pack Request',
+      name: 'Send Payment Request',
     }],
     segments: TRASH_SEGMENTS,
   };

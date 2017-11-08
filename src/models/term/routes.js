@@ -36,7 +36,7 @@ module.exports = (app, models, Term) => {
           };
         }));
       })
-      .then(Utils.createSuccessHandler(res, 'Terms'))
+      .then(Utils.createdSuccessHandler(res, 'Terms'))
       .catch((e) => {
         return res.status(400).send(e);
       });

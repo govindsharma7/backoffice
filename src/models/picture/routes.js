@@ -72,7 +72,7 @@ module.exports = (app, models, Picture) => {
 
         return Picture.destroy({ where: { id: { $in: toDeleteIds } } });
       })
-      .then(Utils.createSuccessHandler(res, 'Terms'))
+      .then(Utils.createdSuccessHandler(res, 'Terms'))
       .catch((e) => {
         return res.status(400).send(e);
       });

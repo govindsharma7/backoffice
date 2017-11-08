@@ -44,7 +44,7 @@ module.exports = (app, models, Client) => {
       .map(([order]) => {
         return order.destroy();
       })
-      .then(Utils.createSuccessHandler(res, 'Orders'))
+      .then(Utils.createdSuccessHandler(res, 'Orders'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -69,7 +69,7 @@ module.exports = (app, models, Client) => {
       .then((clients) => {
         return Client.createRentOrders(clients, month);
       })
-      .then(Utils.createSuccessHandler(res, 'Renting Order'))
+      .then(Utils.createdSuccessHandler(res, 'Renting Order'))
       .catch(Utils.logAndSend(res));
 
     return null;
@@ -93,7 +93,7 @@ module.exports = (app, models, Client) => {
           MetadatableId: client.id,
         });
       })
-      .then(Utils.createSuccessHandler(res, 'New Due Date'))
+      .then(Utils.createdSuccessHandler(res, 'New Due Date'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -119,7 +119,7 @@ module.exports = (app, models, Client) => {
 
         return Client.paylineCredit(ids[0], values, idCredit);
       })
-      .then(Utils.createSuccessHandler(res, 'Payline credit'))
+      .then(Utils.createdSuccessHandler(res, 'Payline credit'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -135,7 +135,7 @@ module.exports = (app, models, Client) => {
             value: values.content,
           };
         }))
-        .then(Utils.createSuccessHandler(res, `${metadatable} Note`))
+        .then(Utils.createdSuccessHandler(res, `${metadatable} Note`))
         .catch(Utils.logAndSend(res));
   });
 
@@ -240,7 +240,7 @@ module.exports = (app, models, Client) => {
           value: JSON.stringify(values),
         });
       })
-      .then(Utils.createSuccessHandler(res, 'Client metadata'))
+      .then(Utils.createdSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -338,7 +338,7 @@ module.exports = (app, models, Client) => {
           ),
         ]);
       })
-      .then(Utils.createSuccessHandler(res, 'Client metadata'))
+      .then(Utils.createdSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
   });
 

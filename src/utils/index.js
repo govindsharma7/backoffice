@@ -2,9 +2,9 @@ const stripIndent                  = require('strip-indent');
 const addInternalRelationshipRoute = require('./addInternalRelationshipRoute');
 const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
 const calculatedPropsMemoizer      = require('./calculatedPropsMemoizer');
-const createSuccessHandler         = require('./createSuccessHandler');
+const successHandler               = require('./successHandler');
 const roundBy100                   = require('./roundBy100');
-const findOrCreateSuccessHandler   = require('./findOrCreateSuccessHandler');
+const findOrcreatedSuccessHandler   = require('./findOrcreatedSuccessHandler');
 const {
   getCheckinPrice,
   getCheckoutPrice,
@@ -17,6 +17,7 @@ const {
   getCheckinEndDate,
   getCheckoutEndDate,
 }                                  = require('./getCheckinoutEndDate');
+const getInvoiceLink               = require('./getInvoiceLink');
 const getLateNoticeFees            = require('./getLateNoticeFees');
 const getLeaseEndDate              = require('./getLeaseEndDate');
 const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
@@ -28,13 +29,16 @@ const toSingleLine                 = require('./toSingleLine');
 const wrapHookPromise              = require('./wrapHookPromise');
 const serializeHousemate           = require('./serializeHousemate');
 
+const createdSuccessHandler        = successHandler('created');
+const sentSuccessHandler           = successHandler('sent');
+
 module.exports = {
   addInternalRelationshipRoute,
   addRestoreAndDestroyRoutes,
   calculatedPropsMemoizer,
-  createSuccessHandler,
+  createdSuccessHandler,
   roundBy100,
-  findOrCreateSuccessHandler,
+  findOrcreatedSuccessHandler,
   getCheckinPrice,
   getCheckoutPrice,
   getPackPrice,
@@ -43,6 +47,7 @@ module.exports = {
   getServiceFees,
   getCheckinEndDate,
   getCheckoutEndDate,
+  getInvoiceLink,
   getLateNoticeFees,
   getLeaseEndDate,
   getRoomSwitchPrice,
@@ -52,6 +57,7 @@ module.exports = {
   parseDBDate,
   toSingleLine,
   stripIndent,
+  sentSuccessHandler,
   wrapHookPromise,
   serializeHousemate,
 };

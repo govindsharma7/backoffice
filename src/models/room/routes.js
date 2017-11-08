@@ -40,7 +40,7 @@ module.exports = function(app, models, Room) {
           _apartment.update( _.pick(apartment, apartmentFields) ),
         ]);
       })
-      .then(Utils.createSuccessHandler(res, 'Room and Apartment'))
+      .then(Utils.createdSuccessHandler(res, 'Room and Apartment'))
       .catch(Utils.logAndSend(res));
   });
 
