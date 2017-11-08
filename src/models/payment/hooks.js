@@ -37,7 +37,7 @@ module.exports = function(models, Payment) {
           }));
         }
 
-        const { Renting } = orders[0].OrderItems[0].Renting;
+        const { Renting } = orders[0].OrderItems[0];
 
         /* eslint-disable promise/no-nesting */
         return orders && SendinBlue.sendWelcomeEmail({
