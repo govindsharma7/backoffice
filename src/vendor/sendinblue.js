@@ -34,16 +34,17 @@ function serializeClient(client) {
 }
 
 function sendTemplateEmail(id, data = {}) {
+  const isProd = NODE_ENV === 'production';
   const emailTo = data.emailTo.filter(Boolean);
   const options = Object.assign(
     {},
     defaults,
-    data,
-    { emailTo: NODE_ENV === 'production' ? emailTo : emailTo.map(getSandboxEmail) }
+    isProd ? data : { attributes: { ID: id, DATA: JSON.stringify(data, null, '  ') } },
+    { emailTo: isProd ? emailTo : emailTo.map(getSandboxEmail) }
   );
 
   if (options.emailTo.length > 0) {
-    return SMTPApi.sendTemplate(id, options);
+    return SMTPApi.sendTemplate(isProd ? id : 1, options);
   }
 
   return false;
