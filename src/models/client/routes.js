@@ -251,11 +251,12 @@ module.exports = (app, models, Client) => {
   app.post('/forest/actions/client-identity', multer, LEA, (req, res) => {
     Client.normalizeIdentityRecord(JSON.parse(req.body.rawRequest))
       .then((identityRecord) => {
-        const { fullName, phoneNumber, clientId } = identityRecord;
+        const { fullName, phoneNumber, clientId, iPrefer } = identityRecord;
         const fieldsToUpdate = {
           firstName: fullName.first,
           lastName: fullName.last,
           phoneNumber: Utils.isValidPhoneNumber( phoneNumber ) && phoneNumber,
+          preferredLanguage: iPrefer === 'Français' ? 'fr' : 'en',
         };
         const scoped = Client.scope('latestClientRenting');
 
