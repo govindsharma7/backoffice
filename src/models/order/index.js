@@ -184,6 +184,29 @@ module.exports = (sequelize, DataTypes) => {
         }],
       }],
     });
+
+    Order.addScope('welcomeEmail', {
+      attributes: ['id'],
+      include: [{
+        model: models.OrderItem,
+        attributes: ['id', 'ProductId'],
+        where: { $or: [
+          { ProductId: 'rent' },
+          { ProductId: { $like: '%-deposit' } }]},
+        include: [{
+          model: models.Renting,
+          attributes: ['id', 'bookingDate', 'serviceFees', 'price'],
+          include: [{
+            model: models.Room,
+            attributes: ['id', 'reference'],
+            include: [{
+              model: models.Apartment,
+              attributes: ['name', 'addressStreet', 'addressZip', 'addressCity'],
+            }],
+          }],
+        }],
+      }],
+    });
   };
 
   Order.prototype.getTotalPaidAndRefund = function() {

@@ -22,67 +22,42 @@ module.exports = function(models, Payment) {
             amount: payment.amount,
           }),
           order,
+          order.OrderItems.length > 0 && models.Order.scope('welcomeEmail')
+            .findAll({ where: { ClientId: order.ClientId } }),
         ]);
       })
-      .tap(([{ messageId }, order]) => {
-        return order.createMetadatum({
-          name: 'messageId',
-          value: messageId,
-        });
-      })
-      .then(([, order]) => {
-        if ( order.OrderItems.length > 0 ) {
-          return models.Order.findAll({
-            where: { ClientId: order.ClientId },
-            attributes: ['id'],
-            include: [{
-              model: models.OrderItem,
-              attributes: ['id', 'ProductId'],
-              where: { $or: [
-                { ProductId: 'rent' },
-                { ProductId: { $like: '%-deposit' } }]},
-              include: [{
-                model: models.Renting,
-                attributes: ['id', 'bookingDate', 'serviceFees', 'price'],
-                include: [{
-                  model: models.Room,
-                  attributes: ['id', 'reference'],
-                  include: [{
-                    model: models.Apartment,
-                    attributes: ['name', 'addressStreet', 'addressZip', 'addressCity'],
-                  }],
-                }],
-              }],
-            }, {
-              model: models.Client,
-              attributes: [
-                'firstName',
-                'lastName',
-                'preferredLanguage',
-                'email',
-                'secondaryEmail',
-              ],
-            }],
-          });
+      .then(([{ messageId }, order, orders]) => {
+        const metadata = [{ value: messageId, MetadatableId: order.id }];
+
+        if ( !orders ) {
+          // TODO: refactor this with the same block few lines below once we
+          // switch to async/await
+          return models.Metadata.bulkCreate(metadata.map((item) => {
+            return { name: 'messageId', metadatable: 'Order', ...item };
+          }));
         }
-        return null;
-      })
-      .then((orders) => {
-        if ( orders ) {
-          return SendinBlue.sendWelcomeEmail({
+
+        const { Renting } = orders[0].OrderItems[0].Renting;
+
+        /* eslint-disable promise/no-nesting */
+        return orders && SendinBlue.sendWelcomeEmail({
             rentOrder: orders[0],
             depositOrder: orders[1],
+            client: order.Client,
+            renting: Renting,
+            room: Renting.Room,
+            apartment: Renting.Room.Apartment,
           })
           .then(({ messageId }) => {
-            return orders.map((order) => {
-              return order.createMetadatum({
-                name: 'messageId',
-                value: messageId,
-              });
-            });
+            [].push.apply(metadata, orders.map((order) => {
+              return { value: messageId, MetadatableId: order.id };
+            }));
+
+            return models.Metadata.bulkCreate(metadata.map((item) => {
+              return { name: 'messageId', metadatable: 'Order', ...item };
+            }));
           });
-        }
-        return null;
+        /* eslint-enable promise/no-nesting */
       });
   });
 

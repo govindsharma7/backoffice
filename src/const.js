@@ -122,6 +122,7 @@ module.exports = {
     confirmation: { en: 27, fr: 26 },
     housingPack: { fr: 28, en: 29 },
   },
+
   SENDINBLUE_LIST_IDS: {
     lyon: { fr: 15, en: 16, all: 14 },
     montpellier: { fr: 17, en: 18, all: 13 },
