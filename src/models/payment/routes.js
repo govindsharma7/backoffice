@@ -136,7 +136,19 @@ module.exports = function(app, models, Payment) {
         // TODO: pick receipt number
         return res.send({ paymentId: payment.id });
       })
-      .catch(Utils.logAndSend(res));
+      .catch((error) => {
+        models.Metadata
+          .create({
+            name: 'paymentError',
+            value: JSON.stringify(error),
+            MetadatableId: orderId,
+            metadatable: 'Order',
+          });
+        console.error(error);
+        return res.status(400).send({
+          error: error.longMessage || error.shortMessage || error.message,
+        });
+      });
   });
 
   Utils.addRestoreAndDestroyRoutes(app, Payment);

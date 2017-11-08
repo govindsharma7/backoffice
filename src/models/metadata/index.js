@@ -48,7 +48,6 @@ module.exports = (sequelize, DataTypes) => {
     const LEA = Liana.ensureAuthenticated;
 
     app.get('/forest/Metadata', (req, res, next) => {
-      console.log(req.query);
       return (
         req.query.filterType === 'and' &&
         req.query.filter &&
