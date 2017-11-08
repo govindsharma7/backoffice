@@ -33,7 +33,7 @@ module.exports = function(models, Payment) {
           // TODO: refactor this with the same block few lines below once we
           // switch to async/await
           return models.Metadata.bulkCreate(metadata.map((item) => {
-            return { name: 'messageId', metadatable: 'Order', ...item };
+            return Object.assign({ name: 'messageId', metadatable: 'Order' }, item );
           }));
         }
 
@@ -54,7 +54,7 @@ module.exports = function(models, Payment) {
             }));
 
             return models.Metadata.bulkCreate(metadata.map((item) => {
-              return { name: 'messageId', metadatable: 'Order', ...item };
+              return Object.assign({ name: 'messageId', metadatable: 'Order' }, item );
             }));
           });
         /* eslint-enable promise/no-nesting */

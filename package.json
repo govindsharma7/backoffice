@@ -79,7 +79,7 @@
     "gulp": "gulp",
     "help": "gulp --tasks",
     "test": "gulp test",
-    "start": "gulp upstart",
+    "start": "gulp start",
     "up": "up",
     "diff": "git diff -- . ':(exclude)package-lock.json'",
     "release": "git checkout release && git reset master --hard && git push origin release --force && git checkout -"
