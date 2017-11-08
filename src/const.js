@@ -111,6 +111,27 @@ module.exports = {
 
   SUPPORT_EMAIL: 'support@chez-nestor.com',
 
+  SENDINBLUE_TEMPLATE_IDS: {
+    welcome: { fr: 7, en: 6 },
+    deposit: { fr: 4, en: 5 },
+    newHousemate: { fr: 3, en: 2 },
+    rentInvoice: { fr: 19, en: 24 },
+    unpaidRent: { fr: 21, en: 14 },
+    lateFees: { fr: 20, en: 15 },
+    dueDate: { fr: 22, en: 23 },
+    confirmation: { en: 27, fr: 26 },
+    housingPack: { fr: 28, en: 29 },
+  },
+  SENDINBLUE_LIST_IDS: {
+    lyon: { fr: 15, en: 16, all: 14 },
+    montpellier: { fr: 17, en: 18, all: 13 },
+    paris: { fr: 20, en: 19, all: 12 },
+    prospects: { fr: 21, en: 27 },
+    archived: 25,
+    en: 9,
+    fr: 8,
+  },
+
   RENT_COEFS: {
     '01-01': 0.95, // January
     '01-02': 0.96,

@@ -12,7 +12,7 @@ const { INVOICENINJA_URL } = require('../../const');
 const {
   SENDINBLUE_LIST_IDS,
   SENDINBLUE_TEMPLATE_IDS,
-}                         = require('../../config');
+}                         = require('../../const');
 
 const _ = { pickBy, mapKeys };
 

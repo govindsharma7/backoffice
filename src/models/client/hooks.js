@@ -3,8 +3,10 @@ const SendinBlue    = require('../../vendor/sendinblue');
 const Utils         = require('../../utils');
 const {
   NODE_ENV,
-  SENDINBLUE_LIST_IDS,
 }                    = require('../../config');
+const {
+  SENDINBLUE_LIST_IDS,
+}                    = require('../../const');
 
 module.exports = function(models, Client) {
   /*

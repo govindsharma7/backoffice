@@ -9,11 +9,11 @@ const {
   SPECIAL_CHECKIN_PRICES,
   AGENCY_ADDRESSES,
   DEPOSIT_PRICES,
+  SENDINBLUE_TEMPLATE_IDS,
+  SENDINBLUE_LIST_IDS,
 }                   = require('../const');
 const {
   NODE_ENV,
-  SENDINBLUE_TEMPLATE_IDS,
-  SENDINBLUE_LIST_IDS,
   WEBSITE_URL,
 }                   = require('../config');
 
