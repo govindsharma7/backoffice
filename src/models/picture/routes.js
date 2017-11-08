@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const Liana   = require('forest-express-sequelize');
 const pick    = require('lodash/pick');
 const Aws     = require('../../vendor/aws');
+const makePublic     = require('../../middlewares/makePublic');
 const Utils   = require('../../utils');
 
 const _ = { pick };
@@ -9,6 +10,14 @@ const _ = { pick };
 module.exports = (app, models, Picture) => {
   const LEA = Liana.ensureAuthenticated;
 
+  app.get('/forest/Picture', (req, res, next) => {
+    return (
+      req.query.filterType === 'or' &&
+      /PicturableId/.test(Object.keys(req.query.filter).join(''))
+    ) ?
+      makePublic(req, res, next) :
+      LEA(req, res, next);
+  });
   app.put('/forest/Picture/:pictureId', LEA, (req, res, next) => {
     const { url } = req.body.data.attributes;
 

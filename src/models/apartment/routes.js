@@ -9,6 +9,15 @@ module.exports = function(app, models, Apartment) {
   const LEA = Liana.ensureAuthenticated;
   let urlencodedParser = bodyParser.urlencoded({ extended: true });
 
+  app.get('/forest/Apartment', (req, res, next) => {
+    return (
+      req.query.filterType === 'and' &&
+      /id/.test(Object.keys(req.query.filter).join(''))
+    ) ?
+      makePublic(req, res, next) :
+      LEA(req, res, next);
+  });
+
   app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
 
