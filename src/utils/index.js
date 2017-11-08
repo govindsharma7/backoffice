@@ -4,7 +4,7 @@ const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
 const calculatedPropsMemoizer      = require('./calculatedPropsMemoizer');
 const successHandler               = require('./successHandler');
 const roundBy100                   = require('./roundBy100');
-const findOrcreatedSuccessHandler   = require('./findOrcreatedSuccessHandler');
+const foundOrCreatedSuccessHandler = require('./foundOrCreatedSuccessHandler');
 const {
   getCheckinPrice,
   getCheckoutPrice,
@@ -38,7 +38,7 @@ module.exports = {
   calculatedPropsMemoizer,
   createdSuccessHandler,
   roundBy100,
-  findOrcreatedSuccessHandler,
+  foundOrCreatedSuccessHandler,
   getCheckinPrice,
   getCheckoutPrice,
   getPackPrice,
