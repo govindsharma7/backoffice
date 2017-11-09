@@ -7,7 +7,7 @@ module.exports = function(app) {
   app.get('/forest/District', (req, res, next) => {
     return (
       req.query.filterType === 'and' &&
-      /DistrictId/.test(Object.keys(req.query.filter).join(''))
+      /id/.test(Object.keys(req.query.filter).join(''))
     ) ?
       makePublic(req, res, next) :
       LEA(req, res, next);
