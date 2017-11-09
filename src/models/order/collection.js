@@ -107,11 +107,25 @@ module.exports = function({ Order, Metadata, Payment }) {
           where: {
             'status': 'active',
             'type': 'debit',
+            '$Payments.id$': null,
           },
-          include: [{ model: Payment }],
+          include: [{ model: Payment, attributes: ['id'] }],
         })
-        .filter((order) => {
-          return order.Payments.length === 0;
+        .reduce((acc, curr) => {
+          acc.id.push(curr.id);
+          return acc;
+        }, { id: [] });
+      },
+    }, {
+      name: 'HasPayment',
+      where: () => {
+        return Order.findAll({
+          where: {
+            'status': 'active',
+            'type': 'debit',
+            '$Payments.id$': { $not: null },
+          },
+          include: [{ model: Payment, attributes: ['id'] }],
         })
         .reduce((acc, curr) => {
           acc.id.push(curr.id);
