@@ -1,5 +1,56 @@
 // /!\ Values in this file will be <findOrCreate>d on each deploy
 // All records in this file need an `id`
+const flattenDeep  = require('lodash/flattenDeep');
+
+const _ = { flattenDeep };
+const nearbySchools = {
+  'lyon-hotel-de-ville': [
+    'L\'EAC',
+    'IFPEC, Institut Français de Psychologie Énergétique Clinique',
+    'Ecole Interculturelle de Français pour Etrangers eife2f',
+    'Ecole Lyonnaise Plantes Médicinales (E.L.P.M)',
+    'HORIZON SANTE Lyon - BTS Diététique & ESF',
+    'Ecole de théâtre de Lyon',
+    'Centre Linguistique Franco Russe CLRF',
+    'Institut Rhonalpin Analyse Transaction',
+    'Inflexion - école de langue',
+  ],
+  'lyon-bellecour': [
+    'UCLy - Université Catholique de Lyon (campus Carnot)',
+    'ESME Sudria Lyon',
+    'Bellecour Ecoles d\'Art',
+    'Peyrefitte',
+    'Institut Préparatoire Carrières Sportives',
+    'Ecole Internationale Tunon',
+  ],
+  'lyon-ainay': [
+    'UCLy - Université Catholique de Lyon (campus Carnot)',
+    'ESME Sudria Lyon',
+    'Bellecour Ecoles d\'Art', 'Peyrefitte',
+    'Institut Préparatoire Carrières Sportives',
+    'Ecole Internationale Tunon',
+    'ESDES',
+  ],
+  'lyon-confluence': [
+    'UCLy - Université Catholique de Lyon (campus Carnot)',
+    'ESDES',
+    'ESTRI School for international careers of UCLy',
+  ],
+  'lyon-debourg-gerland': [
+    'CNRS / Université Lyon 1',
+    'ENS de Lyon - Site Monod',
+    'ISARA-Lyon',
+    'Anses Lyon',
+    'Insert',
+  ],
+  'lyon-universites': [
+    'Université Lyon 3 Jean Moulin',
+    'Université Lumière Lyon 2',
+    'Sciences Po Lyon', 'Ingésup Lyon',
+    'BBA INSEEC - Ecole de Commerce Européenne',
+  ],
+};
+
 module.exports = {
   Setting: [{
     id: 'invoice-counter',
@@ -307,4 +358,14 @@ module.exports = {
       id: 'paris-pere-lachaise',
       label: 'Père Lachaise',
     }],
+  Term: _.flattenDeep(Object.keys(nearbySchools).map((district) => {
+    return nearbySchools[district].map((school) => {
+      return {
+        name: school,
+        taxonomy: 'nearbySchool',
+        termable: 'District',
+        TermableId: district,
+      };
+    });
+  })),
 };
