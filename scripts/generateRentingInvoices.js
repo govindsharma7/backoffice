@@ -15,7 +15,7 @@ return Client.scope(
     'uncashedDepositCount',
     'paymentDelay'
   )
-  .findAll()
+  .findAll({ where: { status: 'active'}})
   // Filter-out clients who already have an order for this month
   .then((clients) => {
     return clients.filter((client) => {
