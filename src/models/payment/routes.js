@@ -61,15 +61,12 @@ module.exports = function(app, models, Payment) {
           throw new Error('Invalid Card Type');
         }
 
-        return Promise.all([
-          models.Order.findOne({
-            where: { id: orderId },
-            include: [{ model: models.OrderItem }],
-          }),
-          models.Order.scope('packItems').findById(orderId),
-        ]);
+        return models.Order.findOne({
+          where: { id: orderId },
+          include: [{ model: models.OrderItem }],
+        });
       })
-      .then(([order, packOrder]) => {
+      .then((order) => {
         if ( !order ) {
           throw new Error(`Order "${orderId}" not found`);
         }
@@ -78,22 +75,6 @@ module.exports = function(app, models, Payment) {
           throw new Error(`Order "${orderId}" has been cancelled`);
         }
 
-        if ( packOrder ) {
-          /* eslint-disable promise/no-nesting */
-          return models.Room.scope('availableAt')
-            .findById(packOrder.OrderItems[0].Renting.RoomId)
-            .then((isAvailable) => {
-              if ( isAvailable && isAvailable.availableAt > Date.now() ) {
-                throw new Error('This room is no longer available.');
-              }
-              return order;
-            });
-          /* eslint-enable promise/no-nesting */
-        }
-
-        return order;
-      })
-      .then((order) => {
         return order.getCalculatedProps();
       })
       .then(({ balance }) => {
