@@ -13,6 +13,7 @@ const getPackPrice                 = require('./getPackPrice');
 const getPeriodCoef                = require('./getPeriodCoef');
 const getPeriodPrice               = require('./getPeriodPrice');
 const getServiceFees               = require('./getServiceFees');
+const getCardType                  = require('./getCardType');
 const {
   getCheckinEndDate,
   getCheckoutEndDate,
@@ -39,6 +40,7 @@ module.exports = {
   createdSuccessHandler,
   roundBy100,
   foundOrCreatedSuccessHandler,
+  getCardType,
   getCheckinPrice,
   getCheckoutPrice,
   getPackPrice,

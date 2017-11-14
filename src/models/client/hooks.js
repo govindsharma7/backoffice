@@ -1,5 +1,5 @@
 const Promise       = require('bluebird');
-const SendinBlue    = require('../../vendor/sendinblue');
+const Sendinblue    = require('../../vendor/sendinblue');
 const Utils         = require('../../utils');
 const {
   NODE_ENV,
@@ -8,7 +8,7 @@ const {
   SENDINBLUE_LIST_IDS,
 }                    = require('../../const');
 
-module.exports = function(models, Client) {
+module.exports = function({ Client }) {
   /*
    * Those hooks are used to update Invoiceninja records when clients are updated
    * in Forest.
@@ -19,7 +19,7 @@ module.exports = function(models, Client) {
     }
 
     const promises = [
-      SendinBlue.createContact(client.email, { client }),
+      Sendinblue.createContact(client.email, { client }),
     ];
 
     if ( !client.ninjaId ) {
@@ -35,16 +35,16 @@ module.exports = function(models, Client) {
     }
 
     if ( client.changed('email') ) {
-      SendinBlue.getContact(client._previousDataValues.email)
+      Sendinblue.getContact(client._previousDataValues.email)
         .then((_client) => {
           return Promise.all([
-            SendinBlue.updateContact(
+            Sendinblue.updateContact(
               _client.email,
               {
                 listIds: [SENDINBLUE_LIST_IDS.archived],
                 unlinkListIds: _client.listIds,
               }),
-            SendinBlue.createContact(client.email, {
+            Sendinblue.createContact(client.email, {
               client,
               listIds: _client.listIds,
             }),
@@ -52,14 +52,14 @@ module.exports = function(models, Client) {
         })
         .catch((err) => {
           if ( err.response.body.code === 'document_not_found' ) {
-            return SendinBlue.createContact(client.email, { client });
+            return Sendinblue.createContact(client.email, { client });
           }
 
           throw err;
         });
     }
     else {
-      SendinBlue.updateContact(client.email, { client });
+      Sendinblue.updateContact(client.email, { client });
     }
     if (
       client.ninjaId && (

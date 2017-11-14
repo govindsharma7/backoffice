@@ -189,13 +189,13 @@ module.exports = function(app, models, Renting) {
 
           return renting[`findOrCreate${_.capitalize(type)}Order`]();
         })
-        .tap(([order, isCreated]) => {
+        .tap(([/*order*/, isCreated]) => {
           // We create the refund event once the checkout order is created,
           // as the checkout date is more reliable at this point
           return Promise.all([
             type === 'checkout' && isCreated &&
               this.createOrUpdateRefundEvent(this.get('checkoutDate')),
-            isCreated && models.Order.ninjaCreateInvoices([order]),
+            // isCreated && models.Order.ninjaCreateInvoices([order]),
           ]);
         })
         .then(Utils.foundOrCreatedSuccessHandler(res, `${_.capitalize(type)} order`))

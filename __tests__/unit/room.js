@@ -1,10 +1,10 @@
 const Promise  = require('bluebird');
 const D        = require('date-fns');
-const models   = require('../../src/models');
 const Utils    = require('../../src/utils');
-const { Room } = require('../../src/models');
+const models   = require('../../src/models');
 
 const now = new Date();
+const { Room } = models;
 
 describe('Room', () => {
   describe('.getCalculatedProps()', () => {
@@ -40,7 +40,7 @@ describe('Room', () => {
     const getNull = () => { return null; };
 
     test('no Rentings == isAvailable', () => {
-      return models.Room.checkAvailability({
+      return Room.checkAvailability({
           Rentings: [],
         }, date)
         .then((isAvailable) => {
@@ -49,7 +49,7 @@ describe('Room', () => {
     });
 
     test('past bookingDate + no checkoutDate == !isAvailable', () => {
-      return models.Room.checkAvailability({
+      return Room.checkAvailability({
           Rentings: [{ bookingDate: D.parse('2017-01-01 Z'), get: getNull }],
         }, date)
         .then((isAvailable) => {
@@ -58,7 +58,7 @@ describe('Room', () => {
     });
 
     test('future bookingDate + no checkoutDate == !isAvailable', () => {
-      return models.Room.checkAvailability({
+      return Room.checkAvailability({
           Rentings: [{ bookingDate: D.parse('2017-12-12 Z'), get: getNull }],
         }, date)
         .then((isAvailable) => {
@@ -67,7 +67,7 @@ describe('Room', () => {
     });
 
     test('past bookingDate + future checkoutDate == !isAvailable', () => {
-      return models.Room.checkAvailability({
+      return Room.checkAvailability({
           Rentings: [{
             bookingDate: D.parse('2017-01-01 Z'),
             get: () => { return D.parse('2017-12-12'); },
@@ -79,7 +79,7 @@ describe('Room', () => {
     });
 
     test('past bookingDate + past checkoutDate == !isAvailable', () => {
-      return models.Room.checkAvailability({
+      return Room.checkAvailability({
           Rentings: [{
             bookingDate: D.parse('2017-01-01 Z'),
             get: () => { return D.parse('2017-02-02'); },

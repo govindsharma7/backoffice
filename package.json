@@ -8,6 +8,9 @@
     "seed",
     ".env.js"
   ],
+  "jest": {
+    "testEnvironment": "node"
+  },
   "dependencies": {
     "aws-sdk": "^2.68.0",
     "aws-serverless-express": "^3.0.2",
@@ -57,13 +60,14 @@
     "eslint-loader": "^1.7.1",
     "eslint-plugin-babel": "^4.1.1",
     "eslint-plugin-import": "^2.3.0",
+    "eslint-plugin-jest": "^21.3.2",
     "eslint-plugin-mocha": "^4.10.1",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-react": "^7.0.1",
     "git-hooks": "^1.1.8",
     "gulp": "github:gulpjs/gulp#4.0",
     "gulp-shelter": "^1.0.1",
-    "jest": "^20.0.4",
+    "jest": "^21.2.1",
     "mysqldump": "^1.4.2",
     "nodemon": "^1.11.0",
     "sequelize-cli": "^2.7.0",

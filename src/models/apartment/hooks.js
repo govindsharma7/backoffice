@@ -1,4 +1,4 @@
-module.exports = function(models, Apartment) {
+module.exports = function({ Apartment, Client }) {
   Apartment.hook('beforeUpdate', (apartment) => {
     // if no address field has been updated…
     if (
@@ -25,7 +25,7 @@ module.exports = function(models, Apartment) {
   });
 
   Apartment.hook('beforeDelete', (apartment) => {
-    return models.Client.scope('currentApartment')
+    return Client.scope('currentApartment')
       .findAll({
         where: { $and: [
           { '$Rentings->Room.ApartmentId$': apartment.id },

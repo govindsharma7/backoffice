@@ -162,13 +162,7 @@ module.exports = function(models) {
         enums: ['current month', 'next month'],
       }],
     }, {
-      name: 'Add Note',
-      fields: [{
-        field: 'content',
-        type: 'String',
-      }],
-    }, {
-      name: 'Change Due Date',
+      name: 'Set Rent Payment Delay',
       fields: [{
         field: 'addDelay',
         type: 'Enum',

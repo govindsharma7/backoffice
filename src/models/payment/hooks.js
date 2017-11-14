@@ -1,79 +1,37 @@
 const Promise     = require('bluebird');
-const SendinBlue  = require('../../vendor/sendinblue');
+const Sendinblue  = require('../../vendor/sendinblue');
 
-module.exports = function(models, Payment) {
-  Payment.hook('afterCreate', (payment) => {
-    return models.Order
+module.exports = function({ Payment, Order, Client }) {
+  // When a payment is created:
+  // - send a payment confirmation message (and store its messageId)
+  // - pick a receiptNumber
+  Payment.hook('afterCreate', (payment) =>
+    Order
       .findOne({
         where: { id: payment.OrderId },
         include: [{
-          model: models.Client,
-        }, {
-          model: models.OrderItem,
-          required: false,
-          where: { ProductId: { $like: '%-pack' } },
+          model: Client,
         }],
       })
-      .then((order) => {
-        return Promise.all([
-          SendinBlue.sendConfirmationPayment({
-            order,
-            client: order.Client,
-            amount: payment.amount,
-          }),
+      .then((order) => Promise.all([
+        Sendinblue.sendPaymentConfirmation({
           order,
-          order.OrderItems.length > 0 && models.Order.scope('welcomeEmail')
-            .findAll({ where: { ClientId: order.ClientId } }),
-        ]);
-      })
-      .then(([{ messageId }, order, orders]) => {
-        const metadata = [{ value: messageId, MetadatableId: order.id }];
+          client: order.Client,
+          amount: payment.amount,
+        }),
+        Order.pickReceiptNumber(order),
+      ]))
+  );
 
-        if ( !orders ) {
-          // TODO: refactor this with the same block few lines below once we
-          // switch to async/await
-          return models.Metadata.bulkCreate(metadata.map((item) => {
-            return Object.assign({ name: 'messageId', metadatable: 'Order' }, item );
-          }));
-        }
+  ['beforeDelete', 'beforeUpdate'].forEach((type) =>
+    Payment.hook(type, (payment) => {
+      if ( payment.type !== 'manual' ) {
+        throw new Error(
+          `Only manual payments can be ${type.replace('before', '').toLowerCase()}ed`
+        );
+      }
 
-        const { Renting } = orders[0].OrderItems[0];
-
-        /* eslint-disable promise/no-nesting */
-        return orders && SendinBlue.sendWelcomeEmail({
-            rentOrder: orders[0],
-            depositOrder: orders[1],
-            client: order.Client,
-            renting: Renting,
-            room: Renting.Room,
-            apartment: Renting.Room.Apartment,
-          })
-          .then(({ messageId }) => {
-            [].push.apply(metadata, orders.map((order) => {
-              return { value: messageId, MetadatableId: order.id };
-            }));
-
-            return models.Metadata.bulkCreate(metadata.map((item) => {
-              return Object.assign({ name: 'messageId', metadatable: 'Order' }, item );
-            }));
-          });
-        /* eslint-enable promise/no-nesting */
-      });
-  });
-
-  Payment.hook('beforeDelete', (payment) => {
-    if ( payment.type !== 'manual' ) {
-      throw new Error('Only manual payments can be deleted');
-    }
-
-    return payment;
-  });
-
-  Payment.hook('beforeUpdate', (payment) => {
-    if ( payment.type !== 'manual' ) {
-      throw new Error('Only manual payments can be updated');
-    }
-
-    return payment;
-  });
+      return payment;
+    })
+  );
 };

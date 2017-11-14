@@ -1,6 +1,7 @@
-const models   = require('../src/models');
-const seed     = require('../seed');
-const fixtures = require('./fixtures');
+const models    = require('../src/models');
+const sequelize = require('../src/models/sequelize');
+const seed      = require('../seed');
+const fixtures  = require('./fixtures');
 
 // Requiring this file wipes out your db
 // throw if NODE_ENV value is unexpected
@@ -11,7 +12,7 @@ if (
   throw new Error('Requiring this file will erase all your data!');
 }
 
-const common = models.sequelize
+const common = sequelize
   .sync()
   .then(() => {
     return fixtures({

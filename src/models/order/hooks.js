@@ -1,11 +1,4 @@
-module.exports = function(models, Order) {
-//  Order.hook('beforeCreate', (order) => {
-//    if ( order.status !== 'active' ) {
-//      order.setDataValue('deletedAt', new Date());
-//    /}
-//  });
-
-  Order.hook('afterUpdate', Order.afterUpdate);
+module.exports = function({ Order }) {
 
   Order.hook('beforeDelete', (order) => {
     // Order that already have a receipt number cannot be deleted.
@@ -23,7 +16,7 @@ module.exports = function(models, Order) {
   });
 
   Order.hook('afterRestore', (order) => {
-    return order.getOrderItems(/*{paranoid: false}*/)
+    return order.getOrderItems()
         .filter((orderItem) => {
           return orderItem.deletedAt != null;
         })

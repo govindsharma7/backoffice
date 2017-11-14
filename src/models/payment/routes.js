@@ -1,8 +1,6 @@
-const uuid           = require('uuid/v4');
 const Liana          = require('forest-express-sequelize');
 const Promise        = require('bluebird');
 const padStart       = require('lodash/padStart');
-const payline        = require('../../vendor/payline');
 const Utils          = require('../../utils');
 const makePublic     = require('../../middlewares/makePublic');
 
@@ -35,96 +33,39 @@ module.exports = function(app, models, Payment) {
 
   app.post('/forest/actions/public/create-payment', makePublic, (req, res) => {
     const {
-      cardNumber: number,
-      holderName: holder,
+      cardNumber,
+      holderName,
       expiryMonth,
       expiryYear,
-      cvv: cvx,
+      cvv,
       orderId,
     } = req.body;
+    const cardType = Utils.getCardType(cardNumber);
+    const expirationDate = _.padStart(`${expiryMonth}${expiryYear}`, 4, '0');
 
-    const rVisa = /^4[0-9]{12}(?:[0-9]{3})?$/;
-    const rMastercard =
-      /^(?:5[1-5][\d]{2}|222[1-9]|22[3-9][\d]|2[3-6][\d]{2}|27[01][\d]|2720)[\d]{12}$/;
-    let type;
-
-    if ( number.match(rVisa) ) {
-      type = 'visa';
-    }
-    else if ( number.match(rMastercard) ) {
-      type = 'mastercard';
-    }
-
-    Promise.resolve()
-      .then(() => {
-        if ( !type ) {
-          throw new Error('Invalid Card Type');
-        }
-
-        return models.Order.findOne({
-          where: { id: orderId },
-          include: [{ model: models.OrderItem }],
-        });
+    return models.Order.findOne({
+        where: { id: orderId },
+        include: [{ model: models.OrderItem }],
       })
       .then((order) => {
         if ( !order ) {
           throw new Error(`Order "${orderId}" not found`);
         }
 
-        if ( order.status === 'cancelled' ) {
-          throw new Error(`Order "${orderId}" has been cancelled`);
-        }
-
-        return order.getCalculatedProps();
+        return Promise.all([order, order.getCalculatedProps()]);
       })
-      .then(({ balance }) => {
-        if ( balance >= 0 ) {
-          throw new Error('Order is already fully paid.');
-        }
-
-        return Promise.all([
-          payline.doPurchase(
-            uuid(),
-            {
-              number,
-              type,
-              expirationDate: _.padStart(`${expiryMonth}${expiryYear}`, 4, '0'),
-              holder,
-              cvx,
-            },
-            -balance
-          ),
-          -balance,
-        ]);
-      })
-      .then(([{ transactionId }, amount]) => {
-        return Promise.all([
-          models.Payment
-            .create({
-              type: 'card',
-              amount,
-              paylineId: transactionId,
-              OrderId: orderId,
-            }),
-          models.Order.scope('packItems').findById(orderId),
-        ]);
-      })
-      .then(([payment, packOrder]) => {
-        if ( packOrder ) {
-          packOrder.markAsPaid();
-        }
-
-        // TODO: pick receipt number
-        return res.send({ paymentId: payment.id });
-      })
+      .then(([order, { balance }]) => order.pay({
+        balance,
+        card: {
+          cardNumber,
+          holderName,
+          expirationDate,
+          cvv,
+          cardType,
+        },
+      }))
+      .then(({ transactionId }) => res.send({ paymentId: transactionId }))
       .catch((error) => {
-        models.Metadata
-          .create({
-            name: 'paymentError',
-            value: JSON.stringify(error),
-            MetadatableId: orderId,
-            metadatable: 'Order',
-          });
         console.error(error);
         return res.status(400).send({
           error: error.longMessage || error.shortMessage || error.message,

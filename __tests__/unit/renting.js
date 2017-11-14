@@ -84,7 +84,7 @@ describe('Renting', () => {
   describe('.prorate()', () => {
     const price = 20000;
     const serviceFees = 3000;
-    const get = () => { return null; };
+    const get = () => null;
 
     test('it calculates the prorata for the "booking month"', () => {
       return expect(Renting.prorate({
@@ -103,7 +103,7 @@ describe('Renting', () => {
         price,
         serviceFees,
         bookingDate: D.parse('2015-01-20'),
-        get: () => { return D.parse('2015-02-10'); },
+        get: () => D.parse('2015-02-10'),
       }, D.parse('2015-02 Z'))).toEqual({
         price: Utils.roundBy100(price / 28 * 10),
         serviceFees: Utils.roundBy100(serviceFees / 28 * 10),

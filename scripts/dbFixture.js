@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 
 /* eslint-disable import/no-dynamic-require */
-const path    = require('path');
-const Promise = require('bluebird');
-const models  = require('../src/models');
-const Utils   = require('../src/utils');
+const path      = require('path');
+const Promise   = require('bluebird');
+const models    = require('../src/models');
+const sequelize = require('../src/models/sequelize');
+const Utils     = require('../src/utils');
 
 // Object.entries polyfill
 Object.entries = typeof Object.entries === 'function' ?
   Object.entries :
-  (obj) => { return Object.keys(obj).map((k) => { return [k, obj[k]]; }); };
+  (obj) => Object.keys(obj).map((k) => [k, obj[k]]);
 
 if (
   process.env.NODE_ENV !== 'test' &&
@@ -24,7 +25,7 @@ Use "--force" if you're certain you want to do that.
 }
 
 /* eslint-disable promise/no-nesting */
-return models.sequelize.sync(/*{ force: true }*/)
+return sequelize.sync(/*{ force: true }*/)
   .then(() => {
     // We used to just load all files in the folder, but the order we load them
     // is important because of references constraints

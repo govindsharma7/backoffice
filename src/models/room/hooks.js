@@ -1,8 +1,8 @@
-module.exports = function(models, Room) {
+module.exports = function({ Room, Apartment, Client }) {
   Room.hook('beforeCreate', (room) => {
     const { ApartmentId, roomNumber } = room;
 
-    return models.Apartment
+    return Apartment
       .findById(ApartmentId)
       .then((apartment) => {
         room.setDataValue('reference', `${apartment.reference}${roomNumber}`);
@@ -17,7 +17,7 @@ module.exports = function(models, Room) {
   });
 
   Room.hook('beforeDelete', (room) => {
-    return models.Client.scope('currentApartment')
+    return Client.scope('currentApartment')
       .findAll({
         where: {
           '$Rentings.RoomId$': room.id,

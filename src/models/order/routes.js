@@ -3,7 +3,7 @@ const Promise           = require('bluebird');
 const Chromeless        = require('../../vendor/chromeless');
 const Sendinblue        = require('../../vendor/sendinblue');
 const makePublic        = require('../../middlewares/makePublic');
-const checkToken        = require('../../middlewares/checkToken');
+// const checkToken        = require('../../middlewares/checkToken');
 const Utils             = require('../../utils');
 // const {
 //   destroySuccessHandler,
@@ -13,22 +13,22 @@ const Serializer  = Liana.ResourceSerializer;
 
 module.exports = (app, models, Order) => {
   const LEA = Liana.ensureAuthenticated;
-  const rInvoiceUrl = /https:\/\/payment\.chez-nestor\.com\/invoices\/(\d+)/;
+  // const rInvoiceUrl = /https:\/\/payment\.chez-nestor\.com\/invoices\/(\d+)/;
 
   // Make this route completely public
   app.get('/forest/Order/:orderId', makePublic);
 
-  app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
-    return Order
-      .findAll({
-        where: { id: { $in: req.body.data.attributes.ids } },
-      })
-      .then((orders) => {
-        return Order.ninjaCreateInvoices(orders);
-      })
-      .then(Utils.createdSuccessHandler(res, 'Ninja invoice'))
-      .catch(Utils.logAndSend(res));
-  });
+  // app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
+  //   return Order
+  //     .findAll({
+  //       where: { id: { $in: req.body.data.attributes.ids } },
+  //     })
+  //     .then((orders) => {
+  //       return Order.ninjaCreateInvoices(orders);
+  //     })
+  //     .then(Utils.createdSuccessHandler(res, 'Ninja invoice'))
+  //     .catch(Utils.logAndSend(res));
+  // });
 
   app.get('/forest/Invoice/:orderId', makePublic, (req, res) => {
     return Order.scope('invoice')
@@ -88,27 +88,15 @@ module.exports = (app, models, Order) => {
           throw new Error('Can\'t send payment request, the balance is positive');
         }
 
-        if ( OrderItems.some(({ ProductId }) => { return ProductId === 'rent'; }) ) {
-          return Promise.all([
-            order,
-            Sendinblue.sendRentRequest({ order, amount, client: Client }),
-          ]);
+        if ( OrderItems.some(({ ProductId }) => ProductId === 'rent' ) ) {
+          return Sendinblue.sendRentRequest({ order, amount, client: Client });
         }
 
-        if ( OrderItems.some(({ ProductId }) => { return /-pack$/.test(ProductId); }) ) {
-          return Promise.all([
-            order,
-            Sendinblue.sendHousingPackRequest({ order, amount, client: Client }),
-          ]);
+        if ( OrderItems.some(({ ProductId }) => /-pack$/.test(ProductId)) ) {
+          return Sendinblue.sendHousingPackRequest({ order, amount, client: Client });
         }
 
         throw new Error('Payment request not implemented for this type of order');
-      })
-      .then(([order, { messageId }]) => {
-        return order.createMetadatum({
-          name: 'messageId',
-          value: messageId,
-        });
       })
       .then(Utils.sentSuccessHandler(res, 'Payment Request'))
       .catch(Utils.logAndSend(res));
@@ -132,40 +120,12 @@ module.exports = (app, models, Order) => {
           throw new Error('This isn\'t a Housing Pack Order');
         }
 
-        return Promise.all([
-          Sendinblue.sendHousingPackRequest(
-            { order, amount: order.get('amount'), client: order.Client }
-          ),
-          order,
-        ]);
-      })
-      .then(([{ messageId }, order]) => {
-        return order.createMetadatum({
-          name: 'messageId',
-          value: messageId,
+        return Sendinblue.sendHousingPackRequest({
+          order, amount: order.get('amount'),
+          client: order.Client,
         });
       })
       .then(Utils.sendSuccessHandler(res, 'Housing Pack Request'))
-      .catch(Utils.logAndSend(res));
-  });
-
-  app.post('/forest/actions/payment-notification', checkToken, (req, res) => {
-    const ninjaId = rInvoiceUrl.exec(req.body.message);
-
-    if ( !ninjaId || !ninjaId[1] ) {
-      return res.status(502).send('Invalid request');
-    }
-
-    return Order.scope('packItems')
-      .findOne({ where: {ninjaId : ninjaId[1]} })
-      .then((order) => {
-        if ( !order ) {
-          throw new Error(`No order found for the NinjaId ${ninjaId[1]}`);
-        }
-
-        return order.markAsPaid();
-      })
-      .then(Utils.createdSuccessHandler(res, 'Payment Notification'))
       .catch(Utils.logAndSend(res));
   });
 
@@ -204,7 +164,7 @@ module.exports = (app, models, Order) => {
         });
       })
       .tap((order) => {
-        return order.destroyOrCancel();
+        return Order.destroyOrCancel(order);
       })
       .then(Utils.createdSuccessHandler(res, 'Cancel invoice'))
       .catch(Utils.logAndSend(res));

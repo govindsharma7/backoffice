@@ -1,29 +1,29 @@
-const routes = require('./routes');
+const { DataTypes } = require('sequelize');
+const sequelize     = require('../sequelize');
+const routes        = require('./routes');
 
-module.exports = (sequelize, DataTypes) => {
-  const District = sequelize.define('District', {
-    id: {
-      primaryKey: true,
-      type:                   DataTypes.STRING,
-    },
-    label:                    DataTypes.STRING,
-    descriptionEn:            DataTypes.TEXT,
-    descriptionFr:            DataTypes.TEXT,
-    descriptionEs:            DataTypes.TEXT,
+const District = sequelize.define('District', {
+  id: {
+    primaryKey: true,
+    type:                   DataTypes.STRING,
+  },
+  label:                    DataTypes.STRING,
+  descriptionEn:            DataTypes.TEXT,
+  descriptionFr:            DataTypes.TEXT,
+  descriptionEs:            DataTypes.TEXT,
+});
+
+District.associate = (models) => {
+  District.hasMany(models.Apartment, {
+    constraints: false,
   });
-  const {models} = sequelize;
-
-  District.associate = () => {
-    District.hasMany(models.Apartment, {
-      constraints: false,
-    });
-    District.hasMany(models.Term, {
-      foreignKey: 'TermableId',
-      constraints: false,
-      scope: { termable: 'District' },
-    });
-  };
-
-  District.routes = routes;
-  return District;
+  District.hasMany(models.Term, {
+    foreignKey: 'TermableId',
+    constraints: false,
+    scope: { termable: 'District' },
+  });
 };
+
+District.routes = routes;
+
+module.exports = District;

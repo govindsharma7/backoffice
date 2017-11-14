@@ -52,12 +52,6 @@ return Client.scope(
 
       return client
         .findOrCreateRentOrder(rentings, month)
-        .tap(([order]) => {
-          return order.pickReceiptNumber();
-        })
-        .tap(([order]) => {
-          return order.ninjaId ? order : order.ninjaCreate();
-        })
         .then(([order]) => {
           return models.Order.scope('amount').findById(order.id);
         })

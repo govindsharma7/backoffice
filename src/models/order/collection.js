@@ -48,11 +48,7 @@ module.exports = function({ Order, Metadata, Payment }) {
     }, {
       field: 'paymentPage',
       type: 'String',
-      get({ id, receiptNumber }) {
-        if ( !receiptNumber ) {
-          return null;
-        }
-
+      get({ id }) {
         return `${WEBSITE_URL}/en-US/payment/${id}`;
       },
     }, {
@@ -93,9 +89,9 @@ module.exports = function({ Order, Metadata, Payment }) {
         });
       },
     }],
-    actions: [{
+    actions: [/*{
       name: 'Generate Invoice',
-    }, {
+    }, */{
       name: 'Cancel Order',
     }, {
       name: 'Send Payment Request',

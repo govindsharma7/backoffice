@@ -75,7 +75,7 @@ module.exports = (app, models, Client) => {
     return null;
   });
 
-  app.post('/forest/actions/change-due-date', LEA, (req, res) => {
+  app.post('/forest/actions/set-rent-payment-delay', LEA, (req, res) => {
     const { values, ids } = req.body.data.attributes;
 
     Promise.resolve()

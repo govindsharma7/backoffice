@@ -1,3 +1,4 @@
+const Promise       = require('bluebird');
 const SendinBlueApi = require('sib-api-v3-sdk');
 const capitalize    = require('lodash/capitalize');
 const D             = require('date-fns');
@@ -24,71 +25,79 @@ const _ = { capitalize };
 const SMTPApi = new SendinBlueApi.SMTPApi();
 const ContactsApi = new SendinBlueApi.ContactsApi();
 const defaults = { replyTo: SUPPORT_EMAIL };
+const Sendinblue = {};
+let Metadata = null;
 
-function serializeClient(client) {
-  return {
-    FIRSTNAME: client.firstName,
-    LASTNAME: client.lastName,
-    SMS: client.phoneNumber === null ? null : client.phoneNumber,
-  };
-}
+Sendinblue.init = function(model) {
+  Metadata = model;
+};
 
-function sendTemplateEmail(id, data = {}) {
+Sendinblue.sendTemplateEmail = function(id, data = {}) {
   const isProd = NODE_ENV === 'production';
+  const isTest = NODE_ENV === 'test';
   const emailTo = data.emailTo.filter(Boolean);
   const options = Object.assign(
     {},
     defaults,
     isProd ? data : { attributes: { ID: id, DATA: JSON.stringify(data, null, '  ') } },
-    { emailTo: isProd ? emailTo : emailTo.map(getSandboxEmail) }
+    { emailTo: isProd ? emailTo : emailTo.map(Sendinblue.getSandboxEmail) }
   );
 
   if (options.emailTo.length > 0) {
-    return SMTPApi.sendTemplate(isProd ? id : 1, options);
+    return SMTPApi[isTest ? 'sendTest' : 'sendTemplate'](isProd ? id : 1, options);
   }
 
-  return false;
-}
+  return Promise.resolve({});
+};
+
+Sendinblue.serializeClient = function(client) {
+  return {
+    FIRSTNAME: client.firstName,
+    LASTNAME: client.lastName,
+    SMS: client.phoneNumber === null ? null : client.phoneNumber,
+  };
+};
 
 // In any environment but production, we always replace the email domain
 // with our own, to make sure we never send an email to a real client
-function getSandboxEmail(email) {
+Sendinblue.getSandboxEmail = function(email) {
   return `lrbabe+${email.replace(/@(.*)\.[^.]+$/, '_at_$1')}@chez-nestor.com`;
-}
+};
 
-function getContact(email) {
+Sendinblue.getContact = function(email) {
   return ContactsApi.getContactInfo(email);
-}
+};
 
-function createContact(email, {client, listIds}) {
+Sendinblue.createContact = function(email, {client, listIds}) {
   return ContactsApi.createContact({
-    email: NODE_ENV === 'production' ? email : getSandboxEmail(email),
-    attributes: serializeClient(client),
+    email: NODE_ENV === 'production' ? email : Sendinblue.getSandboxEmail(email),
+    attributes: Sendinblue.serializeClient(client),
     listIds: listIds === null ?
       [SENDINBLUE_LIST_IDS.prospects[client.preferredLanguage]] : listIds,
   });
-}
+};
 
-function updateContact(email, {listIds, unlinkListIds, client}) {
+Sendinblue.updateContact = function(email, {listIds, unlinkListIds, client}) {
   const params = {
     listIds,
     unlinkListIds,
   };
 
   if ( client != null ) {
-    params.attributes = serializeClient(client);
+    params.attributes = Sendinblue.serializeClient(client);
   }
 
   return ContactsApi.updateContact(email, params);
-}
+};
 
-function sendWelcomeEmail({ rentOrder, depositOrder, client, renting, room, apartment }) {
+Sendinblue.sendWelcomeEmail = function(args) {
+  const { rentOrder, depositOrder, client, renting, room, apartment } = args;
   const { name, addressStreet, addressZip, addressCity } = apartment;
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
   const roomNumber = room.reference.slice(-1);
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
-  return sendTemplateEmail(
+  return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.welcome[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -108,14 +117,22 @@ function sendWelcomeEmail({ rentOrder, depositOrder, client, renting, room, apar
           ( isStudio ? 'l\'appartement entier<b>' : `la chambre nº<b>${roomNumber}` ),
       },
     }
+  )
+  .then(({ messageId }) =>
+    Metadata && Metadata.bulkCreate([rentOrder, depositOrder].map((order) => ({
+      name: 'messageId',
+      value: `Welcome: ${messageId}`,
+      MetadatableId: order.id,
+      metadatable: 'Order',
+    })))
   );
-}
+};
 
-function sendRentReminder({ order, client, amount, now = new Date() }) {
+Sendinblue.sendRentReminder = function({ order, client, amount, now = new Date() }) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
   const templateId = D.getDate(now) === 1 ? 'dueDate' : 'unpaidRent';
 
-  return sendTemplateEmail(
+  return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS[templateId][client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -125,13 +142,21 @@ function sendRentReminder({ order, client, amount, now = new Date() }) {
         AMOUNT: amount / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
-  });
-}
+  })
+  .then(({ messageId }) =>
+    Metadata && Metadata.create({
+      name: 'messageId',
+      value: `Rent Reminder: ${messageId}`,
+      MetadatableId: order.id,
+      metadatable: 'Order',
+    })
+  );
+};
 
-function sendRentRequest({ order, client, amount }) {
+Sendinblue.sendRentRequest = function({ order, client, amount }) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
-  return sendTemplateEmail(
+  return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.rentInvoice[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -141,13 +166,21 @@ function sendRentRequest({ order, client, amount }) {
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
     }
+  )
+  .then(({ messageId }) =>
+    Metadata && Metadata.create({
+      name: 'messageId',
+      value: `Rent Request: ${messageId}`,
+      MetadatableId: order.id,
+      metadatable: 'Order',
+    })
   );
-}
+};
 
-function sendConfirmationPayment({ order, client, amount }) {
+Sendinblue.sendPaymentConfirmation = function({ order, client, amount }) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
-  return sendTemplateEmail(
+  return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.confirmation[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -157,13 +190,22 @@ function sendConfirmationPayment({ order, client, amount }) {
         LABEL: order.label,
         LINK: Utils.getInvoiceLink({ order, lang }),
       },
-    });
-}
+    }
+  )
+  .then(({ messageId }) =>
+    Metadata && Metadata.create({
+      name: 'messageId',
+      value: `Payment confirmation: ${messageId}`,
+      MetadatableId: order.id,
+      metadatable: 'Order',
+    })
+  );
+};
 
-function sendHousingPackRequest({ order, amount, client }) {
+Sendinblue.sendHousingPackRequest = function({ order, amount, client }) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
-  return sendTemplateEmail(
+  return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.housingPack[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -173,13 +215,21 @@ function sendHousingPackRequest({ order, amount, client }) {
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
     }
+  )
+  .then(({ messageId }) =>
+    Metadata && Metadata.create({
+      name: 'messageId',
+      value: `Pack Request: ${messageId}`,
+      MetadatableId: order.id,
+      metadatable: 'Order',
+    })
   );
-}
+};
 
-function sendLateFeesEmail({order, amount, orderItems, client}) {
+Sendinblue.sendLateFeesEmail = function({order, amount, orderItems, client}) {
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
-  return sendTemplateEmail(
+  return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.lateFees[client.preferredLanguage],
     {
       emailTo: [client.email],
@@ -190,24 +240,19 @@ function sendLateFeesEmail({order, amount, orderItems, client}) {
         LATE_FEES: orderItems[0].unitPrice * orderItems[0].quantity / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
-  });
-}
-
-function pingService() {
-  return new SendinBlueApi.AccountApi().getAccount();
-}
-
-module.exports = {
-  sendTemplateEmail,
-  updateContact,
-  createContact,
-  getContact,
-  serializeClient,
-  sendWelcomeEmail,
-  sendRentReminder,
-  sendRentRequest,
-  sendHousingPackRequest,
-  sendConfirmationPayment,
-  sendLateFeesEmail,
-  pingService,
+  })
+  .then(({ messageId }) =>
+    Metadata && Metadata.create({
+      name: 'messageId',
+      value: `Late Fees: ${messageId}`,
+      MetadatableId: order.id,
+      metadatable: 'Order',
+    })
+  );
 };
+
+Sendinblue.pingService = function() {
+  return new SendinBlueApi.AccountApi().getAccount();
+};
+
+module.exports = Sendinblue;

@@ -93,33 +93,4 @@ describe('Order', () => {
         });
     });
   });
-
-  describe('#ninjaSerialize()', () => {
-    test('it should serialize the order for InvoiceNinja', () => {
-      return order
-        .ninjaSerialize({
-          'invoice_number': '1234',
-        })
-        .then((obj) => {
-          return expect(obj).toEqual({
-            'client_id': null,
-            'invoice_number': '1234',
-            'amount': 300 + 200,
-            'balance': (100 + 100) - (300 + 200) - 100,
-            'invoice_items': [{
-              'product_key': 'test item 1',
-              'cost': 1,
-              'qty': 3,
-              'notes': '',
-            }, {
-              'product_key': 'test item 2',
-              'cost': 2,
-              'qty': 1,
-              'notes': '',
-            }],
-          });
-        });
-    });
-  });
-
 });

@@ -1,7 +1,7 @@
 const Aws           = require('../../vendor/aws');
 const config        = require('../../config');
 
-module.exports = function(models, Picture) {
+module.exports = function({ Picture }) {
   Picture.hook('beforeCreate', (picture) => {
     if ( config.NODE_ENV === 'test' ) {
       return picture;

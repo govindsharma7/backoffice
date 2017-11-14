@@ -42,19 +42,20 @@ Unique.prototype = {
   },
 };
 
-function fixtures({models, common = Promise.resolve({}), options: opts}) {
-  const options = Object.assign({
-    method: 'create',
-    hooks: false,
-  }, opts || {});
+function fixtures({models, common = Promise.resolve({}), options: globalOptions = {}}) {
   const instances = {};
   let unique;
   let data;
 
   return function(callback) {
-    return function() {
+    return function(fileOptions = {}) {
       return common
         .then(({ instances: ins, unique: u }) => {
+          const options = Object.assign({
+            method: 'create',
+            hooks: false,
+          }, globalOptions, fileOptions);
+
           Object.assign(instances, ins);
           unique = new Unique(u);
           /* eslint-disable promise/no-callback-in-promise */
@@ -67,11 +68,11 @@ function fixtures({models, common = Promise.resolve({}), options: opts}) {
 
             /* eslint-disable promise/no-nesting */
             return Promise.resolve()
-              .then(() => {
-                return options.method === 'create' ?
+              .then(() =>
+                options.method === 'create' && options.hooks === false ?
                   model.bulkCreate(records, options) :
-                  Promise.map(records, (record) => {
-                    return model[options.method](record, options)
+                  Promise.map(records, (record) =>
+                    model[options.method](record, options)
                       .then((result) => {
                         if (typeof result === 'object') {
                           return result;
@@ -81,9 +82,9 @@ function fixtures({models, common = Promise.resolve({}), options: opts}) {
 
                         instance.isNewRecord = false;
                         return instance;
-                      });
-                  });
-              })
+                      })
+                  )
+              )
               /* eslint-enable promise/no-nesting */
               .then((results) => {
                 if (primaryKeys.length !== 1) {

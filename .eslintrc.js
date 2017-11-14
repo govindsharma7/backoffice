@@ -12,6 +12,7 @@ module.exports = {
     'plugin:promise/recommended',
   ],
   plugins: [
+    'jest',
     'react',
     'mocha',
     'import',
@@ -28,6 +29,7 @@ module.exports = {
     'amd': true,
     'es6': true,
     'node': true,
+    'jest/globals': true,
     'mocha': true
   },
   rules: {
@@ -134,7 +136,8 @@ module.exports = {
     'no-trailing-spaces': ['error'],
 
     // ECMAScript 6
-    'arrow-body-style': ['error', 'always'],
+    // TODO: switch to 'error' later
+    'arrow-body-style': ['warn', 'as-needed'],
     'arrow-parens': ['error', 'always'],
     'arrow-spacing': ['error'],
     'object-shorthand': ['error', 'always'],

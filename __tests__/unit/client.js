@@ -219,14 +219,21 @@ describe('Client', () => {
   });
 
   describe('.getIdentity', () => {
-    test('it fetches and parse the identity record of the client', () => {
-      return models.Client
-        .getIdentity({}, { findOne: () => {
-            return Promise.resolve({ value: JSON.stringify(
-              { birthDate: { year: '1986', month: '07', day: '23' } }
-            ) });
-          } }
-        )
+    const findOne = models.Metadata.findOne;
+
+    beforeAll(() => {
+      models.Metadata.findOne = jest.fn(() => Promise.resolve({
+          value: JSON.stringify(
+            { birthDate: { year: '1986', month: '07', day: '23' } }
+          ),
+        }));
+    });
+    afterAll(() => {
+      models.Metadata.findOne = findOne;
+    });
+
+    it('it fetches and parse the identity record of the client', () => {
+      return models.Client.getIdentity({})
         .then((identity) => {
           return expect(identity).toEqual({
             birthDate: { year: '1986', month: '07', day: '23' },

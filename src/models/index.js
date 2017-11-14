@@ -1,58 +1,43 @@
-const Sequelize   = require('sequelize');
-const config      = require('../config');
-const apartment   = require('./apartment');
-const client      = require('./client');
-const credit      = require('./credit');
-const event       = require('./event');
-const metadata    = require('./metadata');
-const order       = require('./order');
-const orderItem   = require('./orderItem');
-const payment     = require('./payment');
-const picture     = require('./picture');
-const product     = require('./product');
-const renting     = require('./renting');
-const room        = require('./room');
-const setting     = require('./setting');
-const term        = require('./term');
-const district    = require('./district');
+const Sendinblue  = require('../vendor/sendinblue');
+const sequelize   = require('./sequelize');
+const models      = require('./models');
+const Apartment   = require('./apartment');
+const Client      = require('./client');
+const Credit      = require('./credit');
+const District    = require('./district');
+const Event       = require('./event');
+const Metadata    = require('./metadata');
+const Order       = require('./order');
+const OrderItem   = require('./orderItem');
+const Payment     = require('./payment');
+const Picture     = require('./picture');
+const Product     = require('./product');
+const Renting     = require('./renting');
+const Room        = require('./room');
+const Setting     = require('./setting');
+const Term        = require('./term');
+// Keep models sorted alphabetically (easier to make sure they're all there)
+// And don't forget to add the name of the model to ./models.js !
 
-const sequelize = new Sequelize(
-  config.SEQUELIZE_DATABASE,
-  config.SEQUELIZE_USERNAME,
-  config.SEQUELIZE_PASSWORD,
-  {
-    host: config.SEQUELIZE_HOST,
-    dialect: config.SEQUELIZE_DIALECT,
-    // this file is used when dialect is sqlite
-    storage: config.SEQUELIZE_HOST,
-    // WTF Sequelize??
-    define: {
-      freezeTableName: true,
-    },
-    benchmark: true,
-  }
-);
+Object.assign(models, {
+  Apartment,
+  Client,
+  Credit,
+  District,
+  Event,
+  Metadata,
+  Order,
+  OrderItem,
+  Payment,
+  Picture,
+  Product,
+  Renting,
+  Room,
+  Setting,
+  Term,
+  // Keep models sorted alphabetically!
+});
 
-// Load the models manually (loading the directory isn't webpack friendly)
-const db = {
-  Apartment: apartment(sequelize, Sequelize.DataTypes),
-  Client: client(sequelize, Sequelize.DataTypes),
-  Credit: credit(sequelize, Sequelize.DataTypes),
-  Event: event(sequelize, Sequelize.DataTypes),
-  Metadata: metadata(sequelize, Sequelize.DataTypes),
-  Order: order(sequelize, Sequelize.DataTypes),
-  OrderItem: orderItem(sequelize, Sequelize.DataTypes),
-  Payment: payment(sequelize, Sequelize.DataTypes),
-  Picture: picture(sequelize, Sequelize.DataTypes),
-  Product: product(sequelize, Sequelize.DataTypes),
-  Renting: renting(sequelize, Sequelize.DataTypes),
-  Room: room(sequelize, Sequelize.DataTypes),
-  Setting: setting(sequelize, Sequelize.DataTypes),
-  Term: term(sequelize, Sequelize.DataTypes),
-  District: district(sequelize, Sequelize.DataTypes),
-};
-
-// When querying a specific record by its id, remove the default paranoid scope
 sequelize.addHook('beforeFind', (options) => {
   if (
     options.where &&
@@ -65,17 +50,18 @@ sequelize.addHook('beforeFind', (options) => {
   return true;
 });
 
-Object.keys(db).forEach(function(modelName) {
-  if ('associate' in db[modelName]) {
-    db[modelName].associate(db);
+Object.keys(models).forEach(function(modelName) {
+  if ('associate' in models[modelName]) {
+    models[modelName].associate(models);
   }
 
-  if ('hooks' in db[modelName]) {
-    db[modelName].hooks(db, db[modelName]);
+  if ('hooks' in models[modelName]) {
+    models[modelName].hooks(models);
   }
 });
 
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
+// Sendinblue needs Metadata to be initialized before it can save messageIds
+// in Metadata table
+Sendinblue.init(models.Metadata);
 
-module.exports = db;
+module.exports = models;

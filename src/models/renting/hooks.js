@@ -1,7 +1,8 @@
+const Promise                    = require('bluebird');
 const Utils                      = require('../../utils');
-// const Sendinblue                 = require('../../vendor/sendinblue');
+const Sendinblue                 = require('../../vendor/sendinblue');
 
-module.exports = function(models, Renting) {
+module.exports = function({ Renting, Room, Apartment, Client, Order }) {
   Renting.hook('beforeValidate', (renting) => {
     // Only calculate the price and fees on creation
     if (
@@ -12,25 +13,15 @@ module.exports = function(models, Renting) {
       return renting;
     }
 
-    return models.Room
+    return Room
       .findOne({
         where: { id: renting.RoomId },
-        include: [{ model: models.Apartment }],
+        include: [{ model: Apartment }],
       })
       .then((room) => {
         return renting.calculatePriceAndFees(room);
       });
   });
-
-  // We want rentings to be draft by default, but users shouldn't have
-  // to set the deletedAt value themselves
-//  Renting.hook('beforeCreate', (renting) => {
-//    if ( renting.status !== 'active' ) {
-//      renting.setDataValue('deletedAt', new Date());
-//    }
-//
-//    return renting;
-//  });
 
   // Create quote orders if the housing pack has been set when creating the renting
   Renting.hook('afterCreate', (_renting, { transaction }) => {
@@ -47,18 +38,49 @@ module.exports = function(models, Renting) {
     return null;
   });
 
-  //  Renting.hook('beforeUpdate', (_renting) => {
-  //   if ( _renting.status === 'active' && _renting.changed('status') ) {
-  //     return Renting.scope('room+apartment')
-  //       .findOne({
-  //         where: { id: _renting.id },
-  //         include: [{ model: models.Client }],
-  //       })
-  //       .then((renting) => {
-  //         return Sendinblue.sendWelcomeEmail(renting);
-  //       });
-  //   }
-  //
-  //   return true;
-  // });
+  // When a renting is updated to active:
+  // - Make sure the client is active
+  // - Send a welcomeEmail
+  Renting.hook('afterUpdate', (renting) => {
+    if ( !renting.changed('status') || !renting.status === 'active' ) {
+      return true;
+    }
+
+    return Promise.resolve()
+      .then(() => (
+        Renting.scope('room+apartment').findById(
+          renting.id,
+          { include: [{ model: Client }] }
+        )
+      ))
+      .then((renting) => {
+        return Promise.all([
+          renting,
+          Order.scope('welcomeEmail')
+            .findAll({ where: { ClientId: renting.ClientId } }),
+          renting.Client.update({ status: 'active' }),
+        ]);
+      })
+      .then(([renting, orders]) => {
+        if ( !orders ) {
+          throw new Error(
+            `No orders found for renting ${renting.id}. Welcome email \
+            couldn't be sent.`
+          );
+        }
+
+        return Sendinblue.sendWelcomeEmail({
+            rentOrder: orders.find(({ OrderItems }) => (
+              OrderItems.some(({ ProductId }) => ( ProductId === 'rent' ))
+            )),
+            depositOrder: orders.find(({ OrderItems }) => (
+              OrderItems.some(({ ProductId }) => ( /-deposit$/.test(ProductId) ))
+            )),
+            client: renting.Client,
+            renting,
+            room: renting.Room,
+            apartment: renting.Room.Apartment,
+          });
+      });
+  });
 };

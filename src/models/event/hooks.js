@@ -1,7 +1,9 @@
 const Promise       = require('bluebird');
 const { NODE_ENV }  = require('../../config');
 
-module.exports = function(models, Event) {
+module.exports = function(models) {
+  const { Event, Client, OrderItem } = models;
+
   function wrapHookHandler(event, callback) {
     /* eslint-disable promise/no-callback-in-promise */
     return Event.scope('event-category')
@@ -35,7 +37,7 @@ module.exports = function(models, Event) {
           models[eventable].scope(`eventable${eventable}`)
             .findOne({
               where: { id: EventableId },
-              include: [{ model: models.Client }, { model: models.OrderItem }],
+              include: [{ model: Client }, { model: OrderItem }],
             }),
           event.googleEventId != null && event.googleUpdate(),
         ])
