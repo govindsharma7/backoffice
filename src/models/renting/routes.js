@@ -31,7 +31,8 @@ module.exports = function(app, models, Renting) {
       .then((renting) => {
         return renting.findOrCreatePackOrder({
           comfortLevel: values.comfortLevel,
-          packDiscount: values.packDiscount});
+          packDiscount: values.packDiscount,
+        });
       })
       .then(Utils.foundOrCreatedSuccessHandler(res, 'Housing pack order'))
       .catch(Utils.logAndSend(res));

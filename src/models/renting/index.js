@@ -300,6 +300,7 @@ module.exports = (sequelize, DataTypes) => {
     return models.Order
       .findOrCreate({
         where: {
+          type: 'debit',
           status: { $not: 'cancelled' },
           dueDate,
         },
@@ -329,7 +330,10 @@ module.exports = (sequelize, DataTypes) => {
       .then((packPrice) => {
         return models.Order
           .findOrCreate({
-            where: { status: { $not: 'cancelled' } },
+            where: {
+              type: 'debit',
+              status: { $not: 'cancelled' },
+            },
             include: [{
               model: models.OrderItem,
               where: {
@@ -371,7 +375,10 @@ module.exports = (sequelize, DataTypes) => {
 
     return models.Order
       .findOrCreate({
-        where: { status: { $not: 'cancelled' } },
+        where: {
+          type: 'deposit',
+          status: { $not: 'cancelled' },
+        },
         include: [{
           model: models.OrderItem,
           where: {
@@ -429,7 +436,10 @@ module.exports = (sequelize, DataTypes) => {
 
             return models.Order
               .findOrCreate({
-                where: { status: { $not: 'cancelled' } },
+                where: {
+                  type: 'debit',
+                  status: { $not: 'cancelled' },
+                },
                 include: [{
                   model: models.OrderItem,
                   where: {
