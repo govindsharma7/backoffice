@@ -421,20 +421,18 @@ module.exports = (sequelize, DataTypes) => {
   };
   Order.markAsPaid = function(order) {
     return Promise.all([
-      // Switch order status from draft to active
-      order.update({ status: 'active', deletedAt: null}),
       // Switch renting status from draft to active
       order.OrderItems && order.OrderItems[0] && models.Renting.update(
         { status: 'active', deletedAt: null },
         { where: { id: order.OrderItems[0].RentingId } }
       ),
       models.Client.update(
-        { status: 'active', deletedAt: null },
+        { status: 'active' },
         { where: { id: order.ClientId } }
       ),
       models.Order.update(
-        { status: 'active', deletedAt: null },
-        { where: { ClientId: order.ClientId } }
+        { status: 'active' },
+        { where: { ClientId: order.ClientId, status: 'draft' } }
       ),
       // Mark renting as unavailable in WordPress
       order.OrderItems && order.OrderItems[0] && fetch(WORDPRESS_AJAX_URL, {
