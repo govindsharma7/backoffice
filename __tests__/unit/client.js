@@ -219,7 +219,7 @@ describe('Client', () => {
   });
 
   describe('.getIdentity', () => {
-    const findOne = models.Metadata.findOne;
+    const { findOne } = models.Metadata;
 
     beforeAll(() => {
       models.Metadata.findOne = jest.fn(() => Promise.resolve({

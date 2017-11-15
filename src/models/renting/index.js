@@ -446,6 +446,7 @@ Renting.prototype.findOrCreateDepositOrder = function(args) {
             });
         });
   };
+});
 
 Renting.prototype.createOrUpdateRefundEvent = function(date) {
   const {name} = this.Room;
