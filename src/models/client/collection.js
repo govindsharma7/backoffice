@@ -6,6 +6,7 @@ const {
   TRASH_SEGMENTS,
   INVOICENINJA_URL,
 }                       = require('../../const');
+const sequelize         = require('../sequelize');
 
 const _ = { find, capitalize, map };
 
@@ -36,7 +37,7 @@ module.exports = function(models) {
         const split = search.split(' ');
 
         // modify the first $or of the search query
-        _.find(query.where.$and, '$or').$or.push(models.sequelize.and(
+        _.find(query.where.$and, '$or').$or.push(sequelize.and(
           { firstName: { $like: `%${split[0]}%` }},
           { lastName: { $like: `%${split[1]}%` }}
         ));

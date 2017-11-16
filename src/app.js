@@ -6,6 +6,7 @@ const Liana             = require('forest-express-sequelize');
 const values            = require('lodash/values');
 const cookieParser      = require('cookie-parser');
 const config            = require('./config');
+const sequelize         = require('./models/sequelize');
 const models            = require('./models');
 const routes            = require('./routes');
 const checkToken        = require('./middlewares/checkToken');
@@ -115,7 +116,7 @@ Schemas.perform = function(Implementation, integrator) {
  * Forest middleware
  */
 parentApp.use(Liana.init({
-  sequelize: models.sequelize,
+  sequelize,
   envSecret: config.FOREST_ENV_SECRET,
   authSecret: config.FOREST_AUTH_SECRET,
 }));
