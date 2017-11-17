@@ -1,12 +1,7 @@
-const Promise       = require('bluebird');
-const Sendinblue    = require('../../vendor/sendinblue');
-const Utils         = require('../../utils');
-const {
-  NODE_ENV,
-}                    = require('../../config');
-const {
-  SENDINBLUE_LIST_IDS,
-}                    = require('../../const');
+const Promise                 = require('bluebird');
+const Sendinblue              = require('../../vendor/sendinblue');
+const { NODE_ENV }            = require('../../config');
+const { SENDINBLUE_LIST_IDS } = require('../../const');
 
 module.exports = function({ Client }) {
   /*
