@@ -21,7 +21,7 @@ describe('Payline integration', () => {
         expirationYear: '2020',
         cvv: '123',
         holder: 'Toto Tata',
-        amount: '100',
+        amount: 100,
         orderLabel: 'test credit',
         reason: 'credit client',
       };
@@ -32,7 +32,7 @@ describe('Payline integration', () => {
           expect(order).toBeDefined();
           expect(order.Credits).toBeDefined();
           expect(order.OrderItems).toBeDefined();
-          expect(order.OrderItems[0].unitPrice).toBe(-10000);
+          expect(order.OrderItems[0].unitPrice).toBe(-100);
           return true;
         });
     });

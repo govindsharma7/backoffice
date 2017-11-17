@@ -115,7 +115,7 @@ module.exports = (app, models, Client) => {
           throw new Error('Can\'t credit multiple clients');
         }
 
-        values.amount *= 100;
+        values.amount = parseFloat(values.amount) * 100;
 
         return Client.paylineCredit(ids[0], values, idCredit);
       })

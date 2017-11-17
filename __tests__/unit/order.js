@@ -1,14 +1,14 @@
-const Promise  = require('bluebird');
-const fixtures = require('../../__fixtures__/order');
-const models   = require('../../src/models');
+const Promise       = require('bluebird');
+const fixtures      = require('../../__fixtures__');
+const orderFixtures = require('../../__fixtures__/order');
+const models        = require('../../src/models');
 
-const {Order} = models;
 var order;
 var invoiceCounter;
 
 describe('Order', () => {
   beforeAll(() => {
-    return fixtures()
+    return orderFixtures()
       .then(({instances}) => {
         return (
           order = instances['order-1'],
@@ -77,7 +77,7 @@ describe('Order', () => {
           invoiceCounter
             .set('value', Math.round(Math.random() * 1E12))
             .save(),
-          Order.create({
+          models.Order.create({
             type: 'debit',
             label: 'test numbering',
           }),
@@ -92,5 +92,51 @@ describe('Order', () => {
           return expect(order.receiptNumber).toEqual((counter.value + 1).toString());
         });
     });
+  });
+
+  describe('hooks', () => {
+    it('should make the items, client and renting active when it becomes active', () =>
+      fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+          status: 'draft',
+        }],
+        Order: [{
+          id: u.id('order'),
+          label: 'A random order',
+          ClientId: u.id('client'),
+          status: 'draft',
+        }],
+        District: [{ id: u.id('district') }],
+        Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
+        Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'draft',
+        }],
+        OrderItem: [{
+          id: u.id('item'),
+          label: 'A random order',
+          OrderId: u.id('order'),
+          RentingId: u.id('renting'),
+          status: 'draft',
+        }],
+      }))({ method: 'create', hooks: 'Order' })
+      .tap(({ instances: { order } }) => order.update({ status: 'active' }))
+      .tap(Promise.delay(200))
+      .then(({ instances: { item, client, renting } }) => Promise.all([
+        expect(item.reload())
+          .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+        expect(client.reload())
+          .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+        expect(renting.reload())
+          .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+      ]))
+    );
   });
 });

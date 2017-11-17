@@ -1,4 +1,6 @@
-module.exports = function({ Order }) {
+const Promise = require('bluebird');
+
+module.exports = function({ Order, OrderItem, Client, Renting }) {
 
   Order.hook('beforeDelete', (order) => {
     // Order that already have a receipt number cannot be deleted.
@@ -9,21 +11,51 @@ module.exports = function({ Order }) {
 
     const isDeleted = order.deletedAt != null;
 
-    return order.getOrderItems({paranoid: !isDeleted})
-      .map((orderItem) => {
-        return orderItem.destroy({force: isDeleted});
-      });
+    return order
+      .getOrderItems({ paranoid: !isDeleted })
+      .map((orderItem) => orderItem.destroy({ force: isDeleted }));
   });
 
-  Order.hook('afterRestore', (order) => {
-    return order.getOrderItems()
-        .filter((orderItem) => {
-          return orderItem.deletedAt != null;
-        })
-        .map((orderItem) => {
-          return orderItem
-            .set('status', 'active')
-            .restore();
-        });
+  Order.hook('afterRestore', (order) =>
+    order
+      .getOrderItems()
+      .filter((orderItem) => orderItem.deletedAt != null)
+      .map((orderItem) =>
+        orderItem
+          .set('status', 'active')
+          .restore()
+      )
+  );
+
+  // When an order is updated to active:
+  // - Make sure the items are active
+  // - Make sure the client is active
+  // - Make sure the renting is active
+  Order.hook('afterUpdate', (order) => {
+    if ( !order.changed('status') || !order.status === 'active' ) {
+      return true;
+    }
+
+    return Order
+      .findById(order.id, { include: [{ model: OrderItem }] })
+      .then((order) => {
+        const rentingItem =
+          order.OrderItems.find((item) => item.RentingId != null);
+
+        return Promise.all([
+          OrderItem.update({ status: 'active' }, { where: {
+            OrderId: order.id,
+            status: 'draft',
+          } }),
+          Client.update({ status: 'active' }, { where: {
+            id: order.ClientId,
+            status: 'draft',
+          } }),
+          rentingItem && Renting.update({ status: 'active' }, { where: {
+            id: rentingItem.RentingId,
+            status: 'draft',
+          } }),
+        ]);
+      });
   });
 };

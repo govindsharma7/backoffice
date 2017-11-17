@@ -1,5 +1,5 @@
-const Promise     = require('bluebird');
-const Sendinblue  = require('../../vendor/sendinblue');
+const Promise                     = require('bluebird');
+const Sendinblue                  = require('../../vendor/sendinblue');
 
 module.exports = function({ Payment, Order, Client }) {
   // When a payment is created:
@@ -19,16 +19,17 @@ module.exports = function({ Payment, Order, Client }) {
           client: order.Client,
           amount: payment.amount,
         }),
-        Order.pickReceiptNumber(order),
+        order.pickReceiptNumber(),
+        order.status === 'draft' && order.update({ status: 'active' }),
       ]))
   );
 
   ['beforeDelete', 'beforeUpdate'].forEach((type) =>
     Payment.hook(type, (payment) => {
       if ( payment.type !== 'manual' ) {
-        throw new Error(
-          `Only manual payments can be ${type.replace('before', '').toLowerCase()}ed`
-        );
+        return Promise.reject(new Error(
+          `Only manual payments can be ${type.replace('before', '').toLowerCase()}d`
+        ));
       }
 
       return payment;

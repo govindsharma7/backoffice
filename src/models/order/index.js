@@ -1,16 +1,12 @@
 const Promise         = require('bluebird');
 const uuid            = require('uuid/v4');
 const { DataTypes }   = require('sequelize');
-const fetch           = require('../../vendor/fetch');
 const payline         = require('../../vendor/payline');
-const {
-  WORDPRESS_AJAX_URL,
-  REST_API_SECRET,
-}                     = require('../../config');
 
 const {
   TRASH_SCOPES,
 }                     = require('../../const');
+const { required }    = require('../../utils');
 const sequelize       = require('../sequelize');
 const models          = require('../models'); //!\ Destructuring forbidden /!\
 const collection      = require('./collection');
@@ -233,9 +229,9 @@ Order.prototype.getCalculatedProps = function() {
 };
 
 Order.prototype.destroyOrCancel = function() {
-  Order.destroyOrCancel(this);
+  Order.destroyOrCancel({ order: this });
 };
-Order.destroyOrCancel = function(order) {
+Order.destroyOrCancel = function({ order = required() }) {
   if ( order.status === 'cancelled' || order.deletedAt ) {
     throw new Error('This order is already destroyed or cancelled');
   }
@@ -273,9 +269,9 @@ Order.destroyOrCancel = function(order) {
 };
 
 Order.prototype.pickReceiptNumber = function() {
-  return Order.pickReceiptNumber(this);
+  return Order.pickReceiptNumber({ order: this });
 };
-Order.pickReceiptNumber = function(order) {
+Order.pickReceiptNumber = function({ order = required() }) {
   let settingId;
   let strNumber;
 
@@ -312,38 +308,10 @@ Order.pickReceiptNumber = function(order) {
     .thenReturn(order);
 };
 
-Order.prototype.markAsPaid = function() {
-  return Order.markAsPaid(this);
+Order.prototype.pay = function({ balance, card }) {
+  return Order.pay({ order: this, balance, card });
 };
-Order.markAsPaid = function(order) {
-  return Promise.all([
-    // Switch renting status from draft to active
-    order.OrderItems && order.OrderItems[0] && models.Renting.update(
-      { status: 'active', deletedAt: null },
-      { where: { id: order.OrderItems[0].RentingId } }
-    ),
-    // Switch all draft orders of this Client to active
-    Order.update(
-      { status: 'active', deletedAt: null },
-      { where: { ClientId: order.ClientId, status: 'draft' } }
-    ),
-    // Mark renting as unavailable in WordPress
-    order.OrderItems && order.OrderItems[0] && fetch(WORDPRESS_AJAX_URL, {
-      method: 'post',
-      body: {
-        action: 'update_availability',
-        privateKey: REST_API_SECRET,
-        reference: order.OrderItems[0].Renting.Room.reference,
-        meta: '20300901',
-      },
-    }),
-  ]);
-};
-
-Order.prototype.pay = function({ amount, balance, card }) {
-  return Order.pay({ order: this, amount, balance, card });
-};
-Order.pay = function({ order, balance, card }) {
+Order.pay = function({ order = required(), balance = required(), card = required() }) {
   const {
     cardNumber: number,
     holderName: holder,

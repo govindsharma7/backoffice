@@ -1,20 +1,27 @@
-const D                  = require('date-fns');
-const fixtures           = require('../../__fixtures__/renting');
-const Utils              = require('../../src/utils');
-const models             = require('../../src/models');
+jest.mock('../../src/vendor/sendinblue');
+jest.mock('../../src/vendor/wordpress');
 
-const {Renting} = models;
-var renting1;
-var renting2;
+const D                   = require('date-fns');
+const Promise             = require('bluebird');
+const fixtures            = require('../../__fixtures__');
+const rentingFixtures     = require('../../__fixtures__/renting');
+const Wordpress           = require('../../src/vendor/wordpress');
+const Sendinblue          = require('../../src/vendor/sendinblue');
+const Utils               = require('../../src/utils');
+const models              = require('../../src/models');
+
+const { Renting } = models;
+let renting1;
+let renting2;
 
 describe('Renting', () => {
   beforeAll(() => {
-    return fixtures()
+    return rentingFixtures()
       .then(({instances}) => {
-        return (
-          renting1 = instances['renting-1'],
-          renting2 = instances['renting-2']
-        );
+        renting1 = instances['renting-1'];
+        renting2 = instances['renting-2'];
+
+        return null;
       });
   });
 
@@ -87,75 +94,111 @@ describe('Renting', () => {
     const get = () => null;
 
     test('it calculates the prorata for the "booking month"', () => {
-      return expect(Renting.prorate({
-        price,
-        serviceFees,
-        bookingDate: D.parse('2015-01-20'),
-        get,
-      }, D.parse('2015-01 Z'))).toEqual({
+      const actual = Renting.prorate({
+        renting: {
+          price,
+          serviceFees,
+          bookingDate: D.parse('2015-01-20'),
+          get,
+        },
+        date: D.parse('2015-01 Z'),
+      });
+      const expected = {
         price: Utils.roundBy100(price / 31 * (31 - (20 - 1))),
         serviceFees: Utils.roundBy100(serviceFees / 31 * (31 - (20 - 1))),
-      });
+      };
+
+      return expect(actual).toEqual(expected);
     });
 
     test('it calculates the prorata for "checkout month"', () => {
-      return expect(Renting.prorate({
-        price,
-        serviceFees,
-        bookingDate: D.parse('2015-01-20'),
-        get: () => D.parse('2015-02-10'),
-      }, D.parse('2015-02 Z'))).toEqual({
+      const actual = Renting.prorate({
+        renting: {
+          price,
+          serviceFees,
+          bookingDate: D.parse('2015-01-20'),
+          get: () => D.parse('2015-02-10'),
+        },
+        date: D.parse('2015-02 Z'),
+      });
+      const expected = {
         price: Utils.roundBy100(price / 28 * 10),
         serviceFees: Utils.roundBy100(serviceFees / 28 * 10),
-      });
+      };
+
+      return expect(actual).toEqual(expected);
     });
 
     test('it calculates the prorata for "booking+checkout month"', () => {
-      return expect(Renting.prorate({
-        price,
-        serviceFees,
-        bookingDate: D.parse('2015-03-03'),
-        get: () => { return D.parse('2015-03-28'); },
-      }, D.parse('2015-03 Z'))).toEqual({
+      const actual = Renting.prorate({
+        renting: {
+          price,
+          serviceFees,
+          bookingDate: D.parse('2015-03-03'),
+          get: () => D.parse('2015-03-28'),
+        },
+        date: D.parse('2015-03 Z'),
+      });
+      const expected = {
         price: Utils.roundBy100(price / 31 * (28 - 2)),
         serviceFees: Utils.roundBy100(serviceFees / 31 * (28 - 2)),
-      });
+      };
+
+      return expect(actual).toEqual(expected);
     });
 
     test('it bills a full month when checkout is the last day of the month', () => {
-      return expect(Renting.prorate({
-        price,
-        serviceFees,
-        bookingDate: D.parse('2015-01-01'),
-        get: () => { return D.parse('2015-03-31'); },
-      }, D.parse('2015-03 Z'))).toEqual({
+      const actual = Renting.prorate({
+        renting: {
+          price,
+          serviceFees,
+          bookingDate: D.parse('2015-01-01'),
+          get: () => D.parse('2015-03-31'),
+        },
+        date: D.parse('2015-03 Z'),
+      });
+      const expected = {
         price: Utils.roundBy100(price),
         serviceFees: Utils.roundBy100(serviceFees),
-      });
+      };
+
+      return expect(actual).toEqual(expected);
     });
 
     test('it bills a single day when checkout is the first day of the month', () => {
-      return expect(Renting.prorate({
-        price,
-        serviceFees,
-        bookingDate: D.parse('2015-01-01'),
-        get: () => { return D.parse('2015-03-01'); },
-      }, D.parse('2015-03 Z'))).toEqual({
+      const actual = Renting.prorate({
+        renting: {
+          price,
+          serviceFees,
+          bookingDate: D.parse('2015-01-01'),
+          get: () => D.parse('2015-03-01'),
+        },
+        date: D.parse('2015-03 Z'),
+      });
+      const expected = {
         price: Utils.roundBy100(price / 31),
         serviceFees: Utils.roundBy100(serviceFees / 31),
-      });
+      };
+
+      return expect(actual).toEqual(expected);
     });
 
     test('it bills a single day when booking is the last day of the month', () => {
-      return expect(Renting.prorate({
-        price,
-        serviceFees,
-        bookingDate: D.parse('2015-01-31'),
-        get,
-      }, D.parse('2015-01 Z'))).toEqual({
+      const actual = Renting.prorate({
+        renting: {
+          price,
+          serviceFees,
+          bookingDate: D.parse('2015-01-31'),
+          get,
+        },
+        date: D.parse('2015-01 Z'),
+      });
+      const expected = {
         price: Utils.roundBy100(price / 31),
         serviceFees: Utils.roundBy100(serviceFees / 31),
-      });
+      };
+
+      return expect(actual).toEqual(expected);
     });
   });
 
@@ -164,15 +207,15 @@ describe('Renting', () => {
       const date = D.parse('2017-07-07 Z');
 
       expect(Renting.getPeriod({
-        get: () => { return D.parse('2016-03-03 Z'); },
+        get: () => D.parse('2016-03-03 Z'),
         bookingDate: D.parse('2016-01-01 Z'),
       }, date)).toEqual('past');
       expect(Renting.getPeriod({
-        get: () => { return D.parse('2018-03-03 Z'); },
+        get: () => D.parse('2018-03-03 Z'),
         bookingDate: D.parse('2017-01-01 Z'),
       }, date)).toEqual('current');
       expect(Renting.getPeriod({
-        get: () => { return D.parse('2018-03-03 Z'); },
+        get: () => D.parse('2018-03-03 Z'),
         bookingDate: D.parse('2018-01-01 Z'),
       }, date)).toEqual('future');
     });
@@ -197,4 +240,106 @@ describe('Renting', () => {
     });
   });
 
+  describe('hooks', () => {
+    beforeAll(() => {
+      Wordpress.updateRoomAvailability = jest.fn();
+      Sendinblue.sendWelcomeEmail = jest.fn();
+    });
+
+    it('should mark the client and related orders active, send email + update WP', () =>
+      fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+          status: 'draft',
+        }],
+        Order: [{
+          id: u.id('draftRentOrder'),
+          label: 'A random order',
+          ClientId: u.id('client'),
+          status: 'draft',
+        }, {
+          id: u.id('draftDepositOrder'),
+          label: 'A random order',
+          ClientId: u.id('client'),
+          status: 'draft',
+        }, {
+          id: u.id('cancelledRentOrder'),
+          label: 'A random order',
+          ClientId: u.id('client'),
+          status: 'cancelled',
+        }, {
+          id: u.id('unrelatedOrder'),
+          label: 'An unrelated order',
+          ClientId: u.id('client'),
+          status: 'draft',
+        }],
+        District: [{ id: u.id('district') }],
+        Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
+        Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'draft',
+        }],
+        OrderItem: [{
+          label: 'A random item',
+          OrderId: u.id('draftRentOrder'),
+          RentingId: u.id('renting'),
+          ProductId: 'rent',
+        }, {
+          label: 'A random item',
+          OrderId: u.id('draftDepositOrder'),
+          RentingId: u.id('renting'),
+          ProductId: 'montpellier-deposit',
+        }, {
+          label: 'A random item',
+          OrderId: u.id('cancelledRentOrder'),
+          RentingId: u.id('renting'),
+          ProductId: 'rent',
+        }],
+      }))({ method: 'create', hooks: 'Renting' })
+      .tap(({ instances: { renting } }) => renting.update({ status: 'active' }))
+      .tap(Promise.delay(200))
+      .then(({ instances }) => {
+        const {
+          client,
+          renting,
+          room,
+          apartment,
+          draftRentOrder,
+          draftDepositOrder,
+          cancelledRentOrder,
+          unrelatedOrder,
+        } = instances;
+        const sendWelcomeArgs = Sendinblue.sendWelcomeEmail.mock.calls[0][0];
+        const updateRoomArgs = Wordpress.updateRoomAvailability.mock.calls[0][0];
+
+        expect(sendWelcomeArgs.rentOrder.id).toBe(draftRentOrder.id);
+        expect(sendWelcomeArgs.depositOrder.id).toBe(draftDepositOrder.id);
+        expect(sendWelcomeArgs.client.id).toBe(client.id);
+        expect(sendWelcomeArgs.renting.id).toBe(renting.id);
+        expect(sendWelcomeArgs.room.id).toBe(room.id);
+        expect(sendWelcomeArgs.apartment.id).toBe(apartment.id);
+
+        expect(updateRoomArgs.room.id).toBe(room.id);
+
+        return Promise.all([
+          expect(client.reload())
+            .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+          expect(draftRentOrder.reload())
+            .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+          expect(draftDepositOrder.reload())
+            .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+          expect(cancelledRentOrder.reload())
+            .resolves.toEqual(expect.objectContaining({ status: 'cancelled' })),
+          expect(unrelatedOrder.reload())
+            .resolves.toEqual(expect.objectContaining({ status: 'draft' })),
+        ]);
+      })
+    );
+  });
 });

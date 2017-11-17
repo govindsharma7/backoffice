@@ -20,6 +20,7 @@ const hooks                 = require('./hooks');
 const collection            = require('./collection');
 
 const _ = { capitalize, values };
+const { required } = Utils;
 
 // TODO: for some reason sqlite seems to return a date in a strange format
 // find out why and fix this.
@@ -80,7 +81,7 @@ const Renting = sequelize.define('Renting', {
   comfortLevel: {
     type:                     DataTypes.VIRTUAL,
   },
-  packDiscount: {
+  discount: {
     type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
   },
   hasTwoOccupants: {
@@ -189,7 +190,10 @@ Renting.associate = (models) => {
 };
 
 // Prorate the price and service fees of a renting for a given month
-Renting.prorate = function(renting, date) {
+Renting.prototype.prorate = function(date) {
+  return Renting.prorate({ renting: this, date });
+};
+Renting.prorate = function({ renting = required(), date = required() }) {
   const { bookingDate, price, serviceFees } = renting;
   const checkoutDate = renting.get('checkoutDate');
   const daysInMonth = D.getDaysInMonth(date);
@@ -217,9 +221,6 @@ Renting.prorate = function(renting, date) {
     serviceFees: Utils.roundBy100(( serviceFees / daysInMonth ) * daysStayed),
   };
 };
-Renting.prototype.prorate = function(date) {
-  return Renting.prorate(this, date);
-};
 
 // Propagate the status of the renting to that of first-rent/deposit/pack orders
 // and their orderItems
@@ -240,7 +241,7 @@ Renting.prototype.normalizeOrder = function(order) {
   }, order);
 };
 
-Renting.prototype.toOrderItems = function({ date = new Date(), room = this.Room }) {
+Renting.prototype.toOrderItems = function({ date = new Date(), room = required() }) {
   const prorated = this.prorate(date);
   const apartment = room.Apartment;
   const month = D.format(date, 'MMMM');
@@ -288,11 +289,8 @@ Renting.attachOrphanOrderItems = function(rentings, order) {
 };
 
 Renting.prototype.findOrCreateRentOrder = function(args) {
-  const { date = new Date(), room, number } = args;
-  const dueDate = Math.max(new Date(), this.Client.Metadata.length ?
-    D.addDays(D.startOfMonth(date), this.Client.Metadata[0].value) :
-    D.startOfMonth(date)
-  );
+  const { room = required(), now = new Date() } = args;
+  const dueDate = Math.max(now, D.startOfMonth(this.bookingDate));
 
   return models.Order
     .findOrCreate({
@@ -308,17 +306,21 @@ Renting.prototype.findOrCreateRentOrder = function(args) {
         },
       }],
       defaults: this.normalizeOrder({
-        label: `${D.format(date, 'MMMM')} Invoice`,
+        label: `${D.format(dueDate, 'MMMM')} Invoice`,
         dueDate,
-        OrderItems: this.toOrderItems({ date, room }),
-        number,
+        // TODO: we shouldn't need to pass bookingDate as an argument
+        OrderItems: this.toOrderItems({ date: this.bookingDate, room }),
       }),
     });
 };
 
 Renting.prototype.findOrCreatePackOrder = function(args) {
-  const { comfortLevel, packDiscount, number, room = this.Room } = args;
-  const {addressCity} = room.Apartment;
+  const {
+    comfortLevel = required(),
+    discount = required(),
+    apartment = required(),
+  } = args;
+  const { addressCity } = apartment;
   const ProductId = `${comfortLevel}-pack`;
 
   return Utils
@@ -345,9 +347,9 @@ Renting.prototype.findOrCreatePackOrder = function(args) {
                 status: this.status,
                 ProductId,
               },
-              packDiscount != null && packDiscount !== 0 && {
+              discount != null && discount !== 0 && {
                 label: 'Discount',
-                unitPrice: -100 * packDiscount,
+                unitPrice: -discount,
                 RentingId: this.id,
                 status: this.status,
                 ProductId,
@@ -355,15 +357,13 @@ Renting.prototype.findOrCreatePackOrder = function(args) {
               // We should not add more items to this order. We want to keep the amount
               // as low as possible to avoid turning down customers
             ].filter(Boolean),
-            number,
           }),
         });
       });
 };
 
-Renting.prototype.findOrCreateDepositOrder = function(args) {
-  const { room = this.Room, number} = args;
-  const {addressCity} = room.Apartment;
+Renting.prototype.findOrCreateDepositOrder = function({ apartment = required() }) {
+  const { addressCity } = apartment;
   const ProductId = `${addressCity}-deposit`;
 
   return models.Order
@@ -389,7 +389,6 @@ Renting.prototype.findOrCreateDepositOrder = function(args) {
           status: this.status,
           ProductId,
         }],
-        number,
       }),
     });
 };
@@ -670,19 +669,22 @@ Renting.prototype.generateLease = function() {
 };
 
 Renting.prototype.createQuoteOrders = function(args) {
-  const {comfortLevel, packDiscount, room } = args;
+  return Renting.createQuoteOrders(Object.assign({ renting: this }, args));
+};
+Renting.createQuoteOrders = function(args) {
+  const {
+    renting = required(),
+    comfortLevel,
+    discount,
+    room = required(),
+    apartment = required(),
+  } = args;
 
   return Promise.mapSeries([
-      { suffix: 'RentOrder', args: { date: this.bookingDate, room } },
-      { suffix: 'DepositOrder', args: { room } },
-      { suffix: 'PackOrder', args: { comfortLevel, packDiscount, room } },
-    ], (def) => {
-      return this[`findOrCreate${def.suffix}`](def.args);
-    });
-    // .then(([[rentOrder], [depositOrder], [packOrder]]) => {
-    //   return Order
-    //     .ninjaCreateInvoices([rentOrder, depositOrder, packOrder]);
-    // });
+      { suffix: 'RentOrder', args: { room } },
+      { suffix: 'DepositOrder', args: { apartment } },
+      { suffix: 'PackOrder', args: { comfortLevel, discount, apartment } },
+    ], (def) => renting[`findOrCreate${def.suffix}`](def.args));
 };
 
 Renting.prototype.futureCredit = function(args) {

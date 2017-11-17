@@ -1,8 +1,8 @@
-const Promise                    = require('bluebird');
-const Utils                      = require('../../utils');
-const Sendinblue                 = require('../../vendor/sendinblue');
+const Promise                     = require('bluebird');
+const Sendinblue                  = require('../../vendor/sendinblue');
+const Wordpress                   = require('../../vendor/wordpress');
 
-module.exports = function({ Renting, Room, Apartment, Client, Order }) {
+module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }) {
   Renting.hook('beforeValidate', (renting) => {
     // Only calculate the price and fees on creation
     if (
@@ -18,69 +18,78 @@ module.exports = function({ Renting, Room, Apartment, Client, Order }) {
         where: { id: renting.RoomId },
         include: [{ model: Apartment }],
       })
-      .then((room) => {
-        return renting.calculatePriceAndFees(room);
-      });
+      .then((room) => renting.calculatePriceAndFees(room));
   });
 
-  // Create quote orders if the housing pack has been set when creating the renting
-  Renting.hook('afterCreate', (_renting, { transaction }) => {
-    if (_renting.comfortLevel) {
-      const promise = Renting.scope('room+apartment', 'client+paymentDelay')
-        .findById(_renting.id, { transaction })
-        .then((renting) => {
-          return renting.createQuoteOrders(_renting);
-        });
+  // When a renting is created with Housing Pack comfortLevel
+  // - Create quote orders
+  Renting.hook('afterCreate', (renting, { transaction }) => {
+    const { comfortLevel, discount } = renting;
 
-      return Utils.wrapHookPromise(promise);
+    if ( !comfortLevel ) {
+      return true;
     }
 
-    return null;
+    return Room
+      .findById(renting.id, { include: [{ model: Apartment }], transaction })
+      .then((room) => renting.createQuoteOrders({
+        comfortLevel,
+        discount: discount * 100,
+        room,
+        apartment: room.Apartment,
+      }));
   });
 
   // When a renting is updated to active:
   // - Make sure the client is active
+  // - Make sure related orders are active
   // - Send a welcomeEmail
-  Renting.hook('afterUpdate', (renting) => {
-    if ( !renting.changed('status') || !renting.status === 'active' ) {
+  // - Mark the room unavailable in WordPress
+  Renting.hook('afterUpdate', (_renting, { transaction }) => {
+    if ( !_renting.changed('status') || _renting.status !== 'active' ) {
       return true;
     }
 
-    return Promise.resolve()
-      .then(() => (
-        Renting.scope('room+apartment').findById(
-          renting.id,
-          { include: [{ model: Client }] }
-        )
-      ))
-      .then((renting) => {
-        return Promise.all([
-          renting,
-          Order.scope('welcomeEmail')
-            .findAll({ where: { ClientId: renting.ClientId } }),
-          renting.Client.update({ status: 'active' }),
-        ]);
-      })
-      .then(([renting, orders]) => {
-        if ( !orders ) {
-          throw new Error(
-            `No orders found for renting ${renting.id}. Welcome email \
-            couldn't be sent.`
-          );
-        }
+    return Promise.all([
+      Renting.scope('room+apartment')
+        .findById(_renting.id, { include: [{ model: Client }], transaction }),
+      Order.findAll({
+        where: { status: { $not: 'cancelled' } },
+        include: [{
+          model: OrderItem,
+          where: { RentingId: _renting.id },
+        }],
+      }),
+    ])
+    .then(([renting, orders]) => {
+      if ( !orders ) {
+        throw new Error(
+          `No orders found for renting ${renting.id}. Welcome email not sent.`
+        );
+      }
 
-        return Sendinblue.sendWelcomeEmail({
-            rentOrder: orders.find(({ OrderItems }) => (
-              OrderItems.some(({ ProductId }) => ( ProductId === 'rent' ))
-            )),
-            depositOrder: orders.find(({ OrderItems }) => (
-              OrderItems.some(({ ProductId }) => ( /-deposit$/.test(ProductId) ))
-            )),
-            client: renting.Client,
-            renting,
-            room: renting.Room,
-            apartment: renting.Room.Apartment,
-          });
-      });
+      const { Client: client, Room: room } = renting;
+      const rentOrder = orders.find(({ OrderItems }) => (
+        OrderItems.some(({ ProductId }) => ( ProductId === 'rent' ))
+      ));
+      const depositOrder = orders.find(({ OrderItems }) => (
+        OrderItems.some(({ ProductId }) => ( /-deposit$/.test(ProductId) ))
+      ));
+
+      return Promise.all([
+        Promise.all([client, rentOrder, depositOrder].map((instance) =>
+          instance.status === 'draft' && instance.update({ status: 'active' })
+        )),
+        Wordpress.updateRoomAvailability({ room }),
+        Sendinblue.sendWelcomeEmail({
+          rentOrder,
+          depositOrder,
+          client,
+          renting,
+          room,
+          apartment: room.Apartment,
+        }),
+      ]);
+    });
   });
 };

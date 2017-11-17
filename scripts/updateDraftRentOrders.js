@@ -10,8 +10,8 @@ return Order.scope('draftRentOrders')
   .findAll()
   .then((orders) => {
     return orders.map((order) => {
-      const {ninjaId} = order;
-      const {Renting} = order.OrderItems[0];
+      const { ninjaId } = order;
+      const { Renting } = order.OrderItems[0];
 
       /*eslint-disable promise/no-nesting */
       return Ninja.invoice.getInvoice({
@@ -33,9 +33,7 @@ return Order.scope('draftRentOrders')
           },
         });
       })
-      .then(() => {
-        return Renting.prorate(Date.now());
-      })
+      .then((renting) => renting.prorate(Date.now()))
       .then(({price, serviceFees}) => {
         if ( price !== null ) {
           models.OrderItem.update({

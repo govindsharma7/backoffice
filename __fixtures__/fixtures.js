@@ -65,14 +65,19 @@ function fixtures({models, common = Promise.resolve({}), options: globalOptions 
           return Promise.reduce(data, (prev, [modelName, records]) => {
             const model = models[modelName];
             const primaryKeys = Object.keys(model.primaryKeys);
+            const modelOptions = Object.assign(
+              {},
+              options,
+              { hooks: options.hooks === modelName || options.hooks === true }
+            );
 
             /* eslint-disable promise/no-nesting */
             return Promise.resolve()
               .then(() =>
-                options.method === 'create' && options.hooks === false ?
+                modelOptions.method === 'create' && modelOptions.hooks === false ?
                   model.bulkCreate(records, options) :
                   Promise.map(records, (record) =>
-                    model[options.method](record, options)
+                    model[options.method](record, modelOptions)
                       .then((result) => {
                         if (typeof result === 'object') {
                           return result;

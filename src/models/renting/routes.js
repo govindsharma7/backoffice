@@ -28,16 +28,77 @@ module.exports = function(app, models, Renting) {
 
         return Renting.scope('room+apartment').findById(ids[0]);
       })
-      .then((renting) => {
-        return renting.findOrCreatePackOrder({
-          comfortLevel: values.comfortLevel,
-          packDiscount: values.packDiscount,
-        });
-      })
+      .then((renting) => renting.findOrCreatePackOrder({
+        comfortLevel: values.comfortLevel,
+        discount: values.discount * 100,
+        apartment: renting.Room.Apartment,
+      }))
       .then(Utils.foundOrCreatedSuccessHandler(res, 'Housing pack order'))
       .catch(Utils.logAndSend(res));
 
     return null;
+  });
+
+  app.post('/forest/actions/create-deposit-order', LEA, (req, res) => {
+    const {ids} = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple deposit orders');
+        }
+
+        return Renting.scope('room+apartment').findById(ids[0]);
+      })
+      .then((renting) =>
+        renting.findOrCreateDepositOrder({ apartment: renting.Room.Apartment })
+      )
+      .then(Utils.foundOrCreatedSuccessHandler(res, 'Deposit order'))
+      .catch(Utils.logAndSend(res));
+  });
+
+  app.post('/forest/actions/create-first-rent-order', LEA, (req, res) => {
+    const {ids} = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple rent orders');
+        }
+
+        return Renting.scope('room+apartment').findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.findOrCreateRentOrder({ room: renting.Room });
+      })
+      .then(Utils.foundOrCreatedSuccessHandler(res, 'Rent order'))
+      .catch(Utils.logAndSend(res));
+  });
+
+  app.post('/forest/actions/create-quote-orders', LEA, (req, res) => {
+    const { values: { comfortLevel, discount }, ids } = req.body.data.attributes;
+
+    Promise.resolve()
+      .then(() => {
+        if ( !comfortLevel ) {
+          throw new Error('Please select a comfort level');
+        }
+        if ( ids.length > 1 ) {
+          throw new Error('Can\'t create multiple housing-pack orders');
+        }
+
+        return Renting.scope('room+apartment').findById(ids[0]);
+      })
+      .then((renting) => {
+        return renting.createQuoteOrders({
+          comfortLevel,
+          discount: discount * 100,
+          room: renting.Room,
+          apartment: renting.Room.Apartment,
+        });
+      })
+      .then(Utils.createdSuccessHandler(res, 'Quote order'))
+      .catch(Utils.logAndSend(res));
   });
 
   app.post('/forest/actions/generate-lease', LEA, (req, res) => {
@@ -66,66 +127,6 @@ module.exports = function(app, models, Renting) {
         return renting.generateLease();
       })
       .then(Utils.createdSuccessHandler(res, 'Lease'))
-      .catch(Utils.logAndSend(res));
-  });
-
-  app.post('/forest/actions/create-deposit-order', LEA, (req, res) => {
-    const {ids} = req.body.data.attributes;
-
-    Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple deposit orders');
-        }
-
-        return Renting.scope('room+apartment').findById(ids[0]);
-      })
-      .then((renting) => {
-        return renting.findOrCreateDepositOrder();
-      })
-      .then(Utils.foundOrCreatedSuccessHandler(res, 'Deposit order'))
-      .catch(Utils.logAndSend(res));
-  });
-
-  app.post('/forest/actions/create-first-rent-order', LEA, (req, res) => {
-    const {ids} = req.body.data.attributes;
-
-    Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple rent orders');
-        }
-
-        return Renting.scope('room+apartment', 'client+paymentDelay').findById(ids[0]);
-      })
-      .then((renting) => {
-        return renting.findOrCreateRentOrder({ date: renting.bookingDate });
-      })
-      .then(Utils.foundOrCreatedSuccessHandler(res, 'Rent order'))
-      .catch(Utils.logAndSend(res));
-  });
-
-  app.post('/forest/actions/create-quote-orders', LEA, (req, res) => {
-    const { values: {comfortLevel, discount}, ids } = req.body.data.attributes;
-
-    Promise.resolve()
-      .then(() => {
-        if ( !comfortLevel ) {
-          throw new Error('Please select a comfort level');
-        }
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple housing-pack orders');
-        }
-
-        return Renting.scope('room+apartment', 'client+paymentDelay').findById(ids[0]);
-      })
-      .then((renting) => {
-        return renting.createQuoteOrders({
-          comfortLevel,
-          discount: discount * 100,
-        });
-      })
-      .then(Utils.createdSuccessHandler(res, 'Quote order'))
       .catch(Utils.logAndSend(res));
   });
 

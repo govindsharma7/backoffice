@@ -36,7 +36,7 @@ module.exports = function(models) {
       field: 'Pack Discount',
       type: 'Number',
       set(object, value) {
-        object.packDiscount = value;
+        object.discount = value;
         return object;
       },
     }, {
@@ -56,7 +56,7 @@ module.exports = function(models) {
         type: 'Enum',
         enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
       }, {
-        field: 'packDiscount',
+        field: 'discount',
         type: 'Number',
       }],
     }, {
@@ -68,7 +68,7 @@ module.exports = function(models) {
         type: 'Enum',
         enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
       }, {
-        field: 'packDiscount',
+        field: 'discount',
         type: 'Number',
       }],
     }, {

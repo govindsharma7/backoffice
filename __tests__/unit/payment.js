@@ -52,5 +52,44 @@ describe('Payment', () => {
         return null;
       })
     );
+
+    it('should prevent non-manual payments to be updated or deleted', () =>
+      fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Order: [{
+          id: u.id('order'),
+          label: 'A random order',
+          ClientId: u.id('client'),
+        }],
+        Payment: [{
+          id: u.id('cardPayment'),
+          type: 'card',
+          amount: 10000,
+          OrderId: u.id('order'),
+        }, {
+          id: u.id('manualPayment'),
+          type: 'manual',
+          amount: 10000,
+          OrderId: u.id('order'),
+        }],
+      }))({ method: 'create', hooks: 'Payment' })
+      .tap(({ instances: { cardPayment, manualPayment } }) => Promise.all([
+        expect(cardPayment.update({ amount: 20000 }))
+          .rejects.toBeInstanceOf(Error),
+        expect(manualPayment.update({ amount: 20000 }))
+          .resolves.toEqual(expect.objectContaining({ amount: 20000 })),
+      ]))
+      .tap(({ instances: { cardPayment, manualPayment } }) => Promise.all([
+        expect(cardPayment.destroy())
+          .rejects.toBeInstanceOf(Error),
+        expect(manualPayment.destroy())
+          .resolves.toEqual(expect.anything()),
+      ]))
+    );
   });
 });

@@ -22,6 +22,8 @@ SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
   config.SENDINBLUE_API_KEY;
 
 const _ = { capitalize };
+const { required } = Utils;
+
 const SMTPApi = new SendinBlueApi.SMTPApi();
 const ContactsApi = new SendinBlueApi.ContactsApi();
 const defaults = { replyTo: SUPPORT_EMAIL };
@@ -68,7 +70,9 @@ Sendinblue.getContact = function(email) {
   return ContactsApi.getContactInfo(email);
 };
 
-Sendinblue.createContact = function(email, {client, listIds}) {
+Sendinblue.createContact = function(email, args) {
+  const { client = required(), listIds = required() } = args;
+
   return ContactsApi.createContact({
     email: NODE_ENV === 'production' ? email : Sendinblue.getSandboxEmail(email),
     attributes: Sendinblue.serializeClient(client),
@@ -77,7 +81,7 @@ Sendinblue.createContact = function(email, {client, listIds}) {
   });
 };
 
-Sendinblue.updateContact = function(email, {listIds, unlinkListIds, client}) {
+Sendinblue.updateContact = function(email, { listIds, unlinkListIds, client }) {
   const params = {
     listIds,
     unlinkListIds,
@@ -91,7 +95,14 @@ Sendinblue.updateContact = function(email, {listIds, unlinkListIds, client}) {
 };
 
 Sendinblue.sendWelcomeEmail = function(args) {
-  const { rentOrder, depositOrder, client, renting, room, apartment } = args;
+  const {
+    rentOrder = required(),
+    depositOrder = required(),
+    client = required(),
+    renting = required(),
+    room = required(),
+    apartment = required(),
+  } = args;
   const { name, addressStreet, addressZip, addressCity } = apartment;
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
   const roomNumber = room.reference.slice(-1);
@@ -128,7 +139,13 @@ Sendinblue.sendWelcomeEmail = function(args) {
   );
 };
 
-Sendinblue.sendRentReminder = function({ order, client, amount, now = new Date() }) {
+Sendinblue.sendRentReminder = function(args) {
+  const {
+    order = required(),
+    client = required(),
+    amount = required(),
+    now = new Date(),
+  } = args;
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
   const templateId = D.getDate(now) === 1 ? 'dueDate' : 'unpaidRent';
 
@@ -153,7 +170,12 @@ Sendinblue.sendRentReminder = function({ order, client, amount, now = new Date()
   );
 };
 
-Sendinblue.sendRentRequest = function({ order, client, amount }) {
+Sendinblue.sendRentRequest = function(args) {
+  const {
+    order = required(),
+    client = required(),
+    amount = required(),
+  } = args;
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
   return Sendinblue.sendTemplateEmail(
@@ -177,7 +199,12 @@ Sendinblue.sendRentRequest = function({ order, client, amount }) {
   );
 };
 
-Sendinblue.sendPaymentConfirmation = function({ order, client, amount }) {
+Sendinblue.sendPaymentConfirmation = function(args) {
+  const {
+    order = required(),
+    client = required(),
+    amount = required(),
+  } = args;
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
   return Sendinblue.sendTemplateEmail(
@@ -202,7 +229,12 @@ Sendinblue.sendPaymentConfirmation = function({ order, client, amount }) {
   );
 };
 
-Sendinblue.sendHousingPackRequest = function({ order, amount, client }) {
+Sendinblue.sendHousingPackRequest = function(args) {
+  const {
+    order = required(),
+    client = required(),
+    amount = required(),
+  } = args;
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
   return Sendinblue.sendTemplateEmail(
@@ -226,7 +258,13 @@ Sendinblue.sendHousingPackRequest = function({ order, amount, client }) {
   );
 };
 
-Sendinblue.sendLateFeesEmail = function({order, amount, orderItems, client}) {
+Sendinblue.sendLateFeesEmail = function(args) {
+  const {
+    order = required(),
+    orderItems = required(),
+    client = required(),
+    amount = required(),
+  } = args;
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
   return Sendinblue.sendTemplateEmail(

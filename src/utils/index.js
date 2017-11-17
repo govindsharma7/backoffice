@@ -2,18 +2,16 @@ const stripIndent                  = require('strip-indent');
 const addInternalRelationshipRoute = require('./addInternalRelationshipRoute');
 const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
 const calculatedPropsMemoizer      = require('./calculatedPropsMemoizer');
-const successHandler               = require('./successHandler');
-const roundBy100                   = require('./roundBy100');
 const foundOrCreatedSuccessHandler = require('./foundOrCreatedSuccessHandler');
 const {
   getCheckinPrice,
   getCheckoutPrice,
 }                                  = require('./getCheckinoutPrice');
+const getCardType                  = require('./getCardType');
 const getPackPrice                 = require('./getPackPrice');
 const getPeriodCoef                = require('./getPeriodCoef');
 const getPeriodPrice               = require('./getPeriodPrice');
 const getServiceFees               = require('./getServiceFees');
-const getCardType                  = require('./getCardType');
 const {
   getCheckinEndDate,
   getCheckoutEndDate,
@@ -25,10 +23,13 @@ const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
 const isHoliday                    = require('./isHoliday');
 const isValidPhoneNumber           = require('./isValidPhoneNumber');
 const logAndSend                   = require('./logAndSend');
+const required                     = require('./required');
 const parseDBDate                  = require('./parseDBDate');
-const toSingleLine                 = require('./toSingleLine');
-const wrapHookPromise              = require('./wrapHookPromise');
+const roundBy100                   = require('./roundBy100');
 const serializeHousemate           = require('./serializeHousemate');
+const successHandler               = require('./successHandler');
+const toSingleLine                 = require('./toSingleLine');
+const wrapHookCallback             = require('./wrapHookCallback');
 
 const createdSuccessHandler        = successHandler('created');
 const sentSuccessHandler           = successHandler('sent');
@@ -38,28 +39,29 @@ module.exports = {
   addRestoreAndDestroyRoutes,
   calculatedPropsMemoizer,
   createdSuccessHandler,
-  roundBy100,
   foundOrCreatedSuccessHandler,
   getCardType,
-  getCheckinPrice,
-  getCheckoutPrice,
-  getPackPrice,
-  getPeriodCoef,
-  getPeriodPrice,
-  getServiceFees,
   getCheckinEndDate,
+  getCheckinPrice,
   getCheckoutEndDate,
+  getCheckoutPrice,
   getInvoiceLink,
   getLateNoticeFees,
   getLeaseEndDate,
+  getPackPrice,
+  getPeriodCoef,
+  getPeriodPrice,
   getRoomSwitchPrice,
+  getServiceFees,
   isHoliday,
   isValidPhoneNumber,
   logAndSend,
   parseDBDate,
-  toSingleLine,
-  stripIndent,
+  required,
+  roundBy100,
   sentSuccessHandler,
-  wrapHookPromise,
   serializeHousemate,
+  stripIndent,
+  toSingleLine,
+  wrapHookCallback,
 };

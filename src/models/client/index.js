@@ -253,9 +253,9 @@ Client.prototype.findOrCreateRentOrder =
       ClientId: this.id,
       dueDate,
       OrderItems:
-        [].concat.apply([], rentings.map((renting) => {
-          return renting.toOrderItems({ date });
-        }))
+        [].concat.apply([], rentings.map((renting) =>
+          renting.toOrderItems({ date, room: renting.Room }))
+        )
         .concat(this.get('uncashedDepositCount') > 0 && {
           label: 'Option Liberté',
           unitPrice: UNCASHED_DEPOSIT_FEE,
@@ -278,9 +278,7 @@ Client.prototype.findOrCreateRentOrder =
         }],
         defaults,
       })
-      .tap(([order]) => {
-        return models.Renting.attachOrphanOrderItems(rentings, order);
-      });
+      .tap(([order]) => models.Renting.attachOrphanOrderItems(rentings, order));
 };
 
 Client.createRentOrders = function(clients, date = new Date()) {
