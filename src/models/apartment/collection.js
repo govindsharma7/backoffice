@@ -19,9 +19,7 @@ module.exports = function({Picture}) {
             }],
           },
         })
-        .then((picture) => {
-          return picture ? picture.url : null;
-        });
+        .then((picture) => picture ? picture.url : null);
       },
     }, {
       field: 'floorPlan',
@@ -33,9 +31,7 @@ module.exports = function({Picture}) {
             alt: 'floorPlan',
           },
         })
-        .then((picture) => {
-          return picture ? picture.url : null;
-        });
+        .then((picture) => picture ? picture.url : null);
       },
     }],
     actions: [{

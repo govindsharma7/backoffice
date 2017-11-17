@@ -25,25 +25,17 @@ module.exports = (app, models, Client) => {
     const ids = [];
 
     req.body.data
-      .filter((_data) => {
-        return _data.type === 'order';
-      })
-      .map((order) => {
-        return ids.push(order.id);
-    });
+      .filter((_data) => _data.type === 'order')
+      .map((order) => ids.push(order.id));
 
     models.Order
       .findAll({ where: { id: { $in: ids } } })
-      .map((order) => {
-        return Promise.all([
-          order,
-          order.getCalculatedProps(),
-        ]);
-      })
-      .filter(([, { totalPaid }]) => { return totalPaid === null; })
-      .map(([order]) => {
-        return order.destroy();
-      })
+      .map((order) => Promise.all([
+        order,
+        order.getCalculatedProps(),
+      ]))
+      .filter(([, { totalPaid }]) => totalPaid === null)
+      .map(([order]) => order.destroy())
       .then(Utils.createdSuccessHandler(res, 'Orders'))
       .catch(Utils.logAndSend(res));
   });
@@ -66,9 +58,7 @@ module.exports = (app, models, Client) => {
           'paymentDelay' // required by findOrCreateRentOrder
         ).findAll({ where: { id: { $in: ids } } });
       })
-      .then((clients) => {
-        return Client.createRentOrders(clients, month);
-      })
+      .then((clients) => Client.createRentOrders(clients, month))
       .then(Utils.createdSuccessHandler(res, 'Renting Order'))
       .catch(Utils.logAndSend(res));
 
@@ -85,14 +75,12 @@ module.exports = (app, models, Client) => {
         }
         return Client.findAll({ where: { id: { $in: ids } } });
       })
-      .mapSeries((client) => {
-        return models.Metadata.createOrUpdate({
-          name: 'payment-delay',
-          value: values.addDelay,
-          metadatable: 'Client',
-          MetadatableId: client.id,
-        });
-      })
+      .mapSeries((client) => models.Metadata.createOrUpdate({
+        name: 'payment-delay',
+        value: values.addDelay,
+        metadatable: 'Client',
+        MetadatableId: client.id,
+      }))
       .then(Utils.createdSuccessHandler(res, 'New Due Date'))
       .catch(Utils.logAndSend(res));
   });
@@ -127,39 +115,31 @@ module.exports = (app, models, Client) => {
     const {values, ids, collection_name: metadatable} =
       req.body.data.attributes;
 
-      models.Metadata.bulkCreate(ids.map((MetadatableId) => {
-          return {
-            name: 'note',
-            metadatable,
-            MetadatableId,
-            value: values.content,
-          };
-        }))
-        .then(Utils.createdSuccessHandler(res, `${metadatable} Note`))
-        .catch(Utils.logAndSend(res));
+    models.Metadata.bulkCreate(ids.map((MetadatableId) => ({
+        name: 'note',
+        metadatable,
+        MetadatableId,
+        value: values.content,
+      })))
+      .then(Utils.createdSuccessHandler(res, `${metadatable} Note`))
+      .catch(Utils.logAndSend(res));
   });
 
   app.get('/forest/Client/:recordId/relationships/Invoices', LEA, (req, res) => {
     Client
       .findById(req.params.recordId)
-      .then((client) => {
-        return Ninja.invoice.listInvoices({
-         'client_id': client.ninjaId,
-        });
-      })
+      .then((client) => Ninja.invoice.listInvoices({ 'client_id': client.ninjaId }))
       .then((response) => {
         const {data} = response.obj;
 
         return res.send({
-          data: data.map((invoice) => {
-            return {
-              id: invoice.id,
-              type: 'Invoice',
-              attributes: {
-                href: `${INVOICENINJA_URL}/invoices/${invoice.id}/edit`,
-              },
-            };
-          }),
+          data: data.map((invoice) => ({
+            id: invoice.id,
+            type: 'Invoice',
+            attributes: {
+              href: `${INVOICENINJA_URL}/invoices/${invoice.id}/edit`,
+            },
+          })),
           meta: {count: data.length},
         });
       })
@@ -175,16 +155,15 @@ module.exports = (app, models, Client) => {
           where: { ClientId: req.params.recordId },
         }],
       })
-      .then((payments) => {
-        return new Serializer(Liana, models.Payment, payments, null, {}, {
+      .then((payments) =>
+        new Serializer(Liana, models.Payment, payments, null, {}, {
           count: payments.length,
-        }).perform();
-      })
-      .then((data) => {
-        return res.send(data);
-      })
+        }).perform()
+      )
+      .then((data) => res.send(data))
       .catch(Utils.logAndSend(res));
   });
+
   app.get('/forest/Client/:recordId/relationships/jotform-attachments',
     LEA,
     (req, res) => {
@@ -203,20 +182,19 @@ module.exports = (app, models, Client) => {
         }
 
         let rUrl = /https:\/\/www\.jotformeu\.com\/uploads\/cheznestor\//g;
-        const values = _.pickBy(JSON.parse(metadata[0].value), (value) => {
-          return rUrl.test(value);
-        });
+        const values = _.pickBy(
+          JSON.parse(metadata[0].value),
+          (value) => rUrl.test(value)
+        );
 
         return res.send({
-          data: Object.keys(values).map((key) => {
-            return {
-              type: 'rentalAttachment',
-              id: key,
-              attributes: {
-                href: values[key],
-              },
-            };
-          }),
+          data: Object.keys(values).map((key) => ({
+            type: 'rentalAttachment',
+            id: key,
+            attributes: {
+              href: values[key],
+            },
+          })),
           meta: { count: Object.keys(values).length },
         });
       })
@@ -224,22 +202,20 @@ module.exports = (app, models, Client) => {
   });
 
   app.post('/forest/actions/rental-attachments', multer, LEA, (req, res) => {
-    const values = _.mapKeys(JSON.parse(req.body.rawRequest),
-      (value, key) => {
-        return key.replace(/(q[\d]*_)/g, '');
-      });
+    const values = _.mapKeys(
+      JSON.parse(req.body.rawRequest),
+      (value, key) => key.replace(/(q[\d]*_)/g, '')
+    );
     const scoped = Client.scope('latestClientRenting');
 
     Promise
       .resolve(/@/.test(values.clientId) ?
         scoped.findAll({ where: { email: values.clientId.trim() } }) :
         scoped.findAll({ where: { id: values.clientId.trim() } }))
-      .then(([client]) => {
-        return client.createMetadatum({
-          name: 'rentalAttachments',
-          value: JSON.stringify(values),
-        });
-      })
+      .then(([client]) => client.createMetadatum({
+        name: 'rentalAttachments',
+        value: JSON.stringify(values),
+      }))
       .then(Utils.createdSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
   });
@@ -304,41 +280,37 @@ module.exports = (app, models, Client) => {
             }),
         ]);
       })
-      .then(([[client]]) => {
-        return Promise.all([
-          Client.scope('currentApartment').findAll({
-            where: {
-              '$Rentings->Room.ApartmentId$': client.Rentings[0].Room.ApartmentId,
-              '$Rentings.bookingDate$': { $lte:  new Date() },
-              'id': { $ne: client.id },
-            },
-          }),
-          models.Metadata.findOne({
-            where: {
-              name: 'clientIdentity',
-              MetadatableId: client.id,
-            },
-          }),
-        ]);
-      })
-      .then(([houseMates, metadata]) => {
+      .then(([[client]]) => Promise.all([
+        Client.scope('currentApartment').findAll({
+          where: {
+            '$Rentings->Room.ApartmentId$': client.Rentings[0].Room.ApartmentId,
+            '$Rentings.bookingDate$': { $lte:  new Date() },
+            'id': { $ne: client.id },
+          },
+        }),
+        models.Metadata.findOne({
+          where: {
+            name: 'clientIdentity',
+            MetadatableId: client.id,
+          },
+        }),
+      ]))
+      .then(([houseMates, metadata]) =>
         // TODO: this belongs in Sendinblue.js
         // and should be merged with the code in the following then.
         // see sendWelcomeEmail for example
-        return Utils.serializeHousemate(houseMates, metadata);
-      })
-      .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => {
-        return Promise.all([
-          emailToFr.length && Sendinblue.sendTemplateEmail(
-            SENDINBLUE_TEMPLATE_IDS.newHousemate.fr,
-            { emailTo: emailToFr, attributes: attributesFr }
-          ),
-          emailToEn.length && Sendinblue.sendTemplateEmail(
-            SENDINBLUE_TEMPLATE_IDS.newHousemate.en,
-            { emailTo: emailToEn, attributes: attributesEn }
-          ),
-        ]);
-      })
+         Utils.serializeHousemate(houseMates, metadata)
+      )
+      .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => Promise.all([
+        emailToFr.length && Sendinblue.sendTemplateEmail(
+          SENDINBLUE_TEMPLATE_IDS.newHousemate.fr,
+          { emailTo: emailToFr, attributes: attributesFr }
+        ),
+        emailToEn.length && Sendinblue.sendTemplateEmail(
+          SENDINBLUE_TEMPLATE_IDS.newHousemate.en,
+          { emailTo: emailToEn, attributes: attributesEn }
+        ),
+      ]))
       .then(Utils.createdSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
   });
@@ -348,9 +320,7 @@ module.exports = (app, models, Client) => {
     sourceModel: Client,
     associatedModel: models.Metadata,
     routeName: 'Notes',
-    where: (req) => {
-      return { MetadatableId: req.params.recordId, name: 'note' };
-    },
+    where: (req) => ({ MetadatableId: req.params.recordId, name: 'note' }),
   });
 
   Utils.addRestoreAndDestroyRoutes(app, Client);

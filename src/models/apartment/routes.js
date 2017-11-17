@@ -5,18 +5,17 @@ const makePublic                  = require('../../middlewares/makePublic');
 const Aws                         = require('../../vendor/aws');
 const Utils                       = require('../../utils');
 
-module.exports = function(app, models, Apartment) {
+module.exports = function(app, { Apartment, Room, Client }) {
   const LEA = Liana.ensureAuthenticated;
   let urlencodedParser = bodyParser.urlencoded({ extended: true });
 
-  app.get('/forest/Apartment', (req, res, next) => {
-    return (
+  app.get('/forest/Apartment', (req, res, next) => (
       req.query.filterType === 'and' &&
       /id/.test(Object.keys(req.query.filter).join(''))
     ) ?
       makePublic(req, res, next) :
-      LEA(req, res, next);
-  });
+      LEA(req, res, next)
+  );
 
   app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
@@ -26,22 +25,18 @@ module.exports = function(app, models, Apartment) {
         if (!ids || ids.length > 1 ) {
           throw new Error('You have to select one apartment');
         }
-        return models.Client.scope('currentApartment')
+        return Client.scope('currentApartment')
           .findAll({ where: { '$Rentings->Room.ApartmentId$': ids} });
       })
-      .tap((clients) => {
-        return Aws.sendSms(
-          clients
-            .map((client) => { return client.phoneNumber; })
-            .filter(Boolean), // filter-out falsy values
-          values.bodySms
-        );
-      })
-      .then((clients) => {
-        return res.status(200).send({
-          success: `SMS successfully sent to ${clients.length} clients!`,
-        });
-      })
+      .tap((clients) => Aws.sendSms(
+        clients
+          .map((client) => client.phoneNumber)
+          .filter(Boolean), // filter-out falsy values
+        values.bodySms
+      ))
+      .then((clients) => res.status(200).send({
+        success: `SMS successfully sent to ${clients.length} clients!`,
+      }))
       .catch(Utils.logAndSend(res));
   });
 
@@ -49,48 +44,41 @@ module.exports = function(app, models, Apartment) {
     const { ApartmentId } = req.query;
 
     Promise.resolve()
-      .then(() => {
-        return models.Room.scope('latestHousemates')
-          .findAll({ where: { ApartmentId } });
-      })
+      .then(() => Room.scope('latestHousemates').findAll({ where: { ApartmentId } })
+      )
       .map((room) => {
-        if ( room.Rentings.length > 0 && room.Rentings[0].Client ) {
-          return models.Client.getIdentity(room.Rentings[0].Client)
-            .then((identity) => {
-              room.Rentings[0].Client.identity = identity;
-              return room;
-            })
-            .then((_room) => {
-              return Promise.all([
-                models.Client.getDescriptionFr(_room.Rentings[0].Client),
-                models.Client.getDescriptionEn(_room.Rentings[0].Client),
-              ]);
-            })
-            .then(([descriptionFr, descriptionEn]) => {
-              Object.assign( room.Rentings[0].Client, { descriptionEn, descriptionFr });
-              return room;
-            });
+        if ( room.Rentings.length === 0 || !room.Rentings[0].Client ) {
+          return room;
         }
-        return room;
+
+        return Client.getIdentity(room.Rentings[0].Client)
+          .then((identity) => {
+            room.Rentings[0].Client.identity = identity;
+            return room;
+          })
+          .then((_room) => Promise.all([
+            Client.getDescriptionFr(_room.Rentings[0].Client),
+            Client.getDescriptionEn(_room.Rentings[0].Client),
+          ]))
+          .then(([descriptionFr, descriptionEn]) => {
+            Object.assign( room.Rentings[0].Client, { descriptionEn, descriptionFr });
+            return room;
+          });
       })
-      .map((room) => {
-        return {
-          name: room.name,
-          id: room.id,
-          client: room.Rentings.length > 0 && room.Rentings[0].Client && {
-            name: room.Rentings[0].Client.firstName,
-            descriptionEn: room.Rentings[0].Client.descriptionEn,
-            descriptionFr: room.Rentings[0].Client.descriptionFr,
-          },
-          availableAt: room.Rentings.length > 0 && room.Rentings[0].Events.length > 0 ?
-          new Date(room.Rentings[0].Events[0].startDate) < new Date() ? new Date() :
-          new Date(room.Rentings[0].Events[0].startDate) :
-          false,
-        };
-      })
-      .then((houseMates) => {
-      return res.send(houseMates);
-    })
+      .map((room) => ({
+        name: room.name,
+        id: room.id,
+        client: room.Rentings.length > 0 && room.Rentings[0].Client && {
+          name: room.Rentings[0].Client.firstName,
+          descriptionEn: room.Rentings[0].Client.descriptionEn,
+          descriptionFr: room.Rentings[0].Client.descriptionFr,
+        },
+        availableAt: room.Rentings.length > 0 && room.Rentings[0].Events.length > 0 ?
+        new Date(room.Rentings[0].Events[0].startDate) < new Date() ? new Date() :
+        new Date(room.Rentings[0].Events[0].startDate) :
+        false,
+      }))
+      .then((houseMates) => res.send(houseMates))
       .catch(Utils.logAndSend(res));
   });
 
@@ -101,14 +89,10 @@ module.exports = function(app, models, Apartment) {
       { ApartmentId : { $in : ids } } :
       { id : { $in : ids} } ;
 
-    return models.Room.scope('availableAt')
+    return Room.scope('availableAt')
       .findAll({ where })
-      .filter((room) => {
-        return room.checkAvailability(new Date(values.from));
-      })
-      .map((room) => {
-        return room.createMaintenancePeriod(values);
-      })
+      .filter((room) => room.checkAvailability(new Date(values.from)))
+      .map((room) => room.createMaintenancePeriod(values))
       .then(Utils.createdSuccessHandler(res, 'Maintenance period'))
       .catch(Utils.logAndSend(res));
   });
@@ -116,15 +100,13 @@ module.exports = function(app, models, Apartment) {
   Utils.addInternalRelationshipRoute({
     app,
     sourceModel: Apartment,
-    associatedModel: models.Client,
+    associatedModel: Client,
     routeName: 'current-clients',
     scope: 'currentApartment',
-    where: (req) => {
-      return {
-        '$Rentings->Room.ApartmentId$': req.params.recordId,
-        '$Rentings.bookingDate$': { $lte:  new Date() },
-      };
-    },
+    where: (req) => ({
+      '$Rentings->Room.ApartmentId$': req.params.recordId,
+      '$Rentings.bookingDate$': { $lte:  new Date() },
+    }),
   });
 
   Utils.addRestoreAndDestroyRoutes(app, Apartment);

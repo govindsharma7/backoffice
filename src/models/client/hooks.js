@@ -31,20 +31,18 @@ module.exports = function({ Client }) {
 
     if ( client.changed('email') ) {
       Sendinblue.getContact(client._previousDataValues.email)
-        .then((_client) => {
-          return Promise.all([
-            Sendinblue.updateContact(
-              _client.email,
-              {
-                listIds: [SENDINBLUE_LIST_IDS.archived],
-                unlinkListIds: _client.listIds,
-              }),
-            Sendinblue.createContact(client.email, {
-              client,
-              listIds: _client.listIds,
+        .then((_client) => Promise.all([
+          Sendinblue.updateContact(
+            _client.email,
+            {
+              listIds: [SENDINBLUE_LIST_IDS.archived],
+              unlinkListIds: _client.listIds,
             }),
-          ]);
-        })
+          Sendinblue.createContact(client.email, {
+            client,
+            listIds: _client.listIds,
+          }),
+        ]))
         .catch((err) => {
           if ( err.response.body.code === 'document_not_found' ) {
             return Sendinblue.createContact(client.email, { client });

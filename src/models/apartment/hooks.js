@@ -2,9 +2,7 @@ module.exports = function({ Apartment, Client }) {
   Apartment.hook('beforeUpdate', (apartment) => {
     // if no address field has been updated…
     if (
-      Object.keys(apartment._changed).every((name) => {
-        return !/^address/.test(name);
-      })
+      Object.keys(apartment._changed).every((name) => !/^address/.test(name))
     ) {
       return apartment;
     }
@@ -24,8 +22,8 @@ module.exports = function({ Apartment, Client }) {
       });
   });
 
-  Apartment.hook('beforeDelete', (apartment) => {
-    return Client.scope('currentApartment')
+  Apartment.hook('beforeDelete', (apartment) =>
+    Client.scope('currentApartment')
       .findAll({
         where: { $and: [
           { '$Rentings->Room.ApartmentId$': apartment.id },
@@ -37,6 +35,6 @@ module.exports = function({ Apartment, Client }) {
           throw new Error('Cannot delete Apartment: it\'s not empty.');
         }
         return true;
-      });
-  });
+      })
+  );
 };

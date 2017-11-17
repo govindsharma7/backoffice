@@ -283,18 +283,12 @@ Client.prototype.findOrCreateRentOrder =
 
 Client.createRentOrders = function(clients, date = new Date()) {
   return Promise
-    .mapSeries(clients, (client) => {
-      return Promise.all([
-        client,
-        client.getRentingsFor(date),
-      ]);
-    })
-    .filter(([, rentings]) => {
-      return rentings.length !== 0;
-    })
-    .map(([client, rentings]) => {
-      return client.findOrCreateRentOrder(rentings, date);
-    });
+    .mapSeries(clients, (client) => Promise.all([
+      client,
+      client.getRentingsFor(date),
+    ]))
+    .filter(([, rentings]) => rentings.length !== 0)
+    .map(([client, rentings]) => client.findOrCreateRentOrder(rentings, date));
 };
 
 Client.prototype.ninjaSerialize = function() {

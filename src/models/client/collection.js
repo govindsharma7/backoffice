@@ -10,8 +10,7 @@ const sequelize         = require('../sequelize');
 
 const _ = { find, capitalize, map };
 
-module.exports = function(models) {
-  const {Client} = models;
+module.exports = function({ Client }) {
   const cache = new WeakMap();
 
   function getIdentyMemoized(object) {
@@ -63,9 +62,7 @@ module.exports = function(models) {
       type: 'String',
       get(object) {
         return getIdentyMemoized(object)
-          .then((identity) => {
-            return Client.getIdentityRecordUrl(identity);
-          })
+          .then((identity) => Client.getIdentityRecordUrl(identity))
           .catch((e) => { handleDescriptionError(e, object); });
       },
     }, {
@@ -73,9 +70,9 @@ module.exports = function(models) {
       type: 'String',
       get(object) {
         return getIdentyMemoized(object)
-          .then((identity) => {
-            return Client.getDescriptionEn(Object.assign({ identity }, object));
-          })
+          .then((identity) =>
+            Client.getDescriptionEn(Object.assign({ identity }, object))
+          )
           .catch((e) => { handleDescriptionError(e, object); });
       },
     }, {
@@ -83,9 +80,9 @@ module.exports = function(models) {
       type: 'String',
       get(object) {
         return getIdentyMemoized(object)
-          .then((identity) => {
-            return Client.getDescriptionFr(Object.assign({ identity }, object));
-          })
+          .then((identity) =>
+            Client.getDescriptionFr(Object.assign({ identity }, object))
+          )
           .catch((e) => { handleDescriptionError(e, object); });
       },
     }, {
@@ -93,9 +90,7 @@ module.exports = function(models) {
       type: 'String',
       get(object) {
         return getIdentyMemoized(object)
-          .then((identity) => {
-            return identity ? identity.gender : undefined;
-        });
+          .then((identity) => identity ? identity.gender : undefined);
       },
     }, {
       field: 'Invoices',
@@ -175,23 +170,19 @@ module.exports = function(models) {
     }, {
       name: 'Destroy Client',
     }],
-    segments: ['lyon', 'paris', 'montpellier'].map((city) => {
-      return {
-        name: `Currrent Clients ${_.capitalize(city)}`,
-        where: () => {
-          return Client.scope('currentApartment')
-            .findAll({
-              where: { $and: [
-                { status: 'active' },
-                { '$Rentings->Room->Apartment.addressCity$': city },
-              ]},
-            })
-            .then((clients) => {
-              return { id: { $in: _.map(clients, 'id') }};
-            });
-        },
-      };
-    }).concat(TRASH_SEGMENTS),
+    segments: ['lyon', 'paris', 'montpellier'].map((city) => ({
+      name: `Currrent Clients ${_.capitalize(city)}`,
+      where: () => (
+        Client.scope('currentApartment')
+          .findAll({
+            where: { $and: [
+              { status: 'active' },
+              { '$Rentings->Room->Apartment.addressCity$': city },
+            ]},
+          })
+          .then((clients) => ({ id: { $in: _.map(clients, 'id') }}))
+      ),
+    })).concat(TRASH_SEGMENTS),
   };
 };
 
