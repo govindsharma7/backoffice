@@ -95,7 +95,7 @@ describe('Order', () => {
   });
 
   describe('hooks', () => {
-    const afterUpdateHandler = models.Renting.afterUpdateHandler;
+    const { afterUpdateHandler } = models.Renting;
 
     beforeAll(() => {
       models.Renting.afterUpdateHandler = jest.fn(() => true);
