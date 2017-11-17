@@ -31,7 +31,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
     }
 
     return Room
-      .findById(renting.id, { include: [{ model: Apartment }], transaction })
+      .findById(renting.RoomId, { include: [{ model: Apartment }], transaction })
       .then((room) => renting.createQuoteOrders({
         comfortLevel,
         discount: discount * 100,

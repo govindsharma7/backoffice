@@ -71,7 +71,7 @@ Sendinblue.getContact = function(email) {
 };
 
 Sendinblue.createContact = function(email, args) {
-  const { client = required(), listIds = required() } = args;
+  const { client = required(), listIds } = args;
 
   return ContactsApi.createContact({
     email: NODE_ENV === 'production' ? email : Sendinblue.getSandboxEmail(email),

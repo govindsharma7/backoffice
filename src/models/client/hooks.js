@@ -26,7 +26,7 @@ module.exports = function({ Client }) {
       promises.push(client.ninjaCreate());
     }
 
-    return Utils.wrapHookPromise(Promise.all(promises));
+    return Promise.all(promises);
   });
 
   Client.hook('afterUpdate', (client) => {
@@ -68,7 +68,7 @@ module.exports = function({ Client }) {
         client.changed('email')
       )
     ) {
-      return Utils.wrapHookPromise(client.ninjaUpdate());
+      return client.ninjaUpdate();
     }
 
     return true;
