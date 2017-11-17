@@ -241,11 +241,6 @@ describe('Renting', () => {
   });
 
   describe('hooks', () => {
-    beforeAll(() => {
-      Wordpress.updateRoomAvailability = jest.fn();
-      Sendinblue.sendWelcomeEmail = jest.fn();
-    });
-
     it('should mark the client and related orders active, send email + update WP', () =>
       fixtures((u) => ({
         Client: [{

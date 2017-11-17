@@ -17,6 +17,6 @@ function updateRoomAvailability({ room = required() }) {
   });
 }
 
-module.export = {
+module.exports = {
   updateRoomAvailability,
 };

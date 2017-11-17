@@ -3,50 +3,29 @@ const Promise           = require('bluebird');
 const Chromeless        = require('../../vendor/chromeless');
 const Sendinblue        = require('../../vendor/sendinblue');
 const makePublic        = require('../../middlewares/makePublic');
-// const checkToken        = require('../../middlewares/checkToken');
 const Utils             = require('../../utils');
-// const {
-//   destroySuccessHandler,
-// }                       = require('../../utils/destroyAndRestoreSuccessHandler');
 
 const Serializer  = Liana.ResourceSerializer;
 
 module.exports = (app, models, Order) => {
   const LEA = Liana.ensureAuthenticated;
-  // const rInvoiceUrl = /https:\/\/payment\.chez-nestor\.com\/invoices\/(\d+)/;
 
   // Make this route completely public
   app.get('/forest/Order/:orderId', makePublic);
 
-  // app.post('/forest/actions/generate-invoice', LEA, (req, res) => {
-  //   return Order
-  //     .findAll({
-  //       where: { id: { $in: req.body.data.attributes.ids } },
-  //     })
-  //     .then((orders) => {
-  //       return Order.ninjaCreateInvoices(orders);
-  //     })
-  //     .then(Utils.createdSuccessHandler(res, 'Ninja invoice'))
-  //     .catch(Utils.logAndSend(res));
-  // });
-
-  app.get('/forest/Invoice/:orderId', makePublic, (req, res) => {
-    return Order.scope('invoice')
+  app.get('/forest/Invoice/:orderId', makePublic, (req, res) =>
+    Order.scope('invoice')
       .findById(req.params.orderId)
-      .then((order) => {
-        return Promise.all([
-          order.toJSON(),
-          order.getCalculatedProps(),
-        ]);
-      })
-      .then(([order, calculatedProps]) => {
-        return res.send(Object.assign(
-          order,
-          calculatedProps
-        ));
-      })
-      .catch(Utils.logAndSend(res));
-  });
+      .then((order) => Promise.all([
+        order.toJSON(),
+        order.getCalculatedProps(),
+      ]))
+      .then(([order, calculatedProps]) => res.send(Object.assign(
+        order,
+        calculatedProps
+      )))
+      .catch(Utils.logAndSend(res))
+  );
 
   app.get('/forest/actions/pdf-invoice/:filename', makePublic, (req, res) => {
     const { lang, orderId } = req.query;
@@ -54,11 +33,11 @@ module.exports = (app, models, Order) => {
 
     return Chromeless
       .invoiceAsPdf(orderId, lang)
-      .then((pdf) => {
-        return res
+      .then((pdf) =>
+        res
           .set('Content-Disposition', `filename=${filename}`)
-          .redirect(pdf);
-      });
+          .redirect(pdf)
+      );
   });
 
   app.post('/forest/actions/send-payment-request', LEA, (req, res) => {
@@ -75,12 +54,10 @@ module.exports = (app, models, Order) => {
           include: [{ model: models.Client }, { model: models.OrderItem }],
         });
       })
-      .then((order) => {
-        return Promise.all([
-          order,
-          order.getCalculatedProps(),
-        ]);
-      })
+      .then((order) => Promise.all([
+        order,
+        order.getCalculatedProps(),
+      ]))
       .then(([order, { amount, balance }]) => {
         const { OrderItems, Client } = order;
 
@@ -129,22 +106,18 @@ module.exports = (app, models, Order) => {
       .catch(Utils.logAndSend(res));
   });
 
-  app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) => {
-    return models.Credit
+  app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) =>
+    models.Credit
       .findAll({
         where: { '$Payment.OrderId$': req.params.orderId },
         include: [{ model: models.Payment }],
       })
-      .then((credits) => {
-        return new Serializer(Liana, models.Credit, credits, {}, {
-          count: credits.length,
-        }).perform();
-      })
-      .then((result) => {
-        return res.send(result);
-      })
-      .catch(Utils.logAndSend(res));
-  });
+      .then((credits) => new Serializer(Liana, models.Credit, credits, {}, {
+        count: credits.length,
+      }).perform())
+      .then((result) => res.send(result))
+      .catch(Utils.logAndSend(res))
+  );
 
   app.post('/forest/actions/cancel-order', LEA, (req, res) => {
     const {ids} = req.body.data.attributes;
@@ -163,9 +136,7 @@ module.exports = (app, models, Order) => {
           ],
         });
       })
-      .tap((order) => {
-        return Order.destroyOrCancel(order);
-      })
+      .tap((order) => order.destroyOrCancel())
       .then(Utils.createdSuccessHandler(res, 'Cancel invoice'))
       .catch(Utils.logAndSend(res));
   });

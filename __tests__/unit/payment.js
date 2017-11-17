@@ -5,17 +5,12 @@ const Promise               = require('bluebird');
 const fixtures              = require('../../__fixtures__');
 const models                = require('../../src/models');
 const Sendinblue            = require('../../src/vendor/sendinblue');
-const Utils                 = require('../../src/utils');
 
 const { Order } = models;
 
 describe('Payment', () => {
   describe('hooks', () => {
     beforeAll(() => {
-      Utils.getInvoiceLink = jest.fn(() => 'https://domain.com');
-      Sendinblue.sendPaymentConfirmation = jest.fn(() =>
-        Promise.resolve({ messageId: '123456' })
-      );
       Order.pickReceiptNumber = jest.fn((order) => order);
     });
 

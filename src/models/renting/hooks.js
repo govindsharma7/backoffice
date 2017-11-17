@@ -45,7 +45,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   // - Make sure related orders are active
   // - Send a welcomeEmail
   // - Mark the room unavailable in WordPress
-  Renting.hook('afterUpdate', (_renting, { transaction }) => {
+  Renting.afterUpdateHandler = function(_renting, { transaction }) {
     if ( !_renting.changed('status') || _renting.status !== 'active' ) {
       return true;
     }
@@ -91,5 +91,9 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         }),
       ]);
     });
-  });
+  };
+  Renting.hook('afterUpdate', (record, options) =>
+    Renting.afterUpdateHandler(record, options)
+  );
+
 };

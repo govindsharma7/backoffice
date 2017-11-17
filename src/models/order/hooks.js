@@ -51,10 +51,16 @@ module.exports = function({ Order, OrderItem, Client, Renting }) {
             id: order.ClientId,
             status: 'draft',
           } }),
-          rentingItem && Renting.update({ status: 'active' }, { where: {
-            id: rentingItem.RentingId,
-            status: 'draft',
-          } }),
+          rentingItem && Renting.update(
+            { status: 'active' },
+            {
+              where: {
+                id: rentingItem.RentingId,
+                status: 'draft',
+              },
+              individualHooks: true, // without this, renting hook won't fire
+            }
+          ),
         ]);
       });
   });
