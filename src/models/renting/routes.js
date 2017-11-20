@@ -237,7 +237,11 @@ module.exports = function(app, models, Renting) {
 
         return Promise.all([
           Renting.findOrCreate({
-            where: { ClientId: client.id, RoomId: roomId },
+            where: {
+              ClientId: client.id,
+              RoomId: roomId,
+              status: 'draft',
+            },
             defaults: {
               ClientId: client.id,
               RoomId: roomId,
@@ -250,7 +254,11 @@ module.exports = function(app, models, Renting) {
         ]);
       })
       .tap(([[renting, isCreated], room]) => {
-        return isCreated && renting.createQuoteOrders({ comfortLevel, room });
+        return isCreated && renting.createQuoteOrders({
+          comfortLevel,
+          room,
+          apartment: room.Apartment,
+        });
       })
       .then(([[renting]]) => {
         return res.send({ rentingId: renting.id });
