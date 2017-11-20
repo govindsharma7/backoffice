@@ -9,13 +9,8 @@ module.exports = function(app, { Apartment, Room, Client }) {
   const LEA = Liana.ensureAuthenticated;
   let urlencodedParser = bodyParser.urlencoded({ extended: true });
 
-  app.get('/forest/Apartment', (req, res, next) => (
-      req.query.filterType === 'and' &&
-      /id/.test(Object.keys(req.query.filter).join(''))
-    ) ?
-      makePublic(req, res, next) :
-      LEA(req, res, next)
-  );
+  // The frontend needs this route to be public
+  app.get('/forest/Apartment/:apartmentId', makePublic);
 
   app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;

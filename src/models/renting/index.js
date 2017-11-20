@@ -317,7 +317,7 @@ Renting.prototype.findOrCreateRentOrder = function(args) {
 Renting.prototype.findOrCreatePackOrder = function(args) {
   const {
     comfortLevel = required(),
-    discount = required(),
+    discount,
     apartment = required(),
   } = args;
   const { addressCity } = apartment;
