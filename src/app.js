@@ -7,6 +7,7 @@ const values            = require('lodash/values');
 const cookieParser      = require('cookie-parser');
 const GraphQLHTTP       = require('express-graphql');
 const { maskErrors }    = require('graphql-errors');
+const Utils             = require('./utils');
 const config            = require('./config');
 const sequelize         = require('./models/sequelize');
 const models            = require('./models');
