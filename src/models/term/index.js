@@ -99,7 +99,7 @@ Term.prototype.createOrUpdate = function(name) {
   );
 };
 
-Term.excludeFromSchema = true;
+Term.excludeFromSchema = true; // relay option
 Term.routes = routes;
 
 module.exports = Term;
