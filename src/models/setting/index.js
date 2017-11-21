@@ -52,6 +52,7 @@ Setting.prototype.increment = function(options) {
   return this._increment('intVal', options);
 };
 
+Setting.excludeFromSchema = true;
 Setting.collection = collection;
 
 module.exports = Setting;

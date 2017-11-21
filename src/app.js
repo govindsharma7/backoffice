@@ -5,6 +5,8 @@ const BodyParser        = require('body-parser');
 const Liana             = require('forest-express-sequelize');
 const values            = require('lodash/values');
 const cookieParser      = require('cookie-parser');
+const GraphQLHTTP       = require('express-graphql');
+const { maskErrors }    = require('graphql-errors');
 const config            = require('./config');
 const sequelize         = require('./models/sequelize');
 const models            = require('./models');
@@ -12,10 +14,11 @@ const routes            = require('./routes');
 const checkToken        = require('./middlewares/checkToken');
 const smartCollections  = require('./smart-collections');
 
-const parentApp = Express();
-const app       = Express();
-const {Schemas} = Liana;
-const _         = { values };
+const parentApp   = Express();
+const app         = Express();
+const graphqlApp  = Express();
+const {Schemas}   = Liana;
+const _           = { values };
 
 /*
  * Middleware that will handle our custom Forest routes
@@ -127,5 +130,20 @@ Object.keys(models).forEach(function(modelName) {
     models[modelName].afterLianaInit(parentApp, models, models[modelName]);
   }
 });
+
+const schema = Utils.sequelizeSchema(models);
+
+if ( config.NODE_ENV ) {
+  maskErrors(schema);
+}
+/*
+ * GraphQL middleware
+ */
+graphqlApp.use(GraphQLHTTP({
+  schema,
+  graphiql: true,
+}));
+
+parentApp.use('/graphql', graphqlApp);
 
 module.exports = parentApp;

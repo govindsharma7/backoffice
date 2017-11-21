@@ -1,4 +1,5 @@
 const { DataTypes }     = require('sequelize');
+const {GraphQLEnumType} = require('graphql');
 const { TRASH_SCOPES }  = require('../../const');
 const sequelize         = require('../sequelize');
 const collection        = require('./collection');
@@ -71,6 +72,17 @@ OrderItem.prototype.createDiscount = function(amount) {
   });
 };
 
+OrderItem.specialAttributeFields = {
+  vatRate: { type: new GraphQLEnumType({
+    name: 'OrderItemVatRateEnumType',
+    values: {
+      ZERO: { value: '0' },
+      TWENTY: { value: '0.2' },
+    },
+  })},
+};
+
+OrderItem.excludeFromSchema = true;
 OrderItem.collection = collection;
 OrderItem.routes = routes;
 OrderItem.hooks = hooks;

@@ -26,6 +26,7 @@ const logAndSend                   = require('./logAndSend');
 const required                     = require('./required');
 const parseDBDate                  = require('./parseDBDate');
 const roundBy100                   = require('./roundBy100');
+const sequelizeSchema              = require('./sequelizeSchema');
 const serializeHousemate           = require('./serializeHousemate');
 const successHandler               = require('./successHandler');
 const toSingleLine                 = require('./toSingleLine');
@@ -60,6 +61,7 @@ module.exports = {
   required,
   roundBy100,
   sentSuccessHandler,
+  sequelizeSchema,
   serializeHousemate,
   stripIndent,
   toSingleLine,
