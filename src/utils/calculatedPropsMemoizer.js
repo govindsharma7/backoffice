@@ -7,19 +7,14 @@ function calculatedPropsMemoizer(Model) {
 
 // #getCalculatedProps with a WeakMap cache
 calculatedPropsMemoizer.prototype.getCalculatedProps = function(object) {
-  // It seems sometimes object isn't an Model instance
-  if ( !('dataValues' in object) ) {
-    return this.Model.findById(object.id)
-      .then((instance) => {
-        return this.getCalculatedProps(instance);
-      });
-  }
-
   if ( this.cache.has(object) ) {
     return this.cache.get(object);
   }
 
-  const promise = object.getCalculatedProps();
+  const promise = object instanceof this.Model ?
+    object.getCalculatedProps() :
+    // In some Forest views, object isn't a Model instance
+    this.Model.findById(object.id).then((instance) => instance.getCalculatedProps());
 
   this.cache.set(object, promise);
 

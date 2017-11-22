@@ -5,9 +5,9 @@ const BodyParser        = require('body-parser');
 const Liana             = require('forest-express-sequelize');
 const values            = require('lodash/values');
 const cookieParser      = require('cookie-parser');
-const GraphQLHTTP       = require('express-graphql');
-const { maskErrors }    = require('graphql-errors');
-const Utils             = require('./utils');
+// const GraphQLHTTP       = require('express-graphql');
+// const { maskErrors }    = require('graphql-errors');
+// const Utils             = require('./utils');
 const config            = require('./config');
 const sequelize         = require('./models/sequelize');
 const models            = require('./models');
@@ -17,7 +17,7 @@ const smartCollections  = require('./smart-collections');
 
 const parentApp   = Express();
 const app         = Express();
-const graphqlApp  = Express();
+// const graphqlApp  = Express();
 const {Schemas}   = Liana;
 const _           = { values };
 
@@ -132,19 +132,20 @@ Object.keys(models).forEach(function(modelName) {
   }
 });
 
-const schema = Utils.sequelizeSchema(models);
-
-if ( config.NODE_ENV ) {
-  maskErrors(schema);
-}
 /*
  * GraphQL middleware
  */
-graphqlApp.use(GraphQLHTTP({
-  schema,
-  graphiql: true,
-}));
-
-parentApp.use('/graphql', graphqlApp);
+// const schema = Utils.sequelizeSchema(models);
+//
+// if ( config.NODE_ENV === 'production' ) {
+//   maskErrors(schema);
+// }
+//
+// graphqlApp.use(GraphQLHTTP({
+//   schema,
+//   graphiql: true,
+// }));
+//
+// parentApp.use('/graphql', graphqlApp);
 
 module.exports = parentApp;

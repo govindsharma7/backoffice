@@ -193,7 +193,7 @@ Order.associate = (models) => {
 };
 
 Order.prototype.getTotalPaidAndRefund = function() {
-  const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
+  const option = { paranoid: this.deletedAt != null };
 
   return Order.scope('totalPaidRefund')
     .findById(this.id, option)
@@ -204,13 +204,11 @@ Order.prototype.getTotalPaidAndRefund = function() {
 };
 
 Order.prototype.getAmount = function() {
-  const option = this.deletedAt != null ? {paranoid: false} : {paranoid: true};
+  const option = { paranoid: this.deletedAt != null };
 
   return Order.scope('amount')
     .findById(this.id, option)
-    .then((order) => {
-      return order.get('amount');
-  });
+    .then((order) => order.get('amount'));
 };
 // Return all calculated props (amount, totalPaid, balance)
 Order.prototype.getCalculatedProps = function() {
@@ -218,14 +216,12 @@ Order.prototype.getCalculatedProps = function() {
       this.getTotalPaidAndRefund(),
       this.getAmount(),
     ])
-    .then(([{totalPaid, totalRefund}, amount]) => {
-      return {
-        amount,
-        totalPaid,
-        totalRefund,
-        balance: totalPaid - amount - totalRefund,
-      };
-    });
+    .then(([{totalPaid, totalRefund}, amount]) => ({
+      amount,
+      totalPaid,
+      totalRefund,
+      balance: totalPaid - amount - totalRefund,
+    }));
 };
 
 Order.prototype.destroyOrCancel = function() {

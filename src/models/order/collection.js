@@ -14,36 +14,28 @@ module.exports = function({ Order, Metadata, Payment }) {
       type: 'Number',
       get(object) {
         return memoizer.getCalculatedProps(object)
-          .then((result) => {
-            return result.amount;
-          });
+          .then(({ amount }) => amount);
       },
     }, {
       field: 'totalPaid',
       type: 'Number',
       get(object) {
         return memoizer.getCalculatedProps(object)
-          .then((result) => {
-            return result.totalPaid;
-          });
+          .then(({ totalPaid }) => totalPaid);
       },
     }, {
       field: 'balance',
       type: 'Number',
       get(object) {
         return memoizer.getCalculatedProps(object)
-          .then((result) => {
-            return result.balance;
-          });
+          .then(({ balance }) => balance);
       },
     }, {
       field: 'totalRefund',
       type: 'Number',
       get(object) {
         return memoizer.getCalculatedProps(object)
-          .then((result) => {
-            return result.totalRefund;
-        });
+          .then(({ totalRefund }) => totalRefund);
       },
     }, {
       field: 'paymentPage',
@@ -84,9 +76,7 @@ module.exports = function({ Order, Metadata, Payment }) {
         return Metadata.count({
           where: { MetadatableId: object.id, name: 'messageId' },
         })
-        .then((count) => {
-          return count > 0 ? 'Sent' : 'pending';
-        });
+        .then((count) => count > 0 ? 'Sent' : 'pending');
       },
     }],
     actions: [/*{

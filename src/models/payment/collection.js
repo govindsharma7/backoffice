@@ -31,7 +31,7 @@ module.exports = function({ Order, Client }) {
       type: 'String',
       get(object) {
         return getClientMemoized(object)
-          .then((client) => { return client.fullName; });
+          .then((client) => client.fullName);
       },
     }],
     segments: TRASH_SEGMENTS,

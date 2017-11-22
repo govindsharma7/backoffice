@@ -1,4 +1,5 @@
 const reduce            = require('lodash/reduce');
+const forEach           = require('lodash/forEach');
 const {
   GraphQLSchema,
   GraphQLList,
@@ -11,19 +12,19 @@ const {
   resolver,
   defaultArgs,
   defaultListArgs,
-  relay,
+  // relay,
 }                       = require('graphql-sequelize');
 const ResourcesGetter   = require('forest-express-sequelize/services/resources-getter');
 
-const _ = {reduce};
+const _ = { reduce, forEach };
 
 module.exports = function(models) {
   const opts = { sequelize: Sequelize };
-  const {
-    nodeInterface,
-    nodeField,
-    nodeTypeMapper,
-  } = relay.sequelizeNodeInterface({ models });
+  // const {
+  //   nodeInterface,
+  //   nodeField,
+  //   nodeTypeMapper,
+  // } = relay.sequelizeNodeInterface({ models });
   const types = _.reduce(models, (types, model, name) => {
 
     types[name] = new GraphQLObjectType({
@@ -33,15 +34,20 @@ module.exports = function(models) {
           // This allows pre-defining some fields in the model
           const fields = model.specialAttributeFields || {};
 
-          // model.connections = Object.keys(model.associations).map((associationName) =>
-          //   relay.sequelizeConnection({
-          //     name: associationName,
-          //     nodeType: types[model.associations[associationName].target.name],
-          //     target: model.associations[associationName],
-          //   })
-          // );
+          // _.forEach(model.associations, (assoc, assocName) => {
+          //   // TODO: temporary workaround to exclude Term until we find a way
+          //   // to make connections to models with compound keys
+          //   if ( /(Terms|Pictures|Metadatas)/.test(assocName) ) {
+          //     return;
+          //   }
           //
-          // (model.connections || []).forEach((connection) => {
+          //   const connection = relay.sequelizeConnection({
+          //     name: assocName,
+          //     nodeType: types[assoc.target.name],
+          //     target: assoc.target,
+          //   });
+          //
+          //   console.log(name, assocName, connection);
           //   fields[connection.name] = {
           //     type: connection.connectionType,
           //     args: connection.connectionArgs,
@@ -57,13 +63,13 @@ module.exports = function(models) {
             })
           );
         },
-        interfaces: [nodeInterface],
+        // interfaces: [nodeInterface],
       });
 
     return types;
   }, {});
 
-  nodeTypeMapper.mapTypes(types);
+  // nodeTypeMapper.mapTypes(types);
 
   return new GraphQLSchema({
     query: new GraphQLObjectType({
@@ -109,7 +115,7 @@ module.exports = function(models) {
 
         return fields;
       }, {}),
-      field: nodeField,
+      // field: nodeField,
     }),
   });
 };
