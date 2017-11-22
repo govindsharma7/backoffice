@@ -42,13 +42,11 @@ module.exports = function({ Order, Client }) {
       return cache.get(payment);
     }
 
-    const promise = Client
-      .findOne({
-        include: [{
-          model: Order,
-          where: { id: payment.OrderId },
-        }],
-      });
+    const promise = Order
+      .findById(payment.OrderId, {
+        include: [{ model: Client }],
+      })
+      .then((order) => order.Client);
 
     cache.set(payment, promise);
 
