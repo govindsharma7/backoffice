@@ -524,6 +524,41 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
       });
   };
 
+  Renting.prototype.createRoomSwitchOrder = function({discount}) {
+    const comfortLevel = this.get('comfortLevel');
+
+    return models.Client.scope('roomSwitchCount')
+      .findById(this.ClientId)
+      .then((client) =>
+        Utils.getRoomSwitchPrice( client.get('roomSwitchCount'), comfortLevel )
+      )
+      .then((price) => {
+        const items = [
+          price !== 0 && {
+            label: `Room switch ${comfortLevel}`,
+            unitPrice: price,
+            ProductId: 'room-switch',
+          },
+          discount != null && discount !== 0 && {
+            label: 'Discount',
+            unitPrice: -1 * discount,
+            ProductId: 'room-switch',
+          },
+        ].filter(Boolean);
+
+        return models.Order.create({
+          type: 'debit',
+          label: items.length > 0 ? 'Room switch' : 'Free Room switch',
+          ClientId: this.ClientId,
+          OrderItems: items.length > 0 ? items : [{
+            label: `Room switch ${comfortLevel})`,
+            unitPrice: 0,
+            ProductId: 'room-switch',
+          }],
+        }, { include: [models.OrderItem] });
+      });
+  };
+
   Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
     function(startDate, { transaction, hooks }) {
       return Renting[`findOrCreate${_.capitalize(type)}Event`]({
