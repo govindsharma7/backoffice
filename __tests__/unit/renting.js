@@ -372,7 +372,7 @@ describe('Renting', () => {
             unrelatedOrder,
           } = instances;
           const sendWelcomeArgs = Sendinblue.sendWelcomeEmail.mock.calls[0][0];
-          const updateRoomArgs = Wordpress.updateRoomAvailability.mock.calls[0][0];
+          const updateRoomArgs = Wordpress.makeRoomUnavailable.mock.calls[0][0];
 
           expect(sendWelcomeArgs.rentOrder.id).toBe(draftRentOrder.id);
           expect(sendWelcomeArgs.depositOrder.id).toBe(draftDepositOrder.id);
