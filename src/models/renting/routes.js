@@ -15,11 +15,14 @@ module.exports = function(app, models, Renting) {
   app.get('/forest/Renting/:rentingId', makePublic);
 
   app.post('/forest/actions/create-pack-order', LEA, (req, res) => {
-    const {values, ids} = req.body.data.attributes;
+    const {
+      values: { comfortLevel, discount = 0 },
+      ids,
+    } = req.body.data.attributes;
 
     Promise.resolve()
       .then(() => {
-        if ( !values.comfortLevel ) {
+        if ( !comfortLevel ) {
           throw new Error('Please select a comfort level');
         }
         if ( ids.length > 1 ) {
@@ -29,8 +32,8 @@ module.exports = function(app, models, Renting) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => renting.findOrCreatePackOrder({
-        comfortLevel: values.comfortLevel,
-        discount: values.discount * 100,
+        comfortLevel,
+        discount: discount * 100,
         apartment: renting.Room.Apartment,
       }))
       .then(Utils.foundOrCreatedSuccessHandler(res, 'Housing pack order'))

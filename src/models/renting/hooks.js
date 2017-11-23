@@ -24,7 +24,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   // When a renting is created with Housing Pack comfortLevel
   // - Create quote orders
   Renting.handleAfterCreate = (renting, { transaction }) => {
-    const { comfortLevel, discount } = renting;
+    const { comfortLevel, discount = 0 } = renting;
 
     if ( !comfortLevel ) {
       return true;

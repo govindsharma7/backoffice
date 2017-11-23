@@ -241,100 +241,162 @@ describe('Renting', () => {
   });
 
   describe('hooks', () => {
-    it('should mark the client and related orders active, send email + update WP', () =>
-      fixtures((u) => ({
-        Client: [{
-          id: u.id('client'),
-          firstName: 'John',
-          lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
-          status: 'draft',
-        }],
-        Order: [{
-          id: u.id('draftRentOrder'),
-          label: 'A random order',
-          ClientId: u.id('client'),
-          status: 'draft',
-        }, {
-          id: u.id('draftDepositOrder'),
-          label: 'A random order',
-          ClientId: u.id('client'),
-          status: 'draft',
-        }, {
-          id: u.id('cancelledRentOrder'),
-          label: 'A random order',
-          ClientId: u.id('client'),
-          status: 'cancelled',
-        }, {
-          id: u.id('unrelatedOrder'),
-          label: 'An unrelated order',
-          ClientId: u.id('client'),
-          status: 'draft',
-        }],
-        District: [{ id: u.id('district') }],
-        Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
-        Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
-        Renting: [{
-          id: u.id('renting'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-          status: 'draft',
-        }],
-        OrderItem: [{
-          label: 'A random item',
-          OrderId: u.id('draftRentOrder'),
-          RentingId: u.id('renting'),
-          ProductId: 'rent',
-        }, {
-          label: 'A random item',
-          OrderId: u.id('draftDepositOrder'),
-          RentingId: u.id('renting'),
-          ProductId: 'montpellier-deposit',
-        }, {
-          label: 'A random item',
-          OrderId: u.id('cancelledRentOrder'),
-          RentingId: u.id('renting'),
-          ProductId: 'rent',
-        }],
-      }))({ method: 'create', hooks: 'Renting' })
-      .tap(({ instances: { renting } }) => renting.update({ status: 'active' }))
-      .tap(Promise.delay(200))
-      .then(({ instances }) => {
-        const {
-          client,
-          renting,
-          room,
-          apartment,
-          draftRentOrder,
-          draftDepositOrder,
-          cancelledRentOrder,
-          unrelatedOrder,
-        } = instances;
-        const sendWelcomeArgs = Sendinblue.sendWelcomeEmail.mock.calls[0][0];
-        const updateRoomArgs = Wordpress.updateRoomAvailability.mock.calls[0][0];
+    describe('afterCreate', () => {
+      it('should create quote orders when comfortLevel is present', () => {
+        const { createQuoteOrders } = Renting;
 
-        expect(sendWelcomeArgs.rentOrder.id).toBe(draftRentOrder.id);
-        expect(sendWelcomeArgs.depositOrder.id).toBe(draftDepositOrder.id);
-        expect(sendWelcomeArgs.client.id).toBe(client.id);
-        expect(sendWelcomeArgs.renting.id).toBe(renting.id);
-        expect(sendWelcomeArgs.room.id).toBe(room.id);
-        expect(sendWelcomeArgs.apartment.id).toBe(apartment.id);
+        Renting.createQuoteOrders = jest.fn();
 
-        expect(updateRoomArgs.room.id).toBe(room.id);
+        return fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+            status: 'draft',
+          }],
+          District: [{ id: u.id('district') }],
+          Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
+          Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+          Renting: [{
+            id: u.id('renting1'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'draft',
+            comfortLevel: 'basic',
+          }],
+        }))({ method: 'create', hooks: 'Renting' })
+        .tap(({ unique: u }) => {
+          const call = Renting.createQuoteOrders.mock.calls[0][0];
 
-        return Promise.all([
-          expect(client.reload())
-            .resolves.toEqual(expect.objectContaining({ status: 'active' })),
-          expect(draftRentOrder.reload())
-            .resolves.toEqual(expect.objectContaining({ status: 'active' })),
-          expect(draftDepositOrder.reload())
-            .resolves.toEqual(expect.objectContaining({ status: 'active' })),
-          expect(cancelledRentOrder.reload())
-            .resolves.toEqual(expect.objectContaining({ status: 'cancelled' })),
-          expect(unrelatedOrder.reload())
-            .resolves.toEqual(expect.objectContaining({ status: 'draft' })),
-        ]);
-      })
-    );
+          expect(call.comfortLevel).toBe('basic');
+          expect(call.discount).toBe(0);
+          expect(call.room.id).toBe(u.id('room'));
+          expect(call.apartment.id).toBe(u.id('apartment'));
+
+          return Promise.all([
+            u,
+            Renting.create({
+              id: u.id('renting2'),
+              ClientId: u.id('client'),
+              RoomId: u.id('room'),
+              status: 'draft',
+              comfortLevel: 'privilege',
+              discount: 123,
+            }),
+          ]);
+        })
+        .tap(({ unique: u }) => {
+          const call = Renting.createQuoteOrders.mock.calls[1][0];
+
+          expect(call.comfortLevel).toBe('privilege');
+          expect(call.discount).toBe(12300);
+          expect(call.room.id).toBe(u.id('room'));
+          expect(call.apartment.id).toBe(u.id('apartment'));
+
+          Object.assign(Renting, { createQuoteOrders });
+
+          return null;
+        });
+      });
+    });
+
+    describe('afterUpdate', () => {
+      it('should mark the client + related orders active, send email + update WP', () =>
+        fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+            status: 'draft',
+          }],
+          Order: [{
+            id: u.id('draftRentOrder'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+          }, {
+            id: u.id('draftDepositOrder'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+          }, {
+            id: u.id('cancelledRentOrder'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'cancelled',
+          }, {
+            id: u.id('unrelatedOrder'),
+            label: 'An unrelated order',
+            ClientId: u.id('client'),
+            status: 'draft',
+          }],
+          District: [{ id: u.id('district') }],
+          Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
+          Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'draft',
+          }],
+          OrderItem: [{
+            label: 'A random item',
+            OrderId: u.id('draftRentOrder'),
+            RentingId: u.id('renting'),
+            ProductId: 'rent',
+          }, {
+            label: 'A random item',
+            OrderId: u.id('draftDepositOrder'),
+            RentingId: u.id('renting'),
+            ProductId: 'montpellier-deposit',
+          }, {
+            label: 'A random item',
+            OrderId: u.id('cancelledRentOrder'),
+            RentingId: u.id('renting'),
+            ProductId: 'rent',
+          }],
+        }))({ method: 'create', hooks: 'Renting' })
+        .tap(({ instances: { renting } }) => renting.update({ status: 'active' }))
+        .tap(Promise.delay(200))
+        .then(({ instances }) => {
+          const {
+            client,
+            renting,
+            room,
+            apartment,
+            draftRentOrder,
+            draftDepositOrder,
+            cancelledRentOrder,
+            unrelatedOrder,
+          } = instances;
+          const sendWelcomeArgs = Sendinblue.sendWelcomeEmail.mock.calls[0][0];
+          const updateRoomArgs = Wordpress.updateRoomAvailability.mock.calls[0][0];
+
+          expect(sendWelcomeArgs.rentOrder.id).toBe(draftRentOrder.id);
+          expect(sendWelcomeArgs.depositOrder.id).toBe(draftDepositOrder.id);
+          expect(sendWelcomeArgs.client.id).toBe(client.id);
+          expect(sendWelcomeArgs.renting.id).toBe(renting.id);
+          expect(sendWelcomeArgs.room.id).toBe(room.id);
+          expect(sendWelcomeArgs.apartment.id).toBe(apartment.id);
+
+          expect(updateRoomArgs.room.id).toBe(room.id);
+
+          return Promise.all([
+            expect(client.reload())
+              .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+            expect(draftRentOrder.reload())
+              .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+            expect(draftDepositOrder.reload())
+              .resolves.toEqual(expect.objectContaining({ status: 'active' })),
+            expect(cancelledRentOrder.reload())
+              .resolves.toEqual(expect.objectContaining({ status: 'cancelled' })),
+            expect(unrelatedOrder.reload())
+              .resolves.toEqual(expect.objectContaining({ status: 'draft' })),
+          ]);
+        })
+      );
+    });
   });
 });
