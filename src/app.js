@@ -97,9 +97,9 @@ Schemas.perform = function(Implementation, integrator) {
   integrator._defineCollections = integrator.defineCollections;
   integrator.defineCollections = function() {
     integrator._defineCollections.apply(integrator, arguments);
-    // if ( config.NODE_ENV === 'production' ) {
-    //   throw new Error('You shall not pass!');
-    // }
+    if ( config.NODE_ENV === 'production' ) {
+      throw new Error('You shall not pass!');
+    }
   };
 
   return Schemas._perform.apply(Schemas, arguments).tap(() => {
