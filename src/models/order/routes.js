@@ -40,44 +40,21 @@ module.exports = (app, models, Order) => {
       );
   });
 
-  app.post('/forest/actions/send-payment-request', LEA, (req, res) => {
-    const { ids } = req.body.data.attributes;
-
-    return Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t send multiple payment requests');
-        }
-
-        return Order.findOne({
-          where: { id: ids[0] },
-          include: [{ model: models.Client }, { model: models.OrderItem }],
-        });
+  app.post('/forest/actions/send-payment-request', LEA, (req, res) =>
+    Order.findAll({
+        where: { id: { $in: req.body.data.attributes.ids } },
+        include: [{ model: models.Client }, { model: models.OrderItem }],
       })
-      .then((order) => Promise.all([
-        order,
+      .map((order) => Promise.all([
+        { order, client: order.Client },
         order.getCalculatedProps(),
       ]))
-      .then(([order, { amount, balance }]) => {
-        const { OrderItems, Client } = order;
-
-        if ( balance >= 0 ) {
-          throw new Error('Can\'t send payment request, the balance is positive');
-        }
-
-        if ( OrderItems.some(({ ProductId }) => ProductId === 'rent' ) ) {
-          return Sendinblue.sendRentRequest({ order, amount, client: Client });
-        }
-
-        if ( OrderItems.some(({ ProductId }) => /-pack$/.test(ProductId)) ) {
-          return Sendinblue.sendHousingPackRequest({ order, amount, client: Client });
-        }
-
-        throw new Error('Payment request not implemented for this type of order');
-      })
+      .map(([{ order, client }, { amount, balance }]) =>
+        order.sendPaymentRequest({ client, amount, balance })
+      )
       .then(Utils.sentSuccessHandler(res, 'Payment Request'))
-      .catch(Utils.logAndSend(res));
-  });
+      .catch(Utils.logAndSend(res))
+  );
 
   app.post('/forest/actions/send-housing-pack-request', LEA, (req, res) => {
     const { ids } = req.body.data.attributes;

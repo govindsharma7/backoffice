@@ -243,7 +243,7 @@ Client.prototype.getRentingsFor = function(date = new Date()) {
 };
 
 Client.prototype.findOrCreateRentOrder =
-  function(rentings, date = new Date(), number) {
+  function(rentings, date = new Date()) {
     const dueDate = this.Metadata.length ?
       D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
       D.startOfMonth(date);
@@ -262,7 +262,6 @@ Client.prototype.findOrCreateRentOrder =
           ProductId: 'uncashed-deposit',
         })
         .filter(Boolean),
-      number,
     };
 
     return models.Order

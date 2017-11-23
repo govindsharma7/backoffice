@@ -2,7 +2,7 @@ const Promise         = require('bluebird');
 const uuid            = require('uuid/v4');
 const { DataTypes }   = require('sequelize');
 const payline         = require('../../vendor/payline');
-
+const Sendinblue        = require('../../vendor/sendinblue');
 const {
   TRASH_SCOPES,
 }                     = require('../../const');
@@ -264,8 +264,8 @@ Order.destroyOrCancel = function({ order = required() }) {
   });
 };
 
-Order.prototype.pickReceiptNumber = function(args = {}) {
-  return Order.pickReceiptNumber({ order: this, transaction: args.transaction });
+Order.prototype.pickReceiptNumber = function(args) {
+  return Order.pickReceiptNumber(Object.assign({ order: this }, args));
 };
 Order.pickReceiptNumber = function({ order = required(), transaction }) {
   if ( order.receiptNumber ) {
@@ -307,8 +307,8 @@ Order.pickReceiptNumber = function({ order = required(), transaction }) {
     .thenReturn(order);
 };
 
-Order.prototype.pay = function({ balance, card }) {
-  return Order.pay({ order: this, balance, card });
+Order.prototype.pay = function(args) {
+  return Order.pay(Object.assign({ order: this }, args));
 };
 Order.pay = function({ order = required(), balance = required(), card = required() }) {
   const {
@@ -357,6 +357,33 @@ Order.pay = function({ order = required(), balance = required(), card = required
       MetadatableId: order.id,
       metadatable: 'Order',
     }));
+};
+
+Order.prototype.sendPaymentRequest = function(args) {
+  return Order.sendPaymentRequest(Object.assign({ order: this }, args));
+};
+Order.sendPaymentRequest = function(args) {
+  const {
+    order = required(),
+    client = required(),
+    amount,
+    balance,
+  } = args;
+  const { OrderItems } = order;
+
+  if ( balance >= 0 ) {
+    throw new Error('Can\'t send payment request, the balance is positive');
+  }
+
+  if ( OrderItems.some(({ ProductId }) => ProductId === 'rent' ) ) {
+    return Sendinblue.sendRentRequest({ order, amount, client });
+  }
+
+  if ( OrderItems.some(({ ProductId }) => /-pack$/.test(ProductId)) ) {
+    return Sendinblue.sendHousingPackRequest({ order, amount, client });
+  }
+
+  throw new Error('Payment request not implemented for this type of order');
 };
 
 Order.collection = collection;
