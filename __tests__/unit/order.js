@@ -95,13 +95,13 @@ describe('Order', () => {
   });
 
   describe('hooks', () => {
-    const { afterUpdateHandler } = models.Renting;
+    const { handleAfterUpdate } = models.Renting;
 
     beforeAll(() => {
-      models.Renting.afterUpdateHandler = jest.fn(() => true);
+      models.Renting.handleAfterUpdate = jest.fn(() => true);
     });
     afterAll(() => {
-      models.Renting.afterUpdateHandler = afterUpdateHandler;
+      models.Renting.handleAfterUpdate = handleAfterUpdate;
     });
 
     it('should make the items, client and renting active when it becomes active', () =>
@@ -139,7 +139,7 @@ describe('Order', () => {
       .tap(({ instances: { order } }) => order.update({ status: 'active' }))
       .tap(Promise.delay(200))
       .then(({ instances: { item, client, renting } }) => Promise.all([
-        expect(models.Renting.afterUpdateHandler).toHaveBeenCalled(),
+        expect(models.Renting.handleAfterUpdate).toHaveBeenCalled(),
         expect(item.reload())
           .resolves.toEqual(expect.objectContaining({ status: 'active' })),
         expect(client.reload())

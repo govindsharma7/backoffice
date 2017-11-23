@@ -79,7 +79,6 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         OrderItems.some(({ ProductId }) => ( /-deposit$/.test(ProductId) ))
       ));
 
-
       return Promise.all([
         Promise.all([client, rentOrder, depositOrder].map((instance) =>
           instance.status === 'draft' && instance.update({ status: 'active' })
