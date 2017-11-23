@@ -31,7 +31,7 @@ module.exports = function({ Order, OrderItem, Client, Renting }) {
   // - Make sure the items are active
   // - Make sure the client is active
   // - Make sure the renting is active
-  Order.hook('afterUpdate', (order) => {
+  Order.handleAfterUpdate = function(order) {
     if ( !order.changed('status') || !order.status === 'active' ) {
       return true;
     }
@@ -63,5 +63,6 @@ module.exports = function({ Order, OrderItem, Client, Renting }) {
           ),
         ]);
       });
-  });
+  };
+  Order.hook('afterUpdate', (order, opts) => Order.handleAfterUpdate(order, opts));
 };

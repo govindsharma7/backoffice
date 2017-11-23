@@ -10,12 +10,16 @@ const { Order } = models;
 
 describe('Payment', () => {
   describe('hooks', () => {
-    beforeAll(() => {
-      Order.pickReceiptNumber = jest.fn((order) => order);
-    });
+    it('should send a payment confirmation after create', () => {
+      const {
+        pickReceiptNumber,
+        handleAfterUpdate,
+      } = Order;
 
-    it('should send a payment confirmation on payment:afterCreate', () =>
-      fixtures((u) => ({
+      Order.pickReceiptNumber = jest.fn((order) => pickReceiptNumber(order));
+      Order.handleAfterUpdate = jest.fn(() => Promise.resolve(true));
+
+      return fixtures((u) => ({
         Client: [{
           id: u.id('client-0'),
           firstName: 'John',
@@ -26,6 +30,7 @@ describe('Payment', () => {
           id: u.id('order-0'),
           label: 'A random order',
           ClientId: u.id('client-0'),
+          status: 'draft',
         }],
         Payment: [{
           id: u.id('payment-0'),
@@ -33,20 +38,23 @@ describe('Payment', () => {
           amount: 10000,
           OrderId: u.id('order-0'),
         }],
-      }))({ method: 'create', hooks: true })
-      .tap(() => Promise.delay(1000))
+      }))({ method: 'create', hooks: 'Payment' })
+      .tap(() => Promise.delay(200))
       .then(({ instances }) => {
         const { client, order, amount } =
           Sendinblue.sendPaymentConfirmation.mock.calls[0][0];
 
         expect(Order.pickReceiptNumber).toHaveBeenCalled();
+        expect(Order.handleAfterUpdate).toHaveBeenCalled();
         expect(client.id).toBe(instances['client-0'].id);
         expect(order.id).toBe(instances['order-0'].id);
         expect(amount).toBe(instances['payment-0'].amount);
 
+        Object.assign(Order, {pickReceiptNumber, handleAfterUpdate});
+
         return null;
-      })
-    );
+      });
+    });
 
     it('should prevent non-manual payments to be updated or deleted', () =>
       fixtures((u) => ({
@@ -59,6 +67,7 @@ describe('Payment', () => {
         Order: [{
           id: u.id('order'),
           label: 'A random order',
+          status: 'active',
           ClientId: u.id('client'),
         }],
         Payment: [{
@@ -72,7 +81,7 @@ describe('Payment', () => {
           amount: 10000,
           OrderId: u.id('order'),
         }],
-      }))({ method: 'create', hooks: 'Payment' })
+      }))({ method: 'create', hooks: false })
       .tap(({ instances: { cardPayment, manualPayment } }) => Promise.all([
         expect(cardPayment.update({ amount: 20000 }))
           .rejects.toBeInstanceOf(Error),

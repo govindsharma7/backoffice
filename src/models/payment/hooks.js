@@ -5,23 +5,23 @@ module.exports = function({ Payment, Order, Client }) {
   // When a payment is created:
   // - send a payment confirmation message (and store its messageId)
   // - pick a receiptNumber
-  Payment.hook('afterCreate', (payment) =>
-    Order
+  Payment.handleAfterCreate = function(payment) {
+    return Order
       .findOne({
         where: { id: payment.OrderId },
-        include: [{
-          model: Client,
-        }],
+        include: [{ model: Client }],
       })
-      .then((order) => Promise.all([
+      .then((order) => (Promise.all([
         Sendinblue.sendPaymentConfirmation({
           order,
           client: order.Client,
           amount: payment.amount,
         }),
         order.pickReceiptNumber(),
-        order.status === 'draft' && order.update({ status: 'active' }),
-      ]))
+      ])));
+  };
+  Payment.hook('afterCreate', (payment, opts) =>
+    Payment.handleAfterCreate(payment, opts)
   );
 
   ['beforeDelete', 'beforeUpdate'].forEach((type) =>

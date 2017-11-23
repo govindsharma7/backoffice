@@ -23,7 +23,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
 
   // When a renting is created with Housing Pack comfortLevel
   // - Create quote orders
-  Renting.hook('afterCreate', (renting, { transaction }) => {
+  Renting.handleAfterCreate = (renting, { transaction }) => {
     const { comfortLevel, discount } = renting;
 
     if ( !comfortLevel ) {
@@ -38,14 +38,17 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         room,
         apartment: room.Apartment,
       }));
-  });
+  };
+  Renting.hook('afterCreate', (renting, opts) =>
+    Renting.handleAfterCreate(renting, opts)
+  );
 
   // When a renting is updated to active:
   // - Make sure the client is active
   // - Make sure related orders are active
   // - Send a welcomeEmail
   // - Mark the room unavailable in WordPress
-  Renting.afterUpdateHandler = function(_renting, { transaction }) {
+  Renting.handleAfterUpdate = function(_renting, { transaction }) {
     if ( !_renting.changed('status') || _renting.status !== 'active' ) {
       return true;
     }
@@ -76,6 +79,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         OrderItems.some(({ ProductId }) => ( /-deposit$/.test(ProductId) ))
       ));
 
+
       return Promise.all([
         Promise.all([client, rentOrder, depositOrder].map((instance) =>
           instance.status === 'draft' && instance.update({ status: 'active' })
@@ -92,8 +96,8 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
       ]);
     });
   };
-  Renting.hook('afterUpdate', (record, options) =>
-    Renting.afterUpdateHandler(record, options)
+  Renting.hook('afterUpdate', (renting, opts) =>
+    Renting.handleAfterUpdate(renting, opts)
   );
 
 };

@@ -264,16 +264,31 @@ Order.destroyOrCancel = function({ order = required() }) {
   });
 };
 
-Order.prototype.pickReceiptNumber = function() {
-  return Order.pickReceiptNumber({ order: this });
+Order.prototype.pickReceiptNumber = function(args = {}) {
+  return Order.pickReceiptNumber({ order: this, transaction: args.transaction });
 };
-Order.pickReceiptNumber = function({ order = required() }) {
-  let settingId;
-  let strNumber;
-
+Order.pickReceiptNumber = function({ order = required(), transaction }) {
   if ( order.receiptNumber ) {
     return Promise.resolve(order);
   }
+
+  let settingId;
+  let strNumber;
+  const updater = (transaction) =>
+    models.Setting
+      .findById(settingId, { transaction })
+      .then((counter) =>
+        Promise.all([
+          counter.increment({ transaction }),
+          order.update(
+            Object.assign(
+              { receiptNumber: strNumber(counter.value + 1) },
+              order.status === 'draft' && { status: 'active' }
+            ),
+            { transaction }
+          ),
+        ])
+      );
 
   switch (order.type) {
     case 'deposit':
@@ -288,19 +303,7 @@ Order.pickReceiptNumber = function({ order = required() }) {
       break;
   }
 
-  return sequelize.transaction((transaction) =>
-    models.Setting
-      .findById(settingId, { transaction })
-      .then((counter) =>
-        Promise.all([
-          counter.increment({transaction}),
-          order.update(
-            { receiptNumber: strNumber(counter.value + 1) },
-            { transaction }
-          ),
-        ])
-      )
-    )
+  return ( transaction ? updater(transaction) : sequelize.transaction(updater) )
     .thenReturn(order);
 };
 
