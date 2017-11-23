@@ -83,7 +83,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         Promise.all([client, rentOrder, depositOrder].map((instance) =>
           instance.status === 'draft' && instance.update({ status: 'active' })
         )),
-        Wordpress.updateRoomAvailability({ room }),
+        Wordpress.makeRoomUnavailable({ room }),
         Sendinblue.sendWelcomeEmail({
           rentOrder,
           depositOrder,

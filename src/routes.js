@@ -2,11 +2,12 @@ const Promise           = require('bluebird');
 const D                 = require('date-fns');
 const fetch             = require('node-fetch');
 const aws               = require('./vendor/aws');
+const chromeless        = require('./vendor/chromeless');
 const geocode           = require('./vendor/geocode');
 const payline           = require('./vendor/payline');
 const sendinblue        = require('./vendor/sendinblue');
 const webmerge          = require('./vendor/webmerge');
-const chromeless        = require('./vendor/chromeless');
+const wordpress         = require('./vendor/wordpress');
 const config            = require('./config');
 const models            = require('./models');
 const makePublic        = require('./middlewares/makePublic');
@@ -24,6 +25,7 @@ module.exports = function(app) {
         sendinblue.pingService(),
         webmerge.pingService(),
         chromeless.pingService(),
+        wordpress.pingService(),
       ]);
     }
     catch (e) {

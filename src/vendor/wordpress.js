@@ -6,18 +6,29 @@ const {
 }                     = require('../config');
 const fetch           = require('./fetch');
 
-function updateRoomAvailability({ room = required() }) {
-  return false && NODE_ENV === 'production' && fetch(WORDPRESS_AJAX_URL, {
+function makeRoomUnavailable({ room = required() }) {
+  return NODE_ENV === 'production' && fetch(WORDPRESS_AJAX_URL, {
     method: 'post',
     body: {
       action: 'update_availability',
       privateKey: REST_API_SECRET,
       reference: room.reference,
-      meta: '20300901',
+      metaValue: '20300901',
+    },
+  });
+}
+
+function pingService() {
+  return fetch(WORDPRESS_AJAX_URL, {
+    method: 'post',
+    body: {
+      action: 'ping',
+      privateKey: REST_API_SECRET,
     },
   });
 }
 
 module.exports = {
-  updateRoomAvailability,
+  makeRoomUnavailable,
+  pingService,
 };
