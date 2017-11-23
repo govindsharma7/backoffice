@@ -39,10 +39,10 @@ return Client.scope(
 
     return client
       .findOrCreateRentOrder(rentings, month)
-      // .then(([order]) => models.Order.scope('amount').findById(order.id))
-      // .then((order) =>
-      //   Sendinblue.sendRentRequest({ order, client, amount: order.get('amount') })
-      // )
+      .then(([order]) => models.Order.scope('amount').findById(order.id))
+      .then((order) =>
+        Sendinblue.sendRentRequest({ order, client, amount: order.get('amount') })
+      )
       .catch((err) => {
         console.log(err);
         console.log(client);
