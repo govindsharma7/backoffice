@@ -1,10 +1,12 @@
 jest.mock('../../src/vendor/sendinblue');
+jest.mock('../../src/vendor/zapier');
 jest.mock('../../src/utils');
 
 const Promise               = require('bluebird');
 const fixtures              = require('../../__fixtures__');
 const models                = require('../../src/models');
 const Sendinblue            = require('../../src/vendor/sendinblue');
+const Zapier                = require('../../src/vendor/zapier');
 
 const { Order } = models;
 
@@ -40,19 +42,27 @@ describe('Payment', () => {
         }],
       }))({ method: 'create', hooks: 'Payment' })
       .tap(() => Promise.delay(200))
-      .then(({ instances }) => {
-        const { client, order, amount } =
-          Sendinblue.sendPaymentConfirmation.mock.calls[0][0];
-
+      .tap(() => {
         expect(Order.pickReceiptNumber).toHaveBeenCalled();
         expect(Order.handleAfterUpdate).toHaveBeenCalled();
-        expect(client.id).toBe(instances['client-0'].id);
-        expect(order.id).toBe(instances['order-0'].id);
-        expect(amount).toBe(instances['payment-0'].amount);
 
         Object.assign(Order, {pickReceiptNumber, handleAfterUpdate});
+      })
+      .tap(({ instances }) => {
+        const { client, order, payment } =
+          Sendinblue.sendPaymentConfirmation.mock.calls[0][0];
 
-        return null;
+        expect(client.id).toBe(instances['client-0'].id);
+        expect(order.id).toBe(instances['order-0'].id);
+        expect(payment.amount).toBe(instances['payment-0'].amount);
+      })
+      .tap(({ instances }) => {
+        const { client, order, payment } =
+          Zapier.postPayment.mock.calls[0][0];
+
+        expect(client.id).toBe(instances['client-0'].id);
+        expect(order.id).toBe(instances['order-0'].id);
+        expect(payment.amount).toBe(instances['payment-0'].amount);
       });
     });
 

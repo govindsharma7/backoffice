@@ -203,7 +203,7 @@ Sendinblue.sendPaymentConfirmation = function(args) {
   const {
     order = required(),
     client = required(),
-    amount = required(),
+    payment = required(),
   } = args;
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
 
@@ -213,7 +213,7 @@ Sendinblue.sendPaymentConfirmation = function(args) {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
         NAME: `${client.firstName} ${client.lastName}`,
-        AMOUNT: amount / 100,
+        AMOUNT: payment.amount / 100,
         LABEL: order.label,
         LINK: Utils.getInvoiceLink({ order, lang }),
       },

@@ -1,5 +1,6 @@
 const Promise                     = require('bluebird');
 const Sendinblue                  = require('../../vendor/sendinblue');
+const Zapier                      = require('../../vendor/zapier');
 
 module.exports = function({ Payment, Order, Client }) {
   // When a payment is created:
@@ -13,9 +14,14 @@ module.exports = function({ Payment, Order, Client }) {
       })
       .then((order) => (Promise.all([
         Sendinblue.sendPaymentConfirmation({
-          order,
           client: order.Client,
-          amount: payment.amount,
+          order,
+          payment,
+        }),
+        Zapier.postPayment({
+          client: order.Client,
+          order,
+          payment,
         }),
         order.pickReceiptNumber(),
       ])));
