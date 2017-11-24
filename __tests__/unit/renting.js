@@ -302,6 +302,36 @@ describe('Renting', () => {
     });
 
     describe('afterUpdate', () => {
+      it('shouldn\'t do anything unless status is updated to active', () => {
+        const mock = jest.fn((res) => res);
+        const { handleAfterUpdate } = Renting;
+
+        Renting.handleAfterUpdate = (renting) => mock(handleAfterUpdate(renting, {}));
+
+        return fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+            status: 'draft',
+          }],
+          District: [{ id: u.id('district') }],
+          Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
+          Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'draft',
+          }],
+        }))({ method: 'create', hooks: 'Renting' })
+        .tap(({ instances: { renting } }) => renting.update({ status: 'cancelled' }))
+        .then(Promise.delay(200))
+        .then(() => expect(mock).toHaveBeenCalledWith(true) )
+        .then(() => Renting.handleAfterUpdate = handleAfterUpdate);
+      });
+
       it('should mark the client + related orders active, send email + update WP', () =>
         fixtures((u) => ({
           Client: [{

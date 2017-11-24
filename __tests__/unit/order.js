@@ -3,8 +3,10 @@ const fixtures      = require('../../__fixtures__');
 const orderFixtures = require('../../__fixtures__/order');
 const models        = require('../../src/models');
 
-var order;
-var invoiceCounter;
+const { Order, Renting } = models;
+
+let order;
+let invoiceCounter;
 
 describe('Order', () => {
   beforeAll(() => {
@@ -19,7 +21,7 @@ describe('Order', () => {
 
   describe('Scopes', () => {
     test('totalPaidRefund scope return total paid and refund for an Order', () => {
-      return models.Order.scope('totalPaidRefund')
+      return Order.scope('totalPaidRefund')
         .findById(order.id)
         .then((order) => {
           expect(order.get('totalPaid')).toEqual(100 + 100);
@@ -27,7 +29,7 @@ describe('Order', () => {
         });
     });
     test('amount scope return amount of an order', () => {
-      return models.Order.scope('amount')
+      return Order.scope('amount')
         .findById(order.id)
         .then((order) => {
           return expect(order.get('amount')).toEqual(100 * 3 + 200);
@@ -77,35 +79,55 @@ describe('Order', () => {
           invoiceCounter
             .set('value', Math.round(Math.random() * 1E12))
             .save(),
-          models.Order.create({
+          Order.create({
             type: 'debit',
             label: 'test numbering',
           }),
         ])
-        .then(([counter, order]) => {
-          return Promise.all([
-            counter,
-            order.pickReceiptNumber(),
-          ]);
-        })
-        .then(([counter, order]) => {
-          return expect(order.receiptNumber).toEqual((counter.value + 1).toString());
-        });
+        .then(([counter, order]) => Promise.all([
+          counter,
+          order.pickReceiptNumber(),
+        ]))
+        .then(([counter, order]) =>
+          expect(order.receiptNumber).toEqual((counter.value + 1).toString())
+        );
     });
   });
 
-  describe('hooks', () => {
-    const { handleAfterUpdate } = models.Renting;
+  describe('hooks:afterUpdate', () => {
+    it('shouldn\'t do anything unless status is updated to active', () => {
+      const mock = jest.fn((res) => res);
+      const { handleAfterUpdate } = Order;
 
-    beforeAll(() => {
-      models.Renting.handleAfterUpdate = jest.fn(() => true);
-    });
-    afterAll(() => {
-      models.Renting.handleAfterUpdate = handleAfterUpdate;
+      Order.handleAfterUpdate = (order) => mock(handleAfterUpdate(order, {}));
+
+      return fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+          status: 'draft',
+        }],
+        Order: [{
+          id: u.id('order'),
+          label: 'A random order',
+          ClientId: u.id('client'),
+          status: 'draft',
+        }],
+      }))({ method: 'create', hooks: 'Order' })
+      .tap(({ instances: { order } }) => order.update({ status: 'cancelled' }))
+      .then(Promise.delay(200))
+      .then(() => expect(mock).toHaveBeenCalledWith(true) )
+      .then(() => Order.handleAfterUpdate = handleAfterUpdate);
     });
 
-    it('should make the items, client and renting active when it becomes active', () =>
-      fixtures((u) => ({
+    it('should make the items, client and renting active when it becomes active', () => {
+      const { handleAfterUpdate: afterRentingUpdate } = Renting;
+
+      Renting.handleAfterUpdate = jest.fn(() => true);
+
+      return fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
@@ -139,7 +161,7 @@ describe('Order', () => {
       .tap(({ instances: { order } }) => order.update({ status: 'active' }))
       .tap(Promise.delay(200))
       .then(({ instances: { item, client, renting } }) => Promise.all([
-        expect(models.Renting.handleAfterUpdate).toHaveBeenCalled(),
+        expect(Renting.handleAfterUpdate).toHaveBeenCalled(),
         expect(item.reload())
           .resolves.toEqual(expect.objectContaining({ status: 'active' })),
         expect(client.reload())
@@ -147,6 +169,7 @@ describe('Order', () => {
         expect(renting.reload())
           .resolves.toEqual(expect.objectContaining({ status: 'active' })),
       ]))
-    );
+      .then(() => Renting.handleAfterUpdate = afterRentingUpdate);
+    });
   });
 });

@@ -32,7 +32,7 @@ module.exports = function({ Order, OrderItem, Client, Renting }) {
   // - Make sure the client is active
   // - Make sure the renting is active
   Order.handleAfterUpdate = function(order) {
-    if ( !order.changed('status') || !order.status === 'active' ) {
+    if ( !order.changed('status') || order.status !== 'active' ) {
       return true;
     }
 
