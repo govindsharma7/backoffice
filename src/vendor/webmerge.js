@@ -1,16 +1,16 @@
 const WebmergeApi = require('webmerge').WebMergePromiseAPI;
 const Promise     = require('bluebird');
 const capitalize  = require('lodash/capitalize');
-const values     = require('lodash/values');
+const values      = require('lodash/values');
 const D           = require('date-fns');
 const Utils       = require('../utils');
 const config      = require('../config');
 const {
-  LEASE_DURATION,
   DEPOSIT_PRICES,
 }                 = require('../const');
 
 const _ = { capitalize, values };
+const { required } = Utils;
 
 const webmerge = new WebmergeApi(
   config.WEBMERGE_API_KEY,
@@ -18,21 +18,29 @@ const webmerge = new WebmergeApi(
   Promise
 );
 
-function serializeLease(renting) {
-  const {Client, Terms, Room} = renting;
-  const {Apartment} = Room;
-  const {name, addressStreet, addressZip, addressCity} = Apartment;
-  const bookingDate = renting.bookingDate || new Date();
-  const identity = JSON.parse(Client.Metadata[0].value);
+function serializeLease(args) {
+  const {
+    renting = required(),
+    client = required(),
+    room = required(),
+    apartment = required(),
+    identityMeta = required(),
+    comfortLevel = required(),
+    depositTerm,
+    now = new Date(), // used for testing purpose
+  } = args;
+  const {name, addressStreet, addressZip, addressCity} = apartment;
+  const bookingDate = renting.bookingDate || now;
+  const identity = JSON.parse(identityMeta.value);
   const fullAddress = _.values(identity.address).filter(Boolean).join(', ');
   const birthDate = _.values(identity.birthDate).join('/');
   const roomNumber = name.split(' ').splice(-1)[0] === 'studio' ?
-    'l\'appartement entier' : `la chambre privée nº${Room.reference.slice(-1)}`;
-  const depositOption = !Terms[0] || (Terms[0] && Terms[0].name === 'cash') ?
-    'd\'encaissement du montant' : 'de non encaissement du chèque';
+    'l\'appartement entier' : `la chambre privée nº${room.reference.slice(-1)}`;
+  const depositOption = (depositTerm && depositTerm.name === 'do-not-cash') ?
+    'de non encaissement du chèque' : 'd\'encaissement du montant';
   let packLevel;
 
-  switch (renting.get('comfortLevel')) {
+  switch (comfortLevel) {
     case 'comfort':
       packLevel = 'Confort';
       break;
@@ -44,8 +52,8 @@ function serializeLease(renting) {
       break;
   }
 
-  return Promise.resolve({
-    fullName: `${Client.firstName} ${Client.lastName.toUpperCase()}`,
+  return {
+    fullName: client.fullName,
     fullAddress,
     birthDate,
     birthPlace: Utils.toSingleLine(`
@@ -59,22 +67,21 @@ function serializeLease(renting) {
     depositOption,
     packLevel,
     roomNumber,
-    roomFloorArea: Room.floorArea,
-    floorArea: Apartment.floorArea,
+    roomFloorArea: room.floorArea,
+    floorArea: apartment.floorArea,
     address: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
-    floor: Apartment.floor === 0 ? 'rez-de-chausée' : Apartment.floor,
+    floor: apartment.floor === 0 ? 'rez-de-chausée' : apartment.floor,
     bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
-    endDate: D.format(D.addMonths(
-      D.subDays(bookingDate, 1), LEASE_DURATION), 'DD/MM/YYYY'),
-    email: Client.email,
-  });
+    endDate: D.format(Utils.getLeaseEndDate(bookingDate), 'DD/MM/YYYY'),
+    email: client.email,
+  };
 }
 
-function mergeLease(data) {
+function mergeLease(args) {
   return webmerge.mergeDocument(
     config.WEBMERGE_DOCUMENT_ID,
     config.WEBMERGE_DOCUMENT_KEY,
-    data,
+    serializeLease(args),
     config.NODE_ENV !== 'production' // webmerge's test environment switch
   );
 }

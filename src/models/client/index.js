@@ -223,6 +223,28 @@ Client.associate = (models) => {
       where: { name: 'payment-delay' },
     }],
   });
+
+  Client.addScope('identity', {
+    include: [{
+      required: false,
+      model: models.Metadata,
+      where: { name: 'clientIdentity' },
+    }],
+  });
+
+  Client.addScope('comfortLevel', {
+    attributes: { include: [[
+      sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
+      'comfortLevel',
+    ]]},
+    include: [{
+      model: models.Order,
+      include: [{
+        model: models.OrderItem,
+        where: { ProductId: { $like: '%-pack' } },
+      }],
+    }],
+  });
 };
 
 // TODO: this can probably be improved to use a Client scope

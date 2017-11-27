@@ -16,9 +16,7 @@ module.exports = function({Room, Picture}) {
       type: 'Number',
       get(object) {
         return memoizer.getCalculatedProps(object)
-          .then((result) => {
-            return result.periodPrice;
-          })
+          .then((result) => result.periodPrice)
           .tapCatch(console.error);
       },
     }, {
@@ -26,10 +24,14 @@ module.exports = function({Room, Picture}) {
       type: 'Number',
       get(object) {
         return memoizer.getCalculatedProps(object)
-          .then((result) => {
-            return result.serviceFees;
-          })
+          .then((result) => result.serviceFees)
           .tapCatch(console.error);
+      },
+    }, {
+      field: 'availableAt',
+      type: 'Date',
+      get(object) {
+        return object.availableAt;
       },
     }, {
       field: 'current-client',
@@ -44,9 +46,7 @@ module.exports = function({Room, Picture}) {
             PicturableId: object.id,
           },
         })
-        .then((picture) => {
-          return picture ? picture.url : null;
-        });
+        .then((picture) => picture ? picture.url : null);
       },
     }, {
       field: 'preview',
@@ -83,41 +83,37 @@ module.exports = function({Room, Picture}) {
         name: 'Availability',
         scope: 'availableAt',
       },
-      ['lyon', 'montpellier', 'paris'].map((city) => {
-        return {
-          name: `Available Rooms ${_.capitalize(city)}`,
-          scope: 'apartment+availableAt',
-          where: () => {
-            // TODO: this query is awfull. We join on all rentings that ever
-            // existed when we know only the one with the latest bookingDate
-            // are valuable. For now, the performances are acceptable though.
-            // Here are the alternatives we considered and rejected:
-            //   - Using a Renting scope, as this would exclude any Room that has
-            //     never had an active renting.
-            //   - Same, + searching for Rooms that never had an active Renting,
-            //     as this is probably even less efficient
-            //   - Using include.separate = true, as we've never been able to get
-            //     it to work :-/
-            // Here are the alternatives we have yet to investigate:
-            //   - Add a hook to Room to create a fake Renting with a
-            //     bookingDate and checkoutDate at epoch, so we can sort our
-            //     problem with a Renting scope
-            //   - Switch to TypeORM and see if that makes things simpler for us
-            //     using subrequest probably
-            return Room.scope('apartment+availableAt')
-              .findAll({
-                where: { '$Apartment.addressCity$' : `${city}` },
-              })
-              .filter((room) => {
-                return room.checkAvailability();
-              })
-              .reduce((acc, curr) => {
-                acc.id.push(curr.id);
-                return acc;
-              }, { id: [] });
-          },
-        };
-      })
+      ['lyon', 'montpellier', 'paris'].map((city) => ({
+        name: `Available Rooms ${_.capitalize(city)}`,
+        scope: 'apartment+availableAt',
+        where: () => {
+          // TODO: this query is awfull. We join on all rentings that ever
+          // existed when we know only the one with the latest bookingDate
+          // are valuable. For now, the performances are acceptable though.
+          // Here are the alternatives we considered and rejected:
+          //   - Using a Renting scope, as this would exclude any Room that has
+          //     never had an active renting.
+          //   - Same, + searching for Rooms that never had an active Renting,
+          //     as this is probably even less efficient
+          //   - Using include.separate = true, as we've never been able to get
+          //     it to work :-/
+          // Here are the alternatives we have yet to investigate:
+          //   - Add a hook to Room to create a fake Renting with a
+          //     bookingDate and checkoutDate at epoch, so we can sort our
+          //     problem with a Renting scope
+          //   - Switch to TypeORM and see if that makes things simpler for us
+          //     using subrequest probably
+          return Room.scope('apartment+availableAt')
+            .findAll({
+              where: { '$Apartment.addressCity$' : `${city}` },
+            })
+            .filter((room) => room.checkAvailability())
+            .reduce((acc, curr) => {
+              acc.id.push(curr.id);
+              return acc;
+            }, { id: [] });
+        },
+      }))
     ),
   };
 };

@@ -120,18 +120,7 @@ Room.associate = (models) => {
   });
 };
 
-Room.getCalculatedProps = function(basePrice, roomCount, now = new Date()) {
-  return Promise.all([
-      Utils.getPeriodCoef(now),
-      Utils.getServiceFees(roomCount),
-    ])
-    .then(([periodCoef, serviceFees]) => {
-      return {
-        periodPrice: Utils.getPeriodPrice( basePrice, periodCoef, serviceFees ),
-        serviceFees,
-      };
-    });
-};
+
 // calculate periodPrice and serviceFees for the room
 Room.prototype.getCalculatedProps = function(now = new Date()) {
   return Room.getCalculatedProps(
@@ -139,6 +128,16 @@ Room.prototype.getCalculatedProps = function(now = new Date()) {
     this.Apartment && this.Apartment.roomCount,
     now
   );
+};
+Room.getCalculatedProps = function(basePrice, roomCount, now = new Date()) {
+  return Promise.all([
+      Utils.getPeriodCoef(now),
+      Utils.getServiceFees(roomCount),
+    ])
+    .then(([periodCoef, serviceFees]) => ({
+      periodPrice: Utils.getPeriodPrice( basePrice, periodCoef, serviceFees ),
+      serviceFees,
+    }));
 };
 
 Room.prototype.checkAvailability = function(date = new Date()) {

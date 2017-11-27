@@ -134,6 +134,8 @@ Object.keys(models).forEach(function(modelName) {
 
 /*
  * GraphQL middleware
+ * TODO:
+ * - For some reason, Model.findById no longer returns a bluebird Promise
  */
 // const schema = Utils.sequelizeSchema(models);
 //

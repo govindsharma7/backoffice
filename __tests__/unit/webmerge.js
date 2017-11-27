@@ -5,39 +5,54 @@ const { DEPOSIT_PRICES } = require('../../src/const');
 
 describe('webmerge', () => {
   describe('.webmergeSerialize', () => {
-    const commonRenting = {
-      get: () => { return 'basic'; },
-      price: 60000,
-      serviceFees : 4000,
-      bookingDate: undefined,
-      Client: {
+    const commonArgs = {
+      renting: {
+        price: 60000,
+        serviceFees : 4000,
+        bookingDate: undefined,
+      },
+      client: {
         firstName: 'John',
         lastName: 'Doe',
+        fullName: 'John DOE',
         email: 'john@doe.com',
-        Metadata: [{
-          value: JSON.stringify({
-            address: {
-              1: '16 rue Conde',
-              2: 'Lyon',
-              3: undefined,
-              4: '69002',
-            },
-            birthDate: {
-              day: '23',
-              month: '07',
-              year: '1986',
-            },
-            birthPlace: {
-              first: 'New York',
-              last: 'United States',
-            },
-            birthCountryFr: 'Etats-Unis',
-            nationalityFr: 'américain',
-          }),
-        }],
       },
+      room: {
+        reference: '216CON03',
+        floorArea: 15,
+      },
+      apartment: {
+        name: '16 Condé',
+        addressStreet: '16 rue Condé',
+        addressCity: 'lyon',
+        addressZip: '69002',
+        floor: 0,
+        floorArea: 47,
+      },
+      depositTerm: false,
+      identityMeta: {
+        value: JSON.stringify({
+          address: {
+            1: '16 rue Conde',
+            2: 'Lyon',
+            3: undefined,
+            4: '69002',
+          },
+          birthDate: {
+            day: '23',
+            month: '07',
+            year: '1986',
+          },
+          birthPlace: {
+            first: 'New York',
+            last: 'United States',
+          },
+          birthCountryFr: 'Etats-Unis',
+          nationalityFr: 'américain',
+        }),
+      },
+      comfortLevel: 'basique',
     };
-
     const now = new Date();
     const commonExpected = {
       fullName: 'John DOE',
@@ -61,51 +76,35 @@ describe('webmerge', () => {
     };
 
     test('it serializes data for webmerge', () => {
-      const renting = Object.assign({}, commonRenting, {
-        Room: {
-          reference: '216CON03',
-          floorArea: 15,
-          Apartment: {
-            name: '16 Condé',
-            addressStreet: '16 rue Condé',
-            addressCity: 'lyon',
-            addressZip: '69002',
-            floor: 0,
-            floorArea: 47,
-          },
-        },
-        Terms: [],
-      });
+      const actual = webmerge.serializeLease(commonArgs);
 
-      return webmerge.serializeLease(renting)
-        .then((result) => {
-          return expect(result).toEqual(commonExpected);
-        });
+      return expect(actual).toEqual(commonExpected);
     });
 
     test('it serializes data for webmerge', () => {
-      const renting = Object.assign({}, commonRenting, {
-        bookingDate: D.parse('2017-05-14 Z'),
-        Room: {
+      const bookingDate = D.parse('2017-05-14 Z');
+      const args = Object.assign({}, commonArgs, {
+        renting: Object.assign({}, commonArgs.renting, { bookingDate }),
+        room: {
           reference: '216CON0',
           floorArea: 15,
-          Apartment: {
-            name: '16 Condé studio',
-            addressStreet: '16 rue Condé',
-            addressCity: 'lyon',
-            addressZip: '69002',
-            floor: 4,
-            floorArea: 15,
-          },
         },
-        Terms: [{
+        apartment: {
+          name: '16 Condé studio',
+          addressStreet: '16 rue Condé',
+          addressCity: 'lyon',
+          addressZip: '69002',
+          floor: 4,
+          floorArea: 15,
+        },
+        depositTerm: {
           taxonomy: 'deposit-option',
           name: 'do-not-cash',
-        }],
+        },
+        comfortLevel: 'privilege',
       });
-
-      const bookingDate = D.parse('2017-05-14 Z');
       const expected = Object.assign({}, commonExpected, {
+        packLevel: 'Privilège',
         floorArea: 15,
         floor: 4,
         roomNumber: 'l\'appartement entier',
@@ -113,11 +112,9 @@ describe('webmerge', () => {
         bookingDate: D.format(bookingDate, 'DD/MM/YYYY'),
         endDate: D.format(Utils.getLeaseEndDate(bookingDate), 'DD/MM/YYYY'),
       });
+      const actual = webmerge.serializeLease(args);
 
-      return webmerge.serializeLease(renting)
-        .then((result) => {
-         return expect(result).toEqual(expected);
-        });
+      return expect(actual).toEqual(expected);
     });
   });
 });

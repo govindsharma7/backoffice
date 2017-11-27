@@ -167,24 +167,13 @@ Renting.associate = (models) => {
 
   Renting.addScope('client+identity', {
     include: [{
-      model: models.Client,
-      include: [{
-        required: false,
-        model: models.Metadata,
-        where: { name: 'clientIdentity' },
-        limit: 1,
-      }],
+      model: models.Client.scope('identity'),
     }],
   });
 
   Renting.addScope('client+paymentDelay', {
     include: [{
-      model: models.Client,
-      include: [{
-        required: false,
-        model: models.Metadata,
-        where: { name: 'payment-delay'},
-      }],
+      model: models.Client.scope('paymentDelay'),
     }],
   });
 };
@@ -696,11 +685,10 @@ Renting.prototype.handleEventUpdate = function(event, options) {
   });
 };
 
-Renting.prototype.generateLease = function() {
-  return webmerge.serializeLease(this)
-    .then((serialized) => {
-      return webmerge.mergeLease(serialized);
-    });
+Renting.prototype.generateLease = function(args) {
+  return webmerge
+    .serializeLease(Object.assign({ renting: this }, args))
+    .then((serialized) => webmerge.mergeLease(serialized));
 };
 
 Renting.prototype.createQuoteOrders = function(args) {

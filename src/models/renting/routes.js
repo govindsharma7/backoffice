@@ -3,12 +3,13 @@ const Liana           = require('forest-express-sequelize');
 const capitalize      = require('lodash/capitalize');
 const pick            = require('lodash/pick');
 const D               = require('date-fns');
+const Webmerge        = require('../../vendor/webmerge');
 const Utils           = require('../../utils');
 const makePublic      = require('../../middlewares/makePublic');
 
 const _ = { capitalize, pick };
 
-module.exports = function(app, models, Renting) {
+module.exports = function(app, { Renting, Client, Room }) {
   const LEA = Liana.ensureAuthenticated;
 
   // The frontend needs this route to be public
@@ -92,45 +93,52 @@ module.exports = function(app, models, Renting) {
 
         return Renting.scope('room+apartment').findById(ids[0]);
       })
-      .then((renting) => {
-        return renting.createQuoteOrders({
-          comfortLevel,
-          discount: discount * 100,
-          room: renting.Room,
-          apartment: renting.Room.Apartment,
-        });
-      })
+      .then((renting) => renting.createQuoteOrders({
+        comfortLevel,
+        discount: discount * 100,
+        room: renting.Room,
+        apartment: renting.Room.Apartment,
+      }))
       .then(Utils.createdSuccessHandler(res, 'Quote order'))
       .catch(Utils.logAndSend(res));
   });
 
-  app.post('/forest/actions/generate-lease', LEA, (req, res) => {
-    const {ids} = req.body.data.attributes;
+  app.post('/forest/actions/generate-lease', LEA, async (req, res) => {
+    const { ids } = req.body.data.attributes;
 
-    Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1) {
-          throw new Error('Can\'t create multiple leases');
-        }
+    try {
+      if ( ids.length > 1 ) {
+        throw new Error('Can\'t create multiple leases');
+      }
 
-        return Renting.scope(
-          'comfortLevel', // required by #generateLease
-          'client+identity', // required by #generateLease
-          'room+apartment', // required by #generateLease
-          'depositOption' // required by #generateLease
-        ).findById(ids[0]);
-      })
-      .then((renting) => {
-        if ( !renting.Client.Metadata.length ) {
-          throw new Error('Identity record is missing for this client');
-        }
-        if ( !renting.get('comfortLevel') ) {
-          throw new Error('Housing pack is required to generate lease');
-        }
-        return renting.generateLease();
-      })
-      .then(Utils.createdSuccessHandler(res, 'Lease'))
-      .catch(Utils.logAndSend(res));
+      const renting = await Renting.scope('room+apartment', 'depositOption')
+        .findById(ids[0]);
+      const client = await Client.scope('comfortLevel', 'identity')
+        .findById(renting.ClientId);
+
+      if ( !client.Metadata.length ) {
+        throw new Error('Identity record is missing for this client');
+      }
+      if ( !client.get('comfortLevel') ) {
+        throw new Error('Housing pack is required to generate lease');
+      }
+
+      const lease = await Webmerge.mergeLease({
+        renting,
+        client,
+        room: renting.Room,
+        apartment: renting.Room.Apartment,
+        depositTerm: renting.Terms && renting.Terms[0],
+        identityMeta: client.Metadata && client.Metadata[0],
+        comfortLevel: client.get('comfortLevel'),
+      });
+
+      return Utils.createdSuccessHandler(res, 'Lease')(lease);
+
+    }
+    catch (err) {
+      return Utils.logAndSend(res)(err);
+    }
   });
 
   // add-checkin-date, add-checkout-date, create-checkin-order and
@@ -151,7 +159,7 @@ module.exports = function(app, models, Renting) {
         return Renting.scope('room+apartment') // required to create the event
           .findOne({
             where: { id: ids[0] },
-            include: [{ model: models.Client }], // required to create the event
+            include: [{ model: Client }], // required to create the event
           });
       })
       .then((renting) => {
@@ -180,7 +188,7 @@ module.exports = function(app, models, Renting) {
             'comfortLevel' // required below
           ).findOne({
             where: { id: ids[0] },
-            include: [{ model: models.Client }], // required to create the refund event
+            include: [{ model: Client }], // required to create the refund event
           });
         })
         .then((renting) => {
@@ -211,7 +219,7 @@ module.exports = function(app, models, Renting) {
     const { roomId, pack: comfortLevel, client, currentPrice, bookingDate } =
       req.body;
 
-    models.Room.scope('apartment+availableAt')
+    Room.scope('apartment+availableAt')
       .findById(roomId)
       .then((room) => {
         if ( !room ) {
@@ -224,7 +232,7 @@ module.exports = function(app, models, Renting) {
 
         return Promise.all([
           room.getCalculatedProps(Math.max(room.availableAt, new Date())),
-          models.Client.findOrCreate({
+          Client.findOrCreate({
             where: { email: client.email },
             defaults: _.pick(client, ['firstName', 'lastName', 'email']),
           }),
