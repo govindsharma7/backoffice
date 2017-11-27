@@ -8,7 +8,8 @@
     "build": [
       "webpack --config webpack.config.js",
       "mv node_modules .node_modules",
-      "npm install --only=prod"
+      "npm install --only=prod",
+      "yarn autoclean --force"
     ],
     "clean": "[ -d .node_modules ] && rm -rf node_modules && mv .node_modules node_modules"
   },
