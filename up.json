@@ -9,7 +9,7 @@
       "webpack --config webpack.config.js",
       "mv node_modules .node_modules",
       "npm install --only=prod",
-      "npx yarn autoclean --force"
+      "$(npm bin)/yarn autoclean --force"
     ],
     "clean": "[ -d .node_modules ] && rm -rf node_modules && mv .node_modules node_modules"
   },
