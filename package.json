@@ -79,8 +79,7 @@
     "tmpl": "^1.0.4",
     "walker": "^1.0.7",
     "webpack": "^3.7.0",
-    "webpack-blocks": "^1.0.0-rc",
-    "yarn": "^1.3.2"
+    "webpack-blocks": "^1.0.0-rc"
   },
   "optionalDependencies": {
     "up": "^1.0.1"

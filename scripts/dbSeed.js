@@ -11,26 +11,17 @@ Object.entries = typeof Object.entries === 'function' ?
   Object.entries :
   (obj) => Object.keys(obj).map((k) => [k, obj[k]]);
 
-/* eslint-disable promise/no-nesting */
 return sequelize.sync()
-  .then(() => {
-    const tuples = [];
-
-    for (let [modelName, records] of Object.entries(seed)) {
-      for (let record of records) {
-        tuples.push([modelName, record]);
-      }
-    }
-    // use Promise.map instead of Promise.all, as .map limits paralellism
-    // (while .all results in "database is locked" sqlite errors)
-    // TODO try to make this run with .map and concurrency
-    return Promise.mapSeries(tuples, ([modelName, record]) =>
-      models[modelName].findOrCreate({
-        where: { id: record.id },
-        defaults: record,
-      })
-    );
-  })
+  .then(() =>
+    Promise.mapSeries(Object.entries(seed), ([modelName, records]) =>
+      models[modelName].bulkCreate(records, { ignoreDuplicates: true })
+      // In case of mistake, it's possible to upsert all records
+      // but invoice-counter and other settings should be left untouched
+      // models[modelName].bulkCreate(records, {
+      //   ignoreDuplicates: modelName === 'Setting'
+      //   updateOnDuplicate: modelName !== 'Setting',
+      // })
+  ))
   .then(() => {
     console.log('DATABASE SUCCESSFULLY SEEDED!');
     return process.exit(0);
