@@ -113,6 +113,7 @@ module.exports = function(app, { Renting, Client, Room }) {
 
       const renting = await Renting.scope('room+apartment', 'depositOption')
         .findById(ids[0]);
+      // Take the comfort level from clients, as they might be switching room
       const client = await Client.scope('comfortLevel', 'identity')
         .findById(renting.ClientId);
 
