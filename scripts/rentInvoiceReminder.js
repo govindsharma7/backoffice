@@ -22,20 +22,18 @@ return Order.scope('rentOrders')
       where: { status: 'active' },
     }],
   })
-  .map((order) => {
-    return Promise.all([
-      order,
-      order.getCalculatedProps(),
-    ]);
-  })
-  .filter(([, { balance }]) => { return balance < 0; })
-  .map(([order, { amount }]) => {
-    return Sendinblue
+  .map((order) => Promise.all([
+    order,
+    order.getCalculatedProps(),
+  ]))
+  .filter(([, { balance }]) => balance < 0)
+  .map(([order, { amount }]) =>
+    Sendinblue
       .sendRentReminder({ order, client: order.Client, amount })
-      .then(({ messageId }) => {
-        return order.createMetadatum({
+      .then(({ messageId }) =>
+        order.createMetadatum({
           name: 'messageId',
           value: messageId,
-        });
-      });
-  });
+        })
+      )
+  );
