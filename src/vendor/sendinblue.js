@@ -107,7 +107,8 @@ Sendinblue.sendWelcomeEmail = function(args) {
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
   const roomNumber = room.reference.slice(-1);
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
-  const websiteUrl = `${WEBSITE_URL.replace(/^https?:\/\//, '')}/${lang}`;
+  const websiteUrl = `${WEBSITE_URL}/${lang}`;
+  // const websiteUrl = `${WEBSITE_URL.replace(/^https?:\/\//, '')}/${lang}`;
 
   return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.welcome[client.preferredLanguage],
