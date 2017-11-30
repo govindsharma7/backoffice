@@ -107,6 +107,7 @@ Sendinblue.sendWelcomeEmail = function(args) {
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
   const roomNumber = room.reference.slice(-1);
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+  const websiteUrl = `${WEBSITE_URL.replace(/^https?:\/\//, '')}/${lang}`;
 
   return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.welcome[client.preferredLanguage],
@@ -117,10 +118,10 @@ Sendinblue.sendWelcomeEmail = function(args) {
         NAME: `${_.capitalize(client.firstName)} ${client.lastName}`,
         BOOKINGDATE: D.format(renting.bookingDate, 'DD/MM/YYYY'),
         RENT: (renting.price / 100) + (renting.serviceFees / 100),
-        RENT_LINK: `${WEBSITE_URL}/${lang}/payment/${rentOrder.id}`,
+        RENT_LINK: `${websiteUrl}/payment/${rentOrder.id}`,
         EMAIL: client.email,
         DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
-        DEPOSIT_LINK: `${WEBSITE_URL}/${lang}/payment/${depositOrder.id}`,
+        DEPOSIT_LINK: `${websiteUrl}/payment/${depositOrder.id}`,
         ADDRESSAGENCY: AGENCY_ADDRESSES[addressCity],
         SPECIALCHECKIN: SPECIAL_CHECKIN_PRICES[addressCity] / 100,
         ROOM: client.preferredLanguage === 'en' ?
