@@ -78,6 +78,12 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
       const depositOrder = orders.find(({ OrderItems }) => (
         OrderItems.some(({ ProductId }) => ( /-deposit$/.test(ProductId) ))
       ));
+      const comfortLevel =
+        orders
+          .map(({ OrderItems }) => OrderItems)
+          .reduce((acc, curr) => acc.concat(curr), [])
+          .find(({ ProductId }) => ( /-pack$/.test(ProductId) ))
+          .ProductId.replace('-pack', '');
 
       return Promise.all([
         Promise.all([client, rentOrder, depositOrder].map((instance) =>
@@ -91,6 +97,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
           renting,
           room,
           apartment: room.Apartment,
+          comfortLevel,
         }),
       ]);
     });

@@ -189,7 +189,7 @@ module.exports = {
   }, {
       id: 'montpellier-beaux-arts',
       label: 'Beaux-Arts',
-}, {
+  }, {
       id: 'montpellier-aubes-pompignane',
       label: 'Aubes - Pompignane',
   }, {

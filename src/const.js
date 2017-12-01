@@ -113,6 +113,9 @@ module.exports = {
 
   SENDINBLUE_TEMPLATE_IDS: {
     welcome: { fr: 7, en: 6 },
+    'welcome-basic': { fr: 34, en: 33 },
+    'welcome-comfort': { fr: 36, en: 37 },
+    'welcome-privilege': { fr: 38, en: 39 },
     deposit: { fr: 4, en: 5 },
     newHousemate: { fr: 3, en: 2 },
     rentInvoice: { fr: 19, en: 24 },

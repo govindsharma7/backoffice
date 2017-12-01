@@ -102,6 +102,7 @@ Sendinblue.sendWelcomeEmail = function(args) {
     renting = required(),
     room = required(),
     apartment = required(),
+    comfortLevel = required(),
   } = args;
   const { name, addressStreet, addressZip, addressCity } = apartment;
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
@@ -111,7 +112,7 @@ Sendinblue.sendWelcomeEmail = function(args) {
   // const websiteUrl = `${WEBSITE_URL.replace(/^https?:\/\//, '')}/${lang}`;
 
   return Sendinblue.sendTemplateEmail(
-    SENDINBLUE_TEMPLATE_IDS.welcome[client.preferredLanguage],
+    SENDINBLUE_TEMPLATE_IDS[`welcome-${comfortLevel}`][client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {

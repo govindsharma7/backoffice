@@ -352,6 +352,11 @@ describe('Renting', () => {
             ClientId: u.id('client'),
             status: 'draft',
           }, {
+            id: u.id('draftPackOrder'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+          }, {
             id: u.id('cancelledRentOrder'),
             label: 'A random order',
             ClientId: u.id('client'),
@@ -383,6 +388,11 @@ describe('Renting', () => {
             ProductId: 'montpellier-deposit',
           }, {
             label: 'A random item',
+            OrderId: u.id('draftPackOrder'),
+            RentingId: u.id('renting'),
+            ProductId: 'comfort-pack',
+          }, {
+            label: 'A random item',
             OrderId: u.id('cancelledRentOrder'),
             RentingId: u.id('renting'),
             ProductId: 'rent',
@@ -410,6 +420,7 @@ describe('Renting', () => {
           expect(sendWelcomeArgs.renting.id).toBe(renting.id);
           expect(sendWelcomeArgs.room.id).toBe(room.id);
           expect(sendWelcomeArgs.apartment.id).toBe(apartment.id);
+          expect(sendWelcomeArgs.comfortLevel).toEqual('comfort');
 
           expect(updateRoomArgs.room.id).toBe(room.id);
 
