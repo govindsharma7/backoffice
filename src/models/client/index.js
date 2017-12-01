@@ -270,7 +270,7 @@ Client.prototype.findOrCreateRentOrder =
       D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
       D.startOfMonth(date);
     const defaults = {
-      label: `${D.format(date, 'MMMM')} Invoice`,
+      label: `${D.format(date, 'MMMM')} Rent`,
       type: 'debit',
       ClientId: this.id,
       dueDate,
