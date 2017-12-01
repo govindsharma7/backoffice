@@ -28,12 +28,6 @@ return Order.scope('rentOrders')
   ]))
   .filter(([, { balance }]) => balance < 0)
   .map(([order, { amount }]) =>
-    Sendinblue
-      .sendRentReminder({ order, client: order.Client, amount })
-      .then(({ messageId }) =>
-        order.createMetadatum({
-          name: 'messageId',
-          value: messageId,
-        })
-      )
-  );
+    Sendinblue.sendRentReminder({ order, client: order.Client, amount })
+  )
+  .then((all) => console.log(`${all.length} rent reminders sent.`));
