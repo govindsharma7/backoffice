@@ -178,18 +178,6 @@ Order.associate = (models) => {
       }],
     }],
   });
-
-  Order.addScope('welcomeEmail', {
-    attributes: ['id'],
-    include: [{
-      model: models.OrderItem,
-      attributes: ['id', 'ProductId'],
-      where: { $or: [
-        { ProductId: 'rent' },
-        { ProductId: { $like: '%-deposit' } },
-      ] },
-    }],
-  });
 };
 
 Order.prototype.getTotalPaidAndRefund = function() {
