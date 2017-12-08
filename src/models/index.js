@@ -38,6 +38,7 @@ Object.assign(models, {
   // Keep models sorted alphabetically!
 });
 
+// Find by id should return soft-deleted records
 sequelize.addHook('beforeFind', (options) => {
   if (
     options.where &&

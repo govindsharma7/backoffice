@@ -1,13 +1,11 @@
-const WebmergeApi = require('webmerge').WebMergePromiseAPI;
-const Promise     = require('bluebird');
-const capitalize  = require('lodash/capitalize');
-const values      = require('lodash/values');
-const D           = require('date-fns');
-const Utils       = require('../utils');
-const config      = require('../config');
-const {
-  DEPOSIT_PRICES,
-}                 = require('../const');
+const WebmergeApi         = require('webmerge').WebMergePromiseAPI;
+const Promise             = require('bluebird');
+const capitalize          = require('lodash/capitalize');
+const values              = require('lodash/values');
+const D                   = require('date-fns');
+const { DEPOSIT_PRICES }  = require('../const');
+const Utils               = require('../utils');
+const config              = require('../config');
 
 const _ = { capitalize, values };
 const { required } = Utils;

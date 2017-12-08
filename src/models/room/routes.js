@@ -13,12 +13,12 @@ module.exports = function(app, models, Room) {
   app.get('/forest/Room', makePublic);
   app.get('/forest/Room/:recordId', makePublic);
 
-  app.post('/forest/actions/update-apartment-and-room', LEA, (req, res) => {
+  app.post('/forest/actions/update-apartment-and-room', LEA, async (req, res) => {
     const { room, apartment } = req.body;
     const descriptionFields =
-      ['Fr', 'En', 'Es'].map((lang) => { return `description${lang}`; });
+      ['Fr', 'En', 'Es'].map((lang) => `description${lang}`);
     const addressFields =
-      ['Street', 'Zip', 'City', 'Country'].map((name) => { return `address${name}`; });
+      ['Street', 'Zip', 'City', 'Country'].map((name) => `address${name}`);
     const roomFields =
       ['floorArea', 'basePrice', 'beds'].concat(descriptionFields);
     const apartmentFields =
@@ -27,21 +27,17 @@ module.exports = function(app, models, Room) {
         addressFields
       );
 
-    Promise.resolve()
-      .then(() => {
-        return Promise.all([
-          models.Room.findById(room.id),
-          models.Apartment.findById(apartment.id),
-        ]);
-      })
-      .then(([_room, _apartment]) => {
-        return Promise.all([
-          _room.update( _.pick(room, roomFields) ),
-          _apartment.update( _.pick(apartment, apartmentFields) ),
-        ]);
-      })
-      .then(Utils.createdSuccessHandler(res, 'Room and Apartment'))
-      .catch(Utils.logAndSend(res));
+    const [_room, _apartment] = await Promise.all([
+      models.Room.findById(room.id),
+      models.Apartment.findById(apartment.id),
+    ]);
+
+    Promise.all([
+      _room.update( _.pick(room, roomFields) ),
+      _apartment.update( _.pick(apartment, apartmentFields) ),
+    ])
+    .then(Utils.createdSuccessHandler(res, 'Room and Apartment'))
+    .catch(Utils.logAndSend(res));
   });
 
   Utils.addInternalRelationshipRoute({
@@ -50,12 +46,10 @@ module.exports = function(app, models, Room) {
     associatedModel: models.Client,
     routeName: 'current-client',
     scope: 'currentApartment',
-    where: (req) => {
-      return {
-        '$Rentings.RoomId$': req.params.recordId,
-        '$Rentings.bookingDate$': { $lte:  new Date() },
-      };
-    },
+    where: (req) => ({
+      '$Rentings.RoomId$': req.params.recordId,
+      '$Rentings.bookingDate$': { $lte:  new Date() },
+    }),
   });
 
   Utils.addRestoreAndDestroyRoutes(app, Room);

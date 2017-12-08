@@ -9,18 +9,10 @@ const {
 function restore(instances) {
   return Promise.all(
     instances
-      .filter((instance) => {
-        return instance.deletedAt != null;
-      })
-      .map((instance) => {
-          return instance
-            .set('status', 'active')
-            .restore();
-      })
+      .filter((instance) => instance.deletedAt != null )
+      .map((instance) => instance.set('status', 'active').restore())
   )
-  .then((filterInstances) => {
-    return filterInstances.length;
-  });
+  .then((filterInstances) => filterInstances.length);
 }
 
 function destroy(instances) {

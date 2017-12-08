@@ -1,6 +1,6 @@
 const capitalize          = require('lodash/capitalize');
-const { WEBSITE_URL }     = require('../../config');
 const { TRASH_SEGMENTS }  = require('../../const');
+const { WEBSITE_URL }     = require('../../config');
 const Utils               = require('../../utils');
 
 const _ = { capitalize };

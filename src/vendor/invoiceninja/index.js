@@ -1,7 +1,10 @@
-const Swagger   = require('swagger-client');
-const Deasync   = require('deasync');
-const config    = require('../../config');
-const spec      = require('./invoiceninja-spec');
+const Swagger           = require('swagger-client');
+const Deasync           = require('deasync');
+const {
+  INVOICENINJA_URL,
+  INVOICENINJA_API_KEY,
+}                       = require('../../config');
+const spec              = require('./invoiceninja-spec');
 
 let Ninja;
 
@@ -12,7 +15,7 @@ new Swagger({
   authorizations: {
     'api_key': new Swagger.ApiKeyAuthorization(
       'X-Ninja-Token',
-      config.INVOICENINJA_API_KEY,
+      INVOICENINJA_API_KEY,
       'header'
     ),
   },
@@ -20,8 +23,8 @@ new Swagger({
 // Override the host hardcoded in the spec.
 .then((ninja) => {
   Ninja = ninja;
-  Ninja.setSchemes([config.INVOICENINJA_PROTOCOL || 'http']);
-  Ninja.setHost(config.INVOICENINJA_HOST);
+  Ninja.setSchemes([INVOICENINJA_URL.split('://')[0]]);
+  Ninja.setHost(INVOICENINJA_URL.split('://')[1]);
   Ninja.INVOICE_STATUS_PAID = 6;
   Ninja.INVOICE_STATUS_PARTIAL = 5;
   Ninja.INVOICE_STATUS_DRAFT = 1;

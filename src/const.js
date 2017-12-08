@@ -1,6 +1,6 @@
-const config   = require('./config');
+const common = require('cheznestor-common/const');
 
-module.exports = {
+module.exports = Object.assign(common, {
   TRASH_SEGMENTS: [{
     name: 'Trashed',
     scope: 'trashed',
@@ -18,104 +18,8 @@ module.exports = {
     },
   },
 
-  // UNTRASHED_SCOPE: {
-  //   untrashed: {
-  //     where : { $or: [{
-  //       deletedAt: { $not: null },
-  //       status : 'draft',
-  //     }, {
-  //       deletedAt: null,
-  //     }] },
-  //     paranoid: false,
-  //   },
-  // },
-
-  UNAVAILABLE_DATE: new Date(1E14),
-
-  DATETIME_FORMAT: 'YYYY-MM-DD HH:mm:ss.SSSZ',
-
-  LEASE_DURATION: '6',
-
-  INVOICENINJA_URL:
-    `${config.INVOICENINJA_PROTOCOL || 'http'}://${config.INVOICENINJA_HOST}`,
-
-  BASIC_PACK:         'basic',
-  COMFORT_PACK:     'comfort',
-  PRIVILEGE_PACK: 'privilege',
-  PACK_PRICES: {
-    lyon: {
-      basic:      59000,
-      comfort:    79000,
-      privilege:  99000,
-    },
-    montpellier: {
-      basic:      49000,
-      comfort:    69000,
-      privilege:  89000,
-    },
-    paris: {
-      basic:      89000,
-      comfort:   119000,
-      privilege: 149000,
-    },
-  },
-  ROOM_SWITCH_PRICES: {
-    privilege:     0,
-    comfort:   19000,
-    basic:     29000,
-  },
-  DEPOSIT_PRICES: {
-    lyon:        70000,
-    paris:       90000,
-    montpellier: 50000,
-  },
-
-  SPECIAL_CHECKIN_PRICES: {
-    lyon: 7900,
-    montpellier: 7900,
-    paris: 12900,
-  },
-
-  SERVICE_FEES: {
-    1:       5000, // 1 room
-    2:       4000, // 2 rooms
-    default: 3000, // 3 or more rooms
-  },
-
-  CHECKIN_DURATION:  30,
-  CHECKOUT_DURATION: 60,
-
-  LATE_NOTICE_FEES: {
-    '0-9days':   67900,
-    '10-19days': 47900,
-    '20-29days': 27900,
-  },
-
-  LATE_FEES: 1000,
-
-  DEPOSIT_REFUND_DELAYS: {
-    basic:     60,
-    comfort:   40,
-    privilege: 20,
-  },
-
-  UNCASHED_DEPOSIT_FEE: 2900,
-
-  TWO_OCCUPANTS_FEES: 9000,
-
-  AGENCY_ADDRESSES: {
-    lyon: '16 rue de Condé, 69002 Lyon',
-    montpellier: '4 rue Paul Lacroix, 34070 Montpellier',
-    paris: '76 rue de Rivoli, 75004 Paris',
-  },
-
-  SUPPORT_EMAIL: 'support@chez-nestor.com',
-
   SENDINBLUE_TEMPLATE_IDS: {
-    welcome: { fr: 7, en: 6 },
-    'welcome-basic': { fr: 34, en: 33 },
-    'welcome-comfort': { fr: 36, en: 37 },
-    'welcome-privilege': { fr: 38, en: 39 },
+    welcome2: { fr: 41, en: 40 },
     deposit: { fr: 4, en: 5 },
     newHousemate: { fr: 3, en: 2 },
     rentInvoice: { fr: 19, en: 24 },
@@ -504,4 +408,4 @@ module.exports = {
     '12-30': 0.95,
     '12-31': 0.96,
   },
-};
+});

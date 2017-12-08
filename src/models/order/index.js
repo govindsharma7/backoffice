@@ -1,17 +1,15 @@
-const Promise         = require('bluebird');
-const uuid            = require('uuid/v4');
-const { DataTypes }   = require('sequelize');
-const payline         = require('../../vendor/payline');
+const Promise           = require('bluebird');
+const uuid              = require('uuid/v4');
+const { DataTypes }     = require('sequelize');
+const { TRASH_SCOPES }  = require('../../const');
+const payline           = require('../../vendor/payline');
 const Sendinblue        = require('../../vendor/sendinblue');
-const {
-  TRASH_SCOPES,
-}                     = require('../../const');
-const { required }    = require('../../utils');
-const sequelize       = require('../sequelize');
-const models          = require('../models'); //!\ Destructuring forbidden /!\
-const collection      = require('./collection');
-const routes          = require('./routes');
-const hooks           = require('./hooks');
+const { required }      = require('../../utils');
+const sequelize         = require('../sequelize');
+const models            = require('../models'); //!\ Destructuring forbidden /!\
+const collection        = require('./collection');
+const routes            = require('./routes');
+const hooks             = require('./hooks');
 
 
 const Order = sequelize.define('Order', {

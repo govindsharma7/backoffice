@@ -6,15 +6,15 @@ const { DataTypes }   = require('sequelize');
 const Payline         = require('payline');
 const Country         = require('countryjs');
 const GoogleTranslate = require('google-translate');
-const Ninja           = require('../../vendor/invoiceninja');
-const payline         = require('../../vendor/payline');
-const Utils           = require('../../utils');
 const {
   TRASH_SCOPES,
   LATE_FEES,
   UNCASHED_DEPOSIT_FEE,
   DATETIME_FORMAT,
 }                     = require('../../const');
+const Ninja           = require('../../vendor/invoiceninja');
+const payline         = require('../../vendor/payline');
+const Utils           = require('../../utils');
 const config          = require('../../config');
 const sequelize       = require('../sequelize');
 const models          = require('../models'); //!\ Destructuring forbidden /!\

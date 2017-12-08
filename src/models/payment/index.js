@@ -1,6 +1,6 @@
 const { DataTypes }     = require('sequelize');
-const payline           = require('../../vendor/payline');
 const { TRASH_SCOPES }  = require('../../const');
+const payline           = require('../../vendor/payline');
 const sequelize         = require('../sequelize');
 const models            = require('../models'); //!\ Destructuring forbidden /!\
 const collection        = require('./collection');

@@ -1,12 +1,9 @@
-const find              = require('lodash/find');
-const capitalize        = require('lodash/capitalize');
-const map               = require('lodash/map');
-
-const {
-  TRASH_SEGMENTS,
-  INVOICENINJA_URL,
-}                       = require('../../const');
-const sequelize         = require('../sequelize');
+const find                  = require('lodash/find');
+const capitalize            = require('lodash/capitalize');
+const map                   = require('lodash/map');
+const { TRASH_SEGMENTS }    = require('../../const');
+const { INVOICENINJA_URL }  = require('../../config');
+const sequelize             = require('../sequelize');
 
 const _ = { find, capitalize, map };
 

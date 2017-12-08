@@ -1,9 +1,9 @@
+const { TRASH_SEGMENTS }  = require('../../const');
 const {
-  TRASH_SEGMENTS,
+  WEBSITE_URL,
   INVOICENINJA_URL,
-}                     = require('../../const');
-const { WEBSITE_URL } = require('../../config');
-const Utils           = require('../../utils');
+}                         = require('../../config');
+const Utils               = require('../../utils');
 
 module.exports = function({ Order, Metadata, Payment }) {
   const memoizer = new Utils.calculatedPropsMemoizer(Order);

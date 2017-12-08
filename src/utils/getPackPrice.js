@@ -1,5 +1,5 @@
-const Promise = require('bluebird');
-const {PACK_PRICES} = require('../const');
+const Promise         = require('bluebird');
+const { PACK_PRICES } = require('../const');
 
 module.exports = function(city, level) {
   // make this method artificially asynchronous, as it is likely to read from

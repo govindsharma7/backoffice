@@ -3,7 +3,8 @@ const D                       = require('date-fns');
 const {
   BASIC_PACK,
   PRIVILEGE_PACK,
-  SPECIAL_CHECKIN_PRICES,
+  SPECIAL_CHECKIN_FEES,
+  SPECIAL_CHECKOUT_FEES,
 }                             = require('../const');
 const isHoliday               = require('./isHoliday');
 
@@ -23,7 +24,7 @@ function isSpecialDate(date) {
 
 module.exports.getCheckinPrice = function(date, level, city) {
   if ( level === BASIC_PACK && isSpecialDate(date) ) {
-    return Promise.resolve(SPECIAL_CHECKIN_PRICES[city]);
+    return Promise.resolve(SPECIAL_CHECKIN_FEES[city]);
   }
 
   return Promise.resolve(0);
@@ -31,7 +32,7 @@ module.exports.getCheckinPrice = function(date, level, city) {
 
 module.exports.getCheckoutPrice = function(date, level, city) {
   if ( level !== PRIVILEGE_PACK && isSpecialDate(date) ) {
-    return Promise.resolve(SPECIAL_CHECKIN_PRICES[city]);
+    return Promise.resolve(SPECIAL_CHECKOUT_FEES[city]);
   }
 
   return Promise.resolve(0);

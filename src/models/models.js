@@ -1,4 +1,5 @@
 const virtualModels = {};
+// Make sure models aren't used before they're initialized
 // Unfortunately this doesn't work and I have no idea why :-/
 // const models = {};
 //

@@ -1,8 +1,8 @@
 const { DataTypes }         = require('sequelize');
 const Calendar              = require('googleapis').calendar('v3');
 const Promise               = require('bluebird');
-const jwtClient             = require('../../vendor/googlecalendar');
 const { TRASH_SCOPES }      = require('../../const');
+const jwtClient             = require('../../vendor/googlecalendar');
 const Utils                 = require('../../utils');
 const sequelize             = require('../sequelize');
 const models                = require('../models'); //!\ Destructuring forbidden /!\

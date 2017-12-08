@@ -3,16 +3,17 @@ const SendinBlueApi = require('sib-api-v3-sdk');
 const capitalize    = require('lodash/capitalize');
 const D             = require('date-fns');
 const fr            = require('date-fns/locale/fr');
-const config        = require('../config');
-const Utils          = require('../utils');
 const {
   SUPPORT_EMAIL,
-  SPECIAL_CHECKIN_PRICES,
-  AGENCY_ADDRESSES,
+  HOME_CHECKIN_FEES,
+  SPECIAL_CHECKIN_FEES,
+  IDENTITY_FORM_URLS,
   DEPOSIT_PRICES,
   SENDINBLUE_TEMPLATE_IDS,
   SENDINBLUE_LIST_IDS,
 }                   = require('../const');
+const config        = require('../config');
+const Utils         = require('../utils');
 const {
   NODE_ENV,
   WEBSITE_URL,
@@ -109,9 +110,12 @@ Sendinblue.sendWelcomeEmail = function(args) {
   const roomNumber = room.reference.slice(-1);
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
   const websiteUrl = `${WEBSITE_URL.replace(/^https?:\/\//, '')}/${lang}`;
+  const free = lang === 'en-US' ? 'free' : 'gratuit';
+  const homeCheckinFee = HOME_CHECKIN_FEES[comfortLevel] / 100;
+  const specialCheckinFee = SPECIAL_CHECKIN_FEES[comfortLevel] / 100;
 
   return Sendinblue.sendTemplateEmail(
-    SENDINBLUE_TEMPLATE_IDS[`welcome-${comfortLevel}`][client.preferredLanguage],
+    SENDINBLUE_TEMPLATE_IDS.welcome2[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
@@ -123,11 +127,12 @@ Sendinblue.sendWelcomeEmail = function(args) {
         EMAIL: client.email,
         DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
         DEPOSIT_LINK: `${websiteUrl}/payment/${depositOrder.id}`,
-        ADDRESSAGENCY: AGENCY_ADDRESSES[addressCity],
-        SPECIALCHECKIN: SPECIAL_CHECKIN_PRICES[addressCity] / 100,
-        ROOM: client.preferredLanguage === 'en' ?
-          ( isStudio ? 'our studio<b>' : `bedroom nº<b>${roomNumber}` ) :
-          ( isStudio ? 'l\'appartement entier<b>' : `la chambre nº<b>${roomNumber}` ),
+        HOME_CHECKIN_FEE: homeCheckinFee ? `${homeCheckinFee}€` : free,
+        SPECIAL_CHECKIN_FEE: specialCheckinFee ? `${specialCheckinFee}€` : free,
+        IDENTITY_FORM_URL: IDENTITY_FORM_URLS[comfortLevel],
+        ROOM: lang === 'en-US' ?
+          ( isStudio ? 'the <b>studio</b>' : `<b>bedroom nº${roomNumber}</b>` ) :
+          ( isStudio ? 'le <b>studio</b>' : `la <b>chambre nº${roomNumber}</b>` ),
       },
     }
   )

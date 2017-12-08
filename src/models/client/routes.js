@@ -5,14 +5,14 @@ const mapKeys              = require('lodash/mapKeys');
 const D                    = require('date-fns');
 const Multer               = require('multer');
 const Liana                = require('forest-express-sequelize');
-const Ninja                = require('../../vendor/invoiceninja');
-const Sendinblue           = require('../../vendor/sendinblue');
-const Utils                = require('../../utils');
-const { INVOICENINJA_URL } = require('../../const');
 const {
   SENDINBLUE_LIST_IDS,
   SENDINBLUE_TEMPLATE_IDS,
-}                         = require('../../const');
+}                          = require('../../const');
+const { INVOICENINJA_URL } = require('../../config');
+const Ninja                = require('../../vendor/invoiceninja');
+const Sendinblue           = require('../../vendor/sendinblue');
+const Utils                = require('../../utils');
 
 const _ = { pickBy, mapKeys };
 

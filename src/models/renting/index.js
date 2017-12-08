@@ -3,15 +3,14 @@ const Promise               = require('bluebird');
 const D                     = require('date-fns');
 const capitalize            = require('lodash/capitalize');
 const values                = require('lodash/values');
-const webmerge              = require('../../vendor/webmerge');
-const Utils                 = require('../../utils');
 const {
   TRASH_SCOPES,
-  // UNTRASHED_SCOPE,
   DEPOSIT_PRICES,
   DEPOSIT_REFUND_DELAYS,
   TWO_OCCUPANTS_FEES,
 }                           = require('../../const');
+const webmerge              = require('../../vendor/webmerge');
+const Utils                 = require('../../utils');
 const {GOOGLE_CALENDAR_IDS} = require('../../config');
 const sequelize             = require('../sequelize');
 const models                = require('../models'); //!\ Destructuring forbidden /!\

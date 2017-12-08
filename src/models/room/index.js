@@ -1,10 +1,10 @@
 const { DataTypes }   = require('sequelize');
 const Promise         = require('bluebird');
-const Utils           = require('../../utils');
 const {
   TRASH_SCOPES,
   UNAVAILABLE_DATE,
 }                     = require('../../const');
+const Utils           = require('../../utils');
 const sequelize       = require('../sequelize');
 const models          = require('../models'); //!\ Destructuring forbidden /!\
 const collection      = require('./collection');

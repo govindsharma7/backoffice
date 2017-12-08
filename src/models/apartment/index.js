@@ -1,6 +1,6 @@
 const { DataTypes }               = require('sequelize');
-const Geocode                     = require('../../vendor/geocode');
 const { TRASH_SCOPES }            = require('../../const');
+const Geocode                     = require('../../vendor/geocode');
 const sequelize                   = require('../sequelize');
 const collection                  = require('./collection');
 const routes                      = require('./routes');
