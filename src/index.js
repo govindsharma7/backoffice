@@ -7,6 +7,14 @@ const app = require('./app');
  */
 const port = normalizePort(process.env.PORT || '3000');
 
+// Catch potential calls occuring before Liana has initialized all routes
+app.get('*', (req, res) => {
+  const err = new Error(`Cannot ${req.method} ${req.path } :-(`);
+
+  res.status(404).send(err.message);
+  throw err;
+});
+
 app.set('port', port);
 const server = http.createServer(app);
 
