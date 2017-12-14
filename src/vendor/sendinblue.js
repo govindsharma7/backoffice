@@ -7,7 +7,7 @@ const {
   SUPPORT_EMAIL,
   HOME_CHECKIN_FEES,
   SPECIAL_CHECKIN_FEES,
-  IDENTITY_FORM_URLS,
+  CHECKIN_FORM_URLS,
   DEPOSIT_PRICES,
   SENDINBLUE_TEMPLATE_IDS,
   SENDINBLUE_LIST_IDS,
@@ -129,7 +129,8 @@ Sendinblue.sendWelcomeEmail = function(args) {
         DEPOSIT_LINK: `${websiteUrl}/payment/${depositOrder.id}`,
         HOME_CHECKIN_FEE: homeCheckinFee ? `${homeCheckinFee}€` : free,
         SPECIAL_CHECKIN_FEE: specialCheckinFee ? `${specialCheckinFee}€` : free,
-        IDENTITY_FORM_URL: IDENTITY_FORM_URLS[comfortLevel],
+        IDENTITY_FORM_URL: CHECKIN_FORM_URLS[comfortLevel], // TODO: get rid of this
+        CHECKIN_FORM_URL: CHECKIN_FORM_URLS[comfortLevel],
         ROOM: lang === 'en-US' ?
           ( isStudio ? 'the <b>studio</b>' : `<b>bedroom nº${roomNumber}</b>` ) :
           ( isStudio ? 'le <b>studio</b>' : `la <b>chambre nº${roomNumber}</b>` ),
