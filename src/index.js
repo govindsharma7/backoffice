@@ -1,31 +1,30 @@
 /* eslint-disable no-console */
 const http = require('http');
-const app = require('./app');
 
-/*
- * Initialize server
- */
 const port = normalizePort(process.env.PORT || '3000');
 
-// Catch potential calls occuring before Liana has initialized all routes
-app.get('*', (req, res) => {
-  const err = new Error(`Cannot ${req.method} ${req.path } :-(`);
+// Server should only be initialized after Liana's asyn route generation process
+/* eslint-disable promise/catch-or-return */
+require('./app')
+  .then((app) => {
+    app.set('port', port);
+    const server = http.createServer(app);
 
-  res.status(404).send(err.message);
-  throw err;
-});
+    server.listen(port, function() {
+      console.log(`Express server listening on port ${server.address().port}`);
+    });
+    server.on('error', onError);
+    server.on('listening', () => {
+      const addr = server.address();
+      const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
 
-app.set('port', port);
-const server = http.createServer(app);
+      console.log(`Listening on ${bind}`);
+    });
 
-/*
- * Load models
- */
-server.listen(port, function() {
-  console.log(`Express server listening on port ${server.address().port}`);
-});
-server.on('error', onError);
-server.on('listening', onListening);
+    return null;
+  })
+  .catch(onError);
+
 
 /*
  * Utils
@@ -45,7 +44,7 @@ function normalizePort(val) {
 }
 
 function onError(error) {
-  if (error.syscall !== 'listen') {
+  if ( error.syscall !== 'listen' ) {
     throw error;
   }
 
@@ -64,11 +63,4 @@ function onError(error) {
     default:
       throw error;
   }
-}
-
-function onListening() {
-  const addr = server.address();
-  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
-
-  console.log(`Listening on ${bind}`);
 }
