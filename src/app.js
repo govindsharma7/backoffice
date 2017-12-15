@@ -88,14 +88,23 @@ routes(app);
 
 parentApp.use(app);
 
-// Catch potential calls occuring before Liana has initialized all routes
-parentApp.get('*', (req, res) => {
-  const err = new Error(`Cannot ${req.method} ${req.path } :-(`);
-
-  res.status(404).send(err.message);
-  throw err;
-});
-
+/*
+ * GraphQL middleware
+ * TODO:
+ * - For some reason, Model.findById no longer returns a bluebird Promise
+ */
+// const schema = Utils.sequelizeSchema(models);
+//
+// if ( config.NODE_ENV === 'production' ) {
+//   maskErrors(schema);
+// }
+//
+// graphqlApp.use(GraphQLHTTP({
+//   schema,
+//   graphiql: true,
+// }));
+//
+// parentApp.use('/graphql', graphqlApp);
 
 /* eslint-disable promise/avoid-new */
 module.exports = new Promise((resolve) => {
@@ -143,22 +152,4 @@ module.exports = new Promise((resolve) => {
     envSecret: config.FOREST_ENV_SECRET,
     authSecret: config.FOREST_AUTH_SECRET,
   }));
-
-  /*
-   * GraphQL middleware
-   * TODO:
-   * - For some reason, Model.findById no longer returns a bluebird Promise
-   */
-  // const schema = Utils.sequelizeSchema(models);
-  //
-  // if ( config.NODE_ENV === 'production' ) {
-  //   maskErrors(schema);
-  // }
-  //
-  // graphqlApp.use(GraphQLHTTP({
-  //   schema,
-  //   graphiql: true,
-  // }));
-  //
-  // parentApp.use('/graphql', graphqlApp);
 });
