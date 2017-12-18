@@ -201,7 +201,9 @@ module.exports = function(app, { Renting, Client, Room }) {
   const createClientRoute = '/forest/actions/public/create-client-and-renting';
 
   app.post(createClientRoute, makePublic, wrap(async (req, res) => {
-    const { roomId, pack: comfortLevel, booking } = req.body;
+    const { roomId, pack: comfortLevel } = req.body;
+    // TODO: following line to maintain backaward compat. Get rid of it in a bit
+    const booking = req.body.booking || req.body.client;
     const room = await Room.scope('apartment+availableAt').findById(roomId);
 
     if ( !room ) {
