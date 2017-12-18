@@ -3,11 +3,13 @@ const D        = require('date-fns');
 const Utils    = require('../../src/utils');
 const models   = require('../../src/models');
 
-const now = new Date();
+const getNull = () => null;
 const { Room } = models;
 
 describe('Room', () => {
   describe('.getCalculatedProps()', () => {
+    const now = new Date();
+
     test('it calculates the period price using Utils.getPeriodPrice', () => {
       const basePrice = 100;
 
@@ -15,11 +17,11 @@ describe('Room', () => {
           Utils.getPeriodCoef(now),
           Room.getCalculatedProps( basePrice, 3, now ),
         ])
-        .then(([periodCoef, { periodPrice, serviceFees }]) => {
-          return expect(periodPrice).toEqual(
+        .then(([periodCoef, { periodPrice, serviceFees }]) =>
+          expect(periodPrice).toEqual(
             Utils.getPeriodPrice( basePrice, periodCoef, serviceFees )
-          );
-        });
+          )
+        );
     });
 
     test('it calculates correct serviceFees using Utils.getServiceFees', () => {
@@ -29,65 +31,98 @@ describe('Room', () => {
           Utils.getServiceFees(roomCount),
           Room.getCalculatedProps( 100, roomCount, now),
         ])
-        .then(([expected, { serviceFees }]) => {
-          return expect(serviceFees).toEqual(expected);
-        });
+        .then(([expected, { serviceFees }]) =>
+          expect(serviceFees).toEqual(expected)
+        );
     });
   });
 
   describe('.checkAvailability', () => {
     const date = D.parse('2017-07-07 Z');
-    const getNull = () => { return null; };
 
-    test('no Rentings == isAvailable', () => {
-      return Room.checkAvailability({
-          Rentings: [],
-        }, date)
-        .then((isAvailable) => {
-          return expect(isAvailable).toEqual(true);
-        });
-    });
+    test('no Rentings == isAvailable', () =>
+      Room.checkAvailability({ Rentings: [] }, date)
+        .then((isAvailable) => expect(isAvailable).toEqual(true))
+    );
 
-    test('past bookingDate + no checkoutDate == !isAvailable', () => {
-      return Room.checkAvailability({
+    test('past bookingDate + no checkoutDate == !isAvailable', () =>
+      Room.checkAvailability({
           Rentings: [{ bookingDate: D.parse('2017-01-01 Z'), get: getNull }],
         }, date)
-        .then((isAvailable) => {
-          return expect(isAvailable).toEqual(false);
-        });
-    });
+        .then((isAvailable) => expect(isAvailable).toEqual(false))
+    );
 
-    test('future bookingDate + no checkoutDate == !isAvailable', () => {
-      return Room.checkAvailability({
+    test('future bookingDate + no checkoutDate == !isAvailable', () =>
+      Room.checkAvailability({
           Rentings: [{ bookingDate: D.parse('2017-12-12 Z'), get: getNull }],
         }, date)
-        .then((isAvailable) => {
-          return expect(isAvailable).toEqual(false);
-        });
-    });
+        .then((isAvailable) => expect(isAvailable).toEqual(false))
+    );
 
-    test('past bookingDate + future checkoutDate == !isAvailable', () => {
-      return Room.checkAvailability({
+    test('past bookingDate + future checkoutDate == !isAvailable', () =>
+      Room.checkAvailability({
           Rentings: [{
             bookingDate: D.parse('2017-01-01 Z'),
-            get: () => { return D.parse('2017-12-12'); },
+            get: () => D.parse('2017-12-12'),
           }],
         }, date)
-        .then((isAvailable) => {
-          return expect(isAvailable).toEqual(false);
-        });
-    });
+        .then((isAvailable) => expect(isAvailable).toEqual(false))
+    );
 
-    test('past bookingDate + past checkoutDate == !isAvailable', () => {
-      return Room.checkAvailability({
+    test('past bookingDate + past checkoutDate == !isAvailable', () =>
+      Room.checkAvailability({
           Rentings: [{
             bookingDate: D.parse('2017-01-01 Z'),
-            get: () => { return D.parse('2017-02-02'); },
+            get: () => D.parse('2017-02-02'),
           }],
         }, date)
-        .then((isAvailable) => {
-          return expect(isAvailable).toEqual(true);
-        });
-    });
+        .then((isAvailable) => expect(isAvailable).toEqual(true))
+    );
+  });
+
+  describe('.getEarliestAvailability', () => {
+    const now = D.parse('2017-06-06');
+    const futureDate = D.parse('2017-12-12');
+    const pastDate = D.parse('2017-02-02');
+
+    test('no Rentings == now', () => Room.getEarliestAvailability({
+        Rentings: [],
+      }, now)
+      .then((date) => expect(date).toBe(now))
+    );
+
+    test('past bookingDate + no checkoutDate == !isAvailable', () =>
+      Room.getEarliestAvailability({
+        Rentings: [{ bookingDate: D.parse('2017-01-01 Z'), get: getNull }],
+      }, now)
+      .then((date) => expect(date).toEqual(false))
+    );
+
+    test('future bookingDate + no checkoutDate == !isAvailable', () =>
+      Room.getEarliestAvailability({
+        Rentings: [{ bookingDate: D.parse('2017-12-12 Z'), get: getNull }],
+      }, now)
+      .then((date) => expect(date).toEqual(false))
+    );
+
+    test('past bookingDate + future checkoutDate == checkoutDate', () =>
+      Room.getEarliestAvailability({
+        Rentings: [{
+          bookingDate: D.parse('2017-01-01 Z'),
+          get: () => futureDate,
+        }],
+      }, now)
+      .then((date) => expect(date).toEqual(futureDate))
+    );
+
+    test('past bookingDate + past checkoutDate == now', () =>
+      Room.getEarliestAvailability({
+        Rentings: [{
+          bookingDate: D.parse('2017-01-01 Z'),
+          get: () => pastDate,
+        }],
+      }, now)
+      .then((date) => expect(date).toEqual(now))
+    );
   });
 });

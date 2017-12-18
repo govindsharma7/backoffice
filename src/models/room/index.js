@@ -1,5 +1,6 @@
 const { DataTypes }   = require('sequelize');
 const Promise         = require('bluebird');
+const D               = require('date-fns');
 const {
   TRASH_SCOPES,
   UNAVAILABLE_DATE,
@@ -10,6 +11,8 @@ const models          = require('../models'); //!\ Destructuring forbidden /!\
 const collection      = require('./collection');
 const routes          = require('./routes');
 const hooks           = require('./hooks');
+
+const { required } = Utils;
 
 const Room = sequelize.define('Room', {
   id: {
@@ -55,6 +58,8 @@ const Room = sequelize.define('Room', {
 
 Room.associate = (models) => {
   const { fn, col } = sequelize;
+  // /!\ this scope doesn't give the availability date directly, only the
+  // checkout date for each renting of the room
   const availableAt = {
     model: models.Renting.scope('checkoutDate'),
     required: false,
@@ -143,15 +148,28 @@ Room.getCalculatedProps = function(basePrice, roomCount, now = new Date()) {
 Room.prototype.checkAvailability = function(date = new Date()) {
   return Room.checkAvailability(this, date);
 };
-Room.checkAvailability = function(room, date = new Date()) {
-  if ( room.Rentings.length === 0 ) {
+Room.checkAvailability = function({ Rentings = required() }, date = new Date()) {
+  if ( Rentings.length === 0 ) {
     return Promise.resolve(true);
   }
 
   const checkoutDate =
-    models.Renting.getLatest(room.Rentings).get('checkoutDate');
+    models.Renting.getLatest(Rentings).get('checkoutDate');
 
   return Promise.resolve( checkoutDate && checkoutDate <= date ? true : false );
+};
+
+Room.prototype.getEarliestAvailability = function(now = new Date()) {
+  return Room.getEarliestAvailability(this, now);
+};
+Room.getEarliestAvailability = function({ Rentings = required() }, now = new Date()) {
+  if ( Rentings.length === 0 ) {
+    return Promise.resolve(now);
+  }
+
+  const checkoutDate = models.Renting.getLatest(Rentings).get('checkoutDate');
+
+  return Promise.resolve( checkoutDate ? D.max(checkoutDate, now) : false );
 };
 
 Room.prototype.createMaintenancePeriod = function(args) {

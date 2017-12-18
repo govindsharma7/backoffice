@@ -152,4 +152,17 @@ module.exports = new Promise((resolve) => {
     envSecret: config.FOREST_ENV_SECRET,
     authSecret: config.FOREST_AUTH_SECRET,
   }));
+
+  /* eslint-disable no-unused-vars */
+  parentApp.use((err, req, res, next) => {
+  /* eslint-enable no-unused-vars */
+    const message = err.longMessage || err.shortMessage || err.message;
+
+    console.error(message);
+    if ( err.stack ) {
+      console.error(err.stack);
+    }
+
+    res.status(500).send({ error: message });
+  });
 });
