@@ -318,7 +318,7 @@ describe('Renting', () => {
             ClientId: u.id('client'),
             RoomId: u.id('room'),
             status: 'draft',
-            packLevel: 'basic',
+            comfortLevel: 'basic',
           }],
         }))({ method: 'create', hooks: 'Renting' })
         .tap(({ unique: u }) => {
@@ -336,7 +336,7 @@ describe('Renting', () => {
               ClientId: u.id('client'),
               RoomId: u.id('room'),
               status: 'draft',
-              packLevel: 'privilege',
+              comfortLevel: 'privilege',
               discount: 123,
             }),
           ]);
