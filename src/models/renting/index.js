@@ -304,50 +304,40 @@ Renting.prototype.findOrCreateRentOrder = function(args) {
 
 Renting.prototype.findOrCreatePackOrder = function(args) {
   const {
-    comfortLevel = required(),
+    packLevel = required(),
     discount,
     apartment = required(),
   } = args;
   const { addressCity } = apartment;
-  const ProductId = `${comfortLevel}-pack`;
+  const packItem = Utils.buildPackItem({ renting: this, addressCity, packLevel });
 
-  return Utils
-    .getPackPrice(addressCity, comfortLevel)
-    .then((packPrice) => {
-      return models.Order
-        .findOrCreate({
-          where: { status: { $not: 'cancelled' } },
-          include: [{
-            model: models.OrderItem,
-            where: {
-              RentingId: this.id,
-              ProductId: { $like: '%-pack' },
-            },
-          }],
-          defaults: this.normalizeOrder({
-            label: 'Housing Pack',
-            dueDate: Math.max(new Date(), D.startOfMonth(this.bookingDate)),
-            OrderItems: [
-              {
-                label: `Housing Pack ${addressCity} ${comfortLevel}`,
-                unitPrice: packPrice,
-                RentingId: this.id,
-                status: this.status,
-                ProductId,
-              },
-              discount != null && discount !== 0 && {
-                label: 'Discount',
-                unitPrice: -discount,
-                RentingId: this.id,
-                status: this.status,
-                ProductId,
-              },
-              // We should not add more items to this order. We want to keep the amount
-              // as low as possible to avoid turning down customers
-            ].filter(Boolean),
-          }),
-        });
-      });
+  return models.Order
+    .findOrCreate({
+      where: { status: { $not: 'cancelled' } },
+      include: [{
+        model: models.OrderItem,
+        where: {
+          RentingId: this.id,
+          ProductId: { $like: '%-pack' },
+        },
+      }],
+      defaults: this.normalizeOrder({
+        label: 'Housing Pack',
+        dueDate: Math.max(new Date(), D.startOfMonth(this.bookingDate)),
+        OrderItems: [
+          packItem,
+          discount != null && discount !== 0 && {
+            label: 'Discount',
+            unitPrice: -discount,
+            RentingId: this.id,
+            status: this.status,
+            ProductId: packItem.ProductId,
+          },
+          // We should not add more items to this order. We want to keep the amount
+          // as low as possible to avoid turning down customers
+        ].filter(Boolean),
+      }),
+    });
 };
 
 Renting.prototype.findOrCreateDepositOrder = function({ apartment = required() }) {
@@ -512,41 +502,6 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
       });
   };
 
-  Renting.prototype.createRoomSwitchOrder = function({discount}) {
-    const comfortLevel = this.get('comfortLevel');
-
-    return models.Client.scope('roomSwitchCount')
-      .findById(this.ClientId)
-      .then((client) =>
-        Utils.getRoomSwitchPrice( client.get('roomSwitchCount'), comfortLevel )
-      )
-      .then((price) => {
-        const items = [
-          price !== 0 && {
-            label: `Room switch ${comfortLevel}`,
-            unitPrice: price,
-            ProductId: 'room-switch',
-          },
-          discount != null && discount !== 0 && {
-            label: 'Discount',
-            unitPrice: -1 * discount,
-            ProductId: 'room-switch',
-          },
-        ].filter(Boolean);
-
-        return models.Order.create({
-          type: 'debit',
-          label: items.length > 0 ? 'Room switch' : 'Free Room switch',
-          ClientId: this.ClientId,
-          OrderItems: items.length > 0 ? items : [{
-            label: `Room switch ${comfortLevel})`,
-            unitPrice: 0,
-            ProductId: 'room-switch',
-          }],
-        }, { include: [models.OrderItem] });
-      });
-  };
-
   Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
     function(startDate, { transaction, hooks }) {
       return Renting[`findOrCreate${_.capitalize(type)}Event`]({
@@ -559,6 +514,59 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
       });
     };
 });
+
+Renting.prototype.createRoomSwitchOrder = function({discount}) {
+  const comfortLevel = this.get('comfortLevel');
+
+  return models.Client.scope('roomSwitchCount')
+    .findById(this.ClientId)
+    .then((client) =>
+      Utils.getRoomSwitchPrice( client.get('roomSwitchCount'), comfortLevel )
+    )
+    .then((price) => {
+      const items = [
+        price !== 0 && {
+          label: `Room switch ${comfortLevel}`,
+          unitPrice: price,
+          ProductId: 'room-switch',
+        },
+        discount != null && discount !== 0 && {
+          label: 'Discount',
+          unitPrice: -1 * discount,
+          ProductId: 'room-switch',
+        },
+      ].filter(Boolean);
+
+      return models.Order.create({
+        type: 'debit',
+        label: items.length > 0 ? 'Room switch' : 'Free Room switch',
+        ClientId: this.ClientId,
+        OrderItems: items.length > 0 ? items : [{
+          label: `Room switch ${comfortLevel})`,
+          unitPrice: 0,
+          ProductId: 'room-switch',
+        }],
+      }, { include: [models.OrderItem] });
+    });
+};
+
+Renting.prototype.updatePackLevel = function(args) {
+  return Renting.updatePackLevel(Object.assign({ renting: this }, args));
+};
+Renting.updatePackLevel = function(args) {
+  const {
+    renting = required(),
+    addressCity = required(),
+    packLevel = required(),
+  } = args;
+  const updatedItem = Utils.buildPackItem({ renting, addressCity, packLevel });
+
+  return models.OrderItem.update(updatedItem, { where: {
+    RentingId: renting.id,
+    ProductId: { $like: '%-pack' },
+    status: 'draft',
+  } });
+};
 
 Renting.prototype.changeDepositOption = function(option) {
   return models.Term.build({
@@ -696,7 +704,7 @@ Renting.prototype.createQuoteOrders = function(args) {
 Renting.createQuoteOrders = function(args) {
   const {
     renting = required(),
-    comfortLevel,
+    packLevel,
     discount,
     room = required(),
     apartment = required(),
@@ -705,7 +713,7 @@ Renting.createQuoteOrders = function(args) {
   return Promise.mapSeries([
       { suffix: 'RentOrder', args: { room } },
       { suffix: 'DepositOrder', args: { apartment } },
-      { suffix: 'PackOrder', args: { comfortLevel, discount, apartment } },
+      { suffix: 'PackOrder', args: { packLevel, discount, apartment } },
     ], (def) => renting[`findOrCreate${def.suffix}`](def.args));
 };
 

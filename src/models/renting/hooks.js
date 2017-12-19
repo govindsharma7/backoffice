@@ -24,16 +24,16 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   // When a renting is created with Housing Pack comfortLevel
   // - Create quote orders
   Renting.handleAfterCreate = (renting, { transaction }) => {
-    const { comfortLevel, discount = 0 } = renting;
+    const { comfortLevel: packLevel, discount = 0 } = renting;
 
-    if ( !comfortLevel ) {
+    if ( !packLevel ) {
       return true;
     }
 
     return Room
       .findById(renting.RoomId, { include: [{ model: Apartment }], transaction })
       .then((room) => renting.createQuoteOrders({
-        comfortLevel,
+        packLevel,
         discount: discount * 100,
         room,
         apartment: room.Apartment,

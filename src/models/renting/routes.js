@@ -33,7 +33,7 @@ module.exports = function(app, { Renting, Client, Room }) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => renting.findOrCreatePackOrder({
-        comfortLevel,
+        packLevel: comfortLevel,
         discount: discount * 100,
         apartment: renting.Room.Apartment,
       }))
@@ -73,11 +73,12 @@ module.exports = function(app, { Renting, Client, Room }) {
   }));
 
   app.post('/forest/actions/create-quote-orders', LEA, wrap((req, res) => {
-    const { values: { comfortLevel, discount }, ids } = req.body.data.attributes;
+    const { values, ids } = req.body.data.attributes;
+    const { comfortLevel: packLevel, discount } = values;
 
     return Promise.resolve()
       .then(() => {
-        if ( !comfortLevel ) {
+        if ( !packLevel ) {
           throw new Error('Please select a comfort level');
         }
         if ( ids.length > 1 ) {
@@ -87,7 +88,7 @@ module.exports = function(app, { Renting, Client, Room }) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => renting.createQuoteOrders({
-        comfortLevel,
+        packLevel,
         discount: discount * 100,
         room: renting.Room,
         apartment: renting.Room.Apartment,
@@ -201,10 +202,11 @@ module.exports = function(app, { Renting, Client, Room }) {
   const createClientRoute = '/forest/actions/public/create-client-and-renting';
 
   app.post(createClientRoute, makePublic, wrap(async (req, res) => {
-    const { roomId, pack: comfortLevel } = req.body;
+    const { roomId, pack: packLevel } = req.body;
     // TODO: following line to maintain backaward compat. Get rid of it in a bit
     const booking = req.body.booking || req.body.client;
     const room = await Room.scope('apartment+availableAt').findById(roomId);
+    const { Apartment: apartment } = room || {};
 
     if ( !room ) {
       throw new Error(`Room "${roomId}" not found`);
@@ -240,7 +242,11 @@ module.exports = function(app, { Renting, Client, Room }) {
     });
 
     if ( isCreated ) {
-      await renting.createQuoteOrders({ comfortLevel, room, apartment: room.Apartment });
+      await renting.createQuoteOrders({ packLevel, room, apartment });
+    }
+    // The pack level might have changed, try to update it
+    else {
+      await renting.updatePackLevel({ addressCity: apartment.addressCity, packLevel });
     }
 
     return res.send({ rentingId: renting.id });

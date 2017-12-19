@@ -240,6 +240,61 @@ describe('Renting', () => {
     });
   });
 
+  describe('.updatePackLevel', () => {
+    it('should update the label, price and productId of a pack item', () => {
+      return fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+          status: 'draft',
+        }],
+        District: [{ id: u.id('district') }],
+        Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
+        Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'draft',
+          packLevel: 'basic',
+        }],
+        Order: [{
+          id: u.id('order'),
+          ClientId: u.id('client'),
+          label: 'Pack order',
+          status: 'draft',
+        }],
+        OrderItem: [{
+          id: u.id('packitem'),
+          label: 'Basic pack item',
+          unitPrice: 12300,
+          RentingId: u.id('renting'),
+          ProductId: 'basic-pack',
+          status: 'draft',
+        }],
+      }))({ method: 'create', hooks: false })
+      .tap(({ instances: { renting, packitem } }) => {
+        expect(packitem.unitPrice).toEqual(12300);
+
+        return Renting.updatePackLevel({
+          renting,
+          packLevel: 'comfort',
+          addressCity: 'lyon',
+        });
+      })
+      .then(({ instances: { packitem } }) => packitem.reload())
+      .then((packitem) => {
+        expect(packitem.label).toMatch(/co[mn]fort/);
+        expect(packitem.unitPrice).not.toEqual(12300);
+        expect(packitem.ProductId).toEqual('comfort-pack');
+
+        return null;
+      });
+    });
+  });
+
   describe('hooks', () => {
     describe('afterCreate', () => {
       it('should create quote orders when comfortLevel is present', () => {
@@ -263,13 +318,13 @@ describe('Renting', () => {
             ClientId: u.id('client'),
             RoomId: u.id('room'),
             status: 'draft',
-            comfortLevel: 'basic',
+            packLevel: 'basic',
           }],
         }))({ method: 'create', hooks: 'Renting' })
         .tap(({ unique: u }) => {
           const call = Renting.createQuoteOrders.mock.calls[0][0];
 
-          expect(call.comfortLevel).toBe('basic');
+          expect(call.packLevel).toBe('basic');
           expect(call.discount).toBe(0);
           expect(call.room.id).toBe(u.id('room'));
           expect(call.apartment.id).toBe(u.id('apartment'));
@@ -281,7 +336,7 @@ describe('Renting', () => {
               ClientId: u.id('client'),
               RoomId: u.id('room'),
               status: 'draft',
-              comfortLevel: 'privilege',
+              packLevel: 'privilege',
               discount: 123,
             }),
           ]);
@@ -289,7 +344,7 @@ describe('Renting', () => {
         .tap(({ unique: u }) => {
           const call = Renting.createQuoteOrders.mock.calls[1][0];
 
-          expect(call.comfortLevel).toBe('privilege');
+          expect(call.packLevel).toBe('privilege');
           expect(call.discount).toBe(12300);
           expect(call.room.id).toBe(u.id('room'));
           expect(call.apartment.id).toBe(u.id('apartment'));

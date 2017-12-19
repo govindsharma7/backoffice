@@ -8,7 +8,7 @@ const {
   getCheckoutPrice,
 }                                  = require('./getCheckinoutPrice');
 const getCardType                  = require('./getCardType');
-const getPackPrice                 = require('./getPackPrice');
+const buildPackItem                = require('./buildPackItem');
 const getPeriodCoef                = require('./getPeriodCoef');
 const getPeriodPrice               = require('./getPeriodPrice');
 const getServiceFees               = require('./getServiceFees');
@@ -49,7 +49,7 @@ module.exports = {
   getInvoiceLink,
   getLateNoticeFees,
   getLeaseEndDate,
-  getPackPrice,
+  buildPackItem,
   getPeriodCoef,
   getPeriodPrice,
   getRoomSwitchPrice,
