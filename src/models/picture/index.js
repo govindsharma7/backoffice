@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize     = require('../sequelize');
+const collection    = require('./collection');
 const routes        = require('./routes');
 const hooks         = require('./hooks');
 
@@ -38,6 +39,7 @@ Picture.associate = (models) => {
   });
 };
 
+Picture.collection = collection;
 Picture.routes = routes;
 Picture.hooks = hooks;
 

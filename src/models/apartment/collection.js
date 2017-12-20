@@ -3,6 +3,12 @@ const {TRASH_SEGMENTS} = require('../../const');
 module.exports = function({Picture}) {
   return {
     fields: [{
+      // for some reason, Forest excludes belongsTo foreign keys from schemas
+      // a quick and safe hack to bring it back is to create an alias
+      field: '_DistrictId',
+      type: 'String',
+      get(object) { return object.DistrictId; },
+    }, {
       field: 'current-clients',
       type: ['String'],
       reference: 'Client.id',
