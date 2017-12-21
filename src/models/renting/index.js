@@ -405,7 +405,7 @@ Renting.prototype.findOrCreateDepositOrder = function({ apartment = required() }
 
           return models.Order
             .findOrCreate({
-              where: { status: { $not: 'cancelled' } },
+              where: { $and: [{ status: { $not: 'cancelled' } }] },
               include: [{
                 model: models.OrderItem,
                 where: {

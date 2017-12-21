@@ -1,8 +1,7 @@
 const Promise                 = require('bluebird');
 const D                       = require('date-fns');
 const {
-  BASIC_PACK,
-  PRIVILEGE_PACK,
+  HOME_CHECKIN_FEES,
   SPECIAL_CHECKIN_FEES,
   SPECIAL_CHECKOUT_FEES,
 }                             = require('../const');
@@ -22,17 +21,17 @@ function isSpecialDate(date) {
   return D.isWeekend(date) || !isWorkingHours(date) || isHoliday(date);
 }
 
-module.exports.getCheckinPrice = function(date, level, city) {
-  if ( level === BASIC_PACK && isSpecialDate(date) ) {
-    return Promise.resolve(SPECIAL_CHECKIN_FEES[city]);
+module.exports.getCheckinPrice = function(date, level) {
+  if ( isSpecialDate(date) ) {
+    return Promise.resolve(SPECIAL_CHECKIN_FEES[level]);
   }
 
-  return Promise.resolve(0);
+  return Promise.resolve(HOME_CHECKIN_FEES[level]);
 };
 
-module.exports.getCheckoutPrice = function(date, level, city) {
-  if ( level !== PRIVILEGE_PACK && isSpecialDate(date) ) {
-    return Promise.resolve(SPECIAL_CHECKOUT_FEES[city]);
+module.exports.getCheckoutPrice = function(date, level) {
+  if ( isSpecialDate(date) ) {
+    return Promise.resolve(SPECIAL_CHECKOUT_FEES[level]);
   }
 
   return Promise.resolve(0);

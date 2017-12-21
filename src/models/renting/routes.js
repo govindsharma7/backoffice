@@ -158,44 +158,38 @@ module.exports = function(app, { Renting, Client, Room }) {
         .then(Utils.foundOrCreatedSuccessHandler(res, `${_.capitalize(type)} event`));
     }));
 
-    app.post(`/forest/actions/create-${type}-order`, LEA, wrap((req, res) => {
+    app.post(`/forest/actions/create-${type}-order`, LEA, wrap(async (req, res) => {
       const {ids} = req.body.data.attributes;
 
-      return Promise.resolve()
-        .then(() => {
-          if ( ids.length > 1 ) {
-            throw new Error(`Can't create multiple ${type} orders`);
-          }
+      if ( ids.length > 1 ) {
+        throw new Error(`Can't create multiple ${type} orders`);
+      }
 
-          return Renting.scope(
-            'room+apartment', // required to create checkin/out order
-            `${type}Date`, // required below
-            'comfortLevel' // required below
-          ).findOne({
-            where: { id: ids[0] },
-            include: [{ model: Client }], // required to create the refund event
-          });
-        })
-        .then((renting) => {
-          if ( !renting.get(`${type}Date`) || !renting.get('comfortLevel') ) {
-            throw new Error(Utils.toSingleLine(`
-              ${_.capitalize(type)} event and housing pack are required to
-              create ${_.capitalize(type)} order
-            `));
-          }
+      const renting = await Renting.scope(
+        'room+apartment', // required to create checkin/out order
+        `${type}Date`, // required below
+        'comfortLevel' // required below
+      ).findById(ids[0], {
+        include: [{ model: Client }], // required to create the refund event
+      });
 
-          return renting[`findOrCreate${_.capitalize(type)}Order`]();
-        })
-        .tap(([/*order*/, isCreated]) =>
-          // We create the refund event once the checkout order is created,
-          // as the checkout date is more reliable at this point
-          Promise.all([
-            type === 'checkout' && isCreated &&
-              this.createOrUpdateRefundEvent(this.get('checkoutDate')),
-            // isCreated && models.Order.ninjaCreateInvoices([order]),
-          ])
-        )
-        .then(Utils.foundOrCreatedSuccessHandler(res, `${_.capitalize(type)} order`));
+      if ( !renting.get(`${type}Date`) || !renting.get('comfortLevel') ) {
+        throw new Error(Utils.toSingleLine(`
+          ${_.capitalize(type)} event and housing pack are required to
+          create ${_.capitalize(type)} order
+        `));
+      }
+
+      /* eslint-disable no-unused-vars */ // see todo below
+      const [, isCreated] = await renting[`findOrCreate${_.capitalize(type)}Order`]();
+      /* eslint-enable no-unused-vars */
+
+      // TODO: we've disabled that broken feature. Fix it and re-enable
+      // if ( type === 'checkout' && isCreated ) {
+      //   await this.createOrUpdateRefundEvent(this.get('checkoutDate'))
+      // }
+
+      Utils.foundOrCreatedSuccessHandler(res, `${_.capitalize(type)} order`);
     }));
   });
 
