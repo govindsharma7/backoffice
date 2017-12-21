@@ -29,6 +29,8 @@ return Client.scope(
     console.log(`${fullName} has ${rentings.length} rentings`);
     return rentings.length > 0;
   }))
+  // Uncomment following line to test invoice generation for a single customer
+  // .filter((tupple, index) => index === 0)
   .mapSeries(([client, rentings]) => {
     console.log(
       `>>>>>>>>> Generating rent-order for ${client.firstName} ${client.lastName}`

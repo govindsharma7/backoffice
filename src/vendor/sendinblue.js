@@ -12,19 +12,19 @@ const {
   SENDINBLUE_TEMPLATE_IDS,
   SENDINBLUE_LIST_IDS,
 }                   = require('../const');
-const config        = require('../config');
 const Utils         = require('../utils');
 const {
+  SENDINBLUE_API_KEY,
   NODE_ENV,
-  WEBSITE_URL,
+  WEBSITE_URL: _WEBSITE_URL,
 }                   = require('../config');
 
-SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey =
-  config.SENDINBLUE_API_KEY;
+SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey = SENDINBLUE_API_KEY;
 
 const _ = { capitalize };
 const { required } = Utils;
 
+const WEBSITE_URL = _WEBSITE_URL.replace(/^https?:\/\//, '');
 const SMTPApi = new SendinBlueApi.SMTPApi();
 const ContactsApi = new SendinBlueApi.ContactsApi();
 const defaults = { replyTo: SUPPORT_EMAIL };
@@ -109,7 +109,6 @@ Sendinblue.sendWelcomeEmail = function(args) {
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
   const roomNumber = room.reference.slice(-1);
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
-  const websiteUrl = `${WEBSITE_URL.replace(/^https?:\/\//, '')}/${lang}`;
   const free = lang === 'en-US' ? 'free' : 'gratuit';
   const homeCheckinFee = HOME_CHECKIN_FEES[comfortLevel] / 100;
   const specialCheckinFee = SPECIAL_CHECKIN_FEES[comfortLevel] / 100;
@@ -120,13 +119,13 @@ Sendinblue.sendWelcomeEmail = function(args) {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
         APARTMENT: `${addressStreet}, ${_.capitalize(addressCity)}, ${addressZip}`,
-        NAME: `${_.capitalize(client.firstName)} ${client.lastName}`,
+        NAME: client.firstName,
         BOOKINGDATE: D.format(renting.bookingDate, 'DD/MM/YYYY'),
         RENT: (renting.price / 100) + (renting.serviceFees / 100),
-        RENT_LINK: `${websiteUrl}/payment/${rentOrder.id}`,
+        RENT_LINK: `${WEBSITE_URL}/${lang}/payment/${rentOrder.id}`,
         EMAIL: client.email,
         DEPOSIT: DEPOSIT_PRICES[addressCity] / 100,
-        DEPOSIT_LINK: `${websiteUrl}/payment/${depositOrder.id}`,
+        DEPOSIT_LINK: `${WEBSITE_URL}/${lang}/payment/${depositOrder.id}`,
         HOME_CHECKIN_FEE: homeCheckinFee ? `${homeCheckinFee}€` : free,
         SPECIAL_CHECKIN_FEE: specialCheckinFee ? `${specialCheckinFee}€` : free,
         IDENTITY_FORM_URL: CHECKIN_FORM_URLS[comfortLevel], // TODO: get rid of this
@@ -162,7 +161,7 @@ Sendinblue.sendRentReminder = function(args) {
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
-        NAME: `${client.firstName} ${client.lastName}`,
+        NAME: client.firstName,
         MONTH: D.format(order.dueDate, 'MMMM', lang === 'fr-FR' ? { locale: fr } : null ),
         AMOUNT: amount / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
@@ -191,7 +190,7 @@ Sendinblue.sendRentRequest = function(args) {
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
-        NAME: `${client.firstName} ${client.lastName}`,
+        NAME: client.firstName,
         AMOUNT: amount / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
@@ -220,7 +219,7 @@ Sendinblue.sendPaymentConfirmation = function(args) {
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
-        NAME: `${client.firstName} ${client.lastName}`,
+        NAME: client.firstName,
         AMOUNT: payment.amount / 100,
         LABEL: order.label,
         LINK: Utils.getInvoiceLink({ order, lang }),
@@ -250,7 +249,7 @@ Sendinblue.sendHousingPackRequest = function(args) {
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
-        NAME: `${client.firstName} ${client.lastName}`,
+        NAME: client.firstName,
         AMOUNT: amount / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
@@ -281,6 +280,7 @@ Sendinblue.sendLateFeesEmail = function(args) {
       emailTo: [client.email],
       attributes: {
         FIRSTNAME: client.firstName,
+        NAME: client.firstName,
         MONTH: D.format(order.dueDate, 'MMMM', lang === 'fr-FR' ? { locale: fr } : null ),
         AMOUNT: amount / 100,
         LATE_FEES: orderItems[0].unitPrice * orderItems[0].quantity / 100,

@@ -266,9 +266,7 @@ Client.prototype.getRentingsFor = function(date = new Date()) {
 
 Client.prototype.findOrCreateRentOrder =
   function(rentings, date = new Date()) {
-    const dueDate = this.Metadata.length ?
-      D.addDays(D.startOfMonth(date), this.Metadata[0].value) :
-      D.startOfMonth(date);
+    const dueDate = D.startOfMonth(date);
     const defaults = {
       label: `${D.format(date, 'MMMM')} Rent`,
       type: 'debit',
