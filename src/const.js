@@ -22,12 +22,12 @@ module.exports = Object.assign(common, {
     welcome2: { fr: 41, en: 40 },
     deposit: { fr: 4, en: 5 },
     newHousemate: { fr: 3, en: 2 },
-    rentInvoice: { fr: 19, en: 24 },
+    rentInvoice: { fr: 49, en: 50 },
     unpaidRent: { fr: 21, en: 14 },
     lateFees: { fr: 20, en: 15 },
     dueDate: { fr: 22, en: 23 },
-    confirmation: { en: 27, fr: 26 },
-    housingPack: { fr: 28, en: 29 },
+    confirmation: { fr: 47, en: 48 },
+    housingPack: { fr: 45, en: 46 },
   },
 
   SENDINBLUE_LIST_IDS: {
