@@ -6,7 +6,7 @@ const Utils               = require('../../utils');
 const _ = { capitalize };
 
 module.exports = function({Room, Picture}) {
-  const memoizer = new Utils.calculatedPropsMemoizer(
+  const propsMemoizer = new Utils.calculatedPropsMemoizer(
     Room.scope('apartment+availableAt')
   );
 
@@ -15,7 +15,7 @@ module.exports = function({Room, Picture}) {
       field: 'current price',
       type: 'Number',
       get(object) {
-        return memoizer.getCalculatedProps(object)
+        return propsMemoizer.getCalculatedProps(object)
           .then((result) => result.periodPrice)
           .tapCatch(console.error);
       },
@@ -23,7 +23,7 @@ module.exports = function({Room, Picture}) {
       field: 'service fees',
       type: 'Number',
       get(object) {
-        return memoizer.getCalculatedProps(object)
+        return propsMemoizer.getCalculatedProps(object)
           .then((result) => result.serviceFees)
           .tapCatch(console.error);
       },
@@ -48,7 +48,14 @@ module.exports = function({Room, Picture}) {
         })
         .then((picture) => picture ? picture.url : null);
       },
-    }, {
+    }, /*{
+      field: 'galery',
+      type: ['String'],
+      reference: 'Picture.url',
+      get(object) {
+        return [''];
+      }
+    },*/ {
       field: 'preview',
       description: 'frontend preview url',
       type: 'String',
