@@ -1,14 +1,14 @@
 const stripIndent                  = require('strip-indent');
 const addInternalRelationshipRoute = require('./addInternalRelationshipRoute');
 const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
-const calculatedPropsMemoizer      = require('./calculatedPropsMemoizer');
+const buildPackItem                = require('./buildPackItem');
 const foundOrCreatedSuccessHandler = require('./foundOrCreatedSuccessHandler');
+const generateGaleryFields         = require('./generateGaleryFields');
 const {
   getCheckinPrice,
   getCheckoutPrice,
 }                                  = require('./getCheckinoutPrice');
 const getCardType                  = require('./getCardType');
-const buildPackItem                = require('./buildPackItem');
 const getPeriodCoef                = require('./getPeriodCoef');
 const getPeriodPrice               = require('./getPeriodPrice');
 const getServiceFees               = require('./getServiceFees');
@@ -23,8 +23,9 @@ const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
 const isHoliday                    = require('./isHoliday');
 const isValidPhoneNumber           = require('./isValidPhoneNumber');
 const logAndSend                   = require('./logAndSend');
-const required                     = require('./required');
+const methodMemoizer               = require('./methodMemoizer');
 const parseDBDate                  = require('./parseDBDate');
+const required                     = require('./required');
 const roundBy100                   = require('./roundBy100');
 const sequelizeSchema              = require('./sequelizeSchema');
 const serializeHousemate           = require('./serializeHousemate');
@@ -38,9 +39,10 @@ const sentSuccessHandler           = successHandler('sent');
 module.exports = {
   addInternalRelationshipRoute,
   addRestoreAndDestroyRoutes,
-  calculatedPropsMemoizer,
+  buildPackItem,
   createdSuccessHandler,
   foundOrCreatedSuccessHandler,
+  generateGaleryFields,
   getCardType,
   getCheckinEndDate,
   getCheckinPrice,
@@ -49,7 +51,6 @@ module.exports = {
   getInvoiceLink,
   getLateNoticeFees,
   getLeaseEndDate,
-  buildPackItem,
   getPeriodCoef,
   getPeriodPrice,
   getRoomSwitchPrice,
@@ -57,6 +58,7 @@ module.exports = {
   isHoliday,
   isValidPhoneNumber,
   logAndSend,
+  methodMemoizer,
   parseDBDate,
   required,
   roundBy100,

@@ -8,9 +8,7 @@ module.exports = function({ Picture }) {
     }
 
     return Aws.uploadPicture(picture)
-      .then((url) => {
-        return picture.url = url;
-      });
+      .then((url) => ( picture.url = url ));
   });
 
   Picture.hook('beforeDelete', (picture) => {

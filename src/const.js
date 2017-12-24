@@ -408,4 +408,454 @@ module.exports = Object.assign(common, {
     '12-30': 0.95,
     '12-31': 0.96,
   },
+  ENUMS: {
+    apartmentPicsAlts: {
+      'kitchen': {
+        'fr-FR': 'Cuisine',
+        'en-US': 'Kitchen',
+      },
+      'bathroom': {
+        'fr-FR': 'Salle de bain',
+        'en-US': 'Bathroom',
+      },
+      'hall': {
+        'fr-FR': 'Hall',
+        'en-US': 'Hall',
+      },
+      'wc': {
+        'fr-FR': 'Toilettes',
+        'en-US': 'Toilets',
+      },
+      'balcony': {
+        'fr-FR': 'Balcon',
+        'en-US': 'Balcony',
+      },
+      'patio': {
+        'fr-FR': 'Terrasse',
+        'en-US': 'Patio',
+      },
+      'garden': {
+        'fr-FR': 'Jardin',
+        'en-US': 'Garden',
+      },
+      'loggia': {
+        'fr-FR': 'Loggia',
+        'en-US': 'Loggia',
+      },
+      'livingroom': {
+        'fr-FR': 'Séjour',
+        'en-US': 'Living room',
+      },
+      'diningroom': {
+        'fr-FR': 'Salle à manger',
+        'en-US': 'Dining room',
+      },
+      'building': {
+        'fr-FR': 'Immeuble',
+        'en-US': 'Building',
+      },
+      'cellar': {
+        'fr-FR': 'Cellier',
+        'en-US': 'Cellar',
+      },
+      'dressing': {
+        'fr-FR': 'Dressing',
+        'en-US': 'Dressing',
+      },
+      'room1': {
+        'fr-FR': 'Chambre 1',
+        'en-US': 'Room 1',
+      },
+      'room2': {
+        'fr-FR': 'Chambre 2',
+        'en-US': 'Room 2',
+      },
+      'room3': {
+        'fr-FR': 'Chambre 3',
+        'en-US': 'Room 3',
+      },
+      'room4': {
+        'fr-FR': 'Chambre 4',
+        'en-US': 'Room 4',
+      },
+      'room5': {
+        'fr-FR': 'Chambre 5',
+        'en-US': 'Room 5',
+      },
+      'room6': {
+        'fr-FR': 'Chambre 6',
+        'en-US': 'Room 6',
+      },
+      'room7': {
+        'fr-FR': 'Chambre 7',
+        'en-US': 'Room 7',
+      },
+      'room8': {
+        'fr-FR': 'Chambre 8',
+        'en-US': 'Room 8',
+      },
+      'room9': {
+        'fr-FR': 'Chambre 9',
+        'en-US': 'Room 9',
+      },
+      'room10': {
+        'fr-FR': 'Chambre 10',
+        'en-US': 'Room 10',
+      },
+    },
+    roomPicsAlts: {
+      overview: {
+        'fr-FR': 'Vue d\'ensemble de la chambre',
+        'en-US': 'Overview of the room',
+      },
+      bed: {
+        'fr-FR': 'Lit',
+        'en-US': 'Bed',
+      },
+      dressing: {
+        'fr-FR': 'Dressing',
+        'en-US': 'Dressing',
+      },
+      dresser: {
+        'fr-FR': 'Commode',
+        'en-US': 'Overview',
+      },
+      bookstore: {
+        'fr-FR': 'Bibliothèque',
+        'en-US': 'Bookstore',
+      },
+    },
+    beds: {
+      'double': {
+        'fr-FR': 'lit double',
+        'en-US': 'double bed',
+      },
+      'simple': {
+        'fr-FR': 'lit simple',
+        'en-US': 'single bed',
+      },
+      'sofa': {
+        'fr-FR': 'canapé',
+        'en-US': 'sofa',
+      },
+      'double+sofa': {
+        'fr-FR': 'lit double + canapé',
+        'en-US': 'double bed + sofa',
+      },
+      'simple+sofa': {
+        'fr-FR': 'lit simple + sofa',
+        'en-US': 'single bed + sofa',
+      },
+      'simple+simple': {
+        'fr-FR': 'deux lits simples',
+        'en-US': 'two single beds',
+      },
+    },
+    'room-features-sleep': {
+      'sofa': {
+        'en-US': 'Sofa',
+        'fr-FR': 'Canapé',
+      },
+      'duvetAndPillow': {
+        'en-US': 'Duvet and Pillow',
+        'fr-FR': 'Couette et Oreiller',
+      },
+      'bedsideTable': {
+        'en-US': 'Bedside Table',
+        'fr-FR': 'Table de chevet',
+      },
+      'bedsideLamp': {
+        'en-US': 'Bedside Lamp',
+        'fr-FR': 'Lampe de chevet',
+      },
+      'shutters': {
+        'en-US': 'Shutters',
+        'fr-FR': 'Volets',
+      },
+      'curtains': {
+        'en-US': 'Curtains',
+        'fr-FR': 'Rideaux',
+      },
+      'netCurtains': {
+        'en-US': 'Net Curtains',
+        'fr-FR': 'Voilage',
+      },
+    },
+    'room-features-work': {
+      'deskAndChair': {
+        'en-US': 'Desk and Chair',
+        'fr-FR': 'Bureau et Chaise',
+      },
+      'lamp': {
+        'en-US': 'Lamp',
+        'fr-FR': 'Lampe',
+      },
+      'bookCase': {
+        'en-US': 'Book Case',
+        'fr-FR': 'Bibliothèque',
+      },
+      'multiSocket': {
+        'en-US': 'Multi-Socket Extension Cable',
+        'fr-FR': 'Multiprise',
+      },
+    },
+    'room-features-dress': {
+      'storage': {
+        'en-US': 'Storage',
+        'fr-FR': 'Rangements',
+      },
+      'coat-hanger': {
+        'en-US': ' Coat-hanger',
+        'fr-FR': 'Cintres',
+      },
+      'mirror': {
+        'en-US': 'Mirror',
+        'fr-FR': 'Miroir',
+      },
+      'walkinWardrobe': {
+        'en-US': 'Walk-in Wardrobe',
+        'fr-FR': 'Dressing Privé',
+      },
+    },
+    'room-features-general': {
+      'sofa': {
+        'en-US': 'Sofa',
+        'fr-FR': 'Canapé',
+      },
+      'coffeeTable': {
+        'en-US': 'Coffee Table',
+        'fr-FR': 'Table Basse',
+      },
+      'lockedRoom': {
+        'en-US': 'Locked Room',
+        'fr-FR': 'Chambre fermée à clé',
+      },
+      'privateBathroom': {
+        'en-US': 'Private Bathroom',
+        'fr-FR': 'Salle de bain privée',
+      },
+      'privateToilet': {
+        'en-US': 'Private Toilet',
+        'fr-FR': 'WC Privés',
+      },
+      'privateBalcony': {
+        'en-US': 'Private Balcony',
+        'fr-FR': 'Ballcon privé',
+      },
+      'privateTerrace': {
+        'en-US': 'Private Terrace',
+        'fr-FR': 'Terrasse Privée',
+      },
+      'privateGarden': {
+        'en-US': 'Private Garden',
+        'fr-FR': 'Jardin privé',
+      },
+      'balcony': {
+        'en-US': 'Balcony',
+        'fr-FR': 'Balcon',
+      },
+      'terrace': {
+        'en-US': 'Terrace',
+        'fr-FR': 'Terrasse',
+      },
+      'garden': {
+        'en-US': 'Garden',
+        'fr-FR': 'Jardin',
+      },
+      'terraceFurniture': {
+        'en-US': 'Terrace Furniture',
+        'fr-FR': 'Mobilier de Terrasse',
+      },
+      'individualHeating': {
+        'en-US': 'Individual Heating',
+        'fr-FR': 'Chauffage Individuel',
+      },
+    },
+    'apartment-features-kitchen': {
+      'bakingTrays': {
+        'en-US': 'Baking Trays',
+        'fr-FR': 'Plaques',
+      },
+      'oven': {
+        'en-US': 'Oven',
+        'fr-FR': 'Four',
+      },
+      'microwave': {
+        'en-US': 'Microwave',
+        'fr-FR': 'Micro-onde',
+      },
+      'dishwasher': {
+        'en-US': 'Dishwasher',
+        'fr-FR': 'Lave-vaisselle',
+      },
+      'fridge': {
+        'en-US': 'Fridge',
+        'fr-FR': 'Frigo',
+      },
+      'kettle': {
+        'en-US': 'Kettle',
+        'fr-FR': 'Bouilloire',
+      },
+      'pot': {
+        'en-US': 'Pot',
+        'fr-FR': 'Casseroles',
+      },
+      'pan': {
+        'en-US': 'Pan',
+        'fr-FR': 'Poeles',
+      },
+      'utensils': {
+        'en-US': 'Utensils',
+        'fr-FR': 'Ustensiles',
+      },
+      'stewpot': {
+        'en-US': 'Stewpot',
+        'fr-FR': 'Faitout',
+      },
+      'plates': {
+        'en-US': 'Plates',
+        'fr-FR': 'Assiettes',
+      },
+      'cutlery': {
+        'en-US': 'Cutlery',
+        'fr-FR': 'Couverts',
+      },
+      'glasses': {
+        'en-US': 'Glasses',
+        'fr-FR': 'Verre',
+      },
+      'mugs': {
+        'en-US': 'Mugs',
+        'fr-FR': 'Mugs',
+      },
+      'bowls': {
+        'en-US': 'Bowls',
+        'fr-FR': 'Bols',
+      },
+      'saladBowl': {
+        'en-US': 'Salad Bowl',
+        'fr-FR': 'Saladier',
+      },
+      'sieve': {
+        'en-US': 'Sieve',
+        'fr-FR': 'Passoire',
+      },
+      'glassBottle': {
+        'en-US': 'Glass Bottle',
+        'fr-FR': 'Bouteilles en verre',
+      },
+      'scissors': {
+        'en-US': 'Scissors',
+        'fr-FR': 'Ciseaux',
+      },
+      'dryingRack': {
+        'en-US': 'Drying Rack',
+        'fr-FR': 'Egouttoir',
+      },
+      'corkscrew': {
+        'en-US': 'Corkscrew',
+        'fr-FR': 'Tire-bouchon',
+      },
+      'choppingBoards': {
+        'en-US': 'Chopping Boards',
+        'fr-FR': 'Planches à découper',
+      },
+      'storage': {
+        'en-US': 'Storage',
+        'fr-FR': 'Rangements',
+      },
+    },
+    'apartment-features-bathroom': {
+      'bathtub': {
+        'en-US': 'Bathtub',
+        'fr-FR': 'Baignoire',
+      },
+      'shower': {
+        'en-US': 'Shower',
+        'fr-FR': 'Douche',
+      },
+      'storage': {
+        'en-US': 'Storage',
+        'fr-FR': 'Rangements',
+      },
+      'bathMat': {
+        'en-US': 'Bath Mat',
+        'fr-FR': 'Tapis de Bain',
+      },
+      'mirror': {
+        'en-US': 'Mirror',
+        'fr-FR': 'Miroir',
+      },
+      'sink': {
+        'en-US': 'Sink',
+        'fr-FR': 'Lavabo',
+      },
+    },
+    'apartment-features-general': {
+      'wifi': {
+        'en-US': 'Wifi',
+        'fr-FR': 'Wifi',
+      },
+      'washingMachine': {
+        'en-US': 'Washing Machine',
+        'fr-FR': 'Lave-linge',
+      },
+      'storage': {
+        'en-US': 'Storage',
+        'fr-FR': 'Rangements',
+      },
+      'coat-hanger': {
+        'en-US': ' Coat-hanger',
+        'fr-FR': 'Cintres',
+      },
+      'sofa': {
+        'en-US': 'Sofa',
+        'fr-FR': 'Canapé',
+      },
+      'coffeeTable': {
+        'en-US': 'Coffee Table',
+        'fr-FR': 'Table Basse',
+      },
+      'iron': {
+        'en-US': 'Iron',
+        'fr-FR': 'Fer à repasser',
+      },
+      'ironingBoard': {
+        'en-US': 'Ironing Board',
+        'fr-FR': 'Planche à repasser',
+      },
+      'dryingRack': {
+        'en-US': 'Drying Rack',
+        'fr-FR': 'Tancarville',
+      },
+      'vaccum': {
+        'en-US': 'Vaccum',
+        'fr-FR': 'Aspirateur',
+      },
+      'mopAndBucket': {
+        'en-US': 'Mop and Bucket',
+        'fr-FR': 'Serpillère et seau',
+      },
+      'scrubBrush': {
+        'en-US': 'Scrub Brush',
+        'fr-FR': 'Balai Brosse',
+      },
+      'balcony': {
+        'en-US': 'Balcony',
+        'fr-FR': 'Balcon',
+      },
+      'terrace': {
+        'en-US': 'Terrace',
+        'fr-FR': 'Terrasse',
+      },
+      'garden': {
+        'en-US': 'Garden',
+        'fr-FR': 'Jardin',
+      },
+      'terraceFurniture': {
+        'en-US': 'Terrace Furniture',
+        'fr-FR': 'Mobilier de Terrasse',
+      },
+    },
+  },
 });

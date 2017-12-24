@@ -1,21 +1,25 @@
 const capitalize          = require('lodash/capitalize');
-const { TRASH_SEGMENTS }  = require('../../const');
+const {
+  TRASH_SEGMENTS,
+  ENUMS,
+}                         = require('../../const');
 const { WEBSITE_URL }     = require('../../config');
 const Utils               = require('../../utils');
 
 const _ = { capitalize };
 
-module.exports = function({Room, Picture}) {
-  const propsMemoizer = new Utils.calculatedPropsMemoizer(
-    Room.scope('apartment+availableAt')
-  );
+module.exports = function({ Room, Picture }) {
+  const getCalculatedProps =
+    Utils.methodMemoizer(Room.scope('apartment+availableAt'), 'getCalculatedProps');
+  const galeryFields =
+    Utils.generateGaleryFields(Room, Picture, Object.keys(ENUMS.roomPicsAlts));
 
   return {
-    fields: [{
+    fields: galeryFields.concat([{
       field: 'current price',
       type: 'Number',
       get(object) {
-        return propsMemoizer.getCalculatedProps(object)
+        return getCalculatedProps(object)
           .then((result) => result.periodPrice)
           .tapCatch(console.error);
       },
@@ -23,7 +27,7 @@ module.exports = function({Room, Picture}) {
       field: 'service fees',
       type: 'Number',
       get(object) {
-        return propsMemoizer.getCalculatedProps(object)
+        return getCalculatedProps(object)
           .then((result) => result.serviceFees)
           .tapCatch(console.error);
       },
@@ -38,24 +42,6 @@ module.exports = function({Room, Picture}) {
       type: ['String'],
       reference: 'Client.id',
     }, {
-      field: 'cover picture',
-      type: 'String',
-      get(object) {
-        return Picture.findOne({
-          where: {
-            PicturableId: object.id,
-          },
-        })
-        .then((picture) => picture ? picture.url : null);
-      },
-    }, /*{
-      field: 'galery',
-      type: ['String'],
-      reference: 'Picture.url',
-      get(object) {
-        return [''];
-      }
-    },*/ {
       field: 'preview',
       description: 'frontend preview url',
       type: 'String',
@@ -69,7 +55,7 @@ module.exports = function({Room, Picture}) {
         object.roomNumber = value;
         return object;
       },
-    }],
+    }]),
     actions: [{
       name: 'Restore Room',
     }, {
@@ -93,7 +79,7 @@ module.exports = function({Room, Picture}) {
       ['lyon', 'montpellier', 'paris'].map((city) => ({
         name: `Available Rooms ${_.capitalize(city)}`,
         scope: 'apartment+availableAt',
-        where: () => {
+        where: () =>
           // TODO: this query is awfull. We join on all rentings that ever
           // existed when we know only the one with the latest bookingDate
           // are valuable. For now, the performances are acceptable though.
@@ -110,7 +96,7 @@ module.exports = function({Room, Picture}) {
           //     problem with a Renting scope
           //   - Switch to TypeORM and see if that makes things simpler for us
           //     using subrequest probably
-          return Room.scope('apartment+availableAt')
+          Room.scope('apartment+availableAt')
             .findAll({
               where: { '$Apartment.addressCity$' : `${city}` },
             })
@@ -118,8 +104,7 @@ module.exports = function({Room, Picture}) {
             .reduce((acc, curr) => {
               acc.id.push(curr.id);
               return acc;
-            }, { id: [] });
-        },
+            }, { id: [] }),
       }))
     ),
   };
