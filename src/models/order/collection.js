@@ -6,35 +6,35 @@ const {
 const Utils               = require('../../utils');
 
 module.exports = function({ Order, Metadata, Payment }) {
-  const memoizer = Utils.methodMemoizer(Order, 'getCalculatedProps');
+  const getCalculatedProps = Utils.methodMemoizer(Order, 'getCalculatedProps');
 
   return {
     fields: [{
       field: 'amount',
       type: 'Number',
       get(object) {
-        return memoizer.getCalculatedProps(object)
+        return getCalculatedProps(object)
           .then(({ amount }) => amount);
       },
     }, {
       field: 'totalPaid',
       type: 'Number',
       get(object) {
-        return memoizer.getCalculatedProps(object)
+        return getCalculatedProps(object)
           .then(({ totalPaid }) => totalPaid);
       },
     }, {
       field: 'balance',
       type: 'Number',
       get(object) {
-        return memoizer.getCalculatedProps(object)
+        return getCalculatedProps(object)
           .then(({ balance }) => balance);
       },
     }, {
       field: 'totalRefund',
       type: 'Number',
       get(object) {
-        return memoizer.getCalculatedProps(object)
+        return getCalculatedProps(object)
           .then(({ totalRefund }) => totalRefund);
       },
     }, {
@@ -49,7 +49,7 @@ module.exports = function({ Order, Metadata, Payment }) {
       enums: ['pending', 'Paid'],
       get(object) {
         return object.type !== 'credit' ?
-        memoizer.getCalculatedProps(object)
+        getCalculatedProps(object)
           .then((result) => {
             return result.balance >= 0 ? 'Paid' : 'pending';
         }) : null;
