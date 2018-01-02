@@ -27,6 +27,7 @@ return Order.scope('rentOrders')
     order.getCalculatedProps(),
   ]))
   .filter(([, { balance }]) => balance < 0)
+  // .filter((val, key) => key > 1)
   .map(([order, { amount }]) =>
     Sendinblue.sendRentReminder({ order, client: order.Client, amount })
   )
