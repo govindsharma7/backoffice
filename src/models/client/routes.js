@@ -86,15 +86,15 @@ module.exports = (app, models, Client) => {
   });
 
   app.post('/forest/actions/credit-client', LEA, (req, res) => {
-    const idCredit = uuid();
-    const {values, ids} = req.body.data.attributes;
+    const creditId = uuid();
+    const { values, ids } = req.body.data.attributes;
 
     Promise.resolve()
       .then(() => {
         if (
-          !values.cardNumber || !values.cardType ||
-          !values.expirationMonth || !values.expirationYear ||
-          !values.cvv || !values.cardHolder || !values.amount
+          'cardNumber,expirationMonth,expirationYear,cvv,cardHolder,amount'
+            .split(',')
+            .some((fieldName) => !(fieldName in values) )
         ) {
           throw new Error('All fields are required');
         }
@@ -103,9 +103,10 @@ module.exports = (app, models, Client) => {
           throw new Error('Can\'t credit multiple clients');
         }
 
+        values.cardType = Utils.getCardType(values.cardNumber);
         values.amount = parseFloat(values.amount) * 100;
 
-        return Client.paylineCredit(ids[0], values, idCredit);
+        return Client.paylineCredit(ids[0], values, creditId);
       })
       .then(Utils.createdSuccessHandler(res, 'Payline credit'))
       .catch(Utils.logAndSend(res));

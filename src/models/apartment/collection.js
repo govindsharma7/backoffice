@@ -1,12 +1,9 @@
-const {
-  TRASH_SEGMENTS,
-  ENUMS,
-}                         = require('../../const');
+const { TRASH_SEGMENTS }  = require('../../const');
 const Utils               = require('../../utils');
 
 module.exports = function({Apartment, Picture}) {
   const galeryFields =
-    Utils.generateGaleryFields(Apartment, Picture, Object.keys(ENUMS.apartmentPicsAlts));
+    Utils.generateGaleryFields(Apartment, Picture);
 
   return {
     fields: galeryFields.concat([{

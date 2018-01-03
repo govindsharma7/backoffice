@@ -1,13 +1,15 @@
 const Promise         = require('bluebird');
 const sortBy          = require('lodash/sortBy');
 const map             = require('lodash/map');
+const { ENUMS }       = require('../const');
 const methodMemoizer  = require('./methodMemoizer');
 
 const _ = { sortBy, map };
 const rBase64Image = /^data:image\/\w+;base64,/;
 
-module.exports = function(Model, Picture, alts) {
-  const getPictures = methodMemoizer(Model, 'getPictures');
+module.exports = function(Model, Picture) {
+  const getPictures = methodMemoizer({ model: Model, method: 'getPictures' });
+  const alts = Object.keys(ENUMS[`${Model.name.toLowerCase()}PicsAlts`]);
 
   const galeryField = {
     field: 'galery',

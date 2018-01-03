@@ -131,11 +131,6 @@ module.exports = function({ Client }) {
           type: 'Number',
           description: 'required',
         }, {
-          field: 'cardType',
-          type: 'Enum',
-          enums: ['MasterCard', 'Visa'],
-          description: 'required',
-        }, {
           field: 'amount',
           type: 'Number',
           description: 'required',

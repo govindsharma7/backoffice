@@ -6,7 +6,10 @@ const {
 const Utils               = require('../../utils');
 
 module.exports = function({ Order, Metadata, Payment }) {
-  const getCalculatedProps = Utils.methodMemoizer(Order, 'getCalculatedProps');
+  const getCalculatedProps = Utils.methodMemoizer({
+    model: Order,
+    method: 'getCalculatedProps',
+  });
 
   return {
     fields: [{

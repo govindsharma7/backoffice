@@ -1,18 +1,16 @@
 const capitalize          = require('lodash/capitalize');
-const {
-  TRASH_SEGMENTS,
-  ENUMS,
-}                         = require('../../const');
+const { TRASH_SEGMENTS }  = require('../../const');
 const { WEBSITE_URL }     = require('../../config');
 const Utils               = require('../../utils');
 
 const _ = { capitalize };
 
 module.exports = function({ Room, Picture }) {
-  const getCalculatedProps =
-    Utils.methodMemoizer(Room.scope('apartment+availableAt'), 'getCalculatedProps');
-  const galeryFields =
-    Utils.generateGaleryFields(Room, Picture, Object.keys(ENUMS.roomPicsAlts));
+  const getCalculatedProps = Utils.methodMemoizer({
+    model: Room.scope('apartment+availableAt'),
+    method: 'getCalculatedProps',
+  });
+  const galeryFields = Utils.generateGaleryFields(Room, Picture);
 
   return {
     fields: galeryFields.concat([{

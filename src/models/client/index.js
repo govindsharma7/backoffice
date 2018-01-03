@@ -373,36 +373,34 @@ Client.prototype.ninjaUpsert = function() {
     });
 };
 
-Client.paylineCredit = (clientId, values, idCredit) => {
+Client.paylineCredit = async function(clientId, values, creditId) {
   const card = {
     number: values.cardNumber,
     type: values.cardType,
-    expirationDate: values.expirationMonth +
-    values.expirationYear.slice(-2),
+    expirationDate: `${values.expirationMonth}${values.expirationYear.slice(-2)}`,
     cvx: values.cvv,
     holder: values.cardHolder,
   };
+  const { transactionId } =
+    await payline.doCredit(creditId, card, values.amount, Payline.CURRENCIES.EUR);
 
-  return payline.doCredit(idCredit, card, values.amount, Payline.CURRENCIES.EUR)
-    .then((result) => {
-      return models.Order.create({
-        id: idCredit,
-        type: 'credit',
-        label: values.orderLabel,
-        ClientId: clientId,
-        OrderItems: [{
-          label: values.reason,
-          unitPrice: values.amount * -1,
-        }],
-        Credits:[{
-          amount: values.amount,
-          reason: values.orderLabel,
-          paylineId: result.transactionId,
-        }],
-      }, {
-        include: [models.OrderItem, models.Credit],
-      });
-    });
+  return models.Order.create({
+    id: creditId,
+    type: 'credit',
+    label: values.orderLabel,
+    ClientId: clientId,
+    OrderItems: [{
+      label: values.reason,
+      unitPrice: values.amount * -1,
+    }],
+    Credits:[{
+      amount: values.amount,
+      reason: values.orderLabel,
+      paylineId: transactionId,
+    }],
+  }, {
+    include: [models.OrderItem, models.Credit],
+  });
 };
 
 Client.prototype.findUnpaidOrders = function () {
@@ -413,12 +411,10 @@ Client.prototype.findUnpaidOrders = function () {
         { dueDate: { $lt: new Date() } },
       ]},
     })
-    .filter((order) => {
-      return order.getCalculatedProps()
-        .then(({balance}) => {
-          return balance < 0;
-      });
-  });
+    .filter((order) =>
+      order.getCalculatedProps()
+        .then(({ balance }) => balance < 0)
+    );
 };
 
 Client.prototype.applyLateFees = function(now = new Date()) {

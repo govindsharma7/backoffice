@@ -1,6 +1,7 @@
 const Promise       = require('bluebird');
 const SendinBlueApi = require('sib-api-v3-sdk');
 const capitalize    = require('lodash/capitalize');
+const mapValues     = require('lodash/mapValues');
 const D             = require('date-fns');
 const fr            = require('date-fns/locale/fr');
 const {
@@ -16,18 +17,17 @@ const Utils         = require('../utils');
 const {
   SENDINBLUE_API_KEY,
   NODE_ENV,
-  WEBSITE_URL: _WEBSITE_URL,
+  WEBSITE_URL,
 }                   = require('../config');
 
 SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey = SENDINBLUE_API_KEY;
 
-const _ = { capitalize };
+const _ = { capitalize, mapValues };
 const { required } = Utils;
 
-const WEBSITE_URL = _WEBSITE_URL.replace(/^https?:\/\//, '');
 const SMTPApi = new SendinBlueApi.SMTPApi();
 const ContactsApi = new SendinBlueApi.ContactsApi();
-const defaults = { replyTo: SUPPORT_EMAIL };
+const replyTo = SUPPORT_EMAIL;
 const Sendinblue = {};
 let Metadata = null;
 
@@ -39,12 +39,15 @@ Sendinblue.sendTemplateEmail = function(id, data = {}) {
   const isProd = NODE_ENV === 'production';
   const isTest = NODE_ENV === 'test';
   const emailTo = data.emailTo.filter(Boolean);
-  const options = Object.assign(
-    {},
-    defaults,
-    isProd ? data : { attributes: { ID: id, DATA: JSON.stringify(data, null, '  ') } },
-    { emailTo: isProd ? emailTo : emailTo.map(Sendinblue.getSandboxEmail) }
-  );
+  const options = {
+    emailTo: isProd ? emailTo : emailTo.map(Sendinblue.getSandboxEmail),
+    replyTo,
+    attributes: isProd ?
+      _.mapValues(data.attributes, (value, key) =>
+        /LINK$/.test(key) ? value.replace(/^https?:\/\//, '//') : value
+      ) :
+      { ID: id, DATA: JSON.stringify(data, null, '  ') },
+  };
 
   if (options.emailTo.length > 0) {
     return SMTPApi[isTest ? 'sendTest' : 'sendTemplate'](isProd ? id : 1, options);

@@ -250,8 +250,8 @@ Renting.prototype.toOrderItems = function({ date = new Date(), room = required()
 };
 
 Renting.attachOrphanOrderItems = function(rentings, order) {
-  return Promise.map(rentings, (renting) => {
-    return models.OrderItem
+  return Promise.map(rentings, (renting) =>
+    models.OrderItem
       .findAll({
         where: {
           RentingId: renting.id,
@@ -272,8 +272,8 @@ Renting.attachOrphanOrderItems = function(rentings, order) {
           status: renting.status,
           OrderId: order.id,
         });
-      });
-  });
+      })
+  );
 };
 
 Renting.prototype.findOrCreateRentOrder = function(args) {
