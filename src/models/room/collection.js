@@ -5,15 +5,16 @@ const Utils               = require('../../utils');
 
 const _ = { capitalize };
 
-module.exports = function({ Room, Picture }) {
+module.exports = function({ Room, Picture, Term }) {
   const getCalculatedProps = Utils.methodMemoizer({
     model: Room.scope('apartment+availableAt'),
     method: 'getCalculatedProps',
   });
   const galeryFields = Utils.generateGaleryFields(Room, Picture);
+  const featuresFields = Utils.generateFeaturesFields(Room, Term);
 
   return {
-    fields: galeryFields.concat([{
+    fields: [{
       field: 'current price',
       type: 'Number',
       async get(object) {
@@ -65,7 +66,8 @@ module.exports = function({ Room, Picture }) {
         object.roomNumber = value;
         return object;
       },
-    }]),
+    }].concat(galeryFields, featuresFields),
+
     actions: [{
       name: 'Restore Room',
     }, {
@@ -81,6 +83,7 @@ module.exports = function({ Room, Picture }) {
         type: 'Date',
       }],
     }],
+
     segments: TRASH_SEGMENTS.concat(
       {
         name: 'Availability',

@@ -13,6 +13,8 @@ describe('Utils', () => {
       expect(getPeriodPrice(17900, 1, 3000)).toEqual(16800);
       expect(getPeriodPrice(15900, 1, 4000)).toEqual(15800);
       expect(getPeriodPrice(16900, 1, 4000)).toEqual(15800);
+      expect(getPeriodPrice(96900, 1, 4000)).toEqual(95800);
+      expect(getPeriodPrice(100900, 1, 4000)).toEqual(99800);
     });
   });
 

@@ -17,6 +17,7 @@ module.exports = function({ Apartment, Picture, Term }) {
       type: ['String'],
       reference: 'Client.id',
     }].concat(galeryFields, featuresFields),
+
     actions: [{
       name: 'Restore Apartment',
     }, {
@@ -32,6 +33,7 @@ module.exports = function({ Apartment, Picture, Term }) {
         type: 'Date',
       }],
     }],
+
     segments: TRASH_SEGMENTS.concat([{
       name: 'Lyon',
       scope: 'lyon',

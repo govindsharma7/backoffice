@@ -4,7 +4,7 @@ const Utils = { roundBy100 };
 
 // We want room prices to be rounded down to psychological prices:
 // prices between X98 and (X+1)10 are rounded to 98
-// and this should also be true when servces fees are added
+// and this should also be true when service fees are added
 module.exports = function( basePrice, periodCoef, serviceFees ) {
   // The logic is clearer if we convert all prices to euros
   let euroPrice = Math.round( basePrice * periodCoef / 100 );

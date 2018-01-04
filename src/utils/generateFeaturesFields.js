@@ -27,6 +27,7 @@ module.exports = function(Model, Term) {
     _.forEach(featuresDefs, (featureDef, termName) => {
       featuresFields.push({
         field: `${taxonomyName}-${termName}`,
+        // This is actually useless and needs to be done from the UI. F*CK!
         description: termName.replace(/[A-Z]/g, ($0) => ` ${$0.toLowerCase()}`),
         type: 'Boolean',
         async get(object) {
