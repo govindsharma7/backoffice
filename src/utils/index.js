@@ -4,6 +4,7 @@ const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
 const buildPackItem                = require('./buildPackItem');
 const foundOrCreatedSuccessHandler = require('./foundOrCreatedSuccessHandler');
 const generateGaleryFields         = require('./generateGaleryFields');
+const generateFeaturesFields       = require('./generateFeaturesFields');
 const {
   getCheckinPrice,
   getCheckoutPrice,
@@ -43,6 +44,7 @@ module.exports = {
   createdSuccessHandler,
   foundOrCreatedSuccessHandler,
   generateGaleryFields,
+  generateFeaturesFields,
   getCardType,
   getCheckinEndDate,
   getCheckinPrice,

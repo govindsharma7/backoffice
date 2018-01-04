@@ -16,18 +16,30 @@ module.exports = function({ Room, Picture }) {
     fields: galeryFields.concat([{
       field: 'current price',
       type: 'Number',
-      get(object) {
-        return getCalculatedProps(object)
-          .then((result) => result.periodPrice)
-          .tapCatch(console.error);
+      async get(object) {
+        try {
+          const { periodPrice } = await getCalculatedProps(object);
+
+          return periodPrice;
+        }
+        catch (e) {
+          console.error(e);
+          return e;
+        }
       },
     }, {
       field: 'service fees',
       type: 'Number',
-      get(object) {
-        return getCalculatedProps(object)
-          .then((result) => result.serviceFees)
-          .tapCatch(console.error);
+      async get(object) {
+        try {
+          const { serviceFees } = await getCalculatedProps(object);
+
+          return serviceFees;
+        }
+        catch (e) {
+          console.error(e);
+          return e;
+        }
       },
     }, {
       field: 'availableAt',

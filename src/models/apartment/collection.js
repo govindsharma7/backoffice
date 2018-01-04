@@ -1,12 +1,12 @@
 const { TRASH_SEGMENTS }  = require('../../const');
 const Utils               = require('../../utils');
 
-module.exports = function({Apartment, Picture}) {
-  const galeryFields =
-    Utils.generateGaleryFields(Apartment, Picture);
+module.exports = function({ Apartment, Picture, Term }) {
+  const galeryFields = Utils.generateGaleryFields(Apartment, Picture);
+  const featuresFields = Utils.generateFeaturesFields(Apartment, Term);
 
   return {
-    fields: galeryFields.concat([{
+    fields: [{
       // for some reason, Forest excludes belongsTo foreign keys from schemas
       // a quick and safe hack to bring it back is to create an alias
       field: '_DistrictId',
@@ -16,7 +16,7 @@ module.exports = function({Apartment, Picture}) {
       field: 'current-clients',
       type: ['String'],
       reference: 'Client.id',
-    }]),
+    }].concat(galeryFields, featuresFields),
     actions: [{
       name: 'Restore Apartment',
     }, {
