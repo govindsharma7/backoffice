@@ -5,7 +5,6 @@ const D                 = require('date-fns');
 const { TRASH_SCOPES }  = require('../../const');
 const payline           = require('../../vendor/payline');
 const Sendinblue        = require('../../vendor/sendinblue');
-const Zapier            = require('../../vendor/zapier');
 const { required }      = require('../../utils');
 const sequelize         = require('../sequelize');
 const models            = require('../models'); //!\ Destructuring forbidden /!\
