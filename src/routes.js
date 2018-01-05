@@ -41,12 +41,12 @@ module.exports = function(app) {
     case 'sendRentReminders':
       await models.Order.sendRentReminders();
       break;
-    // case 'createAndSendRentInvoices':
-    //   await models.Client.createAndSendRentInvoices();
-    //   break;
+    case 'createAndSendRentInvoices':
+      await models.Client.createAndSendRentInvoices();
+      break;
     default:
       await Zapier.postRentReminder(1337);
-      return res.send(`${ZAPIER_API_URL}/85f0oz/`);
+      break;
     }
 
     return res.send(`${req.params.scriptName} script executed successfully`);
