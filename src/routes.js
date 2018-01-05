@@ -1,6 +1,5 @@
 const Promise           = require('bluebird');
-const D                 = require('date-fns');
-const fetch             = require('node-fetch');
+const { wrap }          = require('express-promise-wrap');
 const aws               = require('./vendor/aws');
 const chromeless        = require('./vendor/chromeless');
 const geocode           = require('./vendor/geocode');
@@ -8,7 +7,7 @@ const payline           = require('./vendor/payline');
 const sendinblue        = require('./vendor/sendinblue');
 const webmerge          = require('./vendor/webmerge');
 const wordpress         = require('./vendor/wordpress');
-const config            = require('./config');
+const Zapier            = require('./vendor/zapier');
 const models            = require('./models');
 const makePublic        = require('./middlewares/makePublic');
 
@@ -35,39 +34,17 @@ module.exports = function(app) {
     return res.send('pong');
   });
 
-  app.post('/forest/login', makePublic, (req, res) => {
-    return Promise.resolve()
-      .then(() => {
-        return fetch(`${config.REST_API_URL}/forest/sessions`, {
-          method: 'post',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign(
-            {},
-            req.body,
-            { renderingId: config.FOREST_RENDERING_ID }
-          )),
-        });
-      })
-      .then((response) => {
-        if ( !response.ok ) {
-          /* eslint-disable promise/no-nesting */
-          return response.text()
-            .then((message) => {
-              throw new Error(message);
-            });
-          /* eslint-enable promise/no-nesting */
-        }
-        return response.json();
-      })
-      .then((result) => {
-        return res.cookie(
-          'authorized',
-          `Bearer ${result.token}`,
-          { expires: D.addDays(Date.now(), 30) }
-        ).send(result);
-      })
-      .catch((e) => {
-        return res.status(400).send(e);
-      });
-  });
+  // Global route used to execute one of the scripts remotely
+  app.get('/script/:scriptName', makePublic, wrap(async (req, res) => {
+    switch (req.params.scriptName) {
+    case 'sendRentReminders':
+      await models.Order.sendRentReminders();
+      break;
+    default:
+      Zapier.postRentReminder(1337);
+      break;
+    }
+
+    res.send(`${req.params.scriptName} script executed successfully`);
+  }));
 };

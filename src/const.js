@@ -21,7 +21,8 @@ module.exports = Object.assign(common, {
   SENDINBLUE_TEMPLATE_IDS: {
     welcome2: { fr: 41, en: 40 },
     rentInvoice: { fr: 49, en: 50 },
-    unpaidRent: { fr: 49, en: 50 },
+    rentReminder: { fr: 49, en: 50 },
+    lastRentReminder: { fr: 51, en: 52 },
     lateFees: { fr: 20, en: 15 },
     dueDate: { fr: 22, en: 23 },
     confirmation: { fr: 47, en: 48 },

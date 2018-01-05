@@ -1,9 +1,11 @@
 const Promise           = require('bluebird');
 const uuid              = require('uuid/v4');
 const { DataTypes }     = require('sequelize');
+const D                 = require('date-fns');
 const { TRASH_SCOPES }  = require('../../const');
 const payline           = require('../../vendor/payline');
 const Sendinblue        = require('../../vendor/sendinblue');
+const Zapier            = require('../../vendor/zapier');
 const { required }      = require('../../utils');
 const sequelize         = require('../sequelize');
 const models            = require('../models'); //!\ Destructuring forbidden /!\
@@ -370,6 +372,32 @@ Order.sendPaymentRequest = function(args) {
   }
 
   throw new Error('Payment request not implemented for this type of order');
+};
+
+Order.sendRentReminders = function(now = new Date()) {
+  return Order.scope('rentOrders')
+    .findAll({
+      where: {
+        $or: [
+          { dueDate: now },
+          { dueDate: D.addDays(now, 3) },
+          { dueDate: D.addDays(now, 5) },
+        ],
+      },
+      include: [{
+        model: models.Client,
+        where: { status: 'active' },
+      }],
+    })
+    .map((order) => Promise.all([
+      order,
+      order.getCalculatedProps(),
+    ]))
+    .filter(([, { balance }]) => balance < 0)
+    .map(([order, { amount }]) =>
+      Sendinblue.sendRentReminder({ order, client: order.Client, amount })
+    )
+    .then((all) => Zapier.postRentReminder(all.length));
 };
 
 Order.collection = collection;

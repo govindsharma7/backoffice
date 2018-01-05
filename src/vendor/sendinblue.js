@@ -157,7 +157,7 @@ Sendinblue.sendRentReminder = function(args) {
     now = new Date(),
   } = args;
   const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
-  const templateId = D.getDate(now) === 1 ? 'dueDate' : 'unpaidRent';
+  const templateId = D.getDate(now) === 1 ? 'lastRentReminder' : 'rentReminder';
 
   return Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS[templateId][client.preferredLanguage],
