@@ -10,7 +10,6 @@ const wordpress         = require('./vendor/wordpress');
 const Zapier            = require('./vendor/zapier');
 const models            = require('./models');
 const makePublic        = require('./middlewares/makePublic');
-const { ZAPIER_API_URL } = require('./config');
 
 module.exports = function(app) {
   // Global route used to verify that the backend is up, running and connected to
