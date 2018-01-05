@@ -396,8 +396,7 @@ Order.sendRentReminders = function(now = new Date()) {
     .filter(([, { balance }]) => balance < 0)
     .map(([order, { amount }]) =>
       Sendinblue.sendRentReminder({ order, client: order.Client, amount })
-    )
-    .then((all) => Zapier.postRentReminder(all.length));
+    );
 };
 
 Order.collection = collection;

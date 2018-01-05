@@ -14,6 +14,7 @@ const {
 }                     = require('../../const');
 const Ninja           = require('../../vendor/invoiceninja');
 const payline         = require('../../vendor/payline');
+const Sendinblue      = require('../../vendor/sendinblue');
 const Utils           = require('../../utils');
 const config          = require('../../config');
 const sequelize       = require('../sequelize');
@@ -109,30 +110,26 @@ Client.associate = (models) => {
     }],
   });
   // TODO: one of the following two scopes is useless. Get rid of it
-  Client.addScope('ordersFor', (date = new Date()) => {
-    return {
+  Client.addScope('ordersFor', (date = new Date()) => ({
+    where: { $and: [
+      { '$Order.type$': 'debit' },
+      { '$Order.dueDate$': { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } },
+    ]},
+  }));
+  Client.addScope('rentOrdersFor', (date = new Date()) => ({
+    include: [{
+      model : models.Order,
+      required: false,
       where: { $and: [
-        { '$Order.type$': 'debit' },
-        { '$Order.dueDate$': { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } },
+        { type: 'debit' },
+        { dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } },
       ]},
-    };
-  });
-  Client.addScope('rentOrdersFor', (date = new Date()) => {
-    return {
       include: [{
-        model : models.Order,
-        required: false,
-        where: { $and: [
-          { type: 'debit' },
-          { dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } },
-        ]},
-        include: [{
-          model: models.OrderItem,
-          where: { ProductId: 'rent' },
-        }],
+        model: models.OrderItem,
+        where: { ProductId: 'rent' },
       }],
-    };
-  });
+    }],
+  }));
   Client.addScope('roomSwitchCount', {
     attributes: { include: [
       [fn('count', col('Orders.id')), 'roomSwitchCount'],
@@ -324,11 +321,7 @@ Client.prototype.ninjaSerialize = function() {
 Client.prototype.ninjaCreate = function() {
   return this
     .ninjaSerialize()
-    .then((ninjaClient) => {
-      return Ninja.client.createClient({
-        'client': ninjaClient,
-      });
-    })
+    .then((ninjaClient) => Ninja.client.createClient({ client: ninjaClient }))
     .then((response) => {
       this
         .set('ninjaId', response.obj.data.id)
@@ -340,15 +333,11 @@ Client.prototype.ninjaCreate = function() {
 Client.prototype.ninjaUpdate = function() {
   return this
     .ninjaSerialize()
-    .then((ninjaClient) => {
-      return Ninja.client.updateClient({
-        'client_id': this.ninjaId,
-        'client': ninjaClient,
-      });
-    })
-    .then((response) => {
-      return response.obj.data;
-    });
+    .then((ninjaClient) => Ninja.client.updateClient({
+      'client_id': this.ninjaId,
+      'client': ninjaClient,
+    }))
+    .then((response) => response.obj.data);
 };
 
 Client.prototype.ninjaUpsert = function() {
@@ -425,17 +414,16 @@ Client.prototype.applyLateFees = function(now = new Date()) {
       return order.getOrderItems({
         where: { ProductId: 'late-fees' },
       })
-      .then((orderItem) => {
-        return models.OrderItem
-          .upsert({
-            id: orderItem[0] && orderItem[0].id,
-            OrderId: order.id,
-            ProductId: 'late-fees',
-            quantity: lateFees,
-            unitPrice: LATE_FEES,
-            label: 'Late fees',
-          });
-      })
+      .then((orderItem) =>
+        models.OrderItem.upsert({
+          id: orderItem[0] && orderItem[0].id,
+          OrderId: order.id,
+          ProductId: 'late-fees',
+          quantity: lateFees,
+          unitPrice: LATE_FEES,
+          label: 'Late fees',
+        })
+      )
       .thenReturn(order);
     });
 };
@@ -490,9 +478,7 @@ Client.getDescriptionFr = function(client) {
 };
 
 Client.normalizeIdentityRecord = function(raw) {
-  const values = _.mapKeys(raw, (value, key) => {
-    return key.replace(/(q[\d]*_)/g, '');
-  });
+  const values = _.mapKeys(raw, (value, key) => key.replace(/(q[\d]*_)/g, ''));
   const phoneNumber = values.phoneNumber.phone.replace(/^0/, '');
 
   values.phoneNumber = `${values.phoneNumber.area}${phoneNumber}`;
@@ -506,9 +492,37 @@ Client.normalizeIdentityRecord = function(raw) {
     Translate(values.birthCountryEn, 'en', 'fr'),
     Translate(values.nationalityEn, 'en', 'fr'),
   ])
-  .then(([{ translatedText : birthCountryFr }, { translatedText : nationalityFr }]) => {
-    return Object.assign( values, { birthCountryFr, nationalityFr });
-  });
+  .then(([{ translatedText : birthCountryFr }, { translatedText : nationalityFr }]) =>
+    Object.assign( values, { birthCountryFr, nationalityFr })
+  );
+};
+
+Client.createAndSendRentInvoices = function(month = D.addMonths(Date.now(), 1)) {
+  return Client.scope(
+      { method: ['rentOrdersFor', month] },
+      'uncashedDepositCount'
+    )
+    .findAll({ where: { status: 'active'}})
+    // Filter-out clients who already have an order for this month
+    .then((clients) => clients.filter((client) => client.Orders.length === 0))
+    .then((clients) => Promise.map(clients, (client) =>
+      Promise.all([
+        client,
+        client.getRentingsFor(month),
+      ]))
+    )
+    // Filter-out clients with no active rentings
+    .filter(([, rentings]) => rentings.length > 0)
+    // Uncomment following line to test invoice generation for a single customer
+    // .filter((tupple, index) => index === 0)
+    .mapSeries(([client, rentings]) =>
+      client
+        .findOrCreateRentOrder(rentings, month)
+        .then(([order]) => models.Order.scope('amount').findById(order.id))
+        .then((order) =>
+          Sendinblue.sendRentRequest({ order, client, amount: order.get('amount') })
+        )
+    );
 };
 
 Client.collection = collection;

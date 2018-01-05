@@ -36,15 +36,27 @@ module.exports = function(app) {
 
   // Global route used to execute one of the scripts remotely
   app.get('/script/:scriptName', makePublic, wrap(async (req, res) => {
+    let orders;
+
     switch (req.params.scriptName) {
     case 'sendRentReminders':
-      await models.Order.sendRentReminders();
+      orders = await models.Order.sendRentReminders();
+
+      await Zapier.postRentInvoiceSuccess({
+        type: 'rent reminders',
+        count: orders.length,
+      });
       break;
     case 'createAndSendRentInvoices':
-      await models.Client.createAndSendRentInvoices();
+      orders = await models.Client.createAndSendRentInvoices();
+
+      await Zapier.postRentInvoiceSuccess({
+        type: 'rent invoices',
+        count: orders.length,
+      });
       break;
     default:
-      await Zapier.postRentReminder(1337);
+      await Zapier.postRentInvoiceSuccess({ type: 'test', count: 1 });
       break;
     }
 

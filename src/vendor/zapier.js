@@ -22,13 +22,13 @@ function postPayment(args) {
   });
 }
 
-function postRentReminder(emailCount) {
+function postRentInvoiceSuccess({ type, count }) {
   return fetch(`${ZAPIER_API_URL}/85f0oz/`, {
     method: 'post',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: querystring.stringify({
-      messageType: 'rentReminder',
-      count: emailCount,
+      messageType: type,
+      count,
     }),
   });
 }
@@ -39,6 +39,6 @@ function pingService() {
 
 module.exports = {
   postPayment,
-  postRentReminder,
+  postRentInvoiceSuccess,
   pingService,
 };
