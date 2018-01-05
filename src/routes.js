@@ -44,7 +44,7 @@ module.exports = function(app) {
     //   await models.Client.createAndSendRentInvoices();
     //   break;
     default:
-      Zapier.postRentReminder(1337);
+      await Zapier.postRentReminder(1337);
       break;
     }
 
