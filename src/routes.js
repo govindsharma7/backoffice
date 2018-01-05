@@ -10,6 +10,7 @@ const wordpress         = require('./vendor/wordpress');
 const Zapier            = require('./vendor/zapier');
 const models            = require('./models');
 const makePublic        = require('./middlewares/makePublic');
+const { ZAPIER_API_URL } = require('./config');
 
 module.exports = function(app) {
   // Global route used to verify that the backend is up, running and connected to
@@ -45,9 +46,9 @@ module.exports = function(app) {
     //   break;
     default:
       await Zapier.postRentReminder(1337);
-      break;
+      return res.send(`${ZAPIER_API_URL}/85f0oz/`);
     }
 
-    res.send(`${req.params.scriptName} script executed successfully`);
+    return res.send(`${req.params.scriptName} script executed successfully`);
   }));
 };
