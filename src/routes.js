@@ -40,6 +40,9 @@ module.exports = function(app) {
     case 'sendRentReminders':
       await models.Order.sendRentReminders();
       break;
+    // case 'createAndSendRentInvoices':
+    //   await models.Client.createAndSendRentInvoices();
+    //   break;
     default:
       Zapier.postRentReminder(1337);
       break;
