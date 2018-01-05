@@ -10,7 +10,7 @@ function postPayment(args) {
     order = required(),
   } = args;
 
-  return fetch(ZAPIER_API_URL, {
+  return fetch(`${ZAPIER_API_URL}/ssjjcr/`, {
     method: 'post',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: querystring.stringify({
@@ -23,7 +23,7 @@ function postPayment(args) {
 }
 
 function postRentReminder(emailCount) {
-  return fetch(ZAPIER_API_URL, {
+  return fetch(`${ZAPIER_API_URL}/85f0oz/`, {
     method: 'post',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: querystring.stringify({
