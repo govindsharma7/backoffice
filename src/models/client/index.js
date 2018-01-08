@@ -261,40 +261,42 @@ Client.prototype.getRentingsFor = function(date = new Date()) {
   });
 };
 
-Client.prototype.findOrCreateRentOrder =
-  function(rentings, date = new Date()) {
-    const dueDate = D.startOfMonth(date);
-    const defaults = {
-      label: `${D.format(date, 'MMMM')} Rent`,
-      type: 'debit',
-      ClientId: this.id,
-      dueDate,
-      OrderItems:
-        [].concat.apply([], rentings.map((renting) =>
-          renting.toOrderItems({ date, room: renting.Room }))
-        )
-        .concat(this.get('uncashedDepositCount') > 0 && {
-          label: 'Option Liberté',
-          unitPrice: UNCASHED_DEPOSIT_FEE,
-          ProductId: 'uncashed-deposit',
-        })
-        .filter(Boolean),
-    };
-
-    return models.Order
-      .findOrCreate({
-        where: { $and: [
-          { status: { $not: 'cancelled' } },
-          { ClientId: this.id },
-          { dueDate },
-        ]},
-        include: [{
-          model: models.OrderItem,
-          where: { ProductId: 'rent' },
-        }],
-        defaults,
+Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Date()) {
+  const dueDate = D.startOfMonth(date);
+  const defaults = {
+    label: `${D.format(date, 'MMMM')} Rent`,
+    type: 'debit',
+    ClientId: this.id,
+    dueDate,
+    OrderItems:
+      [].concat.apply([], rentings.map((renting) =>
+        renting.toOrderItems({ date, room: renting.Room }))
+      )
+      .concat(this.get('uncashedDepositCount') > 0 && {
+        label: 'Option Liberté',
+        unitPrice: UNCASHED_DEPOSIT_FEE,
+        ProductId: 'uncashed-deposit',
       })
-      .tap(([order]) => models.Renting.attachOrphanOrderItems(rentings, order));
+      .filter(Boolean),
+  };
+
+  const [order, isCreated] = await models.Order.findOrCreate({
+    where: { $and: [
+      // Only exclude cancelled orders. First rent order might still be draft
+      { status: { $not: 'cancelled' } },
+      { ClientId: this.id },
+      { dueDate },
+    ]},
+    include: [{
+      model: models.OrderItem,
+      where: { ProductId: 'rent' },
+    }],
+    defaults,
+  });
+
+  await models.Renting.attachOrphanOrderItems(rentings, order);
+
+  return [order, isCreated];
 };
 
 Client.createRentOrders = function(clients, date = new Date()) {

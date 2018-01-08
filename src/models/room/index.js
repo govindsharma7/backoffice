@@ -168,8 +168,10 @@ Room.getEarliestAvailability = function({ Rentings = required() }, now = new Dat
   }
 
   const checkoutDate = models.Renting.getLatest(Rentings).get('checkoutDate');
+  const daysToAdd = checkoutDate && ( D.isSaturday(checkoutDate) ? 2 : 1 );
+  const availabilityDate = checkoutDate && D.addDays(checkoutDate, daysToAdd);
 
-  return Promise.resolve( checkoutDate ? D.max(checkoutDate, now) : false );
+  return Promise.resolve( checkoutDate ? D.max(availabilityDate, now) : false );
 };
 
 Room.prototype.createMaintenancePeriod = function(args) {

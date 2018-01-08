@@ -83,6 +83,7 @@ describe('Room', () => {
   describe('.getEarliestAvailability', () => {
     const now = D.parse('2017-06-06');
     const futureDate = D.parse('2017-12-12');
+    const futureSat = D.parse('2017-12-16');
     const pastDate = D.parse('2017-02-02');
 
     test('no Rentings == now', () => Room.getEarliestAvailability({
@@ -105,14 +106,24 @@ describe('Room', () => {
       .then((date) => expect(date).toEqual(false))
     );
 
-    test('past bookingDate + future checkoutDate == checkoutDate', () =>
+    test('past bookingDate + future checkoutDate == checkoutDate + 1 day', () =>
       Room.getEarliestAvailability({
         Rentings: [{
           bookingDate: D.parse('2017-01-01 Z'),
           get: () => futureDate,
         }],
       }, now)
-      .then((date) => expect(date).toEqual(futureDate))
+      .then((date) => expect(date).toEqual(D.addDays(futureDate, 1)))
+    );
+
+    test('past bookingDate + future checkoutDate (Sat) == checkoutDate + 2 days', () =>
+      Room.getEarliestAvailability({
+        Rentings: [{
+          bookingDate: D.parse('2017-01-01 Z'),
+          get: () => futureSat,
+        }],
+      }, now)
+      .then((date) => expect(date).toEqual(D.addDays(futureSat, 2)))
     );
 
     test('past bookingDate + past checkoutDate == now', () =>
