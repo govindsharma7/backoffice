@@ -37,6 +37,7 @@ module.exports = function(app) {
   // Global route used to execute one of the scripts remotely
   app.get('/script/:scriptName', makePublic, wrap(async (req, res) => {
     let orders;
+    let rentings;
 
     switch (req.params.scriptName) {
     case 'sendRentReminders':
@@ -47,6 +48,7 @@ module.exports = function(app) {
         count: orders.length,
       });
       break;
+
     case 'createAndSendRentInvoices':
       orders = await models.Client.createAndSendRentInvoices();
 
@@ -55,6 +57,13 @@ module.exports = function(app) {
         count: orders.length,
       });
       break;
+
+    case 'updateDraftRentings':
+      rentings = await models.Renting.updateDraftRentings();
+
+      await sendinblue.sendAdminNotif(`${rentings.length} have been updated.`);
+      break;
+
     default:
       await Zapier.postRentInvoiceSuccess({ type: 'test', count: 1 });
       break;

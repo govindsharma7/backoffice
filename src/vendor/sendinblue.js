@@ -18,6 +18,7 @@ const {
   SENDINBLUE_API_KEY,
   NODE_ENV,
   WEBSITE_URL,
+  ADMIN_EMAIL,
 }                   = require('../config');
 
 SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey = SENDINBLUE_API_KEY;
@@ -299,6 +300,13 @@ Sendinblue.sendLateFeesEmail = function(args) {
     })
   );
 };
+
+Sendinblue.sendAdminNotif = function(content) {
+  return Sendinblue.sendTemplateEmail(
+    SENDINBLUE_TEMPLATE_IDS.adminNotif,
+    { emailTo: [ADMIN_EMAIL], attributes: { CONTENT: content } }
+  );
+}
 
 Sendinblue.pingService = function() {
   return new SendinBlueApi.AccountApi().getAccount();

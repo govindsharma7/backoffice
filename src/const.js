@@ -29,6 +29,7 @@ module.exports = Object.assign(common, {
     housingPack: { fr: 45, en: 46 },
     deposit: { fr: 4, en: 5 },
     newHousemate: { fr: 3, en: 2 },
+    adminNotif: 82,
   },
 
   SENDINBLUE_LIST_IDS: {
