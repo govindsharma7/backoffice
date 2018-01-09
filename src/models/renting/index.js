@@ -786,7 +786,11 @@ Renting.updateDraftRentings = async function(now = new Date()) {
   const rentings = await Renting.findAll({
     where: {
       status: 'draft',
-      bookingDate: { $gt: D.subMonths(now, 1), $lt: now },
+      bookingDate: {
+        $gt: D.subMonths(now, 1),
+        // Don't update future booking dates to 'now'!
+        $lt: D.startOfDay(now),
+      },
     },
     include: [{
       model: models.Room,
@@ -813,7 +817,7 @@ Renting.updateDraftRentings = async function(now = new Date()) {
           periodCoef,
           renting.serviceFees
         ),
-      }, { hooks: false }), // bookingDate validation is useless at this point
+      }, { validate: false }), // bookingDate validation is useless at this point
       renting.OrderItems
         .find(({ ProductId }) => ProductId === 'rent')
         .update({ unitPrice: price }),

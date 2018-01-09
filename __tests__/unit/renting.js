@@ -202,12 +202,20 @@ describe('Renting', () => {
           basePrice: 65400,
         }],
         Renting: [{
-          id: u.id('renting'),
+          id: u.id('renting1'),
           ClientId: u.id('client'),
           RoomId: u.id('room'),
           status: 'draft',
           bookingDate: D.parse('2016-07-13'),
           price: 56,
+          serviceFees: 3000,
+        }, {
+          id: u.id('renting2'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'draft',
+          bookingDate: D.parse('2016-07-27'),
+          price: 89,
           serviceFees: 3000,
         }],
         Order: [{
@@ -219,7 +227,7 @@ describe('Renting', () => {
           id: u.id('rentItem'),
           label: 'yo',
           OrderId: u.id('order'),
-          RentingId: u.id('renting'),
+          RentingId: u.id('renting1'),
           ProductId: 'rent',
           status: 'draft',
           unitPrice: 12,
@@ -227,14 +235,17 @@ describe('Renting', () => {
           id: u.id('feesItem'),
           label: 'yo',
           OrderId: u.id('order'),
-          RentingId: u.id('renting'),
+          RentingId: u.id('renting1'),
           ProductId: 'service-fees',
           status: 'draft',
           unitPrice: 34,
         }],
       }))({ method: 'create', hooks: false })
       .then(() => Renting.updateDraftRentings(now))
-      .then(([[renting, rentItem, feesItem]]) => {
+      .then((updatedTuples) => {
+        const [[renting, rentItem, feesItem]] = updatedTuples;
+
+        expect(updatedTuples.length).toEqual(1); // Only one renting should be updated
         expect(renting.bookingDate).toEqual(now);
         expect(renting.price).not.toEqual(56);
         expect(renting.serviceFees).toEqual(3000);
