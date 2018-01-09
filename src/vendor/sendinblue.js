@@ -306,7 +306,7 @@ Sendinblue.sendAdminNotif = function(content) {
     SENDINBLUE_TEMPLATE_IDS.adminNotif,
     { emailTo: [ADMIN_EMAIL], attributes: { CONTENT: content } }
   );
-}
+};
 
 Sendinblue.pingService = function() {
   return new SendinBlueApi.AccountApi().getAccount();
