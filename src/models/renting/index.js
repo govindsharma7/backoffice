@@ -40,22 +40,9 @@ const Renting = sequelize.define('Renting', {
     type:                     DataTypes.UUID,
     defaultValue:             DataTypes.UUIDV4,
   },
-  bookingDate: {
+  bookingDate: { // bookingDate is now validated in beforeValidate hook
     type:                     DataTypes.DATE,
     required: false,
-    validate: {
-      isRoomAvailable(date) {
-        return models.Room.scope('availableAt')
-          .findById(this.RoomId)
-          .then((room) => room.checkAvailability(date))
-          .then((isAvailable) => {
-            if ( !isAvailable ) {
-              throw new Error('The room is already booked');
-            }
-            return isAvailable;
-          });
-      },
-    },
   },
   expectedCheckoutDate:  {
     type:                     DataTypes.DATE,
@@ -63,19 +50,21 @@ const Renting = sequelize.define('Renting', {
   },
   price: {
     type:                     DataTypes.INTEGER,
-    // required: true,
-    // allowNull: false,
+    defaultValue: 0,
+    required: true,
+    allowNull: false,
   },
   serviceFees: {
     type:                     DataTypes.INTEGER,
-    // required: true,
-    // allowNull: false,
+    defaultValue: 0,
+    required: true,
+    allowNull: false,
   },
   status: {
     type:                     DataTypes.ENUM('draft', 'active'),
     defaultValue: 'draft',
-    // required: true,
-    // allowNull: false,
+    required: true,
+    allowNull: false,
   },
   comfortLevel: {
     type:                     DataTypes.VIRTUAL,
@@ -813,6 +802,15 @@ Renting.prototype.calculatePriceAndFees = function(room) {
       return this;
     });
 };
+
+// Update draft rentings as well as first rent order
+// Renting.updateDraftRentings = async function(now = new Date()) {
+//   const rentings = await Renting.findAll({
+//     where: { status: 'draft', bookingDate: { $gt: D.subMonths(now, 1) } },
+//   });
+//
+//   rentings.
+// };
 
 Renting.collection = collection;
 Renting.routes = routes;

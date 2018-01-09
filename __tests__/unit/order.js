@@ -117,7 +117,7 @@ describe('Order', () => {
         }],
       }))({ method: 'create', hooks: 'Order' })
       .tap(({ instances: { order } }) => order.update({ status: 'cancelled' }))
-      .then(Promise.delay(200))
+      .then(() => Promise.delay(200))
       .then(() => expect(mock).toHaveBeenCalledWith(true) )
       .then(() => Order.handleAfterUpdate = handleAfterUpdate);
     });

@@ -113,7 +113,7 @@ module.exports = function({ Room, Picture, Term }) {
             .findAll({
               where: { '$Apartment.addressCity$' : `${city}` },
             })
-            .filter((room) => room.checkAvailability())
+            .filter((room) => room.checkAvailability({ rentings: room.Rentings }))
             .reduce((acc, curr) => {
               acc.id.push(curr.id);
               return acc;

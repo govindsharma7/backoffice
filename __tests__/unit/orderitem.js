@@ -1,3 +1,4 @@
+const Promise               = require('bluebird');
 const fixtures              = require('../../__fixtures__');
 
 describe('OrderItem', () => {
@@ -23,11 +24,11 @@ describe('OrderItem', () => {
         }],
       }))()
       .then(({ instances }) =>
-        [
+        Promise.all([
           instances['item-0'].destroy(),
           instances['item-0'].update({ label: 'different label' }),
           instances['order-0'].createOrderItem({ label: 'another item' }),
-        ].forEach((operation) => expect(operation).rejects.toBeInstanceOf(Error))
+        ].map((operation) => expect(operation).rejects.toBeInstanceOf(Error)))
       )
     );
   });

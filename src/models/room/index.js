@@ -145,16 +145,15 @@ Room.getCalculatedProps = function(basePrice, roomCount, now = new Date()) {
     }));
 };
 
-Room.prototype.checkAvailability = function(date = new Date()) {
-  return Room.checkAvailability(this, date);
+Room.prototype.checkAvailability = function(args) {
+  return Room.checkAvailability(Object.assign({ room: this }, args));
 };
-Room.checkAvailability = function({ Rentings = required() }, date = new Date()) {
-  if ( Rentings.length === 0 ) {
+Room.checkAvailability = function({ rentings = required(), date = new Date() }) {
+  if ( rentings.length === 0 ) {
     return Promise.resolve(true);
   }
 
-  const checkoutDate =
-    models.Renting.getLatest(Rentings).get('checkoutDate');
+  const checkoutDate = models.Renting.getLatest(rentings).get('checkoutDate');
 
   return Promise.resolve( checkoutDate && checkoutDate <= date ? true : false );
 };

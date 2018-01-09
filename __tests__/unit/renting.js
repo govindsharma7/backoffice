@@ -10,7 +10,7 @@ const Sendinblue          = require('../../src/vendor/sendinblue');
 const Utils               = require('../../src/utils');
 const models              = require('../../src/models');
 
-const { Renting } = models;
+const { Renting, Room } = models;
 let renting1;
 let renting2;
 
@@ -296,6 +296,143 @@ describe('Renting', () => {
   });
 
   describe('hooks', () => {
+    const { handleBeforeValidate } = Renting;
+
+    Renting.handleBeforeValidate = jest.fn(() => true);
+
+    describe('beforeValidate', () => {
+      it('should\'t allow booking a room while it\'s rented', () =>
+        fixtures((u) => ({
+          Client: [{
+            id: u.id('client1'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }, {
+            id: u.id('client2'),
+            firstName: 'Jane',
+            lastName: 'Dwight',
+            email: `jane-${u.int(1)}@dwight.her`,
+          }],
+          District: [{ id: u.id('district') }],
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: u.id('district'),
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Renting: [{
+            id: u.id('currentRenting'),
+            ClientId: u.id('client1'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: new Date(),
+          }],
+        }))({ method: 'create', hooks: false })
+        .then(({ unique: u }) => {
+          const actual = handleBeforeValidate(models.Renting.build({
+            ClientId: u.id('client2'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: new Date(),
+          }));
+
+          expect(actual).rejects.toThrow();
+
+          return true;
+        })
+      );
+
+      it('should allow modifying the bookingDate of a renting', () =>
+        fixtures((u) => ({
+          Client: [{
+            id: u.id('client1'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }, {
+            id: u.id('client2'),
+            firstName: 'Jane',
+            lastName: 'Dwight',
+            email: `jane-${u.int(1)}@dwight.her`,
+          }],
+          District: [{ id: u.id('district') }],
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: u.id('district'),
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client1'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: new Date(),
+          }],
+        }))({ method: 'create', hooks: false })
+        .then(async ({ instances }) => {
+          Renting.handleBeforeValidate = handleBeforeValidate;
+
+          // We need to reload the renting using findById, otherwise the
+          // _changed properties will be eroneous
+          const renting = await Renting.findById(instances.renting.id);
+          const nextBooking = D.addDays(new Date(), 1);
+          const updated = await renting.update({ bookingDate: nextBooking });
+
+          expect(updated.bookingDate).toEqual(nextBooking);
+
+          Renting.handleBeforeValidate = jest.fn(() => true);
+
+          return true;
+        })
+      );
+    });
+
+    describe('beforeCreate', () => {
+      it('should calculate renting price and fees when they\'re both 0', () => {
+        return fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+            status: 'draft',
+          }],
+          District: [{ id: u.id('district') }],
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: u.id('district'),
+            roomCount: 3,
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+            basePrice: 69000,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+          }],
+        }))({ method: 'create', hooks: 'Renting' })
+        .then(({ instances: { renting, room, apartment } }) => (Promise.all([
+          renting,
+          Room.getCalculatedProps(room.basePrice, apartment.roomCount),
+        ])))
+        .then(([renting, { periodPrice, serviceFees }]) => {
+          expect(renting.price).toEqual(periodPrice);
+          expect(renting.serviceFees).toEqual(serviceFees);
+
+          return true;
+        })
+      });
+    });
+
     describe('afterCreate', () => {
       it('should create quote orders when comfortLevel is present', () => {
         const { createQuoteOrders } = Renting;
@@ -349,7 +486,7 @@ describe('Renting', () => {
           expect(call.room.id).toBe(u.id('room'));
           expect(call.apartment.id).toBe(u.id('apartment'));
 
-          Object.assign(Renting, { createQuoteOrders });
+          Renting.createQuoteOrders = createQuoteOrders;
 
           return null;
         });
@@ -382,9 +519,14 @@ describe('Renting', () => {
           }],
         }))({ method: 'create', hooks: 'Renting' })
         .tap(({ instances: { renting } }) => renting.update({ status: 'cancelled' }))
-        .then(Promise.delay(200))
-        .then(() => expect(mock).toHaveBeenCalledWith(true) )
-        .then(() => Renting.handleAfterUpdate = handleAfterUpdate);
+        .then(() => Promise.delay(200))
+        .then(() => {
+          expect(mock).toHaveBeenCalledWith(true)
+
+          Renting.handleAfterUpdate = handleAfterUpdate;
+
+          return true;
+        });
       });
 
       it('should mark the client + related orders active, send email + update WP', () =>

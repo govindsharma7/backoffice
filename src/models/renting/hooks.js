@@ -3,41 +3,73 @@ const Sendinblue                  = require('../../vendor/sendinblue');
 const Wordpress                   = require('../../vendor/wordpress');
 
 module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }) {
-  Renting.hook('beforeValidate', (renting) => {
-    // Only calculate the price and fees on creation
-    if (
-      !( 'RoomId' in renting.dataValues ) ||
-      !( 'bookingDate' in renting.dataValues ) ||
-      ( renting.price != null && renting.price > 0 && !isNaN(renting.price) )
-    ) {
+  // When a renting is created or updated, verify:
+  // - that the bookingDate is valid
+  Renting.handleBeforeValidate = async (_renting) => {
+    if ( !_renting.changed('bookingDate') ) {
+      return true;
+    }
+
+    // we always need the RoomId in the handler
+    const renting = await ( _renting.RoomId ? _renting : _renting.reload() );
+    const room = await Room.scope('availableAt').findById(renting.RoomId);
+
+    const isAvailable = await room.checkAvailability({
+      // Exclude that renting from the list.
+      // Otherwise we simply never can update the bookingDate of a renting
+      // once it's created.
+      rentings: room.Rentings.filter(({ id }) => id !== renting.id),
+      date: renting.bookingDate,
+    });
+
+    if ( !isAvailable ) {
+      throw new Error('The room is already booked');
+    }
+
+    return isAvailable;
+  };
+  Renting.hook('beforeValidate', (renting, opts) => {
+    Renting.handleBeforeValidate(renting, opts);
+  });
+
+  // When a renting is created with 0€ price + fees:
+  // - calculate correct price and service fees
+  Renting.handleBeforeCreate = async (renting) => {
+    if ( renting.price !== 0 || renting.serviceFees !== 0 ) {
       return renting;
     }
 
-    return Room
-      .findOne({
-        where: { id: renting.RoomId },
-        include: [{ model: Apartment }],
-      })
-      .then((room) => renting.calculatePriceAndFees(room));
-  });
+    const room = await Room.findOne({
+      where: { id: renting.RoomId },
+      include: [{ model: Apartment }],
+    });
+
+    return renting.calculatePriceAndFees(room);
+  };
+  Renting.hook('beforeCreate', (renting, opts) =>
+    Renting.handleBeforeCreate(renting, opts)
+  );
 
   // When a renting is created with Housing Pack comfortLevel
   // - Create quote orders
-  Renting.handleAfterCreate = (renting, { transaction }) => {
+  Renting.handleAfterCreate = async (renting, { transaction }) => {
     const { comfortLevel: packLevel, discount = 0 } = renting;
 
     if ( !packLevel ) {
       return true;
     }
 
-    return Room
-      .findById(renting.RoomId, { include: [{ model: Apartment }], transaction })
-      .then((room) => renting.createQuoteOrders({
-        packLevel,
-        discount: discount * 100,
-        room,
-        apartment: room.Apartment,
-      }));
+    const room = await Room.findById(renting.RoomId, {
+      include: [{ model: Apartment }],
+      transaction,
+    });
+
+    return renting.createQuoteOrders({
+      packLevel,
+      discount: discount * 100,
+      room,
+      apartment: room.Apartment,
+    });
   };
   Renting.hook('afterCreate', (renting, opts) =>
     Renting.handleAfterCreate(renting, opts)
