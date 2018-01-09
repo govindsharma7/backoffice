@@ -168,35 +168,13 @@ Renting.associate = (models) => {
 
 // Prorate the price and service fees of a renting for a given month
 Renting.prototype.prorate = function(date) {
-  return Renting.prorate({ renting: this, date });
-};
-Renting.prorate = function({ renting = required(), date = required() }) {
-  const { bookingDate, price, serviceFees } = renting;
-  const checkoutDate = renting.get('checkoutDate');
-  const daysInMonth = D.getDaysInMonth(date);
-  const startOfMonth = D.startOfMonth(date);
-  const endOfMonth = D.endOfMonth(date);
-  let daysStayed = daysInMonth;
-
-  if (
-    bookingDate > endOfMonth ||
-    ( checkoutDate != null && checkoutDate < startOfMonth )
-  ) {
-    daysStayed = 0;
-  }
-  else {
-    if ( bookingDate >= startOfMonth ) {
-      daysStayed -= D.getDate(bookingDate) - 1;
-    }
-    if ( checkoutDate != null && checkoutDate < endOfMonth ) {
-      daysStayed -= daysInMonth - D.getDate(checkoutDate);
-    }
-  }
-
-  return {
-    price: Utils.roundBy100(( price / daysInMonth ) * daysStayed),
-    serviceFees: Utils.roundBy100(( serviceFees / daysInMonth ) * daysStayed),
-  };
+  return Utils.prorate({
+    bookingDate: this.bookingDate,
+    price: this.price,
+    serviceFees: this.serviceFees,
+    checkoutDate: this.get('checkoutDate'),
+    date,
+  });
 };
 
 // Propagate the status of the renting to that of first-rent/deposit/pack orders
@@ -803,14 +781,48 @@ Renting.prototype.calculatePriceAndFees = function(room) {
     });
 };
 
-// Update draft rentings as well as first rent order
-// Renting.updateDraftRentings = async function(now = new Date()) {
-//   const rentings = await Renting.findAll({
-//     where: { status: 'draft', bookingDate: { $gt: D.subMonths(now, 1) } },
-//   });
-//
-//   rentings.
-// };
+// Update all draft rentings as well as first rent order
+Renting.updateDraftRentings = async function(now = new Date()) {
+  const rentings = await Renting.findAll({
+    where: {
+      status: 'draft',
+      bookingDate: { $gt: D.subMonths(now, 1), $lt: now },
+    },
+    include: [{
+      model: models.Room,
+    }, {
+      model: models.OrderItem,
+      where: { $or: [{ ProductId: 'rent' }, { ProductId: 'service-fees' }] },
+    }],
+  });
+  const periodCoef = await Utils.getPeriodCoef(now);
+
+  return Promise.map(rentings, (renting) => {
+    const { price, serviceFees } = Utils.prorate({
+      bookingDate: now,
+      price: renting.Room.basePrice,
+      serviceFees: renting.serviceFees,
+      date: now,
+    });
+
+    return Promise.all([
+      renting.update({
+        bookingDate: now,
+        price: Utils.getPeriodPrice(
+          renting.Room.basePrice,
+          periodCoef,
+          renting.serviceFees
+        ),
+      }, { hooks: false }), // bookingDate validation is useless at this point
+      renting.OrderItems
+        .find(({ ProductId }) => ProductId === 'rent')
+        .update({ unitPrice: price }),
+      renting.OrderItems
+        .find(({ ProductId }) => ProductId === 'service-fees')
+        .update({ unitPrice: serviceFees }),
+    ]);
+  });
+};
 
 Renting.collection = collection;
 Renting.routes = routes;

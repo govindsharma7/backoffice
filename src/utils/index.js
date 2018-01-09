@@ -26,6 +26,7 @@ const isValidPhoneNumber           = require('./isValidPhoneNumber');
 const logAndSend                   = require('./logAndSend');
 const methodMemoizer               = require('./methodMemoizer');
 const parseDBDate                  = require('./parseDBDate');
+const prorate                      = require('./prorate');
 const required                     = require('./required');
 const roundBy100                   = require('./roundBy100');
 const sequelizeSchema              = require('./sequelizeSchema');
@@ -62,6 +63,7 @@ module.exports = {
   logAndSend,
   methodMemoizer,
   parseDBDate,
+  prorate,
   required,
   roundBy100,
   sentSuccessHandler,

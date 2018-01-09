@@ -7,7 +7,6 @@ const fixtures            = require('../../__fixtures__');
 const rentingFixtures     = require('../../__fixtures__/renting');
 const Wordpress           = require('../../src/vendor/wordpress');
 const Sendinblue          = require('../../src/vendor/sendinblue');
-const Utils               = require('../../src/utils');
 const models              = require('../../src/models');
 
 const { Renting, Room } = models;
@@ -85,120 +84,6 @@ describe('Renting', () => {
         .then((result) => {
           return expect(result[1]).toEqual(true);
         });
-    });
-  });
-
-  describe('.prorate()', () => {
-    const price = 20000;
-    const serviceFees = 3000;
-    const get = () => null;
-
-    test('it calculates the prorata for the "booking month"', () => {
-      const actual = Renting.prorate({
-        renting: {
-          price,
-          serviceFees,
-          bookingDate: D.parse('2015-01-20'),
-          get,
-        },
-        date: D.parse('2015-01 Z'),
-      });
-      const expected = {
-        price: Utils.roundBy100(price / 31 * (31 - (20 - 1))),
-        serviceFees: Utils.roundBy100(serviceFees / 31 * (31 - (20 - 1))),
-      };
-
-      return expect(actual).toEqual(expected);
-    });
-
-    test('it calculates the prorata for "checkout month"', () => {
-      const actual = Renting.prorate({
-        renting: {
-          price,
-          serviceFees,
-          bookingDate: D.parse('2015-01-20'),
-          get: () => D.parse('2015-02-10'),
-        },
-        date: D.parse('2015-02 Z'),
-      });
-      const expected = {
-        price: Utils.roundBy100(price / 28 * 10),
-        serviceFees: Utils.roundBy100(serviceFees / 28 * 10),
-      };
-
-      return expect(actual).toEqual(expected);
-    });
-
-    test('it calculates the prorata for "booking+checkout month"', () => {
-      const actual = Renting.prorate({
-        renting: {
-          price,
-          serviceFees,
-          bookingDate: D.parse('2015-03-03'),
-          get: () => D.parse('2015-03-28'),
-        },
-        date: D.parse('2015-03 Z'),
-      });
-      const expected = {
-        price: Utils.roundBy100(price / 31 * (28 - 2)),
-        serviceFees: Utils.roundBy100(serviceFees / 31 * (28 - 2)),
-      };
-
-      return expect(actual).toEqual(expected);
-    });
-
-    test('it bills a full month when checkout is the last day of the month', () => {
-      const actual = Renting.prorate({
-        renting: {
-          price,
-          serviceFees,
-          bookingDate: D.parse('2015-01-01'),
-          get: () => D.parse('2015-03-31'),
-        },
-        date: D.parse('2015-03 Z'),
-      });
-      const expected = {
-        price: Utils.roundBy100(price),
-        serviceFees: Utils.roundBy100(serviceFees),
-      };
-
-      return expect(actual).toEqual(expected);
-    });
-
-    test('it bills a single day when checkout is the first day of the month', () => {
-      const actual = Renting.prorate({
-        renting: {
-          price,
-          serviceFees,
-          bookingDate: D.parse('2015-01-01'),
-          get: () => D.parse('2015-03-01'),
-        },
-        date: D.parse('2015-03 Z'),
-      });
-      const expected = {
-        price: Utils.roundBy100(price / 31),
-        serviceFees: Utils.roundBy100(serviceFees / 31),
-      };
-
-      return expect(actual).toEqual(expected);
-    });
-
-    test('it bills a single day when booking is the last day of the month', () => {
-      const actual = Renting.prorate({
-        renting: {
-          price,
-          serviceFees,
-          bookingDate: D.parse('2015-01-31'),
-          get,
-        },
-        date: D.parse('2015-01 Z'),
-      });
-      const expected = {
-        price: Utils.roundBy100(price / 31),
-        serviceFees: Utils.roundBy100(serviceFees / 31),
-      };
-
-      return expect(actual).toEqual(expected);
     });
   });
 
@@ -293,6 +178,72 @@ describe('Renting', () => {
         return null;
       });
     });
+  });
+
+  describe('.updateDraftRentings', () => {
+    const now = D.parse('2016-07-23');
+
+    it('should\'t allow booking a room while it\'s rented', () =>
+      fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        District: [{ id: u.id('district') }],
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: u.id('district'),
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+          basePrice: 65400,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'draft',
+          bookingDate: D.parse('2016-07-13'),
+          price: 56,
+          serviceFees: 3000,
+        }],
+        Order: [{
+          id: u.id('order'),
+          ClientId: u.id('client'),
+          status: 'draft',
+        }],
+        OrderItem: [{
+          id: u.id('rentItem'),
+          label: 'yo',
+          OrderId: u.id('order'),
+          RentingId: u.id('renting'),
+          ProductId: 'rent',
+          status: 'draft',
+          unitPrice: 12,
+        }, {
+          id: u.id('feesItem'),
+          label: 'yo',
+          OrderId: u.id('order'),
+          RentingId: u.id('renting'),
+          ProductId: 'service-fees',
+          status: 'draft',
+          unitPrice: 34,
+        }],
+      }))({ method: 'create', hooks: false })
+      .then(() => Renting.updateDraftRentings(now))
+      .then(([[renting, rentItem, feesItem]]) => {
+        expect(renting.bookingDate).toEqual(now);
+        expect(renting.price).not.toEqual(56);
+        expect(renting.serviceFees).toEqual(3000);
+        expect(rentItem.unitPrice).not.toEqual(12);
+        expect(feesItem.unitPrice).not.toEqual(34);
+
+        return true;
+      })
+    );
   });
 
   describe('hooks', () => {
@@ -394,8 +345,8 @@ describe('Renting', () => {
     });
 
     describe('beforeCreate', () => {
-      it('should calculate renting price and fees when they\'re both 0', () => {
-        return fixtures((u) => ({
+      it('should calculate renting price and fees when they\'re both 0', () =>
+        fixtures((u) => ({
           Client: [{
             id: u.id('client'),
             firstName: 'John',
@@ -430,7 +381,7 @@ describe('Renting', () => {
 
           return true;
         })
-      });
+      );
     });
 
     describe('afterCreate', () => {
@@ -521,7 +472,7 @@ describe('Renting', () => {
         .tap(({ instances: { renting } }) => renting.update({ status: 'cancelled' }))
         .then(() => Promise.delay(200))
         .then(() => {
-          expect(mock).toHaveBeenCalledWith(true)
+          expect(mock).toHaveBeenCalledWith(true);
 
           Renting.handleAfterUpdate = handleAfterUpdate;
 

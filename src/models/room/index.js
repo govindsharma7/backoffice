@@ -134,15 +134,16 @@ Room.prototype.getCalculatedProps = function(now = new Date()) {
     now
   );
 };
-Room.getCalculatedProps = function(basePrice, roomCount, now = new Date()) {
-  return Promise.all([
-      Utils.getPeriodCoef(now),
-      Utils.getServiceFees(roomCount),
-    ])
-    .then(([periodCoef, serviceFees]) => ({
-      periodPrice: Utils.getPeriodPrice( basePrice, periodCoef, serviceFees ),
-      serviceFees,
-    }));
+Room.getCalculatedProps = async function(basePrice, roomCount, now = new Date()) {
+  const [periodCoef, serviceFees] = await Promise.all([
+    Utils.getPeriodCoef(now),
+    Utils.getServiceFees(roomCount),
+  ]);
+
+  return {
+    periodPrice: Utils.getPeriodPrice( basePrice, periodCoef, serviceFees ),
+    serviceFees,
+  };
 };
 
 Room.prototype.checkAvailability = function(args) {
@@ -173,16 +174,15 @@ Room.getEarliestAvailability = function({ Rentings = required() }, now = new Dat
   return Promise.resolve( checkoutDate ? D.max(availabilityDate, now) : false );
 };
 
-Room.prototype.createMaintenancePeriod = function(args) {
-  const {from, to} = args;
-
+// Make a room unavailable for a period of time (from and to included)
+Room.prototype.createMaintenancePeriod = function({ from, to }) {
   return models.Renting
     .create({
       bookingDate: from,
       status: 'active',
       ClientId: 'maintenance',
       RoomId: this.id,
-      Events: [].concat(to && {
+      Events: to ? [{
         startDate: to,
         endDate: to,
         eventable: 'Renting',
@@ -193,8 +193,7 @@ Room.prototype.createMaintenancePeriod = function(args) {
           taxonomy: 'event-category',
           termable: 'Event',
         }],
-      })
-      .filter(Boolean),
+      }] : [],
     }, {
     include: [models.Event, models.Term],
   });

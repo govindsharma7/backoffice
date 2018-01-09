@@ -1,3 +1,4 @@
+const D     = require('date-fns');
 const Utils = require('../../src/utils');
 
 describe('Utils', () => {
@@ -82,6 +83,107 @@ describe('Utils', () => {
         B
         C
       `)).toEqual('A B C');
+    });
+  });
+
+  describe('.prorate()', () => {
+    const price = 20000;
+    const serviceFees = 3000;
+
+    test('it calculates the prorata for the "booking month"', () => {
+      const actual = Utils.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-20'),
+        checkoutDate: null,
+        date: D.parse('2015-01 Z'),
+      });
+      const expected = {
+        price: Utils.roundBy100(price / 31 * (31 - (20 - 1))),
+        serviceFees: Utils.roundBy100(serviceFees / 31 * (31 - (20 - 1))),
+      };
+
+      return expect(actual).toEqual(expected);
+    });
+
+    test('it calculates the prorata for "checkout month"', () => {
+      const actual = Utils.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-20'),
+        checkoutDate: D.parse('2015-02-10'),
+        date: D.parse('2015-02 Z'),
+      });
+      const expected = {
+        price: Utils.roundBy100(price / 28 * 10),
+        serviceFees: Utils.roundBy100(serviceFees / 28 * 10),
+      };
+
+      return expect(actual).toEqual(expected);
+    });
+
+    test('it calculates the prorata for "booking+checkout month"', () => {
+      const actual = Utils.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-03-03'),
+        checkoutDate: D.parse('2015-03-28'),
+        date: D.parse('2015-03 Z'),
+      });
+      const expected = {
+        price: Utils.roundBy100(price / 31 * (28 - 2)),
+        serviceFees: Utils.roundBy100(serviceFees / 31 * (28 - 2)),
+      };
+
+      return expect(actual).toEqual(expected);
+    });
+
+    test('it bills a full month when checkout is the last day of the month', () => {
+      const actual = Utils.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-01'),
+        checkoutDate: D.parse('2015-03-31'),
+        date: D.parse('2015-03 Z'),
+      });
+      const expected = {
+        price: Utils.roundBy100(price),
+        serviceFees: Utils.roundBy100(serviceFees),
+      };
+
+      return expect(actual).toEqual(expected);
+    });
+
+    test('it bills a single day when checkout is the first day of the month', () => {
+      const actual = Utils.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-01'),
+        checkoutDate: D.parse('2015-03-01'),
+        date: D.parse('2015-03 Z'),
+      });
+      const expected = {
+        price: Utils.roundBy100(price / 31),
+        serviceFees: Utils.roundBy100(serviceFees / 31),
+      };
+
+      return expect(actual).toEqual(expected);
+    });
+
+    test('it bills a single day when booking is the last day of the month', () => {
+      const actual = Utils.prorate({
+        price,
+        serviceFees,
+        bookingDate: D.parse('2015-01-31'),
+        checkoutDate: null,
+        date: D.parse('2015-01 Z'),
+      });
+      const expected = {
+        price: Utils.roundBy100(price / 31),
+        serviceFees: Utils.roundBy100(serviceFees / 31),
+      };
+
+      return expect(actual).toEqual(expected);
     });
   });
 });
