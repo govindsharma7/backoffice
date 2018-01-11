@@ -1,17 +1,20 @@
-const Promise           = require('bluebird');
-const uuid              = require('uuid/v4');
-const { DataTypes }     = require('sequelize');
-const D                 = require('date-fns');
-const { TRASH_SCOPES }  = require('../../const');
-const payline           = require('../../vendor/payline');
-const Sendinblue        = require('../../vendor/sendinblue');
-const { required }      = require('../../utils');
-const sequelize         = require('../sequelize');
-const models            = require('../models'); //!\ Destructuring forbidden /!\
-const collection        = require('./collection');
-const routes            = require('./routes');
-const hooks             = require('./hooks');
+const Promise               = require('bluebird');
+const uuid                  = require('uuid/v4');
+const { DataTypes }         = require('sequelize');
+const D                     = require('date-fns');
+const padStart              = require('lodash/padStart');
+const { TRASH_SCOPES }      = require('../../const');
+const payline               = require('../../vendor/payline');
+const Sendinblue            = require('../../vendor/sendinblue');
+const { required, CNError } = require('../../utils');
+const Utils                 = require('../../utils');
+const sequelize             = require('../sequelize');
+const models                = require('../models'); //!\ Destructuring forbidden /!\
+const collection            = require('./collection');
+const routes                = require('./routes');
+const hooks                 = require('./hooks');
 
+const _ = { padStart };
 
 const Order = sequelize.define('Order', {
   id: {
@@ -179,40 +182,39 @@ Order.associate = (models) => {
   });
 };
 
-Order.prototype.getTotalPaidAndRefund = function() {
-  const option = { paranoid: this.deletedAt != null };
+Order.prototype.getTotalPaidAndRefund = async function() {
+  const options = { paranoid: this.deletedAt != null };
+  const order = await Order.scope('totalPaidRefund').findById(this.id, options);
 
-  return Order.scope('totalPaidRefund')
-    .findById(this.id, option)
-    .then((order) => ({
-      totalPaid: order.get('totalPaid'),
-      totalRefund: order.get('totalRefund'),
-    }));
+  return {
+    totalPaid: order.get('totalPaid'),
+    totalRefund: order.get('totalRefund'),
+  };
 };
 
-Order.prototype.getAmount = function() {
+Order.prototype.getAmount = async function() {
   const option = { paranoid: this.deletedAt != null };
+  const order = await Order.scope('amount').findById(this.id, option);
 
-  return Order.scope('amount')
-    .findById(this.id, option)
-    .then((order) => order.get('amount'));
+  return order.get('amount');
 };
 // Return all calculated props (amount, totalPaid, balance)
-Order.prototype.getCalculatedProps = function() {
-  return Promise.all([
-      this.getTotalPaidAndRefund(),
-      this.getAmount(),
-    ])
-    .then(([{totalPaid, totalRefund}, amount]) => ({
-      amount,
-      totalPaid,
-      totalRefund,
-      balance: totalPaid - amount - totalRefund,
-    }));
+Order.prototype.getCalculatedProps = async function() {
+  const [{totalPaid, totalRefund}, amount] = await Promise.all([
+    this.getTotalPaidAndRefund(),
+    this.getAmount(),
+  ]);
+
+  return {
+    amount,
+    totalPaid,
+    totalRefund,
+    balance: totalPaid - amount - totalRefund,
+  };
 };
 
 Order.prototype.destroyOrCancel = function() {
-  Order.destroyOrCancel({ order: this });
+  return Order.destroyOrCancel({ order: this });
 };
 Order.destroyOrCancel = function({ order = required() }) {
   if ( order.status === 'cancelled' || order.deletedAt ) {
@@ -297,53 +299,63 @@ Order.pickReceiptNumber = function({ order = required(), transaction }) {
 Order.prototype.pay = function(args) {
   return Order.pay(Object.assign({ order: this }, args));
 };
-Order.pay = function({ order = required(), balance = required(), card = required() }) {
+Order.pay = async function(args) {
+  const { order = required(), balance = required(), card = required() } = args;
   const {
     cardNumber: number,
     holderName: holder,
     cvv: cvx,
-    cardType: type,
-    expirationDate,
+    expiryYear,
+    expiryMonth,
   } = card;
+  const expirationDate = _.padStart(`${expiryMonth}${expiryYear}`, 4, '0');
+  const type = Utils.getCardType(number);
+  let purchase;
 
-  return Promise.resolve()
-    .then(() => {
-      if ( !type ) {
-        throw new Error('Invalid Card Type');
-      }
+  try {
+    if ( !type ) {
+      throw new CNError('Invalid Card Type', {
+        code: 'payment.invalidCardType',
+      });
+    }
 
-      if ( order.status === 'cancelled' ) {
-        throw new Error(`Order "${order.id}" has been cancelled`);
-      }
+    if ( order.status === 'cancelled' ) {
+      throw new CNError(`Order ${order.id} has been cancelled`, {
+        code: 'payment.orderCancelled',
+      });
+    }
 
-      if ( balance >= 0 ) {
-        throw new Error('Order is already fully paid.');
-      }
+    if ( balance >= 0 ) {
+      throw new CNError(`Order ${order.id} is already fully paid`, {
+        code: 'payment.orderPaid',
+      });
+    }
 
-      return payline.doPurchase(
-        uuid(),
-        {
-          number,
-          type,
-          expirationDate,
-          holder,
-          cvx,
-        },
-        -balance
-      );
-    })
-    .tap(({ transactionId }) => models.Payment.create({
-      type: 'card',
-      amount: -balance,
-      paylineId: transactionId,
-      OrderId: order.id,
-    }))
-    .tapCatch((error) => models.Metadata.create({
+    purchase = await payline.doPurchase(
+      uuid(),
+      { number, type, expirationDate, holder, cvx },
+      -balance
+    );
+  }
+  catch (error) {
+    await models.Metadata.create({
       name: 'paymentError',
       value: JSON.stringify(error),
       MetadatableId: order.id,
       metadatable: 'Order',
-    }));
+    });
+
+    throw error;
+  }
+
+  await models.Payment.create({
+    type: 'card',
+    amount: -balance,
+    paylineId: purchase.transactionId,
+    OrderId: order.id,
+  });
+
+  return purchase;
 };
 
 Order.prototype.sendPaymentRequest = function(args) {

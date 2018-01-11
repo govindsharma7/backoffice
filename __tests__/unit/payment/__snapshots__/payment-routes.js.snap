@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Payment routes .handleCreatePaymentRoute should throw if the order balance does't match the request one 1`] = `"Balance received doesn't match order balance"`;
+
+exports[`Payment routes .handleCreatePaymentRoute should throw if the order isn't found 1`] = `"Order testOrderId not found"`;
+
+exports[`Payment routes .handleCreatePaymentRoute should throw if the room is no longer available 1`] = `"Room testRoomId is no longer available"`;

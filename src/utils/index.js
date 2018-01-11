@@ -2,6 +2,7 @@ const stripIndent                  = require('strip-indent');
 const addInternalRelationshipRoute = require('./addInternalRelationshipRoute');
 const addRestoreAndDestroyRoutes   = require('./addRestoreAndDestroyRoutes');
 const buildPackItem                = require('./buildPackItem');
+const CNError                      = require('./cnerror');
 const foundOrCreatedSuccessHandler = require('./foundOrCreatedSuccessHandler');
 const generateGaleryFields         = require('./generateGaleryFields');
 const generateFeaturesFields       = require('./generateFeaturesFields');
@@ -42,6 +43,7 @@ module.exports = {
   addInternalRelationshipRoute,
   addRestoreAndDestroyRoutes,
   buildPackItem,
+  CNError,
   createdSuccessHandler,
   foundOrCreatedSuccessHandler,
   generateGaleryFields,

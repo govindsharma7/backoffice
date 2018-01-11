@@ -61,7 +61,7 @@ module.exports = function(app) {
     case 'updateDraftRentings':
       rentings = await models.Renting.updateDraftRentings();
 
-      await sendinblue.sendAdminNotif(`${rentings.length} have been updated.`);
+      await sendinblue.sendAdminNotif(`${rentings.length} rentings have been updated.`);
       break;
 
     default:

@@ -91,52 +91,58 @@ describe('Room', () => {
     const pastDate = D.parse('2017-02-02');
 
     test('no Rentings == now', () => Room.getEarliestAvailability({
-        Rentings: [],
-      }, now)
+        rentings: [],
+        now,
+      })
       .then((date) => expect(date).toBe(now))
     );
 
     test('past bookingDate + no checkoutDate == !isAvailable', () =>
       Room.getEarliestAvailability({
-        Rentings: [{ bookingDate: D.parse('2017-01-01 Z'), get: getNull }],
-      }, now)
+        rentings: [{ bookingDate: D.parse('2017-01-01 Z'), get: getNull }],
+        now,
+      })
       .then((date) => expect(date).toEqual(false))
     );
 
     test('future bookingDate + no checkoutDate == !isAvailable', () =>
       Room.getEarliestAvailability({
-        Rentings: [{ bookingDate: D.parse('2017-12-12 Z'), get: getNull }],
-      }, now)
+        rentings: [{ bookingDate: D.parse('2017-12-12 Z'), get: getNull }],
+        now,
+      })
       .then((date) => expect(date).toEqual(false))
     );
 
     test('past bookingDate + future checkoutDate == checkoutDate + 1 day', () =>
       Room.getEarliestAvailability({
-        Rentings: [{
+        rentings: [{
           bookingDate: D.parse('2017-01-01 Z'),
           get: () => futureDate,
         }],
-      }, now)
+        now,
+      })
       .then((date) => expect(date).toEqual(D.addDays(futureDate, 1)))
     );
 
     test('past bookingDate + future checkoutDate (Sat) == checkoutDate + 2 days', () =>
       Room.getEarliestAvailability({
-        Rentings: [{
+        rentings: [{
           bookingDate: D.parse('2017-01-01 Z'),
           get: () => futureSat,
         }],
-      }, now)
+        now,
+      })
       .then((date) => expect(date).toEqual(D.addDays(futureSat, 2)))
     );
 
     test('past bookingDate + past checkoutDate == now', () =>
       Room.getEarliestAvailability({
-        Rentings: [{
+        rentings: [{
           bookingDate: D.parse('2017-01-01 Z'),
           get: () => pastDate,
         }],
-      }, now)
+        now,
+      })
       .then((date) => expect(date).toEqual(now))
     );
   });

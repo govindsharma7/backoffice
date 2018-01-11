@@ -163,6 +163,8 @@ module.exports = new Promise((resolve) => {
       console.error(err.stack);
     }
 
-    res.status(400).send({ error: message });
+    res
+      .status(err.status || 400)
+      .send({ error: message, code: err.code || 'UNEXPECTED' });
   });
 });

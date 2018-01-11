@@ -17,7 +17,7 @@ const Credit = sequelize.define('Credit', {
   },
   reason: {
     type:                     DataTypes.STRING,
-    require: false,
+    required: false,
   },
   paylineId: {
     type:                     DataTypes.STRING,

@@ -1,12 +1,12 @@
-jest.mock('../../src/vendor/sendinblue');
-jest.mock('../../src/vendor/zapier');
-jest.mock('../../src/utils');
+jest.mock('../../../src/vendor/sendinblue');
+jest.mock('../../../src/vendor/zapier');
+jest.mock('../../../src/utils');
 
 const Promise               = require('bluebird');
-const fixtures              = require('../../__fixtures__');
-const models                = require('../../src/models');
-const Sendinblue            = require('../../src/vendor/sendinblue');
-const Zapier                = require('../../src/vendor/zapier');
+const fixtures              = require('../../../__fixtures__');
+const models                = require('../../../src/models');
+const Sendinblue            = require('../../../src/vendor/sendinblue');
+const Zapier                = require('../../../src/vendor/zapier');
 
 const { Order } = models;
 

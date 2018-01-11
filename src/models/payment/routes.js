@@ -1,77 +1,87 @@
-const Liana          = require('forest-express-sequelize');
-const Promise        = require('bluebird');
-const padStart       = require('lodash/padStart');
-const Utils          = require('../../utils');
-const makePublic     = require('../../middlewares/makePublic');
+const Liana           = require('forest-express-sequelize');
+const { wrap }        = require('express-promise-wrap');
+const pick            = require('lodash/pick');
+const { CNError }     = require('../../utils');
+const Utils           = require('../../utils');
+const makePublic      = require('../../middlewares/makePublic');
 
-const _ = { padStart };
+const _ = { pick };
 
-module.exports = function(app, models, Payment) {
+module.exports = function(app, { Payment, Room, Order, OrderItem, Renting }) {
   const LEA = Liana.ensureAuthenticated;
 
-  app.post('/forest/actions/refund', LEA, (req, res) => {
-    var {values, ids} = req.body.data.attributes;
+  app.post('/forest/actions/refund', LEA, wrap(async (req, res) => {
+    const { values, ids } = req.body.data.attributes;
 
-    Promise.resolve()
-      .then(() => {
-        if (!values.amount) {
-          throw new Error('Please specify an amount');
-        }
-        if (ids.length > 1) {
-          throw new Error('Can\'t refund multiple payments');
-        }
+    if (!values.amount) {
+      throw new CNError('Please specify an amount');
+    }
+    if (ids.length > 1) {
+      throw new CNError('Can\'t refund multiple payments');
+    }
 
-        values.amount *= 100;
+    values.amount *= 100;
 
-        return Payment.refund(ids[0], values);
-      })
-      .then(() => {
-        return res.send({success: 'Payment Successfully Refund'});
-      })
-      .catch(Utils.logAndSend(res));
-  });
+    await Payment.refund(ids[0], values);
 
-  app.post('/forest/actions/public/create-payment', makePublic, (req, res) => {
-    const {
-      cardNumber,
-      holderName,
-      expiryMonth,
-      expiryYear,
-      cvv,
-      orderId,
-    } = req.body;
-    const cardType = Utils.getCardType(cardNumber);
-    const expirationDate = _.padStart(`${expiryMonth}${expiryYear}`, 4, '0');
+    return res.send({success: 'Payment Successfully Refund'});
+  }));
 
-    return models.Order.findOne({
-        where: { id: orderId },
-        include: [{ model: models.OrderItem }],
-      })
-      .then((order) => {
-        if ( !order ) {
-          throw new Error(`Order "${orderId}" not found`);
-        }
-
-        return Promise.all([order, order.getCalculatedProps()]);
-      })
-      .then(([order, { balance }]) => order.pay({
-        balance,
-        card: {
-          cardNumber,
-          holderName,
-          expirationDate,
-          cvv,
-          cardType,
-        },
-      }))
-      .then(({ transactionId }) => res.send({ paymentId: transactionId }))
-      .catch((error) => {
-        console.error(error);
-        return res.status(400).send({
-          error: error.longMessage || error.shortMessage || error.message,
-        });
+  Payment.handleCreatePaymentRoute = async ({ body, body: { orderId } }, res) => {
+    const card =
+      _.pick(body, 'cardNumber,holderName,expiryMonth,expiryYear,cvv'.split(','));
+    const order =
+      await Order.findById(orderId, {
+        include: [{
+          model: OrderItem,
+          include: [{
+            model: Renting,
+            required: false,
+            attributes: ['RoomId'],
+          }],
+        }],
       });
-  });
+
+    if ( !order ) {
+      throw new CNError(`Order ${orderId} not found`, {
+        code: 'payment.orderNotFound',
+      });
+    }
+
+    // Reject payments associated with a room completely unavailable
+    const packItem =
+      order.OrderItems.find(({ ProductId }) => /-pack$/.test(ProductId));
+
+    if ( packItem ) {
+      const roomId = packItem.Renting.RoomId;
+      const { Rentings: rentings } =
+        await Room.scope('availableAt').findById(roomId);
+      const earliestAvailability =
+        await Room.getEarliestAvailability({ rentings });
+
+      if ( earliestAvailability === false ) {
+        throw new CNError(`Room ${roomId} is no longer available`, {
+          code: 'payment.roomUnavailable',
+        });
+      }
+    }
+
+    const { balance } = await order.getCalculatedProps();
+
+    // Always make sure the balance displayed on the client side is up-to-date
+    if ( balance !== body.balance ) {
+      throw new CNError('Balance received doesn\'t match order balance', {
+        code: 'payment.balanceMismatch',
+      });
+    }
+
+    const { transactionId } = await order.pay({ balance, card });
+
+    return res.send({ paymentId: transactionId });
+  };
+  app.post('/forest/actions/public/create-payment', makePublic, wrap(
+    Payment.handleCreatePaymentRoute
+  ));
 
   Utils.addRestoreAndDestroyRoutes(app, Payment);
 };

@@ -1,11 +1,11 @@
-const Promise         = require('bluebird');
-const Liana           = require('forest-express-sequelize');
-const { wrap }        = require('express-promise-wrap');
-const capitalize      = require('lodash/capitalize');
-const pick            = require('lodash/pick');
-const Webmerge        = require('../../vendor/webmerge');
-const Utils           = require('../../utils');
-const makePublic      = require('../../middlewares/makePublic');
+const Promise           = require('bluebird');
+const Liana             = require('forest-express-sequelize');
+const { wrap, CNError } = require('express-promise-wrap');
+const capitalize        = require('lodash/capitalize');
+const pick              = require('lodash/pick');
+const Webmerge          = require('../../vendor/webmerge');
+const Utils             = require('../../utils');
+const makePublic        = require('../../middlewares/makePublic');
 
 const _ = { capitalize, pick };
 
@@ -197,19 +197,24 @@ module.exports = function(app, { Renting, Client, Room }) {
 
   app.post(createClientRoute, makePublic, wrap(async (req, res) => {
     const { roomId, pack: packLevel } = req.body;
-    // TODO: following line to maintain backaward compat. Get rid of it in a bit
+    // TODO: following line to maintain backward compat. Get rid of it in a bit
     const booking = req.body.booking || req.body.client;
     const room = await Room.scope('apartment+availableAt').findById(roomId);
     const { Apartment: apartment } = room || {};
 
     if ( !room ) {
-      throw new Error(`Room "${roomId}" not found`);
+      throw new CNError(`Room ${roomId} not found`, {
+        code: 'renting.roomNotFound',
+      });
     }
 
-    const bookingDate = await room.getEarliestAvailability();
+    const bookingDate =
+      await Room.getEarliestAvailability({ rentings: room.Rentings });
 
     if ( !bookingDate ) {
-      throw new Error(`Room "${roomId}" is no longer available`);
+      throw new CNError(`Room ${roomId} is no longer available`, {
+        code: 'renting.roomUnavailable',
+      });
     }
 
     const [{ periodPrice, serviceFees }, [client]] = await Promise.all([

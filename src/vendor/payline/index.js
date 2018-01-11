@@ -1,7 +1,8 @@
-const path    = require('path');
-const fs      = require('fs');
-const Payline = require('payline');
-const config  = require('../../config');
+const path        = require('path');
+const fs          = require('fs');
+const Payline     = require('payline');
+const config      = require('../../config');
+const { CNError } = require('../../utils');
 
 const wsdlPath = path.resolve(__dirname, 'WebPaymentAPI-v4-production.wsdl');
 
@@ -19,15 +20,50 @@ const payline = new Payline(
   config.NODE_ENV === 'production' ? wsdlPath : undefined
 );
 
-payline.pingService = function() {
-  return payline
-    .getWallet(123456)
-    .catch((error) => {
-      if ( error.code !== '02532' ) {
-        throw error;
-      }
+function pingService() {
+  try {
+    return payline.getWallet(123456);
+  }
+  catch (error) {
+    if ( error.code !== '02532' ) {
       console.error(error);
-    });
+      throw error;
+    }
+
+    return true;
+  }
+}
+
+const errorCodesMap = {
+  '01100': 'payment.doNotHonor',
+  '01101': 'payment.cardExpired',
+  '01103': 'payment.unathorized',
+  '01108': 'payment.conditions',
+  '01111': 'payment.invalidCardNumber',
+  '01113': 'payment.expensesNotAccepted',
+  '01117': 'payment.invalidPIN',
+  '01118': 'payment.cardNotRegistered',
 };
 
-module.exports = payline;
+async function doPurchase(id, card, amount) {
+  try {
+    return await payline.doPurchase(id, card, amount);
+  }
+  // Convert a payline error to a CNError
+  catch (error) {
+    throw new CNError(error.longMessage, {
+      code: errorCodesMap[error.code] || 'payment.unexpected',
+    });
+  }
+}
+
+module.exports = {
+  payline,
+  pingService,
+  doPurchase,
+  // TODO: translate error codes for these methods?
+  doCredit: (creditId, card, amount, currency) =>
+    payline.doCredit(creditId, card, amount, currency),
+  doRefund: (paymentId, amount) =>
+    payline.doRefund(paymentId, amount),
+};

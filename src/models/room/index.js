@@ -159,15 +159,15 @@ Room.checkAvailability = function({ rentings = required(), date = new Date() }) 
   return Promise.resolve( checkoutDate && checkoutDate <= date ? true : false );
 };
 
-Room.prototype.getEarliestAvailability = function(now = new Date()) {
-  return Room.getEarliestAvailability(this, now);
+Room.prototype.getEarliestAvailability = function(args) {
+  return Room.getEarliestAvailability(args);
 };
-Room.getEarliestAvailability = function({ Rentings = required() }, now = new Date()) {
-  if ( Rentings.length === 0 ) {
+Room.getEarliestAvailability = function({ rentings = required(), now = new Date() }) {
+  if ( rentings.length === 0 ) {
     return Promise.resolve(now);
   }
 
-  const checkoutDate = models.Renting.getLatest(Rentings).get('checkoutDate');
+  const checkoutDate = models.Renting.getLatest(rentings).get('checkoutDate');
   const daysToAdd = checkoutDate && ( D.isSaturday(checkoutDate) ? 2 : 1 );
   const availabilityDate = checkoutDate && D.addDays(checkoutDate, daysToAdd);
 
