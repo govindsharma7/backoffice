@@ -69,7 +69,8 @@ module.exports = function(app, { Payment, Room, Order, OrderItem, Renting }) {
     const { balance } = await order.getCalculatedProps();
 
     // Always make sure the balance displayed on the client side is up-to-date
-    if ( balance !== body.balance ) {
+    // TODO the first assertion is for backward compat. Remove it in a bit.
+    if ( 'balance' in body && balance !== body.balance ) {
       throw new CNError('Balance received doesn\'t match order balance', {
         code: 'payment.balanceMismatch',
       });

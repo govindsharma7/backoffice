@@ -311,9 +311,7 @@ module.exports = function(app, { Renting, Client, Room }) {
 
         return Renting.findById(ids[0]);
       })
-      .then((renting) => {
-        return renting.futureCredit(values);
-      })
+      .then((renting) => renting.futureCredit(values))
       .then(Utils.createdSuccessHandler(res, 'Future credit'));
   }));
 
@@ -332,9 +330,7 @@ module.exports = function(app, { Renting, Client, Room }) {
 
         return Renting.findById(ids[0]);
       })
-      .then((renting) => {
-        return renting.futureDebit(values);
-      })
+      .then((renting) => renting.futureDebit(values))
       .then(Utils.createdSuccessHandler(res, 'Future debit'));
   }));
 
