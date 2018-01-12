@@ -36,13 +36,16 @@ function pingService() {
 
 const errorCodesMap = {
   '01100': 'payment.doNotHonor',
+  '01200': 'payment.doNotHonor',
   '01101': 'payment.cardExpired',
-  '01103': 'payment.unathorized',
+  '01201': 'payment.cardExpired',
+  '01103': 'payment.unauthorized',
   '01108': 'payment.conditions',
   '01111': 'payment.invalidCardNumber',
   '01113': 'payment.expensesNotAccepted',
-  '01117': 'payment.invalidPIN',
   '01118': 'payment.cardNotRegistered',
+  '01130': 'payment.invalidCVV',
+  '01206': 'payment.tooManyAttempts',
 };
 
 async function doPurchase(id, card, amount) {
