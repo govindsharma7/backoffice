@@ -504,7 +504,7 @@ Client.createAndSendRentInvoices = function(month = D.addMonths(Date.now(), 1)) 
       { method: ['rentOrdersFor', month] },
       'uncashedDepositCount'
     )
-    .findAll({ where: { status: 'active'}})
+    .findAll({ where: { status: 'active', id: { $not: 'maintenance' } }})
     // Filter-out clients who already have an order for this month
     .then((clients) => clients.filter((client) => client.Orders.length === 0))
     .then((clients) => Promise.map(clients, (client) =>

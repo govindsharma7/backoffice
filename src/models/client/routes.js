@@ -44,7 +44,7 @@ module.exports = (app, models, Client) => {
     const {values, ids} = req.body.data.attributes;
     const month = values.for === 'current month' ?
       D.startOfMonth(new Date()) :
-      D.addMonths(new Date(), 1);
+      D.addMonths(new Date(), values.for.slice(-1));
 
     Promise.resolve()
       .then(() => {

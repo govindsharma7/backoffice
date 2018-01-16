@@ -147,7 +147,7 @@ module.exports = function({ Client }) {
       fields: [{
         field: 'for',
         type: 'Enum',
-        enums: ['current month', 'next month'],
+        enums: ['current month', 'month +1', 'month +2', 'month +3'],
       }],
     }, {
       name: 'Set Rent Payment Delay',
