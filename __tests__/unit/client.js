@@ -1,8 +1,10 @@
 const Promise          = require('bluebird');
 const D                = require('date-fns');
 const models           = require('../../src/models');
-const fixtures         = require('../../__fixtures__/client');
+const clientFixtures   = require('../../__fixtures__/client');
+const fixtures         = require('../../__fixtures__');
 
+const { Client } = models;
 
 let client;
 let client2;
@@ -16,7 +18,7 @@ let u;
 
 describe('Client', () => {
   beforeAll(() => {
-    return fixtures()
+    return clientFixtures()
       .then(({instances, unique}) => {
         return (
           client = instances['client-1'],
@@ -31,20 +33,60 @@ describe('Client', () => {
   });
 
   describe('Scopes', () => {
-    test('rentOrders scope find orders where orderItem ProductId equals `rent`', () => {
-      return models.Client.scope('rentOrders')
-        .findById(client2.id)
-        .then((client) => {
-          client.Orders.map((order) => {
-            return order.OrderItems.map((orderitem) => {
-              return expect(orderitem.ProductId).toEqual('rent');
-            });
-          });
-          return expect(client.Orders.length).toEqual(3);
-      });
+    it('rentOrders scope find orders where orderItem is a `rent`', async() => {
+      const { unique: u } = await fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Order: [{
+          id: u.id('order1'),
+          label: 'June Invoice',
+          ClientId: u.id('client'),
+          dueDate: D.parse('2016-01-01 Z'),
+        }, {
+          id: u.id('order2'),
+          label: 'March Invoice',
+          ClientId: u.id('client'),
+          dueDate: D.parse('2017-07-01 Z'),
+        }, {
+          id: u.id('order3'),
+          label: 'July Invoice',
+          ClientId: u.id('client'),
+          dueDate: D.parse('2017-03-21 Z'),
+        }],
+        OrderItem: [{
+          id: u.id('orderitem1'),
+          label: 'Late Fees',
+          OrderId: u.id('order1'),
+          ProductId: 'late-fees',
+        }, {
+          id: u.id('orderitem2'),
+          label: 'Rent',
+          OrderId: u.id('order1'),
+          ProductId: 'rent',
+        }, {
+          id: u.id('orderitem3'),
+          label: 'Rent',
+          OrderId: u.id('order2'),
+          ProductId: 'rent',
+        }],
+      }))();
+
+      const client = await Client.scope('rentOrders').findById(u.id('client'));
+
+      client.Orders.forEach((order) =>
+        order.OrderItems.map((orderitem) =>
+          expect(orderitem.ProductId).toEqual('rent')
+        )
+      );
+
+      return expect(client.Orders.length).toEqual(2);
     });
 
-    test('rentOrders scope return no Order as there is no `rent` orderItem', () => {
+    it('rentOrders scope return no Order as there is no `rent` orderItem', () => {
       return models.Client.scope('rentOrders')
         .findById(client3.id)
         .then((client) => {
@@ -52,7 +94,7 @@ describe('Client', () => {
       });
     });
 
-    test('roomSwitchCount scope counts the time a client switched room', () => {
+    it('roomSwitchCount scope counts the time a client switched room', () => {
       return models.Client.scope('roomSwitchCount')
         .findById(client.id)
         .then((client) => {
@@ -60,7 +102,7 @@ describe('Client', () => {
         });
     });
 
-    test('uncashedDepositCount count rentings with "do-not-cash" option', () => {
+    it('uncashedDepositCount count rentings with "do-not-cash" option', () => {
       return models.Client.scope('uncashedDepositCount')
         .findById(client.id)
         .then((client) => {
@@ -68,7 +110,7 @@ describe('Client', () => {
         });
     });
 
-    test('currentApartment scope should return current client of a Room', () => {
+    it('currentApartment scope should return current client of a Room', () => {
       return models.Client.scope('currentApartment')
         .findById(client.id)
         .then((client) => {
@@ -76,7 +118,7 @@ describe('Client', () => {
         });
     });
 
-    test('currentApartment scope should return current clients of an Apartment', () => {
+    it('currentApartment scope should return current clients of an Apartment', () => {
       return models.Client.scope('currentApartment')
         .findAll({
           where: {
@@ -89,7 +131,7 @@ describe('Client', () => {
          return expect(clients[0].Rentings[0].Room.id).toEqual(u.id('room-2'));
         });
     });
-    test('currentApartment scope return no Renting as client already checkout', () => {
+    it('currentApartment scope return no Renting as client already checkout', () => {
       return models.Client.scope('currentApartment')
         .findById(client2.id)
         .then((client) => {
@@ -99,7 +141,7 @@ describe('Client', () => {
   });
 
   // describe('#getRentingOrdersFor()', () => {
-  //   test('it should find the renting order for a specific month', () => {
+  //   it('should find the renting order for a specific month', () => {
   //     return client.getRentingOrdersFor(D.parse('2016-01 Z'))
   //       .then((orders) => {
   //         return expect(orders[0].dueDate).toEqual('2016-01-01');
@@ -108,7 +150,7 @@ describe('Client', () => {
   // });
 
   describe('#getRentingsFor', () => {
-    test('it should find all rentings for a specific month', () => {
+    it('should find all rentings for a specific month', () => {
       return client.getRentingsFor(D.parse('2017-02 Z'))
         .then((rentings) => {
           expect(rentings.length).toEqual(2);
@@ -119,7 +161,7 @@ describe('Client', () => {
   });
 
   describe('#findOrCreateRentOrder', () => {
-    test('it should create an order with appropriate orderitems', () => {
+    it('should create an order with appropriate orderitems', () => {
       const _Renting = models.Renting.scope('room+apartment');
 
       return models.Client.scope('uncashedDepositCount', 'paymentDelay')
@@ -157,7 +199,7 @@ describe('Client', () => {
   });
 
   describe('#ninjaSerialize()', () => {
-    test('it should serialize the client for InvoiceNinja', () => {
+    it('should serialize the client for InvoiceNinja', () => {
       return client.ninjaSerialize()
         .then((obj) => {
           return expect(obj).toEqual({
@@ -173,7 +215,7 @@ describe('Client', () => {
   });
 
   describe('#applyLateFees()', () => {
-    test('it should create a draft order with late fees', () => {
+    it('should create a draft order with late fees', () => {
       const now = new Date();
 
       return models.Client
@@ -195,7 +237,7 @@ describe('Client', () => {
         });
     });
 
-    test('it shouldn\'t increment late fees as it has been update today', () => {
+    it('shouldn\'t increment late fees as has been update today', () => {
       const now = new Date();
 
       return models.Client
@@ -232,7 +274,7 @@ describe('Client', () => {
       models.Metadata.findOne = findOne;
     });
 
-    it('it fetches and parse the identity record of the client', () => {
+    it('fetches and parse the identity record of the client', () => {
       return models.Client.getIdentity({})
         .then((identity) => {
           return expect(identity).toEqual({
@@ -254,13 +296,13 @@ describe('Client', () => {
       },
     };
 
-    test('it generates a valid English description of the client', () => {
+    it('generates a valid English description of the client', () => {
       return expect(models.Client.getDescriptionEn(client)).toEqual(
         'Victor, 30 years old American young worker'
       );
     });
 
-    test('it generates a valid English description of the client', () => {
+    it('generates a valid English description of the client', () => {
       return expect(models.Client.getDescriptionFr(client)).toEqual(
         'Victor, jeune actif(ve) américain de 30 ans'
       );
@@ -268,7 +310,7 @@ describe('Client', () => {
   });
 
   // describe('.normalizeIdentityRecord', () => {
-  //   test('it adds nationality and translate country and nationality to FR', () => {
+  //   it('adds nationality and translate country and nationality to FR', () => {
   //     const input = {
   //       'q01_phoneNumber': { area: '+33', phone: '0671114171' },
   //       'q02_nationality': 'United States',
