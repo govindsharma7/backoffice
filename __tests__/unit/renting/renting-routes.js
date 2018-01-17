@@ -64,7 +64,7 @@ describe('Renting - Routes', () => {
       .then(async ({ unique: u }) => {
         const email = `john${Math.random().toString().slice(2)}@doe.fr`;
         const renting = await Renting.handleCreateClientAndRentingRoute({
-          pack: 'comfort-pack',
+          pack: 'comfort',
           booking: {
             email,
             firstName: 'John',
