@@ -4,7 +4,7 @@ const models                = require('../../../src/models');
 
 const { Payment, Order, Room } = models;
 
-describe('Payment routes', () => {
+describe('Payment - Routes', () => {
   // Initialize methods in route file
   Payment.routes(app, models);
 

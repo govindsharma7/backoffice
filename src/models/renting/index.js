@@ -66,7 +66,7 @@ const Renting = sequelize.define('Renting', {
     required: true,
     allowNull: false,
   },
-  comfortLevel: {
+  packLevel: {
     type:                     DataTypes.VIRTUAL,
   },
   discount: {
@@ -103,6 +103,11 @@ Renting.associate = (models) => {
     constraints: false,
     scope: { termable: 'Renting' },
   });
+  Renting.hasMany(models.Metadata, {
+    foreignKey: 'MetadatableId',
+    constraints: false,
+    scope: { metadatable: 'Renting' },
+  });
 
   // checkinDate, checkoutDate, checkinEvent, checkoutEvent scopes
   ['checkin', 'checkout'].forEach((type) => {
@@ -132,10 +137,10 @@ Renting.associate = (models) => {
     }],
   });
 
-  Renting.addScope('comfortLevel', {
+  Renting.addScope('packLevel', {
     attributes: { include: [[
       sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
-      'comfortLevel',
+      'packLevel',
     ]]},
     include: [{
       model: models.OrderItem,
@@ -349,7 +354,7 @@ Renting.prototype.findOrCreateDepositOrder = function({ apartment = required() }
       return Promise.all([
           Utils[`get${_.capitalize(type)}Price`](
             this.get(`${type}Date`),
-            this.get('comfortLevel'),
+            this.get('packLevel'),
             Apartment.addressCity),
           Utils.getLateNoticeFees(type, this.get(`${type}Date`)),
         ])
@@ -395,7 +400,7 @@ Renting.prototype.findOrCreateDepositOrder = function({ apartment = required() }
 Renting.prototype.createOrUpdateRefundEvent = function(date) {
   const {name} = this.Room;
   const {firstName, lastName} = this.Client;
-  const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.get('comfortLevel')]);
+  const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.get('packLevel')]);
   const category = 'refund-deposit';
 
   return sequelize.transaction((transaction) => {
@@ -483,17 +488,17 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
 });
 
 Renting.prototype.createRoomSwitchOrder = function({discount}) {
-  const comfortLevel = this.get('comfortLevel');
+  const packLevel = this.get('packLevel');
 
   return models.Client.scope('roomSwitchCount')
     .findById(this.ClientId)
     .then((client) =>
-      Utils.getRoomSwitchPrice( client.get('roomSwitchCount'), comfortLevel )
+      Utils.getRoomSwitchPrice( client.get('roomSwitchCount'), packLevel )
     )
     .then((price) => {
       const items = [
         price !== 0 && {
-          label: `Room switch ${comfortLevel}`,
+          label: `Room switch ${packLevel}`,
           unitPrice: price,
           ProductId: 'room-switch',
         },
@@ -509,7 +514,7 @@ Renting.prototype.createRoomSwitchOrder = function({discount}) {
         label: items.length > 0 ? 'Room switch' : 'Free Room switch',
         ClientId: this.ClientId,
         OrderItems: items.length > 0 ? items : [{
-          label: `Room switch ${comfortLevel})`,
+          label: `Room switch ${packLevel})`,
           unitPrice: 0,
           ProductId: 'room-switch',
         }],
@@ -586,7 +591,7 @@ Renting.prototype.handleEventUpdate = function(event, options) {
       return Promise.all([
           type !== 'refund-deposit' ? Utils[`getC${type.substr(1)}Price`](
             event.startDate,
-            this.getComfortLevel(),
+            this.get('packLevel'),
             this.Room.Apartment.addressCity) : 0,
           Orders && Orders.length ? Orders[0].id : null,
           Utils.getLateNoticeFees(type, event.startDate),

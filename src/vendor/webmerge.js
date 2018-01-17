@@ -23,7 +23,7 @@ function serializeLease(args) {
     room = required(),
     apartment = required(),
     identityMeta = required(),
-    comfortLevel = required(),
+    packLevel = required(),
     depositTerm,
     now = new Date(), // used for testing purpose
   } = args;
@@ -36,17 +36,17 @@ function serializeLease(args) {
     'l\'appartement entier' : `la chambre privée nº${room.reference.slice(-1)}`;
   const depositOption = (depositTerm && depositTerm.name === 'do-not-cash') ?
     'de non encaissement du chèque' : 'd\'encaissement du montant';
-  let packLevel;
+  let frPackLevel;
 
-  switch (comfortLevel) {
+  switch (packLevel) {
     case 'comfort':
-      packLevel = 'Confort';
+      frPackLevel = 'Confort';
       break;
     case 'privilege':
-      packLevel = 'Privilège';
+      frPackLevel = 'Privilège';
       break;
     default:
-      packLevel = 'Basique';
+      frPackLevel = 'Basique';
       break;
   }
 
@@ -63,7 +63,7 @@ function serializeLease(args) {
     serviceFees: renting.serviceFees / 100,
     deposit: DEPOSIT_PRICES[addressCity] / 100,
     depositOption,
-    packLevel,
+    packLevel: frPackLevel,
     roomNumber,
     roomFloorArea: room.floorArea,
     floorArea: apartment.floorArea,

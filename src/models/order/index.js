@@ -378,10 +378,6 @@ Order.sendPaymentRequest = function(args) {
     return Sendinblue.sendRentRequest({ order, amount, client });
   }
 
-  if ( OrderItems.some(({ ProductId }) => /-pack$/.test(ProductId)) ) {
-    return Sendinblue.sendHousingPackRequest({ order, amount, client });
-  }
-
   throw new Error('Payment request not implemented for this type of order');
 };
 

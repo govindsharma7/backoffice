@@ -10,8 +10,8 @@ const Zapier                = require('../../../src/vendor/zapier');
 
 const { Order } = models;
 
-describe('Payment', () => {
-  describe('hooks', () => {
+describe('Payment - Hooks', () => {
+  describe('afterCreate', () => {
     it('should send a payment confirmation after create', () => {
       const {
         pickReceiptNumber,
@@ -65,7 +65,9 @@ describe('Payment', () => {
         expect(payment.amount).toBe(instances['payment-0'].amount);
       });
     });
+  });
 
+  describe('beforeDelete, beforeUpdate', () => {
     it('should prevent non-manual payments to be updated or deleted', () =>
       fixtures((u) => ({
         Client: [{

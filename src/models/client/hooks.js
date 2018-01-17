@@ -8,21 +8,16 @@ module.exports = function({ Client }) {
    * Those hooks are used to update Invoiceninja records when clients are updated
    * in Forest.
    */
-  Client.hook('afterCreate', (client) => {
+  Client.handleAfterCreate = function (client) {
     if ( NODE_ENV === 'test' || client.id === 'maintenance' ) {
       return client;
     }
 
-    const promises = [
-      Sendinblue.createContact(client.email, { client }),
-    ];
-
-    if ( !client.ninjaId ) {
-      promises.push(client.ninjaCreate());
-    }
-
-    return Promise.all(promises);
-  });
+    return Sendinblue.createContact(client.email, { client });
+  };
+  Client.hook('afterCreate', (client) =>
+    Client.handleAfterCreate(client)
+  );
 
   Client.hook('afterUpdate', (client) => {
     if ( NODE_ENV === 'test' ) {

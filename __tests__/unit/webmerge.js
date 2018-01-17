@@ -51,7 +51,7 @@ describe('webmerge', () => {
           nationalityFr: 'américain',
         }),
       },
-      comfortLevel: 'basique',
+      packLevel: 'basique',
     };
     const now = new Date();
     const commonExpected = {
@@ -101,7 +101,7 @@ describe('webmerge', () => {
           taxonomy: 'deposit-option',
           name: 'do-not-cash',
         },
-        comfortLevel: 'privilege',
+        packLevel: 'privilege',
       });
       const expected = Object.assign({}, commonExpected, {
         packLevel: 'Privilège',

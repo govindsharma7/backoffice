@@ -1,8 +1,5 @@
 const { TRASH_SEGMENTS }  = require('../../const');
-const {
-  WEBSITE_URL,
-  INVOICENINJA_URL,
-}                         = require('../../config');
+const { WEBSITE_URL }     = require('../../config');
 const Utils               = require('../../utils');
 
 module.exports = function({ Order, Metadata, Payment }) {
@@ -58,16 +55,6 @@ module.exports = function({ Order, Metadata, Payment }) {
         }) : null;
       },
     }, {
-      field: 'ninjaInvoice',
-      type: 'String',
-      get(object) {
-        if (object.ninjaId !== null) {
-          return `${INVOICENINJA_URL}/invoices/${object.ninjaId}/edit`;
-        }
-
-        return null;
-      },
-    }, {
       field: 'Refunds',
       type: ['String'],
       reference: 'Credit.id',
@@ -82,9 +69,7 @@ module.exports = function({ Order, Metadata, Payment }) {
         .then((count) => count > 0 ? 'Sent' : 'pending');
       },
     }],
-    actions: [/*{
-      name: 'Generate Invoice',
-    }, */{
+    actions: [{
       name: 'Cancel Order',
     }, {
       name: 'Send Payment Request',

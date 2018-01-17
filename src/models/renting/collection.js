@@ -29,7 +29,7 @@ module.exports = function(models) {
       type: 'Enum',
       enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
       set(object, value) {
-        object.comfortLevel = value;
+        object.packLevel = value;
         return object;
       },
     }, {
@@ -52,7 +52,7 @@ module.exports = function(models) {
     }, {
       name: 'Create Pack Order',
       fields: [{
-        field: 'comfortLevel',
+        field: 'packLevel',
         type: 'Enum',
         enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
       }, {
@@ -64,7 +64,7 @@ module.exports = function(models) {
     }, {
       name: 'Create Quote Orders',
       fields: [{
-        field: 'comfortLevel',
+        field: 'packLevel',
         type: 'Enum',
         enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
       }, {

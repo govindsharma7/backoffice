@@ -64,5 +64,7 @@ module.exports = function({ Order, OrderItem, Client, Renting }) {
         ]);
       });
   };
-  Order.hook('afterUpdate', (order, opts) => Order.handleAfterUpdate(order, opts));
+  Order.hook('afterUpdate', (order, opts) =>
+    Order.handleAfterUpdate(order, opts)
+  );
 };

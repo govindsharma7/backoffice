@@ -1,7 +1,6 @@
 const Liana             = require('forest-express-sequelize');
 const Promise           = require('bluebird');
 const Chromeless        = require('../../vendor/chromeless');
-const Sendinblue        = require('../../vendor/sendinblue');
 const makePublic        = require('../../middlewares/makePublic');
 const Utils             = require('../../utils');
 
@@ -55,33 +54,6 @@ module.exports = (app, models, Order) => {
       .then(Utils.sentSuccessHandler(res, 'Payment Request'))
       .catch(Utils.logAndSend(res))
   );
-
-  app.post('/forest/actions/send-housing-pack-request', LEA, (req, res) => {
-    const { ids } = req.body.data.attributes;
-
-    Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t send multiple Housing Pack request');
-        }
-
-        // The order of these scopes matters!
-        return Order.scope('amount')
-          .findById(ids[0], { include: [{ model: models.Client }] });
-      })
-      .then((order) => {
-        if ( !order ) {
-          throw new Error('This isn\'t a Housing Pack Order');
-        }
-
-        return Sendinblue.sendHousingPackRequest({
-          order, amount: order.get('amount'),
-          client: order.Client,
-        });
-      })
-      .then(Utils.sendSuccessHandler(res, 'Housing Pack Request'))
-      .catch(Utils.logAndSend(res));
-  });
 
   app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) =>
     models.Credit

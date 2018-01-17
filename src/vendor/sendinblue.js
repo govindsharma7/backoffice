@@ -99,7 +99,7 @@ Sendinblue.updateContact = function(email, { listIds, unlinkListIds, client }) {
   return ContactsApi.updateContact(email, params);
 };
 
-Sendinblue.sendWelcomeEmail = function(args) {
+Sendinblue.sendWelcomeEmail = async function(args) {
   const {
     rentOrder = required(),
     depositOrder = required(),
@@ -107,17 +107,17 @@ Sendinblue.sendWelcomeEmail = function(args) {
     renting = required(),
     room = required(),
     apartment = required(),
-    comfortLevel = required(),
+    packLevel = required(),
   } = args;
   const { name, addressStreet, addressZip, addressCity } = apartment;
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
   const roomNumber = room.reference.slice(-1);
-  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+  const lang = getClientLocale(client);
   const free = lang === 'en-US' ? 'free' : 'gratuit';
-  const homeCheckinFee = HOME_CHECKIN_FEES[comfortLevel] / 100;
-  const specialCheckinFee = SPECIAL_CHECKIN_FEES[comfortLevel] / 100;
+  const homeCheckinFee = HOME_CHECKIN_FEES[packLevel] / 100;
+  const specialCheckinFee = SPECIAL_CHECKIN_FEES[packLevel] / 100;
 
-  return Sendinblue.sendTemplateEmail(
+  const { messageId } = await Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.welcome2[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -132,35 +132,34 @@ Sendinblue.sendWelcomeEmail = function(args) {
         DEPOSIT_LINK: `${WEBSITE_URL}/${lang}/payment/${depositOrder.id}`,
         HOME_CHECKIN_FEE: homeCheckinFee ? `${homeCheckinFee}€` : free,
         SPECIAL_CHECKIN_FEE: specialCheckinFee ? `${specialCheckinFee}€` : free,
-        IDENTITY_FORM_URL: CHECKIN_FORM_URLS[comfortLevel], // TODO: get rid of this
-        CHECKIN_FORM_URL: CHECKIN_FORM_URLS[comfortLevel],
+        IDENTITY_FORM_URL: CHECKIN_FORM_URLS[packLevel], // TODO: get rid of this
+        CHECKIN_FORM_URL: CHECKIN_FORM_URLS[packLevel],
         ROOM: lang === 'en-US' ?
           ( isStudio ? 'the <b>studio</b>' : `<b>bedroom nº${roomNumber}</b>` ) :
           ( isStudio ? 'le <b>studio</b>' : `la <b>chambre nº${roomNumber}</b>` ),
       },
     }
-  )
-  .then(({ messageId }) =>
-    Metadata && Metadata.bulkCreate([rentOrder, depositOrder].map((order) => ({
-      name: 'messageId',
-      value: `Welcome: ${messageId}`,
-      MetadatableId: order.id,
-      metadatable: 'Order',
-    })))
   );
+
+  return Metadata && Metadata.bulkCreate([rentOrder, depositOrder].map((order) => ({
+    name: 'messageId',
+    value: `Welcome: ${messageId}`,
+    MetadatableId: order.id,
+    metadatable: 'Order',
+  })));
 };
 
-Sendinblue.sendRentReminder = function(args) {
+Sendinblue.sendRentReminder = async function(args) {
   const {
     order = required(),
     client = required(),
     amount = required(),
     now = new Date(),
   } = args;
-  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+  const lang = getClientLocale(client);
   const templateId = D.getDate(now) === 1 ? 'lastRentReminder' : 'rentReminder';
 
-  return Sendinblue.sendTemplateEmail(
+  const { messageId } = await Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS[templateId][client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -170,26 +169,25 @@ Sendinblue.sendRentReminder = function(args) {
         AMOUNT: amount / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
-  })
-  .then(({ messageId }) =>
-    Metadata && Metadata.create({
-      name: 'messageId',
-      value: `Rent Reminder: ${messageId}`,
-      MetadatableId: order.id,
-      metadatable: 'Order',
-    })
-  );
+  });
+
+  return Metadata && Metadata.create({
+    name: 'messageId',
+    value: `Rent Reminder: ${messageId}`,
+    MetadatableId: order.id,
+    metadatable: 'Order',
+  });
 };
 
-Sendinblue.sendRentRequest = function(args) {
+Sendinblue.sendRentRequest = async function(args) {
   const {
     order = required(),
     client = required(),
     amount = required(),
   } = args;
-  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+  const lang = getClientLocale(client);
 
-  return Sendinblue.sendTemplateEmail(
+  const { messageId } = await Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.rentInvoice[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -199,26 +197,25 @@ Sendinblue.sendRentRequest = function(args) {
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
     }
-  )
-  .then(({ messageId }) =>
-    Metadata && Metadata.create({
-      name: 'messageId',
-      value: `Rent Request: ${messageId}`,
-      MetadatableId: order.id,
-      metadatable: 'Order',
-    })
   );
+
+  return Metadata && Metadata.create({
+    name: 'messageId',
+    value: `Rent Request: ${messageId}`,
+    MetadatableId: order.id,
+    metadatable: 'Order',
+  });
 };
 
-Sendinblue.sendPaymentConfirmation = function(args) {
+Sendinblue.sendPaymentConfirmation = async function(args) {
   const {
     order = required(),
     client = required(),
     payment = required(),
   } = args;
-  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+  const lang = getClientLocale(client);
 
-  return Sendinblue.sendTemplateEmail(
+  const { messageId } = await Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.confirmation[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
@@ -229,56 +226,54 @@ Sendinblue.sendPaymentConfirmation = function(args) {
         LINK: Utils.getInvoiceLink({ order, lang }),
       },
     }
-  )
-  .then(({ messageId }) =>
-    Metadata && Metadata.create({
-      name: 'messageId',
-      value: `Payment confirmation: ${messageId}`,
-      MetadatableId: order.id,
-      metadatable: 'Order',
-    })
   );
+
+  return Metadata && Metadata.create({
+    name: 'messageId',
+    value: `Payment confirmation: ${messageId}`,
+    MetadatableId: order.id,
+    metadatable: 'Order',
+  });
 };
 
-Sendinblue.sendHousingPackRequest = function(args) {
+Sendinblue.sendBookingSummaryEmail = async function(args) {
   const {
-    order = required(),
     client = required(),
-    amount = required(),
+    renting = required(),
+    apartment = required(),
   } = args;
-  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+  const lang = getClientLocale(client);
 
-  return Sendinblue.sendTemplateEmail(
-    SENDINBLUE_TEMPLATE_IDS.housingPack[client.preferredLanguage],
+  const { messageId } = await Sendinblue.sendTemplateEmail(
+    SENDINBLUE_TEMPLATE_IDS.bookingSummary[client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
         NAME: client.firstName,
-        AMOUNT: amount / 100,
-        LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
+        APARTMENT: apartment,
+        LINK: `${WEBSITE_URL}/${lang}/summary/${renting.id}`,
       },
     }
-  )
-  .then(({ messageId }) =>
-    Metadata && Metadata.create({
-      name: 'messageId',
-      value: `Pack Request: ${messageId}`,
-      MetadatableId: order.id,
-      metadatable: 'Order',
-    })
   );
+
+  return Metadata && Metadata.create({
+    name: 'messageId',
+    value: `Booking Summary: ${messageId}`,
+    MetadatableId: renting.id,
+    metadatable: 'Renting',
+  });
 };
 
-Sendinblue.sendLateFeesEmail = function(args) {
+Sendinblue.sendLateFeesEmail = async function(args) {
   const {
     order = required(),
     orderItems = required(),
     client = required(),
     amount = required(),
   } = args;
-  const lang = client.preferredLanguage === 'en' ? 'en-US' : 'fr-FR';
+  const lang = getClientLocale(client);
 
-  return Sendinblue.sendTemplateEmail(
+  const { messageId } = await Sendinblue.sendTemplateEmail(
     SENDINBLUE_TEMPLATE_IDS.lateFees[client.preferredLanguage],
     {
       emailTo: [client.email],
@@ -290,15 +285,14 @@ Sendinblue.sendLateFeesEmail = function(args) {
         LATE_FEES: orderItems[0].unitPrice * orderItems[0].quantity / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
-  })
-  .then(({ messageId }) =>
-    Metadata && Metadata.create({
-      name: 'messageId',
-      value: `Late Fees: ${messageId}`,
-      MetadatableId: order.id,
-      metadatable: 'Order',
-    })
-  );
+  });
+
+  return Metadata && Metadata.create({
+    name: 'messageId',
+    value: `Late Fees: ${messageId}`,
+    MetadatableId: order.id,
+    metadatable: 'Order',
+  });
 };
 
 Sendinblue.sendAdminNotif = function(content) {
@@ -311,5 +305,9 @@ Sendinblue.sendAdminNotif = function(content) {
 Sendinblue.pingService = function() {
   return new SendinBlueApi.AccountApi().getAccount();
 };
+
+function getClientLocale({ preferredLanguage }) {
+  return preferredLanguage === 'fr' ? 'fr-FR' : 'en-US';
+}
 
 module.exports = Sendinblue;

@@ -229,10 +229,10 @@ Client.associate = (models) => {
     }],
   });
 
-  Client.addScope('comfortLevel', {
+  Client.addScope('packLevel', {
     attributes: { include: [[
       sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
-      'comfortLevel',
+      'packLevel',
     ]]},
     include: [{
       model: models.Order,

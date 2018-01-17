@@ -26,7 +26,7 @@ module.exports = Object.assign(common, {
     lateFees: { fr: 20, en: 15 },
     dueDate: { fr: 22, en: 23 },
     confirmation: { fr: 47, en: 48 },
-    housingPack: { fr: 45, en: 46 },
+    bookingSummary: { fr: 45, en: 46 },
     deposit: { fr: 4, en: 5 },
     newHousemate: { fr: 3, en: 2 },
     adminNotif: 82,

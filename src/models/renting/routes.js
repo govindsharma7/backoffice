@@ -17,13 +17,13 @@ module.exports = function(app, { Renting, Client, Room }) {
 
   app.post('/forest/actions/create-pack-order', LEA, wrap((req, res) => {
     const {
-      values: { comfortLevel, discount = 0 },
+      values: { packLevel, discount = 0 },
       ids,
     } = req.body.data.attributes;
 
     return Promise.resolve()
       .then(() => {
-        if ( !comfortLevel ) {
+        if ( !packLevel ) {
           throw new Error('Please select a comfort level');
         }
         if ( ids.length > 1 ) {
@@ -33,7 +33,7 @@ module.exports = function(app, { Renting, Client, Room }) {
         return Renting.scope('room+apartment').findById(ids[0]);
       })
       .then((renting) => renting.findOrCreatePackOrder({
-        packLevel: comfortLevel,
+        packLevel,
         discount: discount * 100,
         apartment: renting.Room.Apartment,
       }))
@@ -74,7 +74,7 @@ module.exports = function(app, { Renting, Client, Room }) {
 
   app.post('/forest/actions/create-quote-orders', LEA, wrap((req, res) => {
     const { values, ids } = req.body.data.attributes;
-    const { comfortLevel: packLevel, discount } = values;
+    const { packLevel: packLevel, discount } = values;
 
     return Promise.resolve()
       .then(() => {
@@ -106,13 +106,13 @@ module.exports = function(app, { Renting, Client, Room }) {
     const renting = await Renting.scope('room+apartment', 'depositOption')
       .findById(ids[0]);
     // Take the comfort level from clients, as they might be switching room
-    const client = await Client.scope('comfortLevel', 'identity')
+    const client = await Client.scope('packLevel', 'identity')
       .findById(renting.ClientId);
 
     if ( !client.Metadata.length ) {
       throw new Error('Identity record is missing for this client');
     }
-    if ( !client.get('comfortLevel') ) {
+    if ( !client.get('packLevel') ) {
       throw new Error('Housing pack is required to generate lease');
     }
 
@@ -123,7 +123,7 @@ module.exports = function(app, { Renting, Client, Room }) {
       apartment: renting.Room.Apartment,
       depositTerm: renting.Terms && renting.Terms[0],
       identityMeta: client.Metadata && client.Metadata[0],
-      comfortLevel: client.get('comfortLevel'),
+      packLevel: client.get('packLevel'),
     });
 
     return Utils.createdSuccessHandler(res, 'Lease')(lease);
@@ -168,12 +168,12 @@ module.exports = function(app, { Renting, Client, Room }) {
       const renting = await Renting.scope(
         'room+apartment', // required to create checkin/out order
         `${type}Date`, // required below
-        'comfortLevel' // required below
+        'packLevel' // required below
       ).findById(ids[0], {
         include: [{ model: Client }], // required to create the refund event
       });
 
-      if ( !renting.get(`${type}Date`) || !renting.get('comfortLevel') ) {
+      if ( !renting.get(`${type}Date`) || !renting.get('packLevel') ) {
         throw new Error(Utils.toSingleLine(`
           ${_.capitalize(type)} event and housing pack are required to
           create ${_.capitalize(type)} order
@@ -195,10 +195,8 @@ module.exports = function(app, { Renting, Client, Room }) {
 
   const createClientRoute = '/forest/actions/public/create-client-and-renting';
 
-  app.post(createClientRoute, makePublic, wrap(async (req, res) => {
-    const { roomId, pack: packLevel } = req.body;
-    // TODO: following line to maintain backward compat. Get rid of it in a bit
-    const booking = req.body.booking || req.body.client;
+  Renting.handleCreateClientAndRentingRoute = async (args) => {
+    const { roomId, pack: packLevel, booking } = args;
     const room = await Room.scope('apartment+availableAt').findById(roomId);
     const { Apartment: apartment } = room || {};
 
@@ -237,16 +235,19 @@ module.exports = function(app, { Renting, Client, Room }) {
         price: periodPrice,
         serviceFees,
         bookingDate,
+        packLevel,
       },
     });
 
-    if ( isCreated ) {
-      await renting.createQuoteOrders({ packLevel, room, apartment });
-    }
     // The pack level might have changed, try to update it
-    else {
+    if ( !isCreated ) {
       await renting.updatePackLevel({ addressCity: apartment.addressCity, packLevel });
     }
+
+    return renting;
+  };
+  app.post(createClientRoute, makePublic, wrap(async (req, res) => {
+    const renting = await Renting.handleCreateClientAndRentingRoute(req.body);
 
     return res.send({ rentingId: renting.id });
   }));
@@ -283,11 +284,11 @@ module.exports = function(app, { Renting, Client, Room }) {
         }
 
         return Renting.scope(
-          'comfortLevel' // required below
+          'packLevel' // required below
         ).findById(ids[0]);
       })
       .then((renting) => {
-        if ( renting.get('comfortLevel') == null ) {
+        if ( renting.get('packLevel') == null ) {
           throw new Error('Housing pack is required to create room switch order');
         }
 
