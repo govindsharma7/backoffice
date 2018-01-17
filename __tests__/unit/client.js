@@ -8,7 +8,6 @@ const { Client } = models;
 
 let client;
 let client2;
-let client3;
 
 let apartment;
 
@@ -23,7 +22,6 @@ describe('Client', () => {
         return (
           client = instances['client-1'],
           client2 = instances['client-2'],
-          client3 = instances['client-3'],
           renting2 = instances['renting-2'],
           renting3 = instances['renting-3'],
           apartment = instances['apartment-1'],
@@ -86,12 +84,36 @@ describe('Client', () => {
       return expect(client.Orders.length).toEqual(2);
     });
 
-    it('rentOrders scope return no Order as there is no `rent` orderItem', () => {
-      return models.Client.scope('rentOrders')
-        .findById(client3.id)
-        .then((client) => {
-          return expect(client.Orders).toHaveLength(0);
-      });
+    it('rentOrders scope return no Order when there is no `rent` orderItem', async() => {
+      const { unique: u } = await fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Order: [{
+          id: u.id('order1'),
+          label: 'June Invoice',
+          ClientId: u.id('client'),
+          dueDate: D.parse('2016-01-01 Z'),
+        }, {
+          id: u.id('order2'),
+          label: 'March Invoice',
+          ClientId: u.id('client'),
+          dueDate: D.parse('2017-07-01 Z'),
+        }],
+        OrderItem: [{
+          id: u.id('orderitem1'),
+          label: 'Late Fees',
+          OrderId: u.id('order1'),
+          ProductId: 'late-fees',
+        }],
+      }))();
+
+      const client = await Client.scope('rentOrders').findById(u.id('client'));
+
+      return expect(client.Orders.length).toEqual(0);
     });
 
     it('roomSwitchCount scope counts the time a client switched room', () => {

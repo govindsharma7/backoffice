@@ -19,24 +19,25 @@ AWS.config.update({
 // Use bluebird Promises, instead of native ones
 AWS.config.setPromisesDependency(Promise);
 
-function uploadFile(bucket, data) {
+async function uploadFile(bucket, data) {
   const s3Bucket = new AWS.S3( { params: {Bucket: bucket} });
+  const { Location } = await s3Bucket.upload(data).promise();
 
-  return s3Bucket.upload(data).promise()
-    .then((result) => { return result.Location; });
+  return Location;
 }
 
-function deleteFile(bucket, data) {
+async function deleteFile(bucket, data) {
   const s3Bucket = new AWS.S3({ params: {Bucket: bucket} });
 
-  return s3Bucket.deleteObject(data).promise()
-    .then(() => { return true; });
+  await s3Bucket.deleteObject(data).promise();
+
+  return true;
 }
 
 const rBase64Image = /^data:image\/\w+;base64,/;
 const picturesBucket = new AWS.S3( { params: { Bucket: AWS_BUCKET_PICTURES } });
 
-function uploadPicture({ id, url }) {
+async function uploadPicture({ id, url }) {
   let body;
   let buffer;
 
@@ -46,110 +47,29 @@ function uploadPicture({ id, url }) {
     body.append('file', buffer, { filename: 'pic.jpg' });
   }
 
-  return fetch(
-      `https://im2.io/${IMAGE_OPTIM_KEY}/1920x1080,fit${body ? '' : `/${url}`}`,
-      {
-        method: 'post',
-        body,
-      }
-    )
-    .then((response) => {
-      if ( response.status >= 400 ) {
-        throw new Error(response.statusText);
-      }
+  const fetchUrl =
+    `https://im2.io/${IMAGE_OPTIM_KEY}/1920x1080,fit${body ? '' : `/${url}`}`;
+  const response = await fetch(fetchUrl, { method: 'post', body });
 
-      return response.buffer();
-    })
-    .then((Body) => {
-      return picturesBucket.upload({
-        Key: id,
-        Body,
-        ACL: 'public-read',
-        ContentType: 'image/jpeg',
-      }).promise();
-    })
-    .then(({ Location }) => { return Location; });
+  if ( response.status >= 400 ) {
+    throw new Error(response.statusText);
+  }
+
+  const Body = await response.buffer();
+  const { Location } = await picturesBucket.upload({
+    Key: id,
+    Body,
+    ACL: 'public-read',
+    ContentType: 'image/jpeg',
+  }).promise();
+
+  return Location;
 }
 
 // This function is used to make sure we have access to the pictures bucket
 function pingService() {
   return picturesBucket.headBucket().promise();
 }
-
-/* Following code is deprecated as we're switching to SendInBlue to send
- * emails and SMS
- */
-// const sns = new AWS.SNS({
-//   apiVersion: AWS_SNS_API_VERSION,
-//   accessKeyId: AWS_SNS_ACCESS_KEY_ID,
-//   secretAccessKey: AWS_SNS_SECRET_ACCESS_KEY,
-//   region: AWS_REGION,
-// });
-//
-// const defaultMessageAttributes = {
-// /* MonthlySpendLimit could be usefull if we want to
-//   limit sms cost each month
-//
-//   MonthlySpendLimit: {
-//     DataType: 'Number',
-//     StringValue: '30'
-//   },
-// */
-//   DefaultSenderID: {
-//     DataType: 'String',
-//     /* required */
-//     StringValue: 'ChezNestor',
-//   },
-//   DefaultSMSType: {
-//     DataType: 'String',
-//     StringValue: 'Transactional',
-//   },
-//   DeliveryStatusIAMRole: {
-//     DataType: 'String',
-//     StringValue: config.AWS_SNS_Delivery_Status_IAM_Role,
-//   },
-// };
-//
-// function sendSms(phoneNumbers, text, date = new Date()) {
-//   return sns
-//     .createTopic({
-//       Name: `DATE_${D.format(date, 'YYYY-MM-DD')}_TIME_${D.format(date, 'HH-mm-ss')}`,
-//     }).promise()
-//     .then((data) => {
-//       return Promise.all([
-//         data.TopicArn, // Pass this on to next steps
-//         Promise.filter(phoneNumbers, (number) => {
-//           /* eslint-disable promise/no-nesting */
-//           return sns
-//             .checkIfPhoneNumberIsOptedOut({ phoneNumber: number }).promise()
-//             .then((phoneNumber) => {
-//               return !phoneNumber.isOptedOut;
-//             })
-//             .catch((error) => {
-//               console.error(error);
-//               return false;
-//             });
-//           /* eslint-enable promise/no-nesting */
-//         }),
-//       ]);
-//     })
-//     .tap(([TopicArn, validNumbers]) => {
-//       return Promise.map(validNumbers, (number) => {
-//         return sns.subscribe({
-//           Protocol: 'sms',
-//           Endpoint: number,
-//           TopicArn,
-//         }).promise();
-//       });
-//     })
-//     .then(([TopicArn]) => {
-//       return sns.publish({
-//         Message: text,
-//         MessageAttributes: defaultMessageAttributes,
-//         TopicArn,
-//       }).promise();
-//     });
-// }
 
 module.exports = {
   // sendSms,

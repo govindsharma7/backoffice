@@ -60,19 +60,21 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
       .findById(id, { include: [{ model: Client }], transaction });
     const { Client: client, Room: room, Room: { Apartment: apartment } } = renting;
 
-    return Promise.all([
-      renting.createQuoteOrders({
+    // TODO: In theory we could use Promise.all instead of .mapSeries but this
+    // produces SQLITE_BUSY errors in dev and test env :-/
+    return Promise.mapSeries([
+      () => Sendinblue.sendBookingSummaryEmail({
+        client,
+        renting,
+        apartment,
+      }),
+      () => renting.createQuoteOrders({
         packLevel,
         discount: discount * 100,
         room,
         apartment,
       }),
-      Sendinblue.sendBookingSummaryEmail({
-        client,
-        renting,
-        apartment,
-      }),
-    ]);
+    ], (fn) => fn());
   };
   Renting.hook('afterCreate', (renting, opts) =>
     Renting.handleAfterCreate(renting, opts)

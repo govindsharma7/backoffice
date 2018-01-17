@@ -196,9 +196,10 @@ module.exports = function(app, { Renting, Client, Room }) {
   const createClientRoute = '/forest/actions/public/create-client-and-renting';
 
   Renting.handleCreateClientAndRentingRoute = async (args) => {
-    const { roomId, pack: packLevel, booking } = args;
+    const { roomId, pack, booking } = args;
     const room = await Room.scope('apartment+availableAt').findById(roomId);
     const { Apartment: apartment } = room || {};
+    const packLevel = `${pack}-pack`;
 
     if ( !room ) {
       throw new CNError(`Room ${roomId} not found`, {
