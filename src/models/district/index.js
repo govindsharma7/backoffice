@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize     = require('../sequelize');
 const routes        = require('./routes');
+const hooks        = require('./hooks');
 
 const District = sequelize.define('District', {
   id: {
@@ -25,5 +26,6 @@ District.associate = (models) => {
 };
 
 District.routes = routes;
+District.hooks = hooks;
 
 module.exports = District;
