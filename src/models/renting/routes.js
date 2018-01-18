@@ -196,10 +196,9 @@ module.exports = function(app, { Renting, Client, Room }) {
   const createClientRoute = '/forest/actions/public/create-client-and-renting';
 
   Renting.handleCreateClientAndRentingRoute = async (args) => {
-    const { roomId, pack, booking } = args;
+    const { roomId, pack: packLevel, booking } = args;
     const room = await Room.scope('apartment+availableAt').findById(roomId);
-    const { Apartment: apartment } = room || {};
-    const packLevel = `${pack}-pack`;
+    const { Apartment: { addressCity } } = room || {};
 
     if ( !room ) {
       throw new CNError(`Room ${roomId} not found`, {
@@ -242,7 +241,7 @@ module.exports = function(app, { Renting, Client, Room }) {
 
     // The pack level might have changed, try to update it
     if ( !isCreated ) {
-      await renting.updatePackLevel({ addressCity: apartment.addressCity, packLevel });
+      await renting.updatePackLevel({ addressCity, packLevel });
     }
 
     return renting;

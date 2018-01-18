@@ -80,7 +80,7 @@ describe('Renting - Routes', () => {
         expect(Client.handleAfterCreate).toHaveBeenCalled();
         expect(Renting.handleAfterCreate).toHaveBeenCalledWith(
           expect.objectContaining({
-            packLevel: 'comfort-pack',
+            packLevel: 'comfort',
           }),
           expect.anything()
         );

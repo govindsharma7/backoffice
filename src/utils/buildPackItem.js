@@ -6,7 +6,7 @@ module.exports = function({ renting, addressCity, packLevel, order }) {
     unitPrice: PACK_PRICES[addressCity][packLevel],
     RentingId: renting.id,
     status: renting.status,
-    ProductId: `${packLevel}-pack`,
+    ProductId: packLevel.replace(/(-pack)?$/, '$1-pack'),
   };
 
   if ( order ) {
