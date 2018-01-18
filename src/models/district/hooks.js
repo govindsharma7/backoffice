@@ -5,7 +5,7 @@ module.exports = function({ District }) {
   District.hook('beforeFind', (options) => {
     const { include, offset, limit } = options;
 
-    if ( include.length === 0 && offset === 0 && limit === 10 ) {
+    if ( include && include.length === 0 && offset === 0 && limit === 10 ) {
       options.limit = 40;
     }
 
