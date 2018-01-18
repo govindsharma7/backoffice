@@ -120,17 +120,33 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
     const depositOrder = orders.find(({ OrderItems }) => (
       OrderItems.some(({ ProductId }) => ( /-deposit$/.test(ProductId) ))
     ));
+    const depositRentItemsIds =
+      [].concat(rentOrder.OrderItems, depositOrder.OrderItems)
+        .map(({ id }) => id)
+        .reduce((acc, curr) => acc.concat(curr), []);
     const packLevel =
       orders
         .map(({ OrderItems }) => OrderItems)
         .reduce((acc, curr) => acc.concat(curr), [])
         .find(({ ProductId }) => ( /-pack$/.test(ProductId) ))
         .ProductId.replace('-pack', '');
-    const activatePromises = [client, rentOrder, depositOrder].map((instance) =>
-      instance.status === 'draft' && instance.update({ status: 'active' })
-    );
 
-    return Promise.all(activatePromises.concat(
+    return Promise.all([
+      // Bulk update won't trigger Client update hooks
+      Client.update({ status: 'active' }, {
+        where: { id: client.id },
+        transaction,
+      }),
+      // Bulk update won't trigger Order update hooks
+      Order.update({ status: 'active' }, {
+        where: { id: { $in: [rentOrder.id, depositOrder.id] } },
+        transaction,
+      }),
+      // Bulk update won't trigger OrderItem update hooks
+      OrderItem.update({ status: 'active' }, {
+        where: { id: { $in: depositRentItemsIds } },
+        transaction,
+      }),
       Wordpress.makeRoomUnavailable({ room }),
       Sendinblue.sendWelcomeEmail({
         rentOrder,
@@ -140,8 +156,9 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         room,
         apartment: room.Apartment,
         packLevel,
-      })
-    ));
+        transaction,
+      }),
+    ]);
   };
   Renting.hook('afterUpdate', (renting, opts) =>
     Renting.handleAfterUpdate(renting, opts)
