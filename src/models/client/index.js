@@ -263,24 +263,7 @@ Client.prototype.getRentingsFor = function(date = new Date()) {
 
 Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Date()) {
   const dueDate = D.startOfMonth(date);
-  const defaults = {
-    label: `${D.format(date, 'MMMM')} Rent`,
-    type: 'debit',
-    ClientId: this.id,
-    dueDate,
-    OrderItems:
-      [].concat.apply([], rentings.map((renting) =>
-        renting.toOrderItems({ date, room: renting.Room }))
-      )
-      .concat(this.get('uncashedDepositCount') > 0 && {
-        label: 'Option Liberté',
-        unitPrice: UNCASHED_DEPOSIT_FEE,
-        ProductId: 'uncashed-deposit',
-      })
-      .filter(Boolean),
-  };
-
-  const [order, isCreated] = await models.Order.findOrCreate({
+  const [order, isCreate] = await models.Order.findOrCreate({
     where: { $and: [
       // Only exclude cancelled orders. First rent order might still be draft
       { status: { $not: 'cancelled' } },
@@ -291,12 +274,31 @@ Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Dat
       model: models.OrderItem,
       where: { ProductId: 'rent' },
     }],
-    defaults,
+    defaults: {
+      label: `${D.format(date, 'MMMM')} Rent`,
+      type: 'debit',
+      ClientId: this.id,
+      dueDate,
+    },
   });
+  const orderItems =
+    isCreate && [].concat.apply([], rentings.map((renting) =>
+      renting.toOrderItems({ order, date, room: renting.Room }))
+    )
+    .concat(this.get('uncashedDepositCount') > 0 && {
+      label: 'Option Liberté',
+      unitPrice: UNCASHED_DEPOSIT_FEE,
+      ProductId: 'uncashed-deposit',
+      OrderId: order.id,
+    })
+    .filter(Boolean);
 
-  await models.Renting.attachOrphanOrderItems(rentings, order);
+  await Promise.all([
+    isCreate && models.OrderItem.bulkCreate(orderItems),
+    models.Renting.attachOrphanOrderItems(rentings, order),
+  ]);
 
-  return [order, isCreated];
+  return [order, isCreate];
 };
 
 Client.createRentOrders = function(clients, date = new Date()) {

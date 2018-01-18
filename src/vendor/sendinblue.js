@@ -108,6 +108,7 @@ Sendinblue.sendWelcomeEmail = async function(args) {
     room = required(),
     apartment = required(),
     packLevel = required(),
+    transaction,
   } = args;
   const { name, addressStreet, addressZip, addressCity } = apartment;
   const isStudio = name.split(' ').splice(-1)[0] === 'studio';
@@ -146,7 +147,7 @@ Sendinblue.sendWelcomeEmail = async function(args) {
     value: `Welcome: ${messageId}`,
     MetadatableId: order.id,
     metadatable: 'Order',
-  })));
+  })), { transaction });
 };
 
 Sendinblue.sendRentReminder = async function(args) {
@@ -212,6 +213,7 @@ Sendinblue.sendPaymentConfirmation = async function(args) {
     order = required(),
     client = required(),
     payment = required(),
+    transaction,
   } = args;
   const lang = getClientLocale(client);
 
@@ -233,7 +235,7 @@ Sendinblue.sendPaymentConfirmation = async function(args) {
     value: `Payment confirmation: ${messageId}`,
     MetadatableId: order.id,
     metadatable: 'Order',
-  });
+  }, { transaction });
 };
 
 Sendinblue.sendBookingSummaryEmail = async function(args) {
@@ -241,6 +243,7 @@ Sendinblue.sendBookingSummaryEmail = async function(args) {
     client = required(),
     renting = required(),
     apartment = required(),
+    transaction,
   } = args;
   const lang = getClientLocale(client);
 
@@ -261,7 +264,7 @@ Sendinblue.sendBookingSummaryEmail = async function(args) {
     value: `Booking Summary: ${messageId}`,
     MetadatableId: renting.id,
     metadatable: 'Renting',
-  });
+  }, { transaction });
 };
 
 Sendinblue.sendLateFeesEmail = async function(args) {

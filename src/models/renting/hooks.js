@@ -1,6 +1,7 @@
 const Promise                     = require('bluebird');
 const Sendinblue                  = require('../../vendor/sendinblue');
 const Wordpress                   = require('../../vendor/wordpress');
+const { NODE_ENV }                = require('../../config');
 
 module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }) {
   // When a renting is created or updated, verify:
@@ -55,26 +56,29 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   // - Send booking summary email
   Renting.handleAfterCreate = async (_renting, { transaction }) => {
     const { id, packLevel, discount = 0 } = _renting;
-
     const renting = await Renting.scope('room+apartment')
       .findById(id, { include: [{ model: Client }], transaction });
-    const { Client: client, Room: room, Room: { Apartment: apartment } } = renting;
 
-    // TODO: In theory we could use Promise.all instead of .mapSeries but this
-    // produces SQLITE_BUSY errors in dev and test env :-/
-    return Promise.mapSeries([
+    const { Client: client, Room: room, Room: { Apartment: apartment } } = renting;
+    const fns = [
       () => Sendinblue.sendBookingSummaryEmail({
         client,
         renting,
         apartment,
+        transaction,
       }),
       () => renting.createQuoteOrders({
         packLevel,
         discount: discount * 100,
         room,
         apartment,
+        transaction,
       }),
-    ], (fn) => fn());
+    ];
+    // sqlite doesn't like it when there's too much concurrency in a hook
+    const concurrency = /^(test|dev)/.test(NODE_ENV) ? 1 : 2;
+
+    return Promise.map(fns, (fn) => fn(), { concurrency });
   };
   Renting.hook('afterCreate', (renting, opts) =>
     Renting.handleAfterCreate(renting, opts)
@@ -99,6 +103,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
           model: OrderItem,
           where: { RentingId: _renting.id },
         }],
+        transaction,
       }),
     ]);
 

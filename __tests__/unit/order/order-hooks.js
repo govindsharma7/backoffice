@@ -5,13 +5,8 @@ const models        = require('../../../src/models');
 const { Order, Renting } = models;
 
 describe('hooks:afterUpdate', () => {
-  it('shouldn\'t do anything unless status is updated to active', () => {
-    const mock = jest.fn((res) => res);
-    const { handleAfterUpdate } = Order;
-
-    Order.handleAfterUpdate = (order) => mock(handleAfterUpdate(order, {}));
-
-    return fixtures((u) => ({
+  it('shouldn\'t do anything unless status is updated to active', async () => {
+    const { instances: { order } } = await fixtures((u) => ({
       Client: [{
         id: u.id('client'),
         firstName: 'John',
@@ -25,11 +20,12 @@ describe('hooks:afterUpdate', () => {
         ClientId: u.id('client'),
         status: 'draft',
       }],
-    }))({ method: 'create', hooks: 'Order' })
-    .tap(({ instances: { order } }) => order.update({ status: 'cancelled' }))
-    .then(() => Promise.delay(200))
-    .then(() => expect(mock).toHaveBeenCalledWith(true) )
-    .then(() => Order.handleAfterUpdate = handleAfterUpdate);
+    }))({ method: 'create', hooks: 'Order' });
+
+    const updated = await order.update({ status: 'cancelled' }, { hooks: false });
+    const actual = await Order.handleAfterUpdate(updated, {});
+
+    expect(actual).toEqual(true);
   });
 
   it('should make the items, client and renting active when it becomes active', () => {

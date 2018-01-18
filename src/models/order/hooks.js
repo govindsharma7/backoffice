@@ -31,38 +31,40 @@ module.exports = function({ Order, OrderItem, Client, Renting }) {
   // - Make sure the items are active
   // - Make sure the client is active
   // - Make sure the renting is active
-  Order.handleAfterUpdate = function(order) {
+  Order.handleAfterUpdate = async function(order, { transaction }) {
     if ( !order.changed('status') || order.status !== 'active' ) {
       return true;
     }
 
-    return Order
-      .findById(order.id, { include: [{ model: OrderItem }] })
-      .then((order) => {
-        const rentingItem =
-          order.OrderItems.find((item) => item.RentingId != null);
+    const { OrderItems, ClientId } = await Order.findById(order.id, {
+      include: [{ model: OrderItem }],
+      transaction,
+    });
+    const rentingItem = OrderItems.find((item) => item.RentingId != null);
 
-        return Promise.all([
-          OrderItem.update({ status: 'active' }, { where: {
-            OrderId: order.id,
+    return Promise.all([
+      // This is a batch update, so individual OrderItems hooks won't fire
+      OrderItem.update({ status: 'active' }, { where: {
+        OrderId: order.id,
+        status: 'draft',
+      } }),
+      // This is a batch update, so individual client hooks won't fire
+      Client.update({ status: 'active' }, { where: {
+        id: ClientId,
+        status: 'draft',
+      } }),
+      // Here we explicitely ask renting hooks to fire
+      rentingItem && Renting.update(
+        { status: 'active' },
+        {
+          where: {
+            id: rentingItem.RentingId,
             status: 'draft',
-          } }),
-          Client.update({ status: 'active' }, { where: {
-            id: order.ClientId,
-            status: 'draft',
-          } }),
-          rentingItem && Renting.update(
-            { status: 'active' },
-            {
-              where: {
-                id: rentingItem.RentingId,
-                status: 'draft',
-              },
-              individualHooks: true, // without this, renting hook won't fire
-            }
-          ),
-        ]);
-      });
+          },
+          individualHooks: true,
+        }
+      ),
+    ]);
   };
   Order.hook('afterUpdate', (order, opts) =>
     Order.handleAfterUpdate(order, opts)

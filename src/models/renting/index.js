@@ -11,7 +11,10 @@ const {
 }                           = require('../../const');
 const webmerge              = require('../../vendor/webmerge');
 const Utils                 = require('../../utils');
-const {GOOGLE_CALENDAR_IDS} = require('../../config');
+const {
+  GOOGLE_CALENDAR_IDS,
+  NODE_ENV,
+}                           = require('../../config');
 const sequelize             = require('../sequelize');
 const models                = require('../models'); //!\ Destructuring forbidden /!\
 const routes                = require('./routes');
@@ -183,17 +186,8 @@ Renting.prototype.prorate = function(date) {
 };
 
 // Propagate the status of the renting to that of first-rent/deposit/pack orders
-// and their orderItems
 Renting.prototype.normalizeOrder = function(order) {
-  if ( order.OrderItems != null ) {
-    order.OrderItems = order.OrderItems.map((item) => Object.assign({
-      status: this.status,
-      deletedAt: this.deletedAt,
-    }, item));
-  }
-
   return Object.assign({
-    type: 'debit',
     ClientId: this.ClientId,
     // We want the order to be a draft if the renting is a draft
     status: this.status,
@@ -201,26 +195,39 @@ Renting.prototype.normalizeOrder = function(order) {
   }, order);
 };
 
-Renting.prototype.toOrderItems = function({ date = new Date(), room = required() }) {
-  const prorated = this.prorate(date);
+Renting.prototype.toOrderItems = function(args) {
+  return Renting.toOrderItems(Object.assign({ renting: this }, args));
+};
+Renting.toOrderItems = function(args) {
+  const {
+    renting = required(),
+    room = required(),
+    order = required(),
+    date = new Date(),
+  } = args;
+  const prorated = renting.prorate(date);
   const apartment = room.Apartment;
   const month = D.format(date, 'MMMM');
 
   return [{
     label: `Loyer ${month} - Chambre #${room.reference}`,
     unitPrice: prorated.price,
-    RentingId: this.id,
-    status: this.status,
     ProductId: 'rent',
   }, {
     label: `Charges ${month} - Apt #${apartment.reference}`,
     unitPrice: prorated.serviceFees,
-    RentingId: this.id,
-    status: this.status,
     ProductId: 'service-fees',
-  }];
+
+  }].map((item) => Object.assign(item, {
+    status: renting.status,
+    deletedAt: renting.deletedAt,
+    OrderId: order.id,
+    RentingId: renting.id,
+  }));
 };
 
+// TODO: this can be optimized to use just two queries
+// This should be unti-tested before being optimized
 Renting.attachOrphanOrderItems = function(rentings, order) {
   return Promise.map(rentings, (renting) =>
     models.OrderItem
@@ -248,99 +255,140 @@ Renting.attachOrphanOrderItems = function(rentings, order) {
   );
 };
 
-Renting.prototype.findOrCreateRentOrder = function(args) {
-  const { room = required(), now = new Date() } = args;
-  const dueDate = Math.max(now, D.startOfMonth(this.bookingDate));
 
-  return models.Order
-    .findOrCreate({
+Renting.prototype.findOrCreateRentOrder = function (args) {
+  return Renting.findOrCreateRentOrder(Object.assign({ renting: this }, args));
+};
+Renting.findOrCreateRentOrder = async function(args) {
+  const {
+    renting = required(),
+    room = required(),
+    now = new Date(),
+    transaction,
+  } = args;
+  const dueDate = Math.max(now, D.startOfMonth(renting.bookingDate));
+  const [order, isCreate] = await models.Order.findOrCreate({
+    where: {
+      status: { $not: 'cancelled' },
+      dueDate,
+    },
+    include: [{
+      model: models.OrderItem,
       where: {
-        status: { $not: 'cancelled' },
-        dueDate,
+        RentingId: renting.id,
+        ProductId: 'rent',
       },
-      include: [{
-        model: models.OrderItem,
-        where: {
-          RentingId: this.id,
-          ProductId: 'rent',
-        },
-      }],
-      defaults: this.normalizeOrder({
-        label: `${D.format(dueDate, 'MMMM')} Invoice`,
-        dueDate,
-        // TODO: we shouldn't need to pass bookingDate as an argument
-        OrderItems: this.toOrderItems({ date: this.bookingDate, room }),
-      }),
-    });
+    }],
+    defaults: renting.normalizeOrder({
+      label: `${D.format(dueDate, 'MMMM')} Invoice`,
+      dueDate,
+    }),
+    transaction,
+  });
+
+  if ( isCreate ) {
+    const orderItems =
+      renting.toOrderItems({ order, date: renting.bookingDate, room });
+
+    await models.OrderItem.bulkCreate(orderItems, { transaction });
+  }
+
+  return order;
 };
 
-Renting.prototype.findOrCreatePackOrder = function(args) {
+Renting.prototype.findOrCreatePackOrder = function (args) {
+  return Renting.findOrCreatePackOrder(Object.assign({ renting: this }, args));
+};
+Renting.findOrCreatePackOrder = async function(args) {
   const {
+    renting = required(),
     packLevel = required(),
     discount,
     apartment = required(),
+    transaction,
   } = args;
-  const { addressCity } = apartment;
-  const packItem = Utils.buildPackItem({ renting: this, addressCity, packLevel });
+  const [order, isCreate] = await models.Order.findOrCreate({
+    where: { status: { $not: 'cancelled' } },
+    include: [{
+      model: models.OrderItem,
+      where: {
+        RentingId: renting.id,
+        ProductId: { $like: '%-pack' },
+      },
+    }],
+    defaults: renting.normalizeOrder({
+      label: 'Housing Pack',
+      dueDate: Math.max(new Date(), D.startOfMonth(renting.bookingDate)),
+    }),
+    transaction,
+  });
 
-  return models.Order
-    .findOrCreate({
-      where: { status: { $not: 'cancelled' } },
-      include: [{
-        model: models.OrderItem,
-        where: {
-          RentingId: this.id,
-          ProductId: { $like: '%-pack' },
-        },
-      }],
-      defaults: this.normalizeOrder({
-        label: 'Housing Pack',
-        dueDate: Math.max(new Date(), D.startOfMonth(this.bookingDate)),
-        OrderItems: [
-          packItem,
-          discount != null && discount !== 0 && {
-            label: 'Discount',
-            unitPrice: -discount,
-            RentingId: this.id,
-            status: this.status,
-            ProductId: packItem.ProductId,
-          },
-          // We should not add more items to this order. We want to keep the amount
-          // as low as possible to avoid turning down customers
-        ].filter(Boolean),
-      }),
-    });
+  if ( isCreate ) {
+    const { addressCity } = apartment;
+    const packItem = Utils.buildPackItem({ order, renting, addressCity, packLevel });
+    const orderItems = ([
+      packItem,
+      discount != null && discount !== 0 && {
+        label: 'Discount',
+        unitPrice: -discount,
+        RentingId: renting.id,
+        status: renting.status,
+        ProductId: packItem.ProductId,
+        OrderId: order.id,
+      },
+    ]).filter(Boolean);
+
+    await models.OrderItem.bulkCreate(orderItems, { transaction });
+  }
+
+  return order;
 };
 
-Renting.prototype.findOrCreateDepositOrder = function({ apartment = required() }) {
+Renting.prototype.findOrCreateDepositOrder = function (args) {
+  return Renting.findOrCreateDepositOrder(Object.assign({ renting: this }, args));
+};
+Renting.findOrCreateDepositOrder = async function(args) {
+  const {
+    renting = required(),
+    apartment = required(),
+    transaction,
+  } = args;
   const { addressCity } = apartment;
   const ProductId = `${addressCity}-deposit`;
 
-  return models.Order
-    .findOrCreate({
+  const [order, isCreate] = await models.Order.findOrCreate({
+    where: {
+      type: 'deposit',
+      status: { $not: 'cancelled' },
+    },
+    include: [{
+      model: models.OrderItem,
       where: {
-        type: 'deposit',
-        status: { $not: 'cancelled' },
+        RentingId: renting.id,
+        ProductId,
       },
-      include: [{
-        model: models.OrderItem,
-        where: {
-          RentingId: this.id,
-          ProductId,
-        },
-      }],
-      defaults: this.normalizeOrder({
-        type: 'deposit',
-        label: 'Deposit',
-        OrderItems: [{
-          label: 'Deposit',
-          unitPrice: DEPOSIT_PRICES[addressCity],
-          RentingId: this.id,
-          status: this.status,
-          ProductId,
-        }],
-      }),
-    });
+    }],
+    defaults: renting.normalizeOrder({
+      type: 'deposit',
+      label: 'Deposit',
+    }),
+    transaction,
+  });
+
+  if ( isCreate ) {
+    const orderItems = [{
+      label: 'Deposit',
+      unitPrice: DEPOSIT_PRICES[addressCity],
+      RentingId: renting.id,
+      status: renting.status,
+      OrderId: order.id,
+      ProductId,
+    }];
+
+    await models.OrderItem.bulkCreate(orderItems, { transaction });
+  }
+
+  return order;
 };
 
 // this function finds or creates checkin and checkout Order,
@@ -355,7 +403,8 @@ Renting.prototype.findOrCreateDepositOrder = function({ apartment = required() }
           Utils[`get${_.capitalize(type)}Price`](
             this.get(`${type}Date`),
             this.get('packLevel'),
-            Apartment.addressCity),
+            Apartment.addressCity
+          ),
           Utils.getLateNoticeFees(type, this.get(`${type}Date`)),
         ])
         .then(([price, lateNoticeFees]) => {
@@ -680,17 +729,25 @@ Renting.createQuoteOrders = function(args) {
     discount,
     room = required(),
     apartment = required(),
+    transaction,
   } = args;
+  const toCall = [
+    { suffix: 'RentOrder', args: { room } },
+    { suffix: 'DepositOrder', args: { apartment } },
+    { suffix: 'PackOrder', args: { packLevel, discount, apartment } },
+  ];
+  const concurrency = /^(test|dev)/.test(NODE_ENV) ? 1 : 3;
 
-  return Promise.mapSeries([
-      { suffix: 'RentOrder', args: { room } },
-      { suffix: 'DepositOrder', args: { apartment } },
-      { suffix: 'PackOrder', args: { packLevel, discount, apartment } },
-    ], (def) => renting[`findOrCreate${def.suffix}`](def.args));
+  return Promise.map(
+    toCall,
+    (def) =>
+      renting[`findOrCreate${def.suffix}`](Object.assign(def.args, { transaction })),
+    { concurrency }
+  );
 };
 
 Renting.prototype.futureCredit = function(args) {
-  const {discount, label} = args;
+  const { discount, label } = args;
 
   return models.OrderItem.create({
     label,
