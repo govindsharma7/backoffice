@@ -4,17 +4,12 @@ const map             = require('lodash/map');
 const forEach         = require('lodash/forEach');
 const sequelize       = require('../models/sequelize');
 const { ENUMS }       = require('../const');
-const methodMemoizer  = require('./methodMemoizer');
 
 const _ = { pick, pickBy, map, forEach };
 
 module.exports = function(Model, Term) {
   const featuresPrefix = `${Model.name.toLowerCase()}-features-`;
-  const getFeatures = methodMemoizer({
-    model: Model,
-    method: 'getTerms',
-    args: { where: { taxonomy: { $like: `${featuresPrefix}%` } } },
-  });
+  const getFeatures = getFeaturesMemoizer({ featuresPrefix, Term, Model });
   const updateFeatures = updateFeaturesMemoizer({ featuresPrefix, Term, Model });
   const featureTaxonomies = _.pickBy(ENUMS, (value, key) =>
     key.indexOf(featuresPrefix) === 0
@@ -31,7 +26,7 @@ module.exports = function(Model, Term) {
         description: termName.replace(/[A-Z]/g, ($0) => ` ${$0.toLowerCase()}`),
         type: 'Boolean',
         async get(object) {
-          const features = await getFeatures(object);
+          const features = await getFeatures({ object });
 
           // If features have never been modified/saved, return default features
           return features.length ?
@@ -61,6 +56,29 @@ module.exports = function(Model, Term) {
   return featuresFields;
 };
 
+function getWhere({ object, featuresPrefix }) {
+  return { $and: [
+    { taxonomy: { $like: `${featuresPrefix}%` } },
+    { TermableId: object.id },
+  ] };
+}
+
+function getFeaturesMemoizer({ featuresPrefix, Term }) {
+  const cache = new WeakMap();
+
+  return ({ object }) => {
+    if ( cache.has(object) ) {
+      return cache.get(object);
+    }
+
+    const promise = Term.findAll({ where: getWhere({ object, featuresPrefix }) });
+
+    cache.set(object, promise);
+
+    return promise;
+  };
+}
+
 // We'll take care of all individual updated fields for an apartment/room in one shot
 function updateFeaturesMemoizer({ featuresPrefix, Term, Model }) {
   const cache = new WeakMap();
@@ -71,16 +89,15 @@ function updateFeaturesMemoizer({ featuresPrefix, Term, Model }) {
     }
 
     const _transaction = sequelize.transaction(async (transaction) => {
-      const where = { $and: [
-        { taxonomy: { $like: `${featuresPrefix}%` } },
-        { TermableId: object.id },
-      ] };
+      const where = getWhere({ object, featuresPrefix });
       const dbFeatures = await Term.findAll({ where, transaction });
       const currFeatures = dbFeatures.length ?
         dbFeatures.map((term) =>
           _.pick(term, 'taxonomy,name,termable,TermableId'.split(','))
         ) :
-        defaults.map((feature) => Object.assign({ TermableId: object.id }, feature));
+        defaults.map((feature) =>
+          Object.assign({ TermableId: object.id }, feature)
+        );
 
       // Remove features that are no longer "true"
       const nextFeatures = currFeatures.filter(({ taxonomy, name }) =>

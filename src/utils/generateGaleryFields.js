@@ -1,21 +1,23 @@
 const Promise         = require('bluebird');
 const sortBy          = require('lodash/sortBy');
 const map             = require('lodash/map');
+const reduce          = require('lodash/reduce');
+const sequelize       = require('../models/sequelize');
 const { ENUMS }       = require('../const');
-const methodMemoizer  = require('./methodMemoizer');
 
-const _ = { sortBy, map };
+const _ = { sortBy, map, reduce };
 const rBase64Image = /^data:image\/\w+;base64,/;
 
 module.exports = function(Model, Picture) {
-  const getPictures = methodMemoizer({ model: Model, method: 'getPictures' });
+  const getPictures = getPicturesMemoizer({ Picture, Model });
+  const updatePictures = updatePicturesMemoizer({ Picture, Model });
   const alts = Object.keys(ENUMS[`${Model.name.toLowerCase()}PicsAlts`]);
 
   const galeryField = {
     field: 'galery',
     type: ['String'],
     async get(object) {
-      const pics = await getPictures(object);
+      const pics = await getPictures({ object });
 
       return _.sortBy(pics, ['order']).map(({ url }) => url);
     },
@@ -52,21 +54,13 @@ module.exports = function(Model, Picture) {
       type,
       enums: propName === 'alt' ? alts : undefined,
       async get(object) {
-        const pics = await getPictures(object);
+        const pics = await getPictures({ object });
 
         // Using Array#find wouldn't work here as pics might not have .order set
-        return ( _.sortBy(pics, ['order'])[key] || {})[propName];
+        return (pics[key] || {})[propName];
       },
-      async set(object, value) {
-        // setters might be called even though their field shouldn't be updated :-/
-        if ( value === undefined ) {
-          return object;
-        }
-
-        const pics = await getPictures(object);
-        const toUpdateId = _.sortBy(pics, ['order'])[key].id;
-
-        await Picture.update({ [propName]: value }, { where: { id: toUpdateId } });
+      async set(object) {
+        await updatePictures({ object });
 
         return object;
       },
@@ -75,3 +69,81 @@ module.exports = function(Model, Picture) {
 
   return [].concat.apply([galeryField], picFields);
 };
+
+function getPicturesMemoizer({ Picture }) {
+  const cache = new WeakMap();
+
+  return ({ object }) => {
+    if ( cache.has(object) ) {
+      return cache.get(object);
+    }
+
+    const promise = Picture.findAll({
+      where: { PicturableId: object.id },
+      order: [['order', 'ASC']],
+    });
+
+    cache.set(object, promise);
+
+    return promise;
+  };
+}
+
+// We'll take care of all individual updated fields for an apartment/room in one shot
+function updatePicturesMemoizer({ Picture, Model }) {
+  const cache = new WeakMap();
+
+  return ({ object }) => {
+    if ( cache.has(object) ) {
+      return cache.get(object);
+    }
+
+    const _transaction = sequelize.transaction(async (transaction) => {
+      const dbPictures = await Picture.findAll({
+        where: { PicturableId: object.id },
+        order: [['order', 'ASC']],
+        transaction,
+      });
+
+      let maxOrder =
+        _.reduce(dbPictures, (max, pic) => Math.max(max, pic.order), 0);
+      const updatedPics = _.reduce(object, (acc, val, key) => {
+        const match = key.match(/pic (\d+) (\w+)/);
+
+        if ( !match ) {
+          return acc;
+        }
+
+        const [, rowNumber, propName] = match;
+
+        if ( !(rowNumber in acc) ) {
+          acc[rowNumber] = {};
+        }
+        acc[rowNumber][propName] = val;
+
+        return acc;
+      }, {});
+
+      return Promise.map(Object.entries(updatedPics), ([rowNumber, pic]) => {
+        if ( pic.url ) {
+          Object.assign(
+            pic,
+            { picturable: Model.name, PicturableId: object.id },
+            ( pic.order == null || pic.order === '' ) && { order: ++maxOrder }
+          );
+
+          return Picture.create(pic, { transaction });
+        }
+
+        return Picture.update(pic, {
+          where: { id: dbPictures[rowNumber].id },
+          transaction,
+        });
+      }, { concurrency: 3 });
+    });
+
+    cache.set(object, _transaction);
+
+    return _transaction;
+  };
+}
