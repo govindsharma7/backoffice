@@ -464,67 +464,39 @@ module.exports = Object.assign(common, {
         'fr-FR': 'Dressing',
         'en-US': 'Dressing',
       },
-      room1: {
-        'fr-FR': 'Chambre 1',
-        'en-US': 'Room 1',
-      },
-      room2: {
-        'fr-FR': 'Chambre 2',
-        'en-US': 'Room 2',
-      },
-      room3: {
-        'fr-FR': 'Chambre 3',
-        'en-US': 'Room 3',
-      },
-      room4: {
-        'fr-FR': 'Chambre 4',
-        'en-US': 'Room 4',
-      },
-      room5: {
-        'fr-FR': 'Chambre 5',
-        'en-US': 'Room 5',
-      },
-      room6: {
-        'fr-FR': 'Chambre 6',
-        'en-US': 'Room 6',
-      },
-      room7: {
-        'fr-FR': 'Chambre 7',
-        'en-US': 'Room 7',
-      },
-      room8: {
-        'fr-FR': 'Chambre 8',
-        'en-US': 'Room 8',
-      },
-      room9: {
-        'fr-FR': 'Chambre 9',
-        'en-US': 'Room 9',
-      },
-      room10: {
-        'fr-FR': 'Chambre 10',
-        'en-US': 'Room 10',
-      },
     },
     roomPicsAlts: {
       overview: {
         'fr-FR': 'Vue d\'ensemble de la chambre',
         'en-US': 'Overview of the room',
       },
-      bed: {
-        'fr-FR': 'Lit',
-        'en-US': 'Bed',
+      privateBathroom: {
+        'en-US': 'Private Bathroom',
+        'fr-FR': 'Salle de bain privée',
       },
-      dressing: {
-        'fr-FR': 'Dressing',
-        'en-US': 'Dressing',
+      privateToilet: {
+        'en-US': 'Private Toilet',
+        'fr-FR': 'WC Privés',
       },
-      dresser: {
-        'fr-FR': 'Commode',
-        'en-US': 'Overview',
+      privateBalcony: {
+        'en-US': 'Private Balcony',
+        'fr-FR': 'Ballcon privé',
       },
-      bookstore: {
-        'fr-FR': 'Bibliothèque',
-        'en-US': 'Bookstore',
+      privateTerrace: {
+        'en-US': 'Private Terrace',
+        'fr-FR': 'Terrasse Privée',
+      },
+      privateGarden: {
+        'en-US': 'Private Garden',
+        'fr-FR': 'Jardin privé',
+      },
+      privateDressing: {
+        'en-US': 'Private Dressing',
+        'fr-FR': 'Dressing privé',
+      },
+      privateLoggia: {
+        'en-US': 'Private Loggia',
+        'fr-FR': 'Loggia privé',
       },
     },
     beds: {

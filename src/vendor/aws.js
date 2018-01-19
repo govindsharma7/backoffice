@@ -34,6 +34,14 @@ async function deleteFile(bucket, data) {
   return true;
 }
 
+async function deleteFiles(bucket, data) {
+  const s3Bucket = new AWS.S3({ params: {Bucket: bucket} });
+
+  await s3Bucket.deleteObjects(data).promise();
+
+  return true;
+}
+
 const rBase64Image = /^data:image\/\w+;base64,/;
 const picturesBucket = new AWS.S3( { params: { Bucket: AWS_BUCKET_PICTURES } });
 
@@ -75,6 +83,7 @@ module.exports = {
   // sendSms,
   uploadFile,
   deleteFile,
+  deleteFiles,
   uploadPicture,
   pingService,
 };

@@ -1,6 +1,6 @@
 module.exports = function({ OrderItem, Order }) {
 
-  ['beforeCreate', 'beforeUpdate', 'beforeDelete'].forEach((hookName) =>
+  ['beforeCreate', 'beforeUpdate', 'beforeDestroy'].forEach((hookName) =>
     OrderItem.hook(hookName, async (orderItem) => {
       const order = await Order.findById(orderItem.OrderId);
 

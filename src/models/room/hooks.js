@@ -15,7 +15,7 @@ module.exports = function({ Room, Apartment, Client }) {
     }
   });
 
-  Room.hook('beforeDelete', async (room) => {
+  Room.hook('beforeDestroy', async (room) => {
     const clients = await Client.scope('currentApartment').findAll({
       where: {
         '$Rentings.RoomId$': room.id,

@@ -2,7 +2,7 @@ const Promise = require('bluebird');
 
 module.exports = function({ Order, OrderItem, Client, Renting }) {
 
-  Order.hook('beforeDelete', (order) => {
+  Order.hook('beforeDestroy', (order) => {
     // Order that already have a receipt number cannot be deleted.
     // They should be cancelled instead.
     if ( order.receiptNumber ) {

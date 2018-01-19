@@ -37,8 +37,9 @@ module.exports = function(Model, Picture) {
           .map(({ id }) => id);
 
       await Promise.all([
+        // TODO: beforeBulkDestroy has never been tested
         toCreate && Picture.destroy({ where: { id: { $in: toDestroy } } }),
-        toDestroy && Picture.bulkCreate(toCreate),
+        toDestroy && Picture.bulkCreate(toCreate, { individualHooks: true }),
       ]);
 
       return object;

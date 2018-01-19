@@ -32,7 +32,7 @@ module.exports = function({ Payment, Order, Client }) {
     Payment.handleAfterCreate(payment, opts)
   );
 
-  ['beforeDelete', 'beforeUpdate'].forEach((type) =>
+  ['beforeDestroy', 'beforeUpdate'].forEach((type) =>
     Payment.hook(type, (payment) => {
       if ( payment.type !== 'manual' ) {
         return Promise.reject(new Error(

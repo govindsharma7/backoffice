@@ -22,7 +22,7 @@ module.exports = function({ Apartment, Client }) {
       });
   });
 
-  Apartment.hook('beforeDelete', (apartment) =>
+  Apartment.hook('beforeDestroy', (apartment) =>
     Client.scope('currentApartment')
       .findAll({
         where: { $and: [
