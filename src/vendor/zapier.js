@@ -8,6 +8,8 @@ function postPayment(args) {
     client = required(),
     payment = required(),
     order = required(),
+    room = {},
+    apartment = {},
   } = args;
 
   return fetch(`${ZAPIER_API_URL}/ssjjcr/`, {
@@ -18,6 +20,9 @@ function postPayment(args) {
       client: client.fullName,
       order: order.label,
       amount: payment.amount / 100,
+      date: payment.createdAt,
+      room: room.name,
+      city: apartment.adressCity,
     }),
   });
 }
