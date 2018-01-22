@@ -2,10 +2,11 @@ const Promise         = require('bluebird');
 const sortBy          = require('lodash/sortBy');
 const map             = require('lodash/map');
 const reduce          = require('lodash/reduce');
+const entries         = require('lodash/entries');
 const sequelize       = require('../models/sequelize');
 const { ENUMS }       = require('../const');
 
-const _ = { sortBy, map, reduce };
+const _ = { sortBy, map, reduce, entries };
 const rBase64Image = /^data:image\/\w+;base64,/;
 
 module.exports = function(Model, Picture) {
@@ -125,7 +126,7 @@ function setPicturesMemoizer({ Picture, Model }) {
         return acc;
       }, {});
 
-      return Promise.map(Object.entries(updatedPics), ([rowNumber, pic]) => {
+      return Promise.map(_.entries(updatedPics), ([rowNumber, pic]) => {
         if ( pic.url ) {
           Object.assign(
             pic,

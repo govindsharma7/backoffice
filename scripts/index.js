@@ -44,6 +44,8 @@ const rentInvoiceReminder = 'node scripts/rentInvoiceReminder.js';
 const archivePastRentings = 'node scripts/archivePastRentings.js';
 const removeDeletedAt = 'node scripts/removeDeletedAt.js';
 const lint = 'eslint src forest __tests__ scripts scripts.js';
+// This maxWorkers flag is the right one for Travis-CI's free plan
+// and my dual core dev machine.
 const unitTest = 'jest __tests__/unit --maxWorkers=2';
 const intTest = 'jest __tests__/integration';
 const removeClientsFromSendinBlue = 'node scripts/removeClientsFromSendinBlue';
