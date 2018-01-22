@@ -3,12 +3,15 @@ const config        = require('../../config');
 
 module.exports = function({ Picture }) {
   Picture.hook('beforeCreate', (picture) => {
-    if ( config.NODE_ENV === 'test' ) {
-      return picture;
-    }
+    // if ( config.NODE_ENV === 'test' ) {
+    //   return picture;
+    // }
 
-    return Aws.uploadPicture(picture)
-      .then((url) => ( picture.url = url ));
+    // const url = await Aws.uploadPicture(picture);
+    //
+    // picture.url = url;
+
+    return picture;
   });
 
   Picture.hook('beforeDestroy', (picture) => {
