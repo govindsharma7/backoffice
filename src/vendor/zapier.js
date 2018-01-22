@@ -20,9 +20,9 @@ function postPayment(args) {
       client: client.fullName,
       order: order.label,
       amount: payment.amount / 100,
-      date: payment.createdAt,
+      date: payment.createdAt.toISOString(),
       room: room.name,
-      city: apartment.adressCity,
+      city: apartment.addressCity,
     }),
   });
 }
