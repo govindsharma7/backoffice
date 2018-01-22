@@ -1,6 +1,6 @@
 const Promise = require('bluebird');
 
-module.exports = function({ Order, OrderItem, Client, Renting }) {
+module.exports = function({ Order, OrderItem, Renting }) {
 
   Order.hook('beforeDestroy', (order) => {
     // Order that already have a receipt number cannot be deleted.
@@ -29,42 +29,40 @@ module.exports = function({ Order, OrderItem, Client, Renting }) {
 
   // When an order is updated to active:
   // - Make sure the items are active
-  // - Make sure the client is active
   // - Make sure the renting is active
   Order.handleAfterUpdate = async function(order, { transaction }) {
     if ( !order.changed('status') || order.status !== 'active' ) {
       return true;
     }
 
-    const { OrderItems, ClientId } = await Order.findById(order.id, {
+    const { OrderItems } = await Order.findById(order.id, {
       include: [{ model: OrderItem }],
       transaction,
     });
     const rentingItem = OrderItems.find((item) => item.RentingId != null);
 
-    return Promise.all([
-      // This is a batch update, so individual OrderItems hooks won't fire
-      OrderItem.update({ status: 'active' }, { where: {
-        OrderId: order.id,
-        status: 'draft',
-      } }),
-      // This is a batch update, so individual client hooks won't fire
-      Client.update({ status: 'active' }, { where: {
-        id: ClientId,
-        status: 'draft',
-      } }),
-      // Here we explicitely ask renting hooks to fire
-      rentingItem && Renting.update(
-        { status: 'active' },
-        {
-          where: {
-            id: rentingItem.RentingId,
-            status: 'draft',
-          },
-          individualHooks: true,
-        }
-      ),
+    await Promise.all([
+      // Bulk update won't trigger Client update hooks
+      OrderItem.update({ status: 'active' }, {
+        where: {
+          OrderId: order.id,
+          status: 'draft',
+        },
+        transaction,
+      }),
+      // Bulk update won't trigger Renting update hooks
+      rentingItem && Renting.update({ status: 'active' }, {
+        where: {
+          id: rentingItem.RentingId,
+          status: 'draft',
+        },
+        transaction,
+      }),
     ]);
+
+    // Avoid triggering hooks from a hook, call the handler directly
+    return rentingItem &&
+      Renting.handleAfterActivate({ id: rentingItem.RentingId }, { transaction });
   };
   Order.hook('afterUpdate', (order, opts) =>
     Order.handleAfterUpdate(order, opts)

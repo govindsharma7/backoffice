@@ -89,11 +89,15 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   // - Make sure related orders are active
   // - Send a welcomeEmail
   // - Mark the room unavailable in WordPress
-  Renting.handleAfterUpdate = async function(_renting, { transaction }) {
+  Renting.handleAfterUpdate = function(_renting, { transaction }) {
     if ( !_renting.changed('status') || _renting.status !== 'active' ) {
-      return true;
+      return Promise.resolve(true);
     }
 
+    return Renting.handleAfterActivate(_renting, { transaction });
+  };
+
+  Renting.handleAfterActivate = async function(_renting, { transaction }) {
     const [renting, orders] = await Promise.all([
       Renting.scope('room+apartment')
         .findById(_renting.id, { include: [{ model: Client }], transaction }),

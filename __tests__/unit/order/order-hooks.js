@@ -28,10 +28,10 @@ describe('hooks:afterUpdate', () => {
     expect(actual).toEqual(true);
   });
 
-  it('should make the items, client and renting active when it becomes active', () => {
-    const { handleAfterUpdate: afterRentingUpdate } = Renting;
+  it('should make the items and renting active when it becomes active', () => {
+    const { handleAfterActivate: afterRentingUpdate } = Renting;
 
-    Renting.handleAfterUpdate = jest.fn(() => true);
+    Renting.handleAfterActivate = jest.fn(() => true);
 
     return fixtures((u) => ({
       Client: [{
@@ -66,11 +66,9 @@ describe('hooks:afterUpdate', () => {
     }))({ method: 'create', hooks: 'Order' })
     .tap(({ instances: { order } }) => order.update({ status: 'active' }))
     .tap(Promise.delay(200))
-    .then(({ instances: { item, client, renting } }) => Promise.all([
-      expect(Renting.handleAfterUpdate).toHaveBeenCalled(),
+    .then(({ instances: { item, renting } }) => Promise.all([
+      expect(Renting.handleAfterActivate).toHaveBeenCalled(),
       expect(item.reload())
-        .resolves.toEqual(expect.objectContaining({ status: 'active' })),
-      expect(client.reload())
         .resolves.toEqual(expect.objectContaining({ status: 'active' })),
       expect(renting.reload())
         .resolves.toEqual(expect.objectContaining({ status: 'active' })),
