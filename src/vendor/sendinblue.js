@@ -253,7 +253,7 @@ Sendinblue.sendBookingSummaryEmail = async function(args) {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
         NAME: client.firstName,
-        APARTMENT: apartment,
+        APARTMENT: apartment.name,
         LINK: `${WEBSITE_URL}/${lang}/summary/${renting.id}`,
       },
     }
