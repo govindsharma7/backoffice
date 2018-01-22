@@ -5,6 +5,7 @@ const Zapier                      = require('../../vendor/zapier');
 module.exports = function({ Payment, Order, Client }) {
   // When a payment is created:
   // - send a payment confirmation message (and store its messageId)
+  // - send a notif to zapier webhook
   // - pick a receiptNumber
   Payment.handleAfterCreate = async function(payment, { transaction }) {
     const order = await Order.findOne({
