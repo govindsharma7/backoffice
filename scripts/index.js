@@ -44,7 +44,7 @@ const rentInvoiceReminder = 'node scripts/rentInvoiceReminder.js';
 const archivePastRentings = 'node scripts/archivePastRentings.js';
 const removeDeletedAt = 'node scripts/removeDeletedAt.js';
 const lint = 'eslint src forest __tests__ scripts scripts.js';
-const unitTest = 'jest __tests__/unit';
+const unitTest = 'jest __tests__/unit --maxWorkers=2';
 const intTest = 'jest __tests__/integration';
 const removeClientsFromSendinBlue = 'node scripts/removeClientsFromSendinBlue';
 const buildHolidays = 'node scripts/serializeFrenchHolidays > src/vendor/holidays.json';
