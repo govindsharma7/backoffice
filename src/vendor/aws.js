@@ -55,8 +55,6 @@ async function uploadPicture({ id, url }) {
     body.append('file', buffer, { filename: 'pic.jpg' });
   }
 
-  console.log('THEREEE1');
-
   const fetchUrl =
     `https://im2.io/${IMAGE_OPTIM_KEY}/1920x1080,fit${body ? '' : `/${url}`}`;
   const response = await fetch(fetchUrl, { method: 'post', body });
@@ -65,8 +63,6 @@ async function uploadPicture({ id, url }) {
     throw new Error(response.statusText);
   }
 
-  console.log('THEREEE2');
-
   const Body = await response.buffer();
   const { Location } = await picturesBucket.upload({
     Key: id,
@@ -74,8 +70,6 @@ async function uploadPicture({ id, url }) {
     ACL: 'public-read',
     ContentType: 'image/jpeg',
   }).promise();
-
-  console.log('THEREEE3', Location);
 
   return Location;
 }

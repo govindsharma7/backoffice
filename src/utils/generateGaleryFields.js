@@ -105,8 +105,6 @@ function setPicturesMemoizer({ Picture, Model }) {
         transaction,
       });
 
-      console.log('THEREE1', dbPictures.length);
-
       let maxOrder =
         _.reduce(dbPictures, (max, pic) => Math.max(max, pic.order), 0);
       const updatedPics = _.reduce(object, (acc, val, key) => {
@@ -134,7 +132,6 @@ function setPicturesMemoizer({ Picture, Model }) {
             ( pic.order == null || pic.order === '' ) && { order: ++maxOrder }
           );
 
-          console.log('THEREE2', 'create');
           return Picture.create(pic, { transaction });
         }
 

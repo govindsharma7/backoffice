@@ -7,11 +7,7 @@ module.exports = function({ Picture }) {
       return picture;
     }
 
-    console.log('THERE1');
-
     const url = await Aws.uploadPicture(picture);
-
-    console.log('THERE2');
 
     picture.url = url;
 
