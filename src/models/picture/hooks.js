@@ -2,17 +2,17 @@ const Aws           = require('../../vendor/aws');
 const config        = require('../../config');
 
 module.exports = function({ Picture }) {
-  Picture.hook('beforeCreate', (picture) => {
-    // if ( config.NODE_ENV === 'test' ) {
-    //   return picture;
-    // }
-
-    // const url = await Aws.uploadPicture(picture);
-    //
-    // picture.url = url;
-
-    return picture;
-  });
+  // Picture.hook('beforeCreate', async (picture) => {
+  //   if ( config.NODE_ENV === 'test' ) {
+  //     return picture;
+  //   }
+  //
+  //   const url = await Aws.uploadPicture(picture);
+  //
+  //   picture.url = url;
+  //
+  //   return picture;
+  // });
 
   Picture.hook('beforeDestroy', (picture) => {
     if ( config.NODE_ENV === 'test' ) {

@@ -10,7 +10,7 @@ const rBase64Image = /^data:image\/\w+;base64,/;
 
 module.exports = function(Model, Picture) {
   const getPictures = getPicturesMemoizer({ Picture, Model });
-  const updatePictures = updatePicturesMemoizer({ Picture, Model });
+  const setPictures = setPicturesMemoizer({ Picture, Model });
   const alts = Object.keys(ENUMS[`${Model.name.toLowerCase()}PicsAlts`]);
 
   const galeryField = {
@@ -56,11 +56,10 @@ module.exports = function(Model, Picture) {
       async get(object) {
         const pics = await getPictures({ object });
 
-        // Using Array#find wouldn't work here as pics might not have .order set
         return (pics[key] || {})[propName];
       },
       async set(object) {
-        await updatePictures({ object });
+        await setPictures({ object });
 
         return object;
       },
@@ -90,7 +89,7 @@ function getPicturesMemoizer({ Picture }) {
 }
 
 // We'll take care of all individual updated fields for an apartment/room in one shot
-function updatePicturesMemoizer({ Picture, Model }) {
+function setPicturesMemoizer({ Picture, Model }) {
   const cache = new WeakMap();
 
   return ({ object }) => {
