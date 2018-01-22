@@ -38,6 +38,7 @@ const extractPictures =
 const fixPicturableId =
   'node scripts/fixPicturableId.js';
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
+const deletePictures = 'node scripts/deletePictures.js';
 const updateDraftRentOrders = 'node scripts/updateDraftRentOrders.js';
 const updateLateFees = 'node scripts/updateLateFees.js';
 const rentInvoiceReminder = 'node scripts/rentInvoiceReminder.js';
@@ -63,6 +64,7 @@ const common = {
   'extract:pictures': extractPictures,
   'fix:picturableId': fixPicturableId,
   'generate:invoices': generateInvoices,
+  deletePictures,
   'update:draftRentOrders': updateDraftRentOrders,
   'update:lateFees': updateLateFees,
   'invoice:reminder': rentInvoiceReminder,

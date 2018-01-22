@@ -27,7 +27,7 @@ module.exports = function({ Picture }) {
   // TODO: this code has never been run but might be useful if use the galery
   // to create/delete picture in the future (which we want)
   Picture.hook('beforeBulkDestroy', (options) => {
-    if ( config.NODE_ENV === 'test' ) {
+    if ( config.NODE_ENV === 'test' || !('id' in options.where) ) {
       return options;
     }
 
