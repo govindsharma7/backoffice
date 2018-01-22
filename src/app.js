@@ -19,7 +19,7 @@ const smartCollections  = require('./smart-collections');
 const parentApp   = Express();
 const app         = Express();
 // const graphqlApp  = Express();
-const {Schemas}   = Liana;
+const { Schemas } = Liana;
 const _           = { values };
 
 /*

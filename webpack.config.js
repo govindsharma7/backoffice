@@ -53,12 +53,12 @@ module.exports = createConfig([
     },
     // This is an example of how to replace a file in a dependency with one of
     // our own.
-    // resolve: {
-    //   alias: {
-    //     '../services/allowed-users-finder':
-    //       path.resolve(__dirname, 'src/vendor/allowed-users-finder'),
-    //   },
-    // },
+    resolve: {
+      alias: {
+        './deserializers/resource':
+          path.resolve(__dirname, 'src/vendor/forest/ResourceDeserializer'),
+      },
+    },
   }),
   entryPoint('./src/index.js'),
   setOutput('./server.js'),
