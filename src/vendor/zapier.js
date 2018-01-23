@@ -1,4 +1,5 @@
 const querystring         = require('querystring');
+const D                   = require('date-fns');
 const { required }        = require('../utils');
 const { ZAPIER_API_URL }  = require('../config');
 const fetch               = require('./fetch');
@@ -20,7 +21,8 @@ function postPayment(args) {
       client: client.fullName,
       order: order.label,
       amount: payment.amount / 100,
-      date: payment.createdAt.toISOString(),
+      date: D.format(payment.createdAt, 'DD/MM/YYYY'),
+      time: D.format(payment.createdAt, 'HH:mm'),
       room: room.name,
       city: apartment.addressCity,
     }),

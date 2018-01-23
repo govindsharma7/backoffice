@@ -6,7 +6,7 @@ const Utils            = require('../../utils');
 
 const _ = { pick };
 
-module.exports = function(app, models, Room) {
+module.exports = function(app, { Room, Apartment, Client }) {
   const LEA = Liana.ensureAuthenticated;
 
   // Make the room listing and details endpoint public, for chez-nestor.com
@@ -28,8 +28,8 @@ module.exports = function(app, models, Room) {
       );
 
     const [_room, _apartment] = await Promise.all([
-      models.Room.findById(room.id),
-      models.Apartment.findById(apartment.id),
+      Room.findById(room.id),
+      Apartment.findById(apartment.id),
     ]);
 
     Promise.all([
@@ -43,7 +43,7 @@ module.exports = function(app, models, Room) {
   Utils.addInternalRelationshipRoute({
     app,
     sourceModel: Room,
-    associatedModel: models.Client,
+    associatedModel: Client,
     routeName: 'current-client',
     scope: 'currentApartment',
     where: (req) => ({

@@ -3,7 +3,7 @@ const Jwt               = require('express-jwt');
 const Cors              = require('cors');
 const BodyParser        = require('body-parser');
 const Liana             = require('forest-express-sequelize');
-const values            = require('lodash/values');
+const forEach           = require('lodash/forEach');
 const cookieParser      = require('cookie-parser');
 const Promise           = require('bluebird');
 // const GraphQLHTTP       = require('express-graphql');
@@ -20,7 +20,7 @@ const parentApp   = Express();
 const app         = Express();
 // const graphqlApp  = Express();
 const { Schemas } = Liana;
-const _           = { values };
+const _           = { forEach };
 
 /*
  * Middleware that will handle our custom Forest routes
@@ -77,11 +77,17 @@ app.use(Cors({
 // Mime type
 app.use(BodyParser.json({limit: '10mb'}));
 
-_.values(models).forEach(function(model) {
+_.forEach(models, function(model) {
   if ('routes' in model) {
-    model.routes(app, models, model);
+    model.routes(app, models);
   }
 });
+_.forEach(smartCollections, function(smartCollection) {
+  if ('routes' in smartCollection) {
+    smartCollection.routes(app, models);
+  }
+});
+
 
 // Register non-model-specific routes (e.g. ping and login)
 routes(app);
@@ -132,14 +138,14 @@ module.exports = new Promise((resolve) => {
 
     return Schemas._perform.apply(Schemas, arguments).tap(() => {
       // load collections for models
-      Object.keys(models).forEach((modelName) => {
-        if ('collection' in models[modelName]) {
-          Liana.collection( modelName, models[modelName].collection(models) );
+      _.forEach(models, (model, modelName) => {
+        if ('collection' in model) {
+          Liana.collection( modelName, model.collection(models) );
         }
       });
       // load smart collections
-      Object.keys(smartCollections).forEach((name) => {
-        Liana.collection( name, smartCollections[name](models) );
+      _.forEach(smartCollections, (smartCollection, name) => {
+        Liana.collection( name, smartCollection.collection(models) );
       });
     });
   };

@@ -90,10 +90,6 @@ module.exports = function({ Client }) {
           .then((identity) => identity ? identity.gender : undefined);
       },
     }, {
-      field: 'Invoices',
-      type: ['String'],
-      reference: 'Invoice.id',
-    }, {
       field: 'Notes',
       type: ['String'],
       reference: 'Metadata.id',

@@ -18,7 +18,7 @@ module.exports = {
       {
         type: Sequelize.STRING,
         defaultValue: 'double',
-      },
+      }
     );
   },
 };

@@ -7,6 +7,10 @@ const collection        = require('./collection');
 const routes            = require('./routes');
 const hooks             = require('./hooks');
 
+const paymentTypes = DataTypes.ENUM.apply(DataTypes,
+  'card,sepa,manual,manual-card,manual-cash,manual-transfer,manual-cheque'.split(',')
+);
+
 const Payment = sequelize.define('Payment', {
   id: {
     primaryKey: true,
@@ -14,9 +18,9 @@ const Payment = sequelize.define('Payment', {
     defaultValue:             DataTypes.UUIDV4,
   },
   type: {
-    type:                     DataTypes.ENUM('card', 'sepa', 'manual'),
+    type:                     paymentTypes,
     required: true,
-    defaultValue: 'manual',
+    defaultValue: 'manual-card',
     allowNull: false,
   },
   amount: {
@@ -38,9 +42,9 @@ const Payment = sequelize.define('Payment', {
   scopes: TRASH_SCOPES,
 });
 
-Payment.associate = (models) => {
-  Payment.belongsTo(models.Order);
-  Payment.hasMany(models.Credit, {
+Payment.associate = ({ Order, Credit }) => {
+  Payment.belongsTo(Order);
+  Payment.hasMany(Credit, {
     as: 'Refunds',
   });
 };

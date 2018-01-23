@@ -20,6 +20,11 @@ module.exports = function({ Order, Client }) {
       name: 'Destroy Payment',
     }],
     fields: [{
+      field: 'type',
+      type: 'Enum',
+      // Restrict the list of types available in Forest
+      enums: ['manual-card', 'manual-cash', 'manual-transfer', 'manual-cheque'],
+    }, {
       field: 'client',
       type: 'String',
       reference: 'Client.id',

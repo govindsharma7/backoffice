@@ -1,4 +1,4 @@
-module.exports = function() {
+function collection() {
   return {
     name: 'rentalAttachment',
     idField: 'id',
@@ -10,4 +10,8 @@ module.exports = function() {
       type: 'String',
     }],
   };
+}
+
+module.exports = {
+  collection,
 };

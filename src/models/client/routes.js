@@ -9,14 +9,12 @@ const {
   SENDINBLUE_LIST_IDS,
   SENDINBLUE_TEMPLATE_IDS,
 }                          = require('../../const');
-const { INVOICENINJA_URL } = require('../../config');
-const Ninja                = require('../../vendor/invoiceninja');
 const Sendinblue           = require('../../vendor/sendinblue');
 const Utils                = require('../../utils');
 
 const _ = { pickBy, mapKeys };
 
-module.exports = (app, models, Client) => {
+module.exports = (app, { Client, Order, Metadata, Payment, Renting }) => {
   const LEA = Liana.ensureAuthenticated;
   const multer = Multer().fields([{ name: 'passport', maxCount: 1 }]);
   const Serializer = Liana.ResourceSerializer;
@@ -28,7 +26,7 @@ module.exports = (app, models, Client) => {
       .filter((_data) => _data.type === 'order')
       .map((order) => ids.push(order.id));
 
-    models.Order
+    Order
       .findAll({ where: { id: { $in: ids } } })
       .map((order) => Promise.all([
         order,
@@ -75,7 +73,7 @@ module.exports = (app, models, Client) => {
         }
         return Client.findAll({ where: { id: { $in: ids } } });
       })
-      .mapSeries((client) => models.Metadata.createOrUpdate({
+      .mapSeries((client) => Metadata.createOrUpdate({
         name: 'payment-delay',
         value: values.addDelay,
         metadatable: 'Client',
@@ -116,7 +114,7 @@ module.exports = (app, models, Client) => {
     const {values, ids, collection_name: metadatable} =
       req.body.data.attributes;
 
-    models.Metadata.bulkCreate(ids.map((MetadatableId) => ({
+    Metadata.bulkCreate(ids.map((MetadatableId) => ({
         name: 'note',
         metadatable,
         MetadatableId,
@@ -126,38 +124,17 @@ module.exports = (app, models, Client) => {
       .catch(Utils.logAndSend(res));
   });
 
-  app.get('/forest/Client/:recordId/relationships/Invoices', LEA, (req, res) => {
-    Client
-      .findById(req.params.recordId)
-      .then((client) => Ninja.invoice.listInvoices({ 'client_id': client.ninjaId }))
-      .then((response) => {
-        const {data} = response.obj;
-
-        return res.send({
-          data: data.map((invoice) => ({
-            id: invoice.id,
-            type: 'Invoice',
-            attributes: {
-              href: `${INVOICENINJA_URL}/invoices/${invoice.id}/edit`,
-            },
-          })),
-          meta: {count: data.length},
-        });
-      })
-      .catch(Utils.logAndSend(res));
-  });
-
   app.get('/forest/Client/:recordId/relationships/Payments', LEA, (req, res) => {
-    models.Payment
+    Payment
       .findAll({
         include: [{
-          model: models.Order,
+          model: Order,
           attributes: [],
           where: { ClientId: req.params.recordId },
         }],
       })
       .then((payments) =>
-        new Serializer(Liana, models.Payment, payments, null, {}, {
+        new Serializer(Liana, Payment, payments, null, {}, {
           count: payments.length,
         }).perform()
       )
@@ -168,7 +145,7 @@ module.exports = (app, models, Client) => {
   app.get('/forest/Client/:recordId/relationships/jotform-attachments',
     LEA,
     (req, res) => {
-    models.Metadata
+    Metadata
       .findAll({
         where: {
           name: 'rentalAttachments',
@@ -263,7 +240,7 @@ module.exports = (app, models, Client) => {
             name: 'clientIdentity',
             value: JSON.stringify(identityRecord),
           }),
-          models.Renting.findOrCreateCheckinEvent({
+          Renting.findOrCreateCheckinEvent({
             startDate,
             renting: client.Rentings[0],
             client,
@@ -289,7 +266,7 @@ module.exports = (app, models, Client) => {
             'id': { $ne: client.id },
           },
         }),
-        models.Metadata.findOne({
+        Metadata.findOne({
           where: {
             name: 'clientIdentity',
             MetadatableId: client.id,
@@ -319,7 +296,7 @@ module.exports = (app, models, Client) => {
   Utils.addInternalRelationshipRoute({
     app,
     sourceModel: Client,
-    associatedModel: models.Metadata,
+    associatedModel: Metadata,
     routeName: 'Notes',
     where: (req) => ({ MetadatableId: req.params.recordId, name: 'note' }),
   });

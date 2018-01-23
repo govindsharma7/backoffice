@@ -76,36 +76,36 @@ module.exports = function({ Order, Metadata, Payment }) {
     }],
     segments: TRASH_SEGMENTS.concat({
       name: 'NoPayment',
-      where: () => {
-        return Order.findAll({
-          where: {
-            'status': 'active',
-            'type': 'debit',
-            '$Payments.id$': null,
-          },
-          include: [{ model: Payment, attributes: ['id'] }],
-        })
-        .reduce((acc, curr) => {
-          acc.id.push(curr.id);
-          return acc;
-        }, { id: [] });
-      },
+      where: () =>
+        Order
+          .findAll({
+            where: {
+              'status': 'active',
+              'type': 'debit',
+              '$Payments.id$': null,
+            },
+            include: [{ model: Payment, attributes: ['id'] }],
+          })
+          .reduce((acc, curr) => {
+            acc.id.push(curr.id);
+            return acc;
+          }, { id: [] }),
     }, {
       name: 'HasPayment',
-      where: () => {
-        return Order.findAll({
-          where: {
-            'status': 'active',
-            'type': 'debit',
-            '$Payments.id$': { $not: null },
-          },
-          include: [{ model: Payment, attributes: ['id'] }],
-        })
-        .reduce((acc, curr) => {
-          acc.id.push(curr.id);
-          return acc;
-        }, { id: [] });
-      },
+      where: () =>
+        Order
+          .findAll({
+            where: {
+              'status': 'active',
+              'type': 'debit',
+              '$Payments.id$': { $not: null },
+            },
+            include: [{ model: Payment, attributes: ['id'] }],
+          })
+          .reduce((acc, curr) => {
+            acc.id.push(curr.id);
+            return acc;
+          }, { id: [] }),
     }),
   };
 };

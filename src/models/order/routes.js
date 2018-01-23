@@ -6,7 +6,7 @@ const Utils             = require('../../utils');
 
 const Serializer  = Liana.ResourceSerializer;
 
-module.exports = (app, models, Order) => {
+module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
   const LEA = Liana.ensureAuthenticated;
 
   // Make this route completely public
@@ -42,7 +42,7 @@ module.exports = (app, models, Order) => {
   app.post('/forest/actions/send-payment-request', LEA, (req, res) =>
     Order.findAll({
         where: { id: { $in: req.body.data.attributes.ids } },
-        include: [{ model: models.Client }, { model: models.OrderItem }],
+        include: [{ model: Client }, { model: OrderItem }],
       })
       .map((order) => Promise.all([
         { order, client: order.Client },
@@ -56,12 +56,12 @@ module.exports = (app, models, Order) => {
   );
 
   app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) =>
-    models.Credit
+    Credit
       .findAll({
         where: { '$Payment.OrderId$': req.params.orderId },
-        include: [{ model: models.Payment }],
+        include: [{ model: Payment }],
       })
-      .then((credits) => new Serializer(Liana, models.Credit, credits, {}, {
+      .then((credits) => new Serializer(Liana, Credit, credits, {}, {
         count: credits.length,
       }).perform())
       .then((result) => res.send(result))
@@ -80,8 +80,8 @@ module.exports = (app, models, Order) => {
         return Order.findOne({
           where: { id: ids[0] },
           include: [
-            { model: models.OrderItem },
-            { model: models.Payment },
+            { model: OrderItem },
+            { model: Payment },
           ],
         });
       })
