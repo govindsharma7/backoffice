@@ -1,5 +1,4 @@
 const Promise                     = require('bluebird');
-const bodyParser                  = require('body-parser');
 const Liana                       = require('forest-express-sequelize');
 const makePublic                  = require('../../middlewares/makePublic');
 const Aws                         = require('../../vendor/aws');
@@ -7,12 +6,12 @@ const Utils                       = require('../../utils');
 
 module.exports = function(app, { Apartment, Room, Client }) {
   const LEA = Liana.ensureAuthenticated;
-  let urlencodedParser = bodyParser.urlencoded({ extended: true });
 
   // The frontend needs this route to be public
   app.get('/forest/Apartment/:apartmentId', makePublic);
 
-  app.post('/forest/actions/send-sms', urlencodedParser, LEA, (req, res) => {
+  // TODO: re-implement this route using Sendinblue API
+  app.post('/forest/actions/send-sms', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
 
     Promise.resolve()
