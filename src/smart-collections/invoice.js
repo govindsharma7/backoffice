@@ -1,6 +1,6 @@
-// var Liana = require('forest-express-sequelize');
+var Liana = require('forest-express-sequelize');
 
-function collection() {
+function collection({ Order }) {
   return {
     name: 'Invoice',
     idField: 'id',
@@ -47,36 +47,51 @@ function collection() {
       field: 'room',
       type: 'String',
     }],
+    segments: [{
+      name: 'hasInvoiceNumber',
+      where: () =>
+        Order
+          .findAll({
+            where: { receiptNumber: { $not: null } },
+            attributes: ['id'],
+          })
+          .reduce((acc, curr) => {
+            acc.id.push(curr.id);
+            return acc;
+          }, { id: [] }),
+    }],
   };
 }
 
-// function routes(app, { Order, Client, OrderItem, Renting, Room, Apartment }) {
-//   app.get('/forest/invoices', Liana.ensureAuthenticated, async (req, res) => {
-//     const orders = await Order.findAll({
-//       include: [{
-//         model: Client,
-//         attributes: ['firstName', 'lastName']
-//       }, {
-//         model: OrderItem,
-//         include: [{
-//           model: Renting,
-//           required: false,
-//           attributes: [],
-//           include: [{
-//             model: Room,
-//             attributes: ['name'],
-//             include: [{
-//               model: Apartment,
-//               attributes: ['addressCity'],
-//             }],
-//           }],
-//         }],
-//       }],
-//     });
-//   });
-// }
+function routes(app, { Order, Client, OrderItem, Renting, Room, Apartment }) {
+  app.get('/forest/invoices', Liana.ensureAuthenticated, async (req, res) => {
+    const orders = await Order.findAll({
+      include: [{
+        model: Client,
+        attributes: ['firstName', 'lastName'],
+      }, {
+        model: OrderItem,
+        include: [{
+          model: Renting,
+          required: false,
+          attributes: [],
+          include: [{
+            model: Room,
+            attributes: ['name'],
+            include: [{
+              model: Apartment,
+              attributes: ['addressCity'],
+            }],
+          }],
+        }],
+      }],
+    });
+
+    return res.send(orders);
+  });
+}
 
 module.exports = {
   collection,
-  // routes,
+  routes,
 };

@@ -94,6 +94,8 @@ _.forEach(smartCollections, function(smartCollection) {
 routes(app);
 
 parentApp.use(app);
+parentApp.use(BodyParser.json({ limit: '50mb' }));
+parentApp.use(BodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 /*
  * GraphQL middleware
