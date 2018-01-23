@@ -44,18 +44,35 @@ function collection() {
       field: 'city',
       type: 'String',
     }, {
-      field: 'apartment',
-      type: 'String',
-    }, {
       field: 'room',
       type: 'String',
     }],
   };
 }
 
-// function routes(app, { Order }) {
-//   app.get('/forest/invoices', Liana.ensureAuthenticated, (req, res) => {
-//     Order.scope().findAll
+// function routes(app, { Order, Client, OrderItem, Renting, Room, Apartment }) {
+//   app.get('/forest/invoices', Liana.ensureAuthenticated, async (req, res) => {
+//     const orders = await Order.findAll({
+//       include: [{
+//         model: Client,
+//         attributes: ['firstName', 'lastName']
+//       }, {
+//         model: OrderItem,
+//         include: [{
+//           model: Renting,
+//           required: false,
+//           attributes: [],
+//           include: [{
+//             model: Room,
+//             attributes: ['name'],
+//             include: [{
+//               model: Apartment,
+//               attributes: ['addressCity'],
+//             }],
+//           }],
+//         }],
+//       }],
+//     });
 //   });
 // }
 

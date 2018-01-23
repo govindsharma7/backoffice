@@ -29,7 +29,7 @@ module.exports = function(Model, Picture) {
       }
 
       const basePic = { picturable: Model.name, PicturableId: object.id };
-      const currPics = await getPictures(object);
+      const currPics = await getPictures({ object });
       const toCreate =
         nextUrls
           .filter((url) => rBase64Image.test(url))

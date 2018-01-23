@@ -50,9 +50,7 @@ module.exports = function({ Order, Metadata, Payment }) {
       get(object) {
         return object.type !== 'credit' ?
         getCalculatedProps(object)
-          .then((result) => {
-            return result.balance >= 0 ? 'Paid' : 'pending';
-        }) : null;
+          .then((result) => result.balance >= 0 ? 'Paid' : 'pending') : null;
       },
     }, {
       field: 'Refunds',

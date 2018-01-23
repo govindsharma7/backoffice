@@ -27,7 +27,7 @@ async function uploadFile(bucket, data) {
 }
 
 async function deleteFile(bucket, data) {
-  const s3Bucket = new AWS.S3({ params: {Bucket: bucket} });
+  const s3Bucket = new AWS.S3({ params: { Bucket: bucket } });
 
   await s3Bucket.deleteObject(data).promise();
 
@@ -37,7 +37,7 @@ async function deleteFile(bucket, data) {
 async function deleteFiles(bucket, data) {
   const s3Bucket = new AWS.S3({ params: {Bucket: bucket} });
 
-  await s3Bucket.deleteObjects(data).promise();
+  await s3Bucket.deleteObjects({ Delete: { Objects: data } }).promise();
 
   return true;
 }
