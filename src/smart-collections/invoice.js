@@ -16,6 +16,9 @@ function collection({ Order }) {
     }, {
       field: 'clientFullName',
       type: 'String',
+      get(object) {
+        console.log(object);
+      }
     }, {
       field: 'amountTaxExcluded',
       type: 'Number',
