@@ -18,7 +18,7 @@ function collection({ Order }) {
       type: 'String',
       get(object) {
         console.log(object);
-      }
+      },
     }, {
       field: 'amountTaxExcluded',
       type: 'Number',
