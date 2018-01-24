@@ -66,6 +66,11 @@ Apartment.associate = (models) => {
     constraints: false,
     scope: { termable: 'Apartment' },
   });
+  Apartment.hasMany(models.Metadata, {
+    foreignKey: 'MetadatableId',
+    constraints: false,
+    scope: { metadatable: 'Apartment' },
+  });
 
   Apartment.addScope('_roomCount', {
     attributes: { include: [

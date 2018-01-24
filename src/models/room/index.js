@@ -81,6 +81,11 @@ Room.associate = (models) => {
     constraints: false,
     scope: { termable: 'Room' },
   });
+  Room.hasMany(models.Metadata, {
+    foreignKey: 'MetadatableId',
+    constraints: false,
+    scope: { metadatable: 'Room' },
+  });
 
   Room.addScope('availableAt', {
     include: [availableAt],

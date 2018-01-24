@@ -43,10 +43,15 @@ async function deleteFiles(bucket, data) {
 }
 
 const rBase64Image = /^data:image\/\w+;base64,/;
+const rGoogleDriveImage = /^https:\/\/drive.google.com\/file\/d\//;
 const picturesBucket = new AWS.S3( { params: { Bucket: AWS_BUCKET_PICTURES } });
 
-async function uploadPicture({ id, url }) {
+async function uploadPicture({ id, url: _url }) {
   let body;
+  // replace google drive image urls with the download url
+  const url = rGoogleDriveImage.test(_url) ?
+    _url.replace(/file\/d\/([^/]+)\/view.*/, 'uc?export=download&id=$1') :
+    _url;
   let buffer;
 
   if ( rBase64Image.test(url) ) {

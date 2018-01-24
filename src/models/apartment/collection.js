@@ -32,6 +32,14 @@ module.exports = function({ Apartment, Picture, Term }) {
         field: 'to',
         type: 'Date',
       }],
+    }, {
+      name: 'Import Drive Pics',
+      fields: [{
+        field: 'urls',
+        type: 'String',
+        isRequired: true,
+        widget: 'text area',
+      }],
     }],
 
     segments: TRASH_SEGMENTS.concat([{

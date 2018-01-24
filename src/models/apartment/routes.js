@@ -1,10 +1,11 @@
 const Promise                     = require('bluebird');
 const Liana                       = require('forest-express-sequelize');
+const { wrap }                    = require('express-promise-wrap');
 const makePublic                  = require('../../middlewares/makePublic');
 const Aws                         = require('../../vendor/aws');
 const Utils                       = require('../../utils');
 
-module.exports = function(app, { Apartment, Room, Client }) {
+module.exports = function(app, { Apartment, Room, Client, Picture }) {
   const LEA = Liana.ensureAuthenticated;
 
   // The frontend needs this route to be public
@@ -93,6 +94,29 @@ module.exports = function(app, { Apartment, Room, Client }) {
       .then(Utils.createdSuccessHandler(res, 'Maintenance period'))
       .catch(Utils.logAndSend(res));
   });
+
+  app.post('/forest/actions/import-drive-pics', LEA, wrap(async (req, res) => {
+    const { values, ids, collection_name: collectionName } =
+      req.body.data.attributes;
+
+    if ( !ids || ids.length > 1 ) {
+      throw new Error(`You have to select one ${collectionName.toLowerCase()}`);
+    }
+
+    const pics =
+      values.urls
+        .split('https://')
+        .filter(Boolean)
+        .map((url) => ({
+          picturable: collectionName,
+          PicturableId: ids[0],
+          url: `https://${url.trim()}`,
+        }));
+
+    await Picture.bulkCreate(pics, { individualHooks: true });
+
+    Utils.createdSuccessHandler(res, 'pictures')(pics);
+  }));
 
   Utils.addInternalRelationshipRoute({
     app,
