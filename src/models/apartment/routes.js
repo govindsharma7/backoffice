@@ -113,7 +113,7 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
           url: `https://${url.trim()}`,
         }));
 
-    await Picture.bulkCreate(pics, { individualHooks: true });
+    await Picture.bulkCreate(pics);
 
     Utils.createdSuccessHandler(res, 'pictures')(pics);
   }));

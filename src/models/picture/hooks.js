@@ -1,17 +1,32 @@
+const Promise       = require('bluebird');
 const Aws           = require('../../vendor/aws');
 const config        = require('../../config');
 
 module.exports = function({ Picture }) {
-  Picture.hook('beforeCreate', async (picture) => {
+  Picture.hook('beforeBulkCreate', (pictures) => {
     if ( config.NODE_ENV === 'test' ) {
-      return picture;
+      return pictures;
     }
 
+    return Promise.map(
+      pictures,
+      Picture.handleBeforeCreate,
+      { concurrency: 3 }
+    );
+  });
+
+  Picture.handleBeforeCreate = async function(picture) {
     const url = await Aws.uploadPicture(picture);
 
     picture.url = url;
 
     return picture;
+  };
+  Picture.hook('beforeCreate', (picture) => {
+    if ( config.NODE_ENV === 'test' ) {
+      return picture;
+    }
+    return Picture.handleBeforeCreate(picture);
   });
 
   Picture.hook('beforeDestroy', (picture) => {
