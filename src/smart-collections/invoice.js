@@ -49,7 +49,8 @@ function collection(/*{ Order }*/) {
       get: getTotalAmount,
     }, {
       field: 'dueDate',
-      type: 'Date',
+      type: 'String',
+      get: ({ dueDate }) => D.format(dueDate, 'DD/MM/YYYY'),
     }, {
       field: 'totalPaid',
       type: 'Number',
@@ -128,8 +129,8 @@ function routes(app, models) {
     const where = getWhere(segment);
     const params = {
       where,
-      limit: page.size,
-      offset: ( page.number - 1) * page.size,
+      limit: Number(page.size),
+      offset: ( Number(page.number) - 1 ) * Number(page.size),
     };
     const [count, orders] = await Promise.all([
       Order.count({ where }),
