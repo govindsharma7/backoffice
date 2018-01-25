@@ -91,7 +91,7 @@ function collection(/*{ Order }*/) {
       name: 'future invoices',
     }, {
       name: 'previous month invoices',
-    }]
+    }],
   };
 }
 
