@@ -13,13 +13,13 @@ module.exports = function({ Payment, Order, OrderItem, Client, Renting }) {
       include: [Client, OrderItem],
       transaction,
     });
-    const packItem =
-      order.OrderItems.find(({ ProductId }) => /-pack$/.test(ProductId));
+    const rentingItem =
+      order.OrderItems.find(({ RentingId }) => RentingId != null);
     let renting;
 
-    if ( packItem ) {
-      renting =
-        await Renting.scope('room+apartment').findById(packItem.RentingId);
+    if ( rentingItem ) {
+      renting = await Renting.scope('room+apartment')
+        .findById(rentingItem.RentingId, { transaction });
     }
 
     return Promise.all([
