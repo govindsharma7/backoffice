@@ -178,7 +178,7 @@ function getWhere(segment, date = D.subMonths(new Date(), 1)) {
   return {
     receiptNumber: { $not: null },
     dueDate: segment === 'previous month invoices' ?
-      { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } :
+      { $gte: D.startOfMonth(date), $lt: D.endOfMonth(date) } :
       { $gte: D.endOfMonth(date) },
   };
 }
