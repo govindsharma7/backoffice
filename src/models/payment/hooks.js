@@ -45,7 +45,7 @@ module.exports = function({ Payment, Order, OrderItem, Client, Renting }) {
 
   ['beforeDestroy', 'beforeUpdate'].forEach((type) =>
     Payment.hook(type, (payment) => {
-      if ( payment.type !== 'manual' ) {
+      if ( !payment.type.test(/^manual/) ) {
         return Promise.reject(new Error(
           `Only manual payments can be ${type.replace('before', '').toLowerCase()}d`
         ));
