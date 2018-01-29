@@ -4,16 +4,13 @@ const fetch                 = require('./fetch');
 
 const endpoint = 'https://maps.googleapis.com/maps/api/geocode/json';
 
-function geocode(address) {
-  return fetch(
-      `${endpoint}?address=${urlencode(address)}&key=${GOOGLE_MAPS_API_KEY}`
-    )
-    .then((res) => {
-      return res.json();
-    })
-    .then((json) => {
-      return json.results[0].geometry.location;
-    });
+async function geocode(address) {
+  const result = await fetch(
+    `${endpoint}?address=${urlencode(address)}&key=${GOOGLE_MAPS_API_KEY}`
+  );
+  const json = await result.json();
+
+  return json.results[0].geometry.location;
 }
 
 geocode.pingService = function() {

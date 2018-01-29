@@ -85,16 +85,16 @@ Apartment.associate = (models) => {
 };
 
 Apartment.prototype.calculateLatLng = function(addressValues = this.dataValues) {
-  return Geocode([
-        addressValues.addressStreet,
-        addressValues.addressZip,
-        addressValues.addressCountry,
-      ].join(',')
-    )
-    .then(({lat, lng}) => {
-      this.set('latLng', `${lat},${lng}`);
-      return this;
-    });
+  return Apartment.calculateLatLng({ apartment: addressValues });
+};
+Apartment.calculateLatLng = async function({ apartment }) {
+  const { addressStreet, addressZip, addressCountry } = apartment;
+  const { lat, lng } =
+    await Geocode(`${addressStreet}, ${addressZip}, ${addressCountry}`);
+
+  apartment.latLng = `${lat},${lng}`;
+
+  return apartment;
 };
 
 Apartment.collection = collection;

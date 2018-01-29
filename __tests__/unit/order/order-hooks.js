@@ -47,8 +47,7 @@ describe('hooks:afterUpdate', () => {
         ClientId: u.id('client'),
         status: 'draft',
       }],
-      District: [{ id: u.id('district') }],
-      Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
+      Apartment: [{ id: u.id('apartment'), DistrictId: 'lyon-ainay' }],
       Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
       Renting: [{
         id: u.id('renting'),
