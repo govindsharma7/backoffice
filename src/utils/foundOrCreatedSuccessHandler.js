@@ -1,6 +1,6 @@
 module.exports = function(res, subject) {
-  return ([, isCreated]) => {
-    if (!isCreated) {
+  return function(args) {
+    if ( !args[1] ) {
       throw new Error(`${subject} already exists.`);
     }
 

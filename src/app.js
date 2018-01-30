@@ -162,7 +162,7 @@ module.exports = new Promise((resolve) => {
     authSecret: config.FOREST_AUTH_SECRET,
   }));
 
-  parentApp.use((err, req, res, next) => {
+  parentApp.use(function(err, req, res, next) {
     const message = err.longMessage || err.shortMessage || err.message;
 
     console.error(message);
