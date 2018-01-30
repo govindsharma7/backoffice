@@ -16,5 +16,8 @@
   "proxy": {
     "command": "node server.js",
     "listen_timeout": 25
+  },
+  "error_pages": {
+    "disable": true
   }
 }
