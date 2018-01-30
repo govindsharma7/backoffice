@@ -162,9 +162,7 @@ module.exports = new Promise((resolve) => {
     authSecret: config.FOREST_AUTH_SECRET,
   }));
 
-  /* eslint-disable no-unused-vars */
   parentApp.use((err, req, res, next) => {
-  /* eslint-enable no-unused-vars */
     const message = err.longMessage || err.shortMessage || err.message;
 
     console.error(message);
@@ -175,5 +173,11 @@ module.exports = new Promise((resolve) => {
     res
       .status(err.status || 400)
       .send({ error: message, code: err.code || 'UNEXPECTED' });
+
+    // This code is only here to prevent minification from removing arguments
+    // of the function. Otherwise it wouldn't be treated as an error handler.
+    if ( !req && !res ) {
+      next(err);
+    }
   });
 });
