@@ -26,14 +26,12 @@ module.exports = function({ Apartment, Client }) {
   });
 
   Apartment.hook('beforeDestroy', async (apartment) => {
-    const clients =
-      await Client.scope('currentApartment')
-        .findAll({
-          where: { $and: [
-            { '$Rentings->Room.ApartmentId$': apartment.id },
-            { '$Rentings.bookingDate$': { $lte:  new Date() } },
-          ]},
-        });
+    const clients = await Client.scope('currentApartment').findAll({
+      where: { $and: [
+        { '$Rentings->Room.ApartmentId$': apartment.id },
+        { '$Rentings.bookingDate$': { $lte:  new Date() } },
+      ]},
+    });
 
     if ( clients.length > 0) {
       throw new Error('Cannot delete Apartment: it\'s not empty.');

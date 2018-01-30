@@ -536,7 +536,7 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
     };
 });
 
-Renting.prototype.createRoomSwitchOrder = function({discount}) {
+Renting.prototype.createRoomSwitchOrder = function({ discount }) {
   const packLevel = this.get('packLevel');
 
   return models.Client.scope('roomSwitchCount')
@@ -606,13 +606,13 @@ Renting.prototype.googleSerialize = function(event) {
     calendarId: GOOGLE_CALENDAR_IDS[
       isRefundDeposit ? 'refund-deposit' : Apartment.addressCity
     ],
-    resource: isRefundDeposit && {
-      location: Utils.toSingleLine(`
-        ${Apartment.addressStreet},
-        ${Apartment.addressZip} ${Apartment.addressCity},
-        ${Apartment.addressCountry}
-      `),
-    },
+    // resource: isRefundDeposit && {
+    //   location: [
+    //     `${Apartment.addressStreet}, `,
+    //     `${Apartment.addressZip} ${Apartment.addressCity}, `,
+    //     Apartment.addressCountry,
+    //   ].join('')),
+    // },
   };
 };
 

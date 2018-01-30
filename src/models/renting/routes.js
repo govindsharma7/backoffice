@@ -15,85 +15,76 @@ module.exports = function(app, { Renting, Client, Room }) {
   // The frontend needs this route to be public
   app.get('/forest/Renting/:rentingId', makePublic);
 
-  app.post('/forest/actions/create-pack-order', LEA, wrap((req, res) => {
+  app.post('/forest/actions/create-pack-order', LEA, wrap(async (req, res) => {
     const {
       values: { packLevel, discount = 0 },
       ids,
     } = req.body.data.attributes;
 
-    return Promise.resolve()
-      .then(() => {
-        if ( !packLevel ) {
-          throw new Error('Please select a comfort level');
-        }
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple housing-pack orders');
-        }
+    if ( !packLevel ) {
+      throw new Error('Please select a comfort level');
+    }
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t create multiple housing-pack orders');
+    }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
-      })
-      .then((renting) => renting.findOrCreatePackOrder({
-        packLevel,
-        discount: discount * 100,
-        apartment: renting.Room.Apartment,
-      }))
-      .then(Utils.foundOrCreatedSuccessHandler(res, 'Housing pack order'));
+    const renting = await Renting.scope('room+apartment').findById(ids[0]);
+    const result = await renting.findOrCreatePackOrder({
+      packLevel,
+      discount: discount * 100,
+      apartment: renting.Room.Apartment,
+    });
+
+    Utils.foundOrCreatedSuccessHandler(res, 'Housing pack order')(result);
   }));
 
-  app.post('/forest/actions/create-deposit-order', LEA, wrap((req, res) => {
+  app.post('/forest/actions/create-deposit-order', LEA, wrap(async (req, res) => {
+    const { ids } = req.body.data.attributes;
+
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t create multiple deposit orders');
+    }
+
+    const renting = await Renting.scope('room+apartment').findById(ids[0]);
+    const apartment = renting.Room.Apartment;
+    const result = await renting.findOrCreateDepositOrder({ apartment });
+
+    Utils.foundOrCreatedSuccessHandler(res, 'Deposit order')(result);
+  }));
+
+  app.post('/forest/actions/create-first-rent-order', LEA, wrap(async (req, res) => {
     const {ids} = req.body.data.attributes;
 
-    return Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple deposit orders');
-        }
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t create multiple rent orders');
+    }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
-      })
-      .then((renting) =>
-        renting.findOrCreateDepositOrder({ apartment: renting.Room.Apartment })
-      )
-      .then(Utils.foundOrCreatedSuccessHandler(res, 'Deposit order'));
+    const renting = await Renting.scope('room+apartment').findById(ids[0]);
+    const result = await renting.findOrCreateRentOrder({ room: renting.Room });
+
+    Utils.foundOrCreatedSuccessHandler(res, 'Rent order')(result);
   }));
 
-  app.post('/forest/actions/create-first-rent-order', LEA, wrap((req, res) => {
-    const {ids} = req.body.data.attributes;
-
-    return Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple rent orders');
-        }
-
-        return Renting.scope('room+apartment').findById(ids[0]);
-      })
-      .then((renting) => renting.findOrCreateRentOrder({ room: renting.Room }))
-      .then(Utils.foundOrCreatedSuccessHandler(res, 'Rent order'));
-  }));
-
-  app.post('/forest/actions/create-quote-orders', LEA, wrap((req, res) => {
+  app.post('/forest/actions/create-quote-orders', LEA, wrap(async (req, res) => {
     const { values, ids } = req.body.data.attributes;
     const { packLevel: packLevel, discount } = values;
 
-    return Promise.resolve()
-      .then(() => {
-        if ( !packLevel ) {
-          throw new Error('Please select a comfort level');
-        }
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple housing-pack orders');
-        }
+    if ( !packLevel ) {
+      throw new Error('Please select a comfort level');
+    }
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t create multiple housing-pack orders');
+    }
 
-        return Renting.scope('room+apartment').findById(ids[0]);
-      })
-      .then((renting) => renting.createQuoteOrders({
-        packLevel,
-        discount: discount * 100,
-        room: renting.Room,
-        apartment: renting.Room.Apartment,
-      }))
-      .then(Utils.createdSuccessHandler(res, 'Quote order'));
+    const renting = await Renting.scope('room+apartment').findById(ids[0]);
+    const result = await renting.createQuoteOrders({
+      packLevel,
+      discount: discount * 100,
+      room: renting.Room,
+      apartment: renting.Room.Apartment,
+    });
+
+    Utils.createdSuccessHandler(res, 'Quote order')(result);
   }));
 
   app.post('/forest/actions/generate-lease', LEA, wrap(async (req, res) => {
@@ -132,30 +123,26 @@ module.exports = function(app, { Renting, Client, Room }) {
   // add-checkin-date, add-checkout-date, create-checkin-order and
   // create-checkout-order routes
   ['checkin', 'checkout'].forEach((type) => {
-    app.post(`/forest/actions/add-${type}-date`, LEA, wrap((req, res) => {
-      const {values, ids} = req.body.data.attributes;
+    const capType = _.capitalize(type);
 
-      return Promise.resolve()
-        .then(() => {
-          if ( !values.dateAndTime ) {
-            throw new Error('Please select a planned date');
-          }
-          if ( ids.length > 1 ) {
-            throw new Error(`Can't create multiple ${type} events`);
-          }
+    app.post(`/forest/actions/add-${type}-date`, LEA, wrap(async (req, res) => {
+      const { values, ids } = req.body.data.attributes;
 
-          return Renting.scope('room+apartment') // required to create the event
-            .findOne({
-              where: { id: ids[0] },
-              include: [{ model: Client }], // required to create the event
-            });
-        })
-        .then((renting) => {
-          return renting[`findOrCreate${_.capitalize(type)}Event`](
-            values.dateAndTime, {}
-          );
-        })
-        .then(Utils.foundOrCreatedSuccessHandler(res, `${_.capitalize(type)} event`));
+      if ( !values.dateAndTime ) {
+        throw new Error('Please select a planned date');
+      }
+      if ( ids.length > 1 ) {
+        throw new Error(`Can't create multiple ${type} events`);
+      }
+
+      const renting = await Renting.scope('room+apartment').findOne({
+        where: { id: ids[0] },
+        include: [{ model: Client }], // required to create the event
+      });
+      const methodName = `findOrCreate${capType}Event`;
+      const result = await renting[methodName](values.dateAndTime, {});
+
+      Utils.foundOrCreatedSuccessHandler(res, `${capType} event`)(result);
     }));
 
     app.post(`/forest/actions/create-${type}-order`, LEA, wrap(async (req, res) => {
@@ -174,22 +161,22 @@ module.exports = function(app, { Renting, Client, Room }) {
       });
 
       if ( !renting.get(`${type}Date`) || !renting.get('packLevel') ) {
-        throw new Error(Utils.toSingleLine(`
-          ${_.capitalize(type)} event and housing pack are required to
-          create ${_.capitalize(type)} order
-        `));
+        throw new Error([
+          `${capType} event and housing pack are required to `,
+          `create ${capType} order`,
+        ].join(''));
       }
 
       /* eslint-disable no-unused-vars */ // see todo below
-      const [, isCreated] = await renting[`findOrCreate${_.capitalize(type)}Order`]();
+      const result = await renting[`findOrCreate${capType}Order`]();
       /* eslint-enable no-unused-vars */
 
       // TODO: we've disabled that broken feature. Fix it and re-enable
-      // if ( type === 'checkout' && isCreated ) {
+      // if ( type === 'checkout' && result.isCreated ) {
       //   await this.createOrUpdateRefundEvent(this.get('checkoutDate'))
       // }
 
-      Utils.foundOrCreatedSuccessHandler(res, `${_.capitalize(type)} order`);
+      Utils.foundOrCreatedSuccessHandler(res, `${capType} order`)(result);
     }));
   });
 
@@ -252,87 +239,79 @@ module.exports = function(app, { Renting, Client, Room }) {
     return res.send({ rentingId: renting.id });
   }));
 
-  app.post('/forest/actions/update-do-not-cash-deposit-option', LEA, wrap((req, res) => {
+  const updateDepositOptionRoute = '/forest/actions/update-do-not-cash-deposit-option';
+
+  app.post(updateDepositOptionRoute, LEA, wrap(async (req, res) => {
     const {ids, values} = req.body.data.attributes;
 
-    return Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple deposit order');
-        }
-        if ( values.option == null ) {
-          throw new Error('"Option" field is required');
-        }
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t create multiple deposit order');
+    }
+    if ( values.option == null ) {
+      throw new Error('"Option" field is required');
+    }
 
-        return Renting.build({ id: ids[0] }, { isNewRecord: false })
-          .changeDepositOption(values.option);
-      })
-      .then(() => res.send({success: 'Deposit option successfuly updated'}));
+    await Renting
+      .build({ id: ids[0] }, { isNewRecord: false })
+      .changeDepositOption(values.option);
+
+    res.send({success: 'Deposit option successfuly updated'});
   }));
 
-  app.post('/forest/actions/create-room-switch-order', LEA, wrap((req, res) => {
+  app.post('/forest/actions/create-room-switch-order', LEA, wrap(async (req, res) => {
     const {ids, values} = req.body.data.attributes;
 
     if ( values.discount != null ) {
       values.discount *= 100;
     }
 
-    return Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t create multiple room switch orders');
-        }
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t create multiple room switch orders');
+    }
 
-        return Renting.scope(
-          'packLevel' // required below
-        ).findById(ids[0]);
-      })
-      .then((renting) => {
-        if ( renting.get('packLevel') == null ) {
-          throw new Error('Housing pack is required to create room switch order');
-        }
+    const renting = await Renting.scope('packLevel').findById(ids[0]);
 
-        return renting.createRoomSwitchOrder(values);
-      })
-      .then(Utils.createdSuccessHandler(res, 'Room switch order'));
+    if ( renting.get('packLevel') == null ) {
+      throw new Error('Housing pack is required to create room switch order');
+    }
+
+    const result = await renting.createRoomSwitchOrder(values);
+
+    Utils.createdSuccessHandler(res, 'Room switch order')(result);
   }));
 
-  app.post('/forest/actions/future-credit', LEA, wrap((req, res) => {
+  app.post('/forest/actions/future-credit', LEA, wrap(async (req, res) => {
     const {ids, values} = req.body.data.attributes;
 
     if ( values.discount != null ) {
       values.discount *= -100;
     }
 
-    return Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t credit multiple rentings');
-        }
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t credit multiple rentings');
+    }
 
-        return Renting.findById(ids[0]);
-      })
-      .then((renting) => renting.futureCredit(values))
-      .then(Utils.createdSuccessHandler(res, 'Future credit'));
+    const renting = await Renting.findById(ids[0]);
+    const result = await renting.futureCredit(values);
+
+    Utils.createdSuccessHandler(res, 'Future credit')(result);
   }));
 
-  app.post('/forest/actions/future-debit', LEA, wrap((req, res) => {
+  app.post('/forest/actions/future-debit', LEA, wrap(async (req, res) => {
     const {ids, values} = req.body.data.attributes;
 
     if ( values.amount != null ) {
       values.amount *= 100;
     }
 
-    return Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1) {
-          throw new Error('Can\'t debit multiple rentings');
-        }
+    if ( ids.length > 1) {
+      throw new Error('Can\'t debit multiple rentings');
+    }
 
-        return Renting.findById(ids[0]);
-      })
-      .then((renting) => renting.futureDebit(values))
-      .then(Utils.createdSuccessHandler(res, 'Future debit'));
+    const renting = await Renting.findById(ids[0]);
+    const result = await renting.futureDebit(values);
+
+    Utils.createdSuccessHandler(res, 'Future debit')(result);
   }));
 
   Utils.addRestoreAndDestroyRoutes(app, Renting);

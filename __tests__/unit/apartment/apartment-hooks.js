@@ -29,7 +29,7 @@ describe('Apartment - Hooks', () => {
   });
 
   describe(':beforeCreate', () => {
-    it('should set the coordinates if all address fields are ste', async () => {
+    it('should set the coordinates if all address fields are set', async () => {
       const actual = await Apartment.handleBeforeCreate({
         addressStreet: '16 rue de Condé',
         addressZip: '69002',

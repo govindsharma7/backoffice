@@ -27,7 +27,7 @@ function serializeLease(args) {
     depositTerm,
     now = new Date(), // used for testing purpose
   } = args;
-  const {name, addressStreet, addressZip, addressCity} = apartment;
+  const { name, addressStreet, addressZip, addressCity } = apartment;
   const bookingDate = renting.bookingDate || now;
   const identity = JSON.parse(identityMeta.value);
   const fullAddress = _.values(identity.address).filter(Boolean).join(', ');
@@ -54,10 +54,8 @@ function serializeLease(args) {
     fullName: client.fullName,
     fullAddress,
     birthDate,
-    birthPlace: Utils.toSingleLine(`
-      ${identity.birthPlace.first}
-      (${_.capitalize(identity.birthCountryFr)})
-    `),
+    birthPlace:
+      `${identity.birthPlace.first} (${_.capitalize(identity.birthCountryFr)})`,
     nationality: identity.nationalityFr,
     rent: renting.price / 100,
     serviceFees: renting.serviceFees / 100,
