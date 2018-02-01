@@ -105,6 +105,7 @@ function routes(app, models) {
       attributes: ['firstName', 'lastName'],
     }, {
       model: Payment,
+      required: false,
       attributes: ['type', 'amount', 'createdAt'],
     }, {
       model: OrderItem,
