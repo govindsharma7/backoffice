@@ -1,5 +1,8 @@
 const capitalize          = require('lodash/capitalize');
-const { TRASH_SEGMENTS }  = require('../../const');
+const {
+  TRASH_SEGMENTS,
+  CITIES,
+}                         = require('../../const');
 const { WEBSITE_URL }     = require('../../config');
 const Utils               = require('../../utils');
 
@@ -97,7 +100,7 @@ module.exports = function({ Room, Picture, Term }) {
         name: 'Availability',
         scope: 'availableAt',
       },
-      ['lyon', 'montpellier', 'paris'].map((city) => ({
+      CITIES.map((city) => ({
         name: `Available Rooms ${_.capitalize(city)}`,
         scope: 'apartment+availableAt',
         where: () =>

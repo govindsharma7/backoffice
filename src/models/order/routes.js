@@ -1,8 +1,10 @@
 const Liana             = require('forest-express-sequelize');
+const { wrap }          = require('express-promise-wrap');
 const Promise           = require('bluebird');
 const Chromeless        = require('../../vendor/chromeless');
 const makePublic        = require('../../middlewares/makePublic');
 const Utils             = require('../../utils');
+const sequelize         = require('../sequelize');
 
 const Serializer  = Liana.ResourceSerializer;
 
@@ -12,35 +14,42 @@ module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
   // Make this route completely public
   app.get('/forest/Order/:orderId', makePublic);
 
-  app.get('/forest/Invoice/:orderId', makePublic, (req, res) =>
-    Order.scope('invoice')
-      .findById(req.params.orderId)
-      .then((order) => Promise.all([
-        order.toJSON(),
-        order.getCalculatedProps(),
-      ]))
-      .then(([order, calculatedProps]) => res.send(Object.assign(
-        order,
-        calculatedProps
-      )))
-      .catch(Utils.logAndSend(res))
-  );
+  app.get('/forest/Invoice/:orderId', makePublic, wrap(async (req, res) => {
+    const order = await Order.scope('invoice').findById(req.params.orderId)
+    const [json, calculatedProps] = await Promise.all([
+      order.toJSON(),
+      order.getCalculatedProps(),
+    ]);
 
-  app.get('/forest/actions/pdf-invoice/:filename', makePublic, (req, res) => {
+    res.send(Object.assign( json, calculatedProps ));
+  }));
+
+  app.get('/forest/actions/pdf-invoice/:filename', makePublic, wrap(async (req, res) => {
     const { lang, orderId } = req.query;
     const { filename } = req.params;
+    const pdf = await Chromeless.invoiceAsPdf(orderId, lang);
 
-    return Chromeless
-      .invoiceAsPdf(orderId, lang)
-      .then((pdf) =>
-        res
-          .set('Content-Disposition', `filename=${filename}`)
-          .redirect(pdf)
-      );
-  });
+    res
+      .set('Content-Disposition', `filename=${filename}`)
+      .redirect(pdf);
+  }));
 
-  app.post('/forest/actions/send-payment-request', LEA, (req, res) =>
-    Order.findAll({
+  app.post('/forest/actions/generate-invoice', wrap(async (req, res) => {
+    const orders = await Order.findAll({
+      where: { id: { $in: req.body.data.attributes.ids } }
+    });
+
+    await sequelize.transaction((transaction) =>
+      Promise.mapSeries(orders, (order) =>
+        order.pickReceiptNumber({ transaction })
+      )
+    )
+
+    Utils.createdSuccessHandler(res, 'Invoices')(orders);
+  }));
+
+  app.post('/forest/actions/send-payment-request', LEA, wrap(async (req, res) => {
+    const orders = await Order.findAll({
         where: { id: { $in: req.body.data.attributes.ids } },
         include: [{ model: Client }, { model: OrderItem }],
       })
@@ -50,43 +59,39 @@ module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
       ]))
       .map(([{ order, client }, { amount, balance }]) =>
         order.sendPaymentRequest({ client, amount, balance })
-      )
-      .then(Utils.sentSuccessHandler(res, 'Payment Request'))
-      .catch(Utils.logAndSend(res))
-  );
+      );
 
-  app.get('/forest/Order/:orderId/relationships/Refunds', LEA, (req, res) =>
-    Credit
-      .findAll({
-        where: { '$Payment.OrderId$': req.params.orderId },
-        include: [{ model: Payment }],
-      })
-      .then((credits) => new Serializer(Liana, Credit, credits, {}, {
-        count: credits.length,
-      }).perform())
-      .then((result) => res.send(result))
-      .catch(Utils.logAndSend(res))
-  );
+    Utils.sentSuccessHandler(res, 'Payment Request')(orders);
+  }));
 
-  app.post('/forest/actions/cancel-order', LEA, (req, res) => {
-    const {ids} = req.body.data.attributes;
+  app.get('/forest/Order/:orderId/relationships/Refunds', LEA, wrap(async (req, res) => {
+    const credits = await Credit.findAll({
+      where: { '$Payment.OrderId$': req.params.orderId },
+      include: [{ model: Payment }],
+    });
+    const result = await new Serializer(Liana, Credit, credits, {}, {
+      count: credits.length,
+    }).perform();
 
-    return Promise.resolve()
-      .then(() => {
-        if ( ids.length > 1 ) {
-          throw new Error('Can\'t cancel multiple orders');
-        }
+    res.send(result);
+  }));
 
-        return Order.findOne({
-          where: { id: ids[0] },
-          include: [
-            { model: OrderItem },
-            { model: Payment },
-          ],
-        });
-      })
-      .tap((order) => order.destroyOrCancel())
-      .then(Utils.createdSuccessHandler(res, 'Cancel invoice'))
-      .catch(Utils.logAndSend(res));
-  });
+  app.post('/forest/actions/cancel-order', LEA, wrap(async (req, res) => {
+    const { ids } = req.body.data.attributes;
+
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t cancel multiple orders');
+    }
+
+    const order = await Order.findOne({
+      where: { id: ids[0] },
+      include: [
+        { model: OrderItem },
+        { model: Payment },
+      ],
+    });
+    const result = await order.destroyOrCancel();
+
+    Utils.createdSuccessHandler(res, 'Cancel invoice')(result);
+  }));
 };

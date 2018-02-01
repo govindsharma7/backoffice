@@ -1,7 +1,10 @@
 const find                  = require('lodash/find');
 const capitalize            = require('lodash/capitalize');
 const map                   = require('lodash/map');
-const { TRASH_SEGMENTS }    = require('../../const');
+const {
+  TRASH_SEGMENTS,
+  CITIES,
+}                           = require('../../const');
 const { INVOICENINJA_URL }  = require('../../config');
 const sequelize             = require('../sequelize');
 
@@ -158,7 +161,7 @@ module.exports = function({ Client }) {
     }, {
       name: 'Destroy Client',
     }],
-    segments: ['lyon', 'paris', 'montpellier'].map((city) => ({
+    segments: CITIES.map((city) => ({
       name: `Currrent Clients ${_.capitalize(city)}`,
       where: () => (
         Client.scope('currentApartment')

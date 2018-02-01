@@ -432,7 +432,6 @@ Client.prototype.applyLateFees = function(now = new Date()) {
     });
 };
 
-// the last argument is only used for testing purpose
 Client.getIdentity = function(client, now = new Date()) {
   return models.Metadata.findOne({
       where: { $and: [

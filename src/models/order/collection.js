@@ -1,6 +1,12 @@
+const kebabCase           = require('lodash/kebabCase');
 const { TRASH_SEGMENTS }  = require('../../const');
-const { WEBSITE_URL }     = require('../../config');
+const {
+  REST_API_URL,
+  WEBSITE_URL,
+}                         = require('../../config');
 const Utils               = require('../../utils');
+
+const _ = { kebabCase };
 
 module.exports = function({ Order, Metadata, Payment }) {
   const getCalculatedProps = Utils.methodMemoizer({
@@ -44,6 +50,12 @@ module.exports = function({ Order, Metadata, Payment }) {
         return `${WEBSITE_URL}/en-US/payment/${id}`;
       },
     }, {
+      field: 'invoiceLink',
+      type: 'String',
+      get({ label }) {
+        return `${REST_API_URL}/forest/actions/pdf-invoice/${_.kebabCase(label)}.pdf`;
+      },
+    }, {
       field: 'isPaid',
       type: 'Enum',
       enums: ['pending', 'Paid'],
@@ -71,6 +83,8 @@ module.exports = function({ Order, Metadata, Payment }) {
       name: 'Cancel Order',
     }, {
       name: 'Send Payment Request',
+    }, {
+      name: 'Generate Invoice'
     }],
     segments: TRASH_SEGMENTS.concat({
       name: 'NoPayment',

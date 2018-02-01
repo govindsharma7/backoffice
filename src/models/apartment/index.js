@@ -1,10 +1,18 @@
 const { DataTypes }               = require('sequelize');
-const { TRASH_SCOPES }            = require('../../const');
+const {
+  TRASH_SCOPES,
+  CITIES,
+}                                 = require('../../const');
 const Geocode                     = require('../../vendor/geocode');
 const sequelize                   = require('../sequelize');
 const collection                  = require('./collection');
 const routes                      = require('./routes');
 const hooks                       = require('./hooks');
+
+const citiesScopes = CITIES.reduce(
+  (acc, curr) => Object.assign(acc, { [curr]: { where: { addressCity: curr } } }),
+  {}
+);
 
 const Apartment = sequelize.define('Apartment', {
   id: {
@@ -19,7 +27,7 @@ const Apartment = sequelize.define('Apartment', {
   name:                     DataTypes.STRING,
   addressStreet:            DataTypes.STRING,
   addressZip:               DataTypes.STRING,
-  addressCity:              DataTypes.ENUM('lyon', 'montpellier', 'paris'),
+  addressCity:              DataTypes.ENUM(CITIES),
   addressCountry:           DataTypes.ENUM('france'),
   code:                     DataTypes.STRING,
   floor:                    DataTypes.INTEGER,
@@ -38,17 +46,7 @@ const Apartment = sequelize.define('Apartment', {
   elevator:                 DataTypes.BOOLEAN,
 }, {
   paranoid: true,
-  scopes: Object.assign({
-    lyon: {
-      where: { addressCity: 'lyon' },
-    },
-    paris: {
-      where: { addressCity: 'paris' },
-    },
-    montpellier: {
-      where: { addressCity: 'montpellier' },
-    },
-  }, TRASH_SCOPES),
+  scopes: Object.assign(citiesScopes, TRASH_SCOPES),
 });
 
 Apartment.associate = (models) => {

@@ -810,9 +810,10 @@ Renting.getPeriod = function(renting, date = new Date()) {
 };
 
 Renting.getLatest = function(rentings) {
-  return rentings.reduce((acc, curr) => {
-    return curr.bookingDate > acc.bookingDate ? curr : acc;
-  }, rentings[0]);
+  return rentings.reduce(
+    (acc, curr) => curr.bookingDate > acc.bookingDate ? curr : acc,
+    rentings[0]
+  );
 };
 
 Renting.calculatePriceAndFees = function({ room, bookingDate, hasTwoOccupants }) {

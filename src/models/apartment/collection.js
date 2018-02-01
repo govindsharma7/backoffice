@@ -1,5 +1,11 @@
-const { TRASH_SEGMENTS }  = require('../../const');
+const capitalize          = require('lodash/capitalize');
+const {
+  TRASH_SEGMENTS,
+  CITIES,
+}                         = require('../../const');
 const Utils               = require('../../utils');
+
+const _ = { capitalize };
 
 module.exports = function({ Apartment, Picture, Term }) {
   const galeryFields = Utils.generateGaleryFields(Apartment, Picture);
@@ -42,15 +48,11 @@ module.exports = function({ Apartment, Picture, Term }) {
       }],
     }],
 
-    segments: TRASH_SEGMENTS.concat([{
-      name: 'Lyon',
-      scope: 'lyon',
-    }, {
-      name: 'Montpellier',
-      scope: 'montpellier',
-    }, {
-      name: 'Paris',
-      scope: 'paris',
-    }]),
+    segments: TRASH_SEGMENTS.concat(
+      CITIES.map((city) => ({
+        name: _.capitalize(city),
+        scope: city,
+      }))
+    ),
   };
 };

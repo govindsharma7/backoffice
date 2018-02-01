@@ -36,11 +36,25 @@ module.exports = Object.assign(common, {
     lyon: { fr: 15, en: 16, all: 14 },
     montpellier: { fr: 17, en: 18, all: 13 },
     paris: { fr: 20, en: 19, all: 12 },
+    lille: { fr: 39, en: 40, all: 42 },
+    bordeaux: { fr: 44, en: 46, all: 43 },
+    madrid: { fr: 37, en: 38, all: 41 },
+    toulouse: { fr: 48, en: 50, all: 47 },
     prospects: { fr: 21, en: 27 },
     archived: 25,
     en: 9,
     fr: 8,
   },
+
+  CITIES: [
+    'lyon',
+    'montpellier',
+    'paris',
+    'lille',
+    'bordeaux',
+    'toulouse',
+    'madrid',
+  ],
 
   RENT_COEFS: {
     '01-01': 0.95, // January
