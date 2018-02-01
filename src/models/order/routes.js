@@ -39,11 +39,7 @@ module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
       where: { id: { $in: req.body.data.attributes.ids } },
     });
 
-    await sequelize.transaction((transaction) =>
-      Promise.mapSeries(orders, (order) =>
-        order.pickReceiptNumber({ transaction })
-      )
-    );
+    await Promise.mapSeries(orders, (order) => order.pickReceiptNumber());
 
     Utils.createdSuccessHandler(res, 'Invoices')(orders);
   }));
