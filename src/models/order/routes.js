@@ -15,7 +15,7 @@ module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
   app.get('/forest/Order/:orderId', makePublic);
 
   app.get('/forest/Invoice/:orderId', makePublic, wrap(async (req, res) => {
-    const order = await Order.scope('invoice').findById(req.params.orderId)
+    const order = await Order.scope('invoice').findById(req.params.orderId);
     const [json, calculatedProps] = await Promise.all([
       order.toJSON(),
       order.getCalculatedProps(),
@@ -36,14 +36,14 @@ module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
 
   app.post('/forest/actions/generate-invoice', wrap(async (req, res) => {
     const orders = await Order.findAll({
-      where: { id: { $in: req.body.data.attributes.ids } }
+      where: { id: { $in: req.body.data.attributes.ids } },
     });
 
     await sequelize.transaction((transaction) =>
       Promise.mapSeries(orders, (order) =>
         order.pickReceiptNumber({ transaction })
       )
-    )
+    );
 
     Utils.createdSuccessHandler(res, 'Invoices')(orders);
   }));
