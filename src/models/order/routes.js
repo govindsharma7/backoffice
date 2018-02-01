@@ -4,7 +4,6 @@ const Promise           = require('bluebird');
 const Chromeless        = require('../../vendor/chromeless');
 const makePublic        = require('../../middlewares/makePublic');
 const Utils             = require('../../utils');
-const sequelize         = require('../sequelize');
 
 const Serializer  = Liana.ResourceSerializer;
 

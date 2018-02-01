@@ -52,8 +52,10 @@ module.exports = function({ Order, Metadata, Payment }) {
     }, {
       field: 'invoiceLink',
       type: 'String',
-      get({ label }) {
-        return `${REST_API_URL}/forest/actions/pdf-invoice/${_.kebabCase(label)}.pdf`;
+      get({ id, label }) {
+        const path = `${REST_API_URL}/forest/actions/pdf-invoice/`;
+
+        return `${path}${_.kebabCase(label)}.pdf?orderId=${id}&lang=fr-FR`;
       },
     }, {
       field: 'isPaid',
