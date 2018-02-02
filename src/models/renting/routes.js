@@ -1,12 +1,13 @@
 const Promise           = require('bluebird');
 const Liana             = require('forest-express-sequelize');
-const { wrap, CNError } = require('express-promise-wrap');
+const { wrap }          = require('express-promise-wrap');
 const capitalize        = require('lodash/capitalize');
 const pick              = require('lodash/pick');
 const Webmerge          = require('../../vendor/webmerge');
 const Utils             = require('../../utils');
 const makePublic        = require('../../middlewares/makePublic');
 
+const { CNError } = Utils;
 const _ = { capitalize, pick };
 
 module.exports = function(app, { Renting, Client, Room }) {
@@ -197,7 +198,7 @@ module.exports = function(app, { Renting, Client, Room }) {
       await Room.getEarliestAvailability({ rentings: room.Rentings });
 
     if ( !bookingDate ) {
-      throw new CNError(`Room ${roomId} is no longer available`, {
+      throw new CNError(`Room ${room.name} is no longer available`, {
         code: 'renting.roomUnavailable',
       });
     }
