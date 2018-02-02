@@ -20,7 +20,7 @@ function invoiceAsPdf(orderId, lang) {
 
   return chromeless
     .goto(`${WEBSITE_URL}/${lang}/invoice/${orderId}`)
-    .wait('div.invoice-content')
+    .wait('div.invoice-data')
     .pdf()
     .then((pdf) => {
       chromeless.end();
