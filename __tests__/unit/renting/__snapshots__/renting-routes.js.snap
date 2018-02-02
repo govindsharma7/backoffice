@@ -1,3 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Renting - Routes .handleCreateClientAndRentingRoute should create a client and a renting and send a booking summary 1`] = `"Cannot read property 'email' of undefined"`;
+
 exports[`Renting - Routes .handleCreateClientAndRentingRoute should throw a roomUnavailable error if the room is unavailable 1`] = `"CNError is not a constructor"`;

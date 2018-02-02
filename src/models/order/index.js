@@ -369,16 +369,13 @@ Order.sendPaymentRequest = function(args) {
     balance,
   } = args;
   const { OrderItems } = order;
+  const isRent = OrderItems.some(({ ProductId }) => ProductId === 'rent' );
 
   if ( balance >= 0 ) {
     throw new Error('Can\'t send payment request, the balance is positive');
   }
 
-  if ( OrderItems.some(({ ProductId }) => ProductId === 'rent' ) ) {
-    return Sendinblue.sendRentRequest({ order, amount, client });
-  }
-
-  throw new Error('Payment request not implemented for this type of order');
+  return Sendinblue.sendPaymentRequest({ order, amount, client, isRent });
 };
 
 Order.sendRentReminders = function(now = new Date()) {

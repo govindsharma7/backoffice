@@ -88,7 +88,7 @@ module.exports = function({ Order, Metadata, Payment }) {
     }, {
       name: 'Generate Invoice',
     }, {
-      name: 'Download Invoice'
+      name: 'Download Invoice',
     }],
     segments: TRASH_SEGMENTS.concat({
       name: 'NoPayment',

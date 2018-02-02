@@ -180,20 +180,23 @@ Sendinblue.sendRentReminder = async function(args) {
   });
 };
 
-Sendinblue.sendRentRequest = async function(args) {
+Sendinblue.sendPaymentRequest = async function(args) {
   const {
     order = required(),
     client = required(),
     amount = required(),
+    isRent,
   } = args;
+  const template = isRent ? 'rentPaymentRequest' : 'paymentRequest';
   const lang = getClientLocale(client);
 
   const { messageId } = await Sendinblue.sendTemplateEmail(
-    SENDINBLUE_TEMPLATE_IDS.rentInvoice[client.preferredLanguage],
+    SENDINBLUE_TEMPLATE_IDS[template][client.preferredLanguage],
     {
       emailTo: [client.email, client.secondaryEmail],
       attributes: {
         NAME: client.firstName,
+        LABEL: order.label,
         AMOUNT: amount / 100,
         LINK: `${WEBSITE_URL}/${lang}/payment/${order.id}`,
       },
