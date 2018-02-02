@@ -303,8 +303,7 @@ Renting.findOrCreatePackOrder = async function(args) {
   const {
     renting = required(),
     packLevel = required(),
-    // TODO: remove this global pack discount
-    discount = 20000,
+    discount,
     apartment = required(),
     transaction,
   } = args;
@@ -329,9 +328,10 @@ Renting.findOrCreatePackOrder = async function(args) {
     const packItem = Utils.buildPackItem({ order, renting, addressCity, packLevel });
     const orderItems = ([
       packItem,
-      discount != null && discount !== 0 && {
-        label: 'Discount',
-        unitPrice: -discount,
+      //discount != null && discount !== 0 && {
+      {
+        label: 'Discount Offre Flash',
+        unitPrice: -discount || -20000,
         RentingId: renting.id,
         status: renting.status,
         ProductId: packItem.ProductId,

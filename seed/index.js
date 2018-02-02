@@ -94,6 +94,18 @@ module.exports = {
     id: 'montpellier-deposit',
     name: 'Montpellier deposit',
   }, {
+    id: 'lille-deposit',
+    name: 'Lille deposit',
+  }, {
+    id: 'bordeaux-deposit',
+    name: 'Bordeaux deposit',
+  }, {
+    id: 'toulouse-deposit',
+    name: 'Toulouse deposit',
+  }, {
+    id: 'madrid-deposit',
+    name: 'Madrid deposit',
+  }, {
     id: 'paris-deposit',
     name: 'Paris deposit',
   }, {
