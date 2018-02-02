@@ -303,7 +303,8 @@ Renting.findOrCreatePackOrder = async function(args) {
   const {
     renting = required(),
     packLevel = required(),
-    discount,
+    // TODO: remove this global pack discount
+    discount = 20000,
     apartment = required(),
     transaction,
   } = args;
