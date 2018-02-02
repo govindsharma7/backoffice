@@ -82,8 +82,8 @@ Apartment.associate = (models) => {
   });
 };
 
-Apartment.prototype.calculateLatLng = function(addressValues = this.dataValues) {
-  return Apartment.calculateLatLng({ apartment: addressValues });
+Apartment.prototype.calculateLatLng = function() {
+  return Apartment.calculateLatLng({ apartment: this });
 };
 Apartment.calculateLatLng = async function({ apartment }) {
   const { addressStreet, addressZip, addressCountry } = apartment;

@@ -63,6 +63,7 @@ const common = {
   extractPortfolio,
   extractPictures,
   fixPicturableId,
+  fixLatLng: 'node scripts/fixLatLng.js',
   generateInvoices,
   deletePictures,
   'update:draftRentOrders': updateDraftRentOrders,
