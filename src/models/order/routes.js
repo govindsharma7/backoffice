@@ -1,11 +1,14 @@
+const kebabCase         = require('lodash/kebabCase');
 const Liana             = require('forest-express-sequelize');
 const { wrap }          = require('express-promise-wrap');
 const Promise           = require('bluebird');
+const { REST_API_URL }  = require('../../config');
 const Chromeless        = require('../../vendor/chromeless');
 const makePublic        = require('../../middlewares/makePublic');
 const Utils             = require('../../utils');
 
 const Serializer  = Liana.ResourceSerializer;
+const _ = { kebabCase };
 
 module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
   const LEA = Liana.ensureAuthenticated;
@@ -41,6 +44,13 @@ module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
     await Promise.mapSeries(orders, (order) => order.pickReceiptNumber());
 
     Utils.createdSuccessHandler(res, 'Invoices')(orders);
+  }));
+
+  app.post('/forest/actions/download-invoice', wrap(async (req, res) => {
+    const { id, label } = await Order.findById(req.body.data.attributes.ids[0]);
+    const path = `${REST_API_URL}/forest/actions/pdf-invoice/`;
+
+    res.redirect(`${path}${_.kebabCase(label)}.pdf?orderId=${id}&lang=fr-FR`);
   }));
 
   app.post('/forest/actions/send-payment-request', LEA, wrap(async (req, res) => {
