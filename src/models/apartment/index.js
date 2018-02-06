@@ -69,17 +69,6 @@ Apartment.associate = (models) => {
     constraints: false,
     scope: { metadatable: 'Apartment' },
   });
-
-  Apartment.addScope('_roomCount', {
-    attributes: { include: [
-      [sequelize.fn('count', sequelize.col('Rooms.id')), '_roomCount'],
-    ]},
-    include: [{
-      model: models.Room,
-      attributes: [],
-    }],
-    group: ['Apartment.id'],
-  });
 };
 
 Apartment.prototype.calculateLatLng = function() {

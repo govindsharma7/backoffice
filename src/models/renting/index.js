@@ -255,7 +255,6 @@ Renting.attachOrphanOrderItems = function(rentings, order) {
   );
 };
 
-
 Renting.prototype.findOrCreateRentOrder = function (args) {
   return Renting.findOrCreateRentOrder(Object.assign({ renting: this }, args));
 };
@@ -328,10 +327,12 @@ Renting.findOrCreatePackOrder = async function(args) {
     const packItem = Utils.buildPackItem({ order, renting, addressCity, packLevel });
     const orderItems = ([
       packItem,
-      //discount != null && discount !== 0 && {
-      {
-        label: 'Discount Offre Flash',
-        unitPrice: -discount || -20000,
+      discount != null && discount !== 0 && {
+        label: 'Discount',
+        unitPrice: -discount,
+      //{
+      //   label: 'Discount Offre Flash',
+      //   unitPrice: -discount || -20000,
         RentingId: renting.id,
         status: renting.status,
         ProductId: packItem.ProductId,
