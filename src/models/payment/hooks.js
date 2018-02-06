@@ -1,6 +1,5 @@
 const Promise                     = require('bluebird');
 const Sendinblue                  = require('../../vendor/sendinblue');
-const Zapier                      = require('../../vendor/zapier');
 
 module.exports = function({ Payment, Order, OrderItem, Client, Renting }) {
   // When a payment is created:
@@ -29,10 +28,9 @@ module.exports = function({ Payment, Order, OrderItem, Client, Renting }) {
         payment,
         transaction,
       }),
-      Zapier.postPayment({
+      payment.zapCreated({
         client: order.Client,
         order,
-        payment,
         room: renting && renting.Room,
         apartment: renting && renting.Room.Apartment,
       }),

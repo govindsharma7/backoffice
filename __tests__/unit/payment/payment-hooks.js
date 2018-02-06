@@ -1,25 +1,20 @@
-jest.mock('../../../src/vendor/sendinblue');
-jest.mock('../../../src/vendor/zapier');
-jest.mock('../../../src/utils');
-
 const Promise               = require('bluebird');
 const fixtures              = require('../../../__fixtures__');
 const models                = require('../../../src/models');
 const Sendinblue            = require('../../../src/vendor/sendinblue');
-const Zapier                = require('../../../src/vendor/zapier');
 
-const { Order } = models;
+const { Order, Payment } = models;
 
 describe('Payment - Hooks', () => {
   describe('afterCreate', () => {
     it('should send a payment confirmation after create', () => {
-      const {
-        pickReceiptNumber,
-        handleAfterUpdate,
-      } = Order;
-
-      Order.pickReceiptNumber = jest.fn((order) => pickReceiptNumber(order));
-      Order.handleAfterUpdate = jest.fn(() => Promise.resolve(true));
+      jest.spyOn(Order, 'pickReceiptNumber');
+      jest.spyOn(Order, 'handleAfterUpdate')
+        .mockImplementationOnce(() => true);
+      jest.spyOn(Payment, 'zapCreated')
+        .mockImplementationOnce(() => true);
+      jest.spyOn(Sendinblue, 'sendPaymentConfirmation')
+        .mockImplementationOnce(() => true);
 
       return fixtures((u) => ({
         Client: [{
@@ -45,8 +40,6 @@ describe('Payment - Hooks', () => {
       .tap(() => {
         expect(Order.pickReceiptNumber).toHaveBeenCalled();
         expect(Order.handleAfterUpdate).toHaveBeenCalled();
-
-        Object.assign(Order, {pickReceiptNumber, handleAfterUpdate});
       })
       .tap(({ instances }) => {
         const { client, order, payment } =
@@ -58,7 +51,7 @@ describe('Payment - Hooks', () => {
       })
       .tap(({ instances }) => {
         const { client, order, payment } =
-          Zapier.postPayment.mock.calls[0][0];
+          Payment.zapCreated.mock.calls[0][0];
 
         expect(client.id).toBe(instances['client-0'].id);
         expect(order.id).toBe(instances['order-0'].id);

@@ -1,21 +1,22 @@
-const Sendinblue  = require('../vendor/sendinblue');
-const sequelize   = require('./sequelize');
-const models      = require('./models');
-const Apartment   = require('./apartment');
-const Client      = require('./client');
-const Credit      = require('./credit');
-const District    = require('./district');
-const Event       = require('./event');
-const Metadata    = require('./metadata');
-const Order       = require('./order');
-const OrderItem   = require('./orderItem');
-const Payment     = require('./payment');
-const Picture     = require('./picture');
-const Product     = require('./product');
-const Renting     = require('./renting');
-const Room        = require('./room');
-const Setting     = require('./setting');
-const Term        = require('./term');
+const Sendinblue    = require('../vendor/sendinblue');
+const sequelize     = require('./sequelize');
+const models        = require('./models');
+const Apartment     = require('./apartment');
+const Client        = require('./client');
+const Credit        = require('./credit');
+const District      = require('./district');
+const Event         = require('./event');
+const LatestRenting = require('./latestrenting');
+const Metadata      = require('./metadata');
+const Order         = require('./order');
+const OrderItem     = require('./orderItem');
+const Payment       = require('./payment');
+const Picture       = require('./picture');
+const Product       = require('./product');
+const Renting       = require('./renting');
+const Room          = require('./room');
+const Setting       = require('./setting');
+const Term          = require('./term');
 // Keep models sorted alphabetically (easier to make sure they're all there)
 // And don't forget to add the name of the model to ./models.js !
 
@@ -25,6 +26,7 @@ Object.assign(models, {
   Credit,
   District,
   Event,
+  LatestRenting,
   Metadata,
   Order,
   OrderItem,

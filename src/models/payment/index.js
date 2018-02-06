@@ -1,5 +1,8 @@
 const { DataTypes }     = require('sequelize');
+const D                 = require('date-fns');
+const { required }      = require('../../utils');
 const { TRASH_SCOPES }  = require('../../const');
+const Zapier            = require('../../vendor/zapier');
 const payline           = require('../../vendor/payline');
 const sequelize         = require('../sequelize');
 const models            = require('../models'); //!\ Destructuring forbidden /!\
@@ -10,6 +13,7 @@ const hooks             = require('./hooks');
 const paymentTypes = DataTypes.ENUM.apply(DataTypes,
   'card,sepa,manual,manual-card,manual-cash,manual-transfer,manual-cheque'.split(',')
 );
+const postToZapier = Zapier.poster('ssjjcr');
 
 const Payment = sequelize.define('Payment', {
   id: {
@@ -64,6 +68,30 @@ Payment.refund = (id, values) => Payment
     paylineId: result.transactionId,
     PaymentId: id,
   }));
+
+Payment.prototype.zapCreated = function(args) {
+  return Payment.zapCreated(Object.assign({ payment: this }, args));
+};
+Payment.zapCreated = function(args) {
+  const {
+    client = required(),
+    payment = required(),
+    order = required(),
+    room = {},
+    apartment = {},
+  } = args;
+
+  return postToZapier({
+    messageType: 'payment',
+    client: client.fullName,
+    order: order.label,
+    amount: payment.amount / 100,
+    date: D.format(payment.createdAt, 'DD/MM/YYYY'),
+    time: D.format(payment.createdAt, 'HH:mm'),
+    room: room.name,
+    city: apartment.addressCity,
+  });
+};
 
 Payment.collection = collection;
 Payment.routes = routes;

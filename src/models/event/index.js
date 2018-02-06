@@ -1,18 +1,13 @@
 const { DataTypes }         = require('sequelize');
-const Calendar              = require('googleapis').calendar('v3');
-const Promise               = require('bluebird');
 const { TRASH_SCOPES }      = require('../../const');
-const jwtClient             = require('../../vendor/googlecalendar');
+const Zapier                = require('../../vendor/zapier');
+const { required }          = require('../../utils');
 const Utils                 = require('../../utils');
 const sequelize             = require('../sequelize');
-const models                = require('../models'); //!\ Destructuring forbidden /!\
 const collection            = require('./collection');
 const hooks                 = require('./hooks');
 
-const eventsInsert = Promise.promisify(Calendar.events.insert);
-const eventsUpdate = Promise.promisify(Calendar.events.update);
-const eventsDelete = Promise.promisify(Calendar.events.delete);
-
+const postToZapier = Zapier.poster('zdso65');
 
 const Event = sequelize.define('Event', {
   id: {
@@ -38,9 +33,9 @@ const Event = sequelize.define('Event', {
     type:                     DataTypes.STRING,
     required: false,
   },
-  googleEventId: {
-    type:                     DataTypes.STRING,
-    required: false,
+  type: {
+    type:                     DataTypes.ENUM('checkin', 'checkout', 'deposit-refund'),
+    required: true,
   },
   eventable: {
     type:                     DataTypes.STRING,
@@ -85,57 +80,18 @@ Event.associate = (models) => {
   });
 };
 
-Event.prototype.googleSerialize = function() {
-  const {eventable} = this;
-
-  // TODO: make this more generic and not only useful for Renting
-  return models.Renting.scope(`eventable${eventable}`)
-    .findById(this.EventableId)
-    .then((eventableInstance) =>
-      eventableInstance.googleSerialize(this)
-    )
-    .then(({calendarId, resource}) => ({
-      auth: jwtClient,
-      eventId : this.googleEventId,
-      calendarId,
-      resource: Object.assign({
-        summary: this.summary,
-        start: { dateTime: this.startDate },
-        end: { dateTime: this.endDate },
-        description: this.description,
-      }, resource),
-    }));
+Event.prototype.zapCreatedOrUpdated = function(args) {
+  return Event.zapCreatedOrUpdated(Object.assign({ event: this }, args));
+};
+Event.zapCreatedOrUpdated = function({ event = required() }) {
+  return postToZapier(event.dataValues || event);
 };
 
-Event.prototype.googleCreate = function(options) {
-  return this
-    .googleSerialize(options)
-    .then((serialized) => eventsInsert(serialized))
-    .tap((googleEvent) => {
-      return this
-        .set('googleEventId', googleEvent.id)
-        .save(Object.assign({}, options, {hooks: false}));
-    });
+Event.prototype.zapDeleted = function(args) {
+  return Event.zapDeleted(Object.assign({ event: this }, args));
 };
-
-Event.prototype.googleUpdate = function() {
-  return this
-    .googleSerialize()
-    .then((serialized) => {
-      return eventsUpdate(serialized);
-    });
-};
-
-Event.prototype.googleDelete = function() {
-  return this
-    .googleSerialize()
-    .then((serialized) => {
-      return eventsDelete(serialized);
-    })
-    .then(() => {
-      return this.set('googleEventId', null)
-        .save({hook: false});
-    });
+Event.zapDeleted = function({ event = required() }) {
+  return postToZapier({ id: event.id, delete: true });
 };
 
 Event.collection = collection;

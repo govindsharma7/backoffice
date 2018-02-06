@@ -93,6 +93,10 @@ Client.associate = (models) => {
   const {fn, col} = sequelize;
 
   Client.hasMany(models.Renting);
+  Client.hasMany(models.LatestRenting, {
+    foreignKey: 'ClientId',
+    constraints: false,
+  });
   Client.hasMany(models.Order);
   Client.hasMany(models.Metadata, {
     foreignKey: 'MetadatableId',

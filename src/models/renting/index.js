@@ -11,10 +11,7 @@ const {
 }                           = require('../../const');
 const webmerge              = require('../../vendor/webmerge');
 const Utils                 = require('../../utils');
-const {
-  GOOGLE_CALENDAR_IDS,
-  NODE_ENV,
-}                           = require('../../config');
+const { NODE_ENV }          = require('../../config');
 const sequelize             = require('../sequelize');
 const models                = require('../models'); //!\ Destructuring forbidden /!\
 const routes                = require('./routes');
@@ -598,24 +595,6 @@ Renting.prototype.changeDepositOption = function(option) {
       TermableId: this.id,
     }, {isNewRecord: false})
     .createOrUpdate(option === 'cash deposit' ? 'cash' : 'do-not-cash');
-};
-
-Renting.prototype.googleSerialize = function(event) {
-  const {Apartment} = this.Room;
-  const isRefundDeposit = event.get('category') === 'refund-deposit';
-
-  return {
-    calendarId: GOOGLE_CALENDAR_IDS[
-      isRefundDeposit ? 'refund-deposit' : Apartment.addressCity
-    ],
-    // resource: isRefundDeposit && {
-    //   location: [
-    //     `${Apartment.addressStreet}, `,
-    //     `${Apartment.addressZip} ${Apartment.addressCity}, `,
-    //     Apartment.addressCountry,
-    //   ].join('')),
-    // },
-  };
 };
 
 /*  handle update of an event, check if an Order

@@ -71,6 +71,10 @@ Room.associate = (models) => {
 
   Room.belongsTo(models.Apartment);
   Room.hasMany(models.Renting);
+  Room.hasMany(models.LatestRenting, {
+    foreignKey: 'RoomId',
+    constraints: false,
+  });
   Room.hasMany(models.Picture, {
     foreignKey: 'PicturableId',
     constraints: false,
@@ -98,7 +102,7 @@ Room.associate = (models) => {
       [fn('max', col('Rentings.bookingDate')), 'latestBookingDate'],
     ],
     include: [{
-      model: models.Renting,
+      model: models.LatestRenting,
       attributes: ['id'],
       where: {
         status: 'active',
