@@ -17,7 +17,9 @@ async function fixEventType() {
 
   return Promise.map(
     events,
-    (event) => event.update({ type: event.Term.name }),
+    (event) => (
+      event.update({ type: event.Terms[0].name })
+    ),
     { concurrency: 3 }
   );
 }
