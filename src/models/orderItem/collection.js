@@ -7,6 +7,7 @@ module.exports = function() {
       fields: [{
         field: 'discount',
         type: 'Number',
+        isRequired: true,
       }],
     }, {
       name: 'Restore OrderItem',

@@ -55,6 +55,7 @@ module.exports = function(models) {
         field: 'packLevel',
         type: 'Enum',
         enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
+        isRequired: true,
       }, {
         field: 'discount',
         type: 'Number',
@@ -67,6 +68,7 @@ module.exports = function(models) {
         field: 'packLevel',
         type: 'Enum',
         enums: [BASIC_PACK, COMFORT_PACK, PRIVILEGE_PACK],
+        isRequired: true,
       }, {
         field: 'discount',
         type: 'Number',
@@ -75,8 +77,8 @@ module.exports = function(models) {
       name: 'Update "do not cash deposit" Option',
       fields: [{
         field: 'option',
-        description: 'required',
         type: 'Enum',
+        isRequired: true,
         enums: ['cash deposit', 'do not cash deposit'],
       }],
     }, {
@@ -84,12 +86,14 @@ module.exports = function(models) {
       fields: [{
         field: 'dateAndTime',
         type: 'Date',
+        isRequired: true,
       }],
     }, {
       name: 'Add Checkout Date',
       fields :[{
         field: 'dateAndTime',
         type: 'Date',
+        isRequired: true,
       }],
     }, {
       name: 'Generate Lease',
@@ -111,6 +115,7 @@ module.exports = function(models) {
       }, {
         field: 'label',
         type: 'String',
+        isRequired: true,
       }],
     }, {
       name: 'Future Debit',
@@ -122,17 +127,16 @@ module.exports = function(models) {
         field: 'reason',
         type: 'Enum',
         isRequired: true,
-        enums: Products.Product.map((product) => {
-          return product.name;
-        }),
+        enums: Products.Product.map((product) => product.name),
       }, {
         field: 'invoiceWith',
-        isRequired: true,
         type: 'Enum',
         enums: ['Next Rent Invoice', 'Account Balance Invoice'],
+        isRequired: true,
       }, {
         field: 'label',
         type: 'String',
+        isRequired: true,
       }],
     }, {
       name: 'Restore Renting',

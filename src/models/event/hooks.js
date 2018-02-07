@@ -1,6 +1,6 @@
 module.exports = function({ Event }) {
   Event.afterCreateHandler = function(event) {
-    return Event.zapCreatedOrUpdated( event );
+    return Event.zapCreatedOrUpdated({ event });
   };
   Event.hook('afterCreate', (event, options) =>
     Event.afterCreateHandler(event, options)
@@ -19,6 +19,6 @@ module.exports = function({ Event }) {
     return Event.zapDeleted({ event });
   };
   Event.hook('afterDelete', (event, options) =>
-    Event.afterDeleteHandler(event, options)
+    Event.afterDestroyHandler(event, options)
   );
 };

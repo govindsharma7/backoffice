@@ -523,15 +523,10 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
   };
 
   Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
-    function(startDate, { transaction, hooks }) {
-      return Renting[`findOrCreate${_.capitalize(type)}Event`]({
-        renting: this,
-        client: this.Client,
-        room: this.Room,
-        startDate,
-        transaction,
-        hooks,
-      });
+    function(args) {
+      return Renting[`findOrCreate${_.capitalize(type)}Event`](
+        Object.assign({ renting: this }, args)
+      );
     };
 });
 

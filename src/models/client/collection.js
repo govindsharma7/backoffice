@@ -110,29 +110,29 @@ module.exports = function({ Client }) {
       fields: [{
           field: 'cardHolder',
           type: 'String',
-          description: 'required',
+          isRequired: true,
         }, {
           field: 'cardNumber',
           type: 'Number',
-          description: 'required',
+          isRequired: true,
         }, {
           field: 'expirationMonth',
           type: 'Enum',
           enums: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
-          description: 'required',
+          isRequired: true,
         }, {
           field: 'expirationYear',
           type: 'Enum',
           enums: ['2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'],
-          description: 'required',
+          isRequired: true,
         }, {
           field: 'cvv',
           type: 'Number',
-          description: 'required',
+          isRequired: true,
         }, {
           field: 'amount',
           type: 'Number',
-          description: 'required',
+          isRequired: true,
         }, {
           field: 'reason',
           type: 'String',
@@ -147,6 +147,7 @@ module.exports = function({ Client }) {
         field: 'for',
         type: 'Enum',
         enums: ['current month', 'month +1', 'month +2', 'month +3'],
+        isRequired: true,
       }],
     }, {
       name: 'Set Rent Payment Delay',

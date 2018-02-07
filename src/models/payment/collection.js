@@ -4,21 +4,6 @@ const cache = new WeakMap();
 
 module.exports = function({ Order, Client }) {
   return {
-    actions: [{
-      name: 'Refund',
-      fields: [{
-          field: 'amount',
-          type: 'Number',
-          description: 'required',
-        }, {
-          field: 'reason',
-          type: 'String',
-        }],
-    }, {
-      name: 'Restore Payment',
-    }, {
-      name: 'Destroy Payment',
-    }],
     fields: [{
       field: 'type',
       type: 'Enum',
@@ -38,6 +23,21 @@ module.exports = function({ Order, Client }) {
         return getClientMemoized(object)
           .then((client) => client.fullName);
       },
+    }],
+    actions: [{
+      name: 'Refund',
+      fields: [{
+          field: 'amount',
+          type: 'Number',
+          isRequired: true,
+        }, {
+          field: 'reason',
+          type: 'String',
+        }],
+    }, {
+      name: 'Restore Payment',
+    }, {
+      name: 'Destroy Payment',
     }],
     segments: TRASH_SEGMENTS,
   };

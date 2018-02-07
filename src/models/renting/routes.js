@@ -129,9 +129,6 @@ module.exports = function(app, { Renting, Client, Room }) {
     app.post(`/forest/actions/add-${type}-date`, LEA, wrap(async (req, res) => {
       const { values, ids } = req.body.data.attributes;
 
-      if ( !values.dateAndTime ) {
-        throw new Error('Please select a planned date');
-      }
       if ( ids.length > 1 ) {
         throw new Error(`Can't create multiple ${type} events`);
       }
@@ -141,7 +138,12 @@ module.exports = function(app, { Renting, Client, Room }) {
         include: [{ model: Client }], // required to create the event
       });
       const methodName = `findOrCreate${capType}Event`;
-      const result = await renting[methodName](values.dateAndTime, {});
+      const result = await renting[methodName]({
+        startDate: values.dateAndTime,
+        client: renting.Client,
+        room: renting.Room,
+        apartment: renting.Room.Apartment,
+      });
 
       Utils.foundOrCreatedSuccessHandler(res, `${capType} event`)(result);
     }));
