@@ -46,31 +46,93 @@ describe('Renting - Model', () => {
 
 
   describe('#findOrCreateCheckinEvent()', () => {
-    test('It should\'nt create a checkin event as it already exists', () =>
-      Renting.scope('room+apartment')
-        .findOne({
-          where: { id: renting1.id },
-          include: [{ model: models.Client }],
-        })
-        .then((renting) =>
-          renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false})
-        )
-        .then((result) => expect(result[1]).toEqual(false))
-    );
+    test('It should\'nt create a checkin event as it already exists', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'active',
+          bookingDate: D.parse('2016-01-01'),
+        }],
+        Event: [{
+          type: 'checkin',
+          EventableId: u.id('renting'),
+          eventable: 'Renting',
+          startDate: D.parse('2017-05-16 Z'),
+          endDate: D.parse('2017-05-16 Z'),
+        }],
+      }))({ method: 'create', hooks: false });
 
-    test('It should create a checkin event', () =>
-      Renting.scope('room+apartment')
-        .findOne({
-          where: { id: renting2.id },
-          include: [{ model: models.Client }],
-        })
-        .then((renting) => {
-          return renting.findOrCreateCheckinEvent('2017-05-16 Z', {hooks:false});
-        })
-        .then((result) => {
-          return expect(result[1]).toEqual(true);
-        })
-    );
+      const renting = await Renting.scope('room+apartment').findOne({
+        where: { id: u.id('renting') },
+        include: [{ model: models.Client }],
+      });
+      const [, isCreated] = await renting.findOrCreateCheckinEvent({
+        startDate: '2017-05-16 Z',
+        client: renting.Client,
+        room: renting.Room,
+        apartment: renting.Room.Apartment,
+        hooks: false,
+      });
+
+      expect(isCreated).toEqual(false);
+    });
+
+    test('It should create a checkin event', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'active',
+          bookingDate: D.parse('2016-01-01'),
+        }],
+      }))({ method: 'create', hooks: false });
+
+      const renting = await Renting.scope('room+apartment').findOne({
+        where: { id: u.id('renting') },
+        include: [{ model: models.Client }],
+      });
+
+      const [, isCreated] = await renting.findOrCreateCheckinEvent({
+        startDate: '2017-05-16 Z',
+        client: renting.Client,
+        room: renting.Room,
+        apartment: renting.Room.Apartment,
+        hooks: false,
+      });
+
+      expect(isCreated).toEqual(true);
+    });
   });
 
   describe('.getPeriod', () => {

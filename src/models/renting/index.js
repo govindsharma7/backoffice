@@ -484,50 +484,51 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
 
 // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
 ['checkin', 'checkout'].forEach((type) => {
-  Renting[`findOrCreate${_.capitalize(type)}Event`] = function(args) {
-    const { startDate, renting, client, room, transaction, hooks } = args;
-    const {firstName, lastName, phoneNumber} = client;
-    const term = {
-      name: type,
-      taxonomy: 'event-category',
-      termable: 'Event',
-    };
+  const capType = _.capitalize(type);
 
-    return Utils[`get${_.capitalize(type)}EndDate`](startDate)
-      .then((endDate) => {
-        return models.Event.findOrCreate({
-          where: {
-            EventableId: renting.id,
-          },
-          include: [{
-            model: models.Term,
-            where: term,
-          }],
-          defaults: {
-            startDate,
-            endDate,
-            summary: `${type} ${firstName} ${lastName}`,
-            description: Utils.stripIndent(`\
-              ${firstName} ${lastName},
-              ${room.name},
-              tel: ${phoneNumber || 'N/A'}\
-            `),
-            eventable: 'Renting',
-            EventableId: renting.id,
-            Terms: [term],
-          },
-          transaction,
-          hooks,
-        });
-      });
+  Renting[`findOrCreate${capType}Event`] = async function(args) {
+    const {
+      startDate = required(),
+      renting = required(),
+      client = required(),
+      room = required(),
+      apartment = required(),
+      hooks,
+     } = args;
+    const endDate = await Utils[`get${capType}EndDate`](startDate);
+
+    return models.Event.findOrCreate({
+      where: {
+        EventableId: renting.id,
+        type,
+      },
+      defaults: {
+        startDate,
+        endDate,
+        type,
+        summary: `${type} ${client.fullName}`,
+        description: [
+          client.fullName,
+          room.name,
+          `tel: ${client.phoneNumber || 'N/A'}`,
+        ].join('\n'),
+        location: [
+          apartment.addressStreet,
+          apartment.addressZip,
+          apartment.addressCountry,
+        ].join(', '),
+        eventable: 'Renting',
+        EventableId: renting.id,
+      },
+      hooks,
+    });
   };
 
-  Renting.prototype[`findOrCreate${_.capitalize(type)}Event`] =
-    function(args) {
-      return Renting[`findOrCreate${_.capitalize(type)}Event`](
-        Object.assign({ renting: this }, args)
-      );
-    };
+  Renting.prototype[`findOrCreate${capType}Event`] = function(args) {
+    return Renting[`findOrCreate${capType}Event`](
+      Object.assign({ renting: this }, args)
+    );
+  };
 });
 
 Renting.prototype.createRoomSwitchOrder = function({ discount }) {

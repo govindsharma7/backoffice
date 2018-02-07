@@ -27,16 +27,15 @@ const Event = sequelize.define('Event', {
   },
   summary: {
     type:                     DataTypes.STRING,
-    required: false,
   },
   description:  {
     type:                     DataTypes.STRING,
-    required: false,
   },
   type: {
     type:                     DataTypes.ENUM('checkin', 'checkout', 'deposit-refund'),
     required: true,
   },
+  location:                   DataTypes.STRING,
   eventable: {
     type:                     DataTypes.STRING,
     required: true,

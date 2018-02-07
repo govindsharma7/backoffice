@@ -37,8 +37,7 @@ const Apartment = sequelize.define('Apartment', {
   status: {
     type:                   DataTypes.ENUM('draft', 'active'),
     defaultValue: 'active',
-    // required: true,
-    // allowNull: false,
+    required: true,
   },
   descriptionEn:            DataTypes.TEXT,
   descriptionFr:            DataTypes.TEXT,

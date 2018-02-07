@@ -1,9 +1,10 @@
+const Promise             = require('bluebird');
 const D                   = require('date-fns');
-const app                   = require('express')();
+const app                 = require('express')();
 const fixtures            = require('../../../__fixtures__');
 const models              = require('../../../src/models');
 
-const { Renting, Client } = models;
+const { Renting, Client, Event } = models;
 
 describe('Renting - Routes', () => {
   // Initialize methods in route file
@@ -18,10 +19,9 @@ describe('Renting - Routes', () => {
           lastName: 'Doe',
           email: `john-${u.int(1)}@doe.something`,
         }],
-        District: [{ id: u.id('district') }],
         Apartment: [{
           id: u.id('apartment'),
-          DistrictId: u.id('district'),
+          DistrictId: 'lyon-ainay',
         }],
         Room: [{
           id: u.id('room'),
@@ -44,17 +44,13 @@ describe('Renting - Routes', () => {
     );
 
     it('should create a client and a renting and send a booking summary', () => {
-      const { handleAfterCreate: hacClient } = Client;
-      const { handleAfterCreate: hacRenting } = Renting;
-
-      Client.handleAfterCreate = jest.fn();
-      Renting.handleAfterCreate = jest.fn();
+      jest.spyOn(Client, 'handleAfterCreate').mockImplementationOnce(() => true);
+      jest.spyOn(Renting, 'handleAfterCreate').mockImplementationOnce(() => true);
 
       return fixtures((u) => ({
-        District: [{ id: u.id('district') }],
         Apartment: [{
           id: u.id('apartment'),
-          DistrictId: u.id('district'),
+          DistrictId: 'lyon-ainay',
         }],
         Room: [{
           id: u.id('room'),
@@ -85,11 +81,64 @@ describe('Renting - Routes', () => {
           expect.anything()
         );
 
-        Client.handleAfterCreate = hacClient;
-        Renting.handleAfterCreate = hacRenting;
-
         return true;
       });
+    });
+  });
+
+  describe('.handleAddCheckinDateHandler', () => {
+    it('should create a checkin event and send it to zapier', async () => {
+      jest.spyOn(Event, 'zapCreatedOrUpdated')
+        .mockImplementationOnce(() => true);
+
+      const { unique: u } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+          addressStreet: '16 rue de Condé',
+          addressZip: '69002',
+          addressCountry: 'France',
+        }],
+        Room: [{
+          id: u.id('room'),
+          name: u.str('room name'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'active',
+          bookingDate: D.parse('2016-01-01'),
+        }],
+      }))({ method: 'create', hooks: false });
+
+      await Renting.addCheckinDateHandler({
+        values: { dateAndTime: D.parse('2016-01-02T12:30') },
+        ids: [u.id('renting')],
+      });
+
+      await Promise.delay(200);
+
+      const event = await Event.findOne({ where: { EventableId: u.id('renting') }});
+
+      expect(event.startDate).toEqual(D.parse('2016-01-02T12:30'));
+      expect(event.endDate).toEqual(D.parse('2016-01-02T13:00'));
+      expect(event.type).toEqual('checkin');
+      expect(event.summary).toEqual('checkin John DOE');
+      expect(event.description).toEqual(expect.stringContaining('John DOE'));
+      expect(event.description).toEqual(expect.stringContaining(u.str('room name')));
+      expect(event.location).toEqual('16 rue de Condé, 69002, France');
+
+      expect(Event.zapCreatedOrUpdated).toHaveBeenCalledWith(
+        expect.objectContaining({ event: expect.objectContaining({ id: event.id }) })
+      );
     });
   });
 });

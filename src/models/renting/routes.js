@@ -126,24 +126,27 @@ module.exports = function(app, { Renting, Client, Room }) {
   ['checkin', 'checkout'].forEach((type) => {
     const capType = _.capitalize(type);
 
-    app.post(`/forest/actions/add-${type}-date`, LEA, wrap(async (req, res) => {
-      const { values, ids } = req.body.data.attributes;
-
+    Renting[`add${capType}DateHandler`] = async function({ values, ids }) {
       if ( ids.length > 1 ) {
         throw new Error(`Can't create multiple ${type} events`);
       }
 
+      const methodName = `findOrCreate${capType}Event`;
       const renting = await Renting.scope('room+apartment').findOne({
         where: { id: ids[0] },
         include: [{ model: Client }], // required to create the event
       });
-      const methodName = `findOrCreate${capType}Event`;
-      const result = await renting[methodName]({
+
+      return renting[methodName]({
         startDate: values.dateAndTime,
         client: renting.Client,
         room: renting.Room,
         apartment: renting.Room.Apartment,
       });
+    };
+    app.post(`/forest/actions/add-${type}-date`, LEA, wrap(async (req, res) => {
+      const result =
+        await Renting[`add${capType}DateHandler`](req.body.data.attributes);
 
       Utils.foundOrCreatedSuccessHandler(res, `${capType} event`)(result);
     }));
