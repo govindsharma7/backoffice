@@ -11,7 +11,7 @@ async function fixEventType() {
   const events = await Event.findAll({
     where: { type: { $eq: null } },
     include: [Term],
-    limit: 10,
+    limit: 2,
   });
 
   console.log(events.length);
