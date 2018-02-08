@@ -65,6 +65,7 @@ const common = {
   fixPicturableId,
   fixLatLng: 'node scripts/fixLatLng.js',
   fixEventType: 'node scripts/fixEventType.js',
+  fixFeatures: 'node scripts/fixFeatures.js',
   generateInvoices,
   deletePictures,
   'update:draftRentOrders': updateDraftRentOrders,

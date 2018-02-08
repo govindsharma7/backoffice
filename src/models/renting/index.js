@@ -514,7 +514,7 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
         ].join('\n'),
         location: [
           apartment.addressStreet,
-          apartment.addressZip,
+          `${apartment.addressZip} ${apartment.addressCity}`,
           apartment.addressCountry,
         ].join(', '),
         eventable: 'Renting',

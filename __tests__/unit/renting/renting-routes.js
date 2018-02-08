@@ -1,8 +1,8 @@
-const Promise             = require('bluebird');
-const D                   = require('date-fns');
-const app                 = require('express')();
-const fixtures            = require('../../../__fixtures__');
-const models              = require('../../../src/models');
+const Promise                 = require('bluebird');
+const D                       = require('date-fns');
+const app                     = require('express')();
+const fixtures                = require('../../../__fixtures__');
+const models                  = require('../../../src/models');
 
 const { Renting, Client, Event } = models;
 
@@ -97,6 +97,7 @@ describe('Renting - Routes', () => {
           DistrictId: 'lyon-ainay',
           addressStreet: '16 rue de Condé',
           addressZip: '69002',
+          addressCity: 'lyon',
           addressCountry: 'France',
         }],
         Room: [{
@@ -134,10 +135,12 @@ describe('Renting - Routes', () => {
       expect(event.summary).toEqual('checkin John DOE');
       expect(event.description).toEqual(expect.stringContaining('John DOE'));
       expect(event.description).toEqual(expect.stringContaining(u.str('room name')));
-      expect(event.location).toEqual('16 rue de Condé, 69002, France');
+      expect(event.location).toEqual('16 rue de Condé, 69002 lyon, France');
 
       expect(Event.zapCreatedOrUpdated).toHaveBeenCalledWith(
-        expect.objectContaining({ event: expect.objectContaining({ id: event.id }) })
+        expect.objectContaining({
+          event: expect.objectContaining({ id: event.id }),
+        })
       );
     });
   });

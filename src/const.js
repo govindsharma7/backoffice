@@ -47,6 +47,25 @@ module.exports = Object.assign(common, {
     fr: 8,
   },
 
+  // UNUSED YET
+  GOOGLE_CALENDAR_IDS: {
+    lyon:
+      'chez-nestor.com_llk2oj1qcrvlgifo1uonb9qmv4@group.calendar.google.com',
+    montpellier:
+      'chez-nestor.com_d970ctbusf6b49s1sg0ld22o6s@group.calendar.google.com',
+    paris:
+      'chez-nestor.com_nchuh8dhc5kgsihq8auurtud08@group.calendar.google.com',
+    lille:
+      'chez-nestor.com_15muul19go7cgp1hf1c7dt5dnc@group.calendar.google.com',
+    bordeaux:
+      'chez-nestor.com_e28p3q0n7be8a2tm5ls3t7q8s8@group.calendar.google.com',
+    toulouse:
+      'chez-nestor.com_il8umu3m9s0mpcougn9gags6o0@group.calendar.google.com',
+    madrid:
+      'chez-nestor.com_jj07d1jreo24j4pqjlv3kpn9uk@group.calendar.google.com',
+    //"refund-deposit": "0e7sgvoldas3bi80vcvfld5u64@group.calendar.google.com",
+  },
+
   CITIES: [
     'lyon',
     'montpellier',
