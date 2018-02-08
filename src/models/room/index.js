@@ -197,14 +197,10 @@ Room.prototype.createMaintenancePeriod = function({ from, to }) {
         eventable: 'Renting',
         summary: 'End of maintenance',
         description: `${this.name}`,
-        Terms: [{
-          name: 'Checkout',
-          taxonomy: 'event-category',
-          termable: 'Event',
-        }],
+        type: 'checkout',
       }] : [],
     }, {
-    include: [models.Event, models.Term],
+    include: [models.Event],
   });
 };
 
