@@ -1,6 +1,9 @@
 const querystring         = require('querystring');
 const { required }        = require('../utils');
-const { ZAPIER_API_URL }  = require('../config');
+const {
+  ZAPIER_API_URL,
+  NODE_ENV,
+}                         = require('../config');
 const fetch               = require('./fetch');
 
 function postRentInvoiceSuccess({ type, count }) {
@@ -10,6 +13,7 @@ function postRentInvoiceSuccess({ type, count }) {
     body: querystring.stringify({
       messageType: type,
       count,
+      environment: NODE_ENV,
     }),
   });
 }
@@ -19,12 +23,16 @@ function pingService() {
 }
 
 function poster(zapId = required()) {
-  return function(body) {
+  return function(_body) {
+    // querystring.stringify would strip `Date`s from body without this trick
+    const body = JSON.parse(JSON.stringify(_body));
+
+    body.environment = NODE_ENV;
+
     return fetch(`${ZAPIER_API_URL}/${zapId}/`, {
       method: 'post',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      // querystring.stringify strips `Date`s from body without this trick
-      body: querystring.stringify(JSON.parse(JSON.stringify(body))),
+      body: querystring.stringify(),
     });
   };
 }
