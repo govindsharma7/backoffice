@@ -115,23 +115,27 @@ Renting.associate = (models) => {
 
   // checkinDate, checkoutDate scopes
   ['checkin', 'checkout'].forEach((type) => {
-    Renting.addScope(`${type}Date`, {
+    Renting.addScope(`${type}Date`, (fromTable = 'Renting') => ({
       attributes: { include: [
-        [sequelize.col('Events.startDate'), `${type}Date`],
+        [sequelize.col('LatestRenting->Events.startDate'), `${type}Date`],
       ]},
       include: [{
         model: models.LatestRenting,
         required: true,
         on: {
-          RoomId: { $col: 'Rentings.RoomId' },
-          bookingDate: { $col: 'Rentings.bookingDate' },
-        }
-      }, {
-        model: models.Event,
-        required: false,
-        where: { type },
+          RoomId: { $col: `${fromTable}.RoomId` },
+          bookingDate: { $col: `${fromTable}.bookingDate` },
+        },
+        include: [{
+          model: models.Event,
+          required: false,
+          on: {
+            EventableId: { $col: `${fromTable}.id` },
+            type,
+          },
+        }],
       }],
-    });
+    }));
   });
 
   Renting.addScope('depositOption', {

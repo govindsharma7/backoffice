@@ -46,6 +46,11 @@ LatestRenting.associate = (models) => {
     foreignKey: 'RoomId',
     constraints: false,
   });
+  LatestRenting.hasMany(models.Event, {
+    foreignKey: 'EventableId',
+    constraints: false,
+    scope: { eventable: 'Renting' },
+  });
 };
 
 module.exports = LatestRenting;

@@ -57,14 +57,16 @@ const Room = sequelize.define('Room', {
 });
 
 Room.associate = (models) => {
-  const { fn, col } = sequelize;
+  const { fn, col, literal } = sequelize;
   // /!\ this scope doesn't give the availability date directly, only the
   // checkout date for each renting of the room
   const availableAt = {
-    model: models.Renting.scope('checkoutDate'),
+    model: models.Renting.scope('checkoutDate', {
+      method: ['checkoutDate', 'Rentings'],
+    }),
     required: false,
     attributes: { include: [
-      [sequelize.literal('`Rentings->Events`.`startDate`'), 'checkoutDate'],
+      [literal('`Rentings->LatestRenting->Events`.`startDate`'), 'checkoutDate'],
     ]},
     where: { status: 'active' },
   };
