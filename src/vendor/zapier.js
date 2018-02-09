@@ -32,7 +32,7 @@ function poster(zapId = required()) {
     return fetch(`${ZAPIER_API_URL}/${zapId}/`, {
       method: 'post',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: querystring.stringify(),
+      body: querystring.stringify(body),
     });
   };
 }
