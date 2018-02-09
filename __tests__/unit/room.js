@@ -1,5 +1,6 @@
 const Promise  = require('bluebird');
 const D        = require('date-fns');
+const fixtures = require('../../__fixtures__');
 const Utils    = require('../../src/utils');
 const models   = require('../../src/models');
 
@@ -7,6 +8,112 @@ const getNull = () => null;
 const { Room } = models;
 
 describe('Room', () => {
+  describe('scopes', () => {
+    describe('availableAt combined with Apartment', () => {
+      it('should find all rooms from lyon with their availability', async () => {
+        const now = new Date();
+        const oneYearAgo = D.subYears(now, 1);
+        const oneMonthAgo = D.subMonths(now, 1);
+        const oneMonthFromNow = D.addMonths(now, 1);
+
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment1'),
+            addressCity: 'lyon',
+            DistrictId: 'lyon-ainay',
+          }, {
+            id: u.id('apartment2'),
+            addressCity: 'paris',
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room1'),
+            ApartmentId: u.id('apartment1'),
+          }, {
+            id: u.id('room2'),
+            ApartmentId: u.id('apartment1'),
+          }, {
+            id: u.id('room3'),
+            ApartmentId: u.id('apartment2'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('draft-renting'),
+            status: 'draft',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('past-renting'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room2'),
+          }, {
+            id: u.id('current-renting1'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('current-renting2'),
+            status: 'active',
+            bookingDate: oneMonthAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room2'),
+          }, {
+            id: u.id('current-renting3'),
+            status: 'active',
+            bookingDate: oneMonthAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room3'),
+          }, {
+            id: u.id('future-renting'),
+            status: 'draft',
+            bookingDate: oneMonthFromNow,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }],
+          Event: [{
+            type: 'checkout',
+            EventableId: u.id('current-renting1'),
+            eventable: 'Renting',
+            startDate: oneMonthFromNow,
+            endDate: oneMonthFromNow,
+          }, {
+            type: 'checkout',
+            EventableId: u.id('past-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }],
+        }))({ method: 'create', hooks: false });
+
+        const rooms = await models.Room.scope('availableAt').findAll({
+          include: [models.Apartment],
+          where: {
+            '$Apartment.addressCity$': 'lyon',
+            '$Apartment.id$': { $in: [u.id('apartment1'), u.id('apartment2')] },
+          },
+        });
+        const roomsIds = rooms.map(({ id }) => id);
+
+        expect(rooms.length).toEqual(2);
+        expect(roomsIds).toContain(u.id('room1'));
+        expect(roomsIds).toContain(u.id('room2'));
+        expect(rooms.find(({ id }) => id === u.id('room1')).availableAt)
+          .toEqual(oneMonthFromNow);
+        expect(rooms.find(({ id }) => id === u.id('room2')).availableAt)
+          .toEqual(null);
+      });
+    });
+  });
+
   describe('.getCalculatedProps()', () => {
     const now = new Date();
 

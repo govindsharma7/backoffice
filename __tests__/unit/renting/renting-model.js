@@ -1,47 +1,255 @@
 const D                   = require('date-fns');
 const fixtures            = require('../../../__fixtures__');
-const rentingFixtures     = require('../../../__fixtures__/renting');
 const models              = require('../../../src/models');
 
 const { Renting } = models;
-let renting1;
-let renting2;
 
 describe('Renting - Model', () => {
-  beforeAll(() =>
-    rentingFixtures()
-      .then(({instances}) => {
-        renting1 = instances['renting-1'];
-        renting2 = instances['renting-2'];
-
-        return null;
-      })
-  );
 
   describe('scopes', () => {
-    test('checkinDate should include the checkin date', () =>
-      Renting.scope('checkinDate')
-        .findById(renting1.id)
-        .then((renting) =>
-          expect(renting.get('checkinDate')).toEqual(D.parse('2017-05-14 Z'))
-        )
-    );
-    test('checkinDate should be null when there is no checkin event', () =>
-      Renting.scope('checkinDate')
-        .findById(renting2.id)
-        .then((renting) => expect(renting.get('checkinDate')).toBeNull())
-    );
+    test('checkinDate should include the checkin date', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'active',
+          bookingDate: D.parse('2016-01-01'),
+        }],
+        Event: [{
+          type: 'checkin',
+          EventableId: u.id('renting'),
+          eventable: 'Renting',
+          startDate: D.parse('2017-05-14 Z'),
+          endDate: D.parse('2017-05-14 Z'),
+        }],
+      }))({ method: 'create', hooks: false });
 
-    test('it should return the comfort level of the housing pack', () =>
-      Renting.scope('packLevel')
-        .findById(renting1.id)
-        .then((renting) => expect(renting.get('packLevel')).toEqual('privilege'))
-    );
-    test('it should return null when there is no housing pack', () =>
-      Renting.scope('packLevel')
-        .findById(renting2.id)
-        .then((renting) => expect(renting.get('packLevel')).toBeNull())
-    );
+      const renting =
+        await Renting.scope('checkinDate').findById(u.id('renting'));
+
+      expect(renting.get('checkinDate')).toEqual(D.parse('2017-05-14 Z'));
+    });
+    test('checkinDate should be null when there is no checkin event', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'active',
+          bookingDate: D.parse('2016-01-01'),
+        }],
+      }))({ method: 'create', hooks: false });
+
+      const renting =
+        await Renting.scope('checkinDate').findById(u.id('renting'));
+
+      expect(renting.get('checkinDate')).toBeNull();
+    });
+
+    test('it should return the comfort level of the housing pack', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'active',
+          bookingDate: D.parse('2016-01-01'),
+        }],
+        OrderItem: [{
+          id: u.id('orderItem'),
+          label: 'Label shouldn\'t matter',
+          ProductId: 'privilege-pack',
+          RentingId: u.id('renting'),
+        }],
+      }))({ method: 'create', hooks: false });
+
+      const renting = await Renting.scope('packLevel').findById(u.id('renting'));
+
+      expect(renting.get('packLevel')).toEqual('privilege');
+    });
+    test('it should return null when there is no housing pack', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room'),
+          status: 'active',
+          bookingDate: D.parse('2016-01-01'),
+        }],
+      }))({ method: 'create', hooks: false });
+
+      const renting = await Renting.scope('packLevel').findById(u.id('renting'));
+
+      expect(renting.get('packLevel')).toBeNull();
+    });
+
+    describe('currentRenting & latestRenting', () => {
+      it('finds all currentRentings of an apartment', async () => {
+        let apartment;
+        const now = new Date();
+        const oneYearAgo = D.subYears(now, 1);
+        const oneMonthAgo = D.subMonths(now, 1);
+        const oneMonthFromNow = D.addMonths(now, 1);
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room1'),
+            ApartmentId: u.id('apartment'),
+          }, {
+            id: u.id('room2'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('draft-renting'),
+            status: 'draft',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('past-renting'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room2'),
+          }, {
+            id: u.id('current-renting1'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('current-renting2'),
+            status: 'active',
+            bookingDate: oneMonthAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room2'),
+          }, {
+            id: u.id('future-renting'),
+            status: 'active',
+            bookingDate: oneMonthFromNow,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }],
+          Event: [{
+            type: 'checkout',
+            EventableId: u.id('current-renting1'),
+            eventable: 'Renting',
+            startDate: oneMonthFromNow,
+            endDate: oneMonthFromNow,
+          }, {
+            type: 'checkout',
+            EventableId: u.id('past-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }],
+        }))({ method: 'create', hooks: false });
+
+        apartment = await models.Apartment.findById(u.id('apartment'), {
+          include: [{
+            model: models.Room,
+            include: [models.Renting.scope({
+              method: ['latestRenting', 'Rooms->Rentings'],
+              required: false,
+            })],
+          }],
+        });
+
+        const latestRentingsIds =
+          [].concat.apply([], apartment.Rooms.map(({ Rentings }) =>
+            Rentings.map(({ id }) => id))
+          );
+
+        expect(latestRentingsIds.length).toEqual(2);
+        expect(latestRentingsIds).toContain(u.id('current-renting2'));
+        expect(latestRentingsIds).toContain(u.id('future-renting'));
+
+        apartment = await models.Apartment.findById(u.id('apartment'), {
+          include: [{
+            model: models.Room,
+            include: [models.Renting.scope({
+              method: ['currentRenting', 'Rooms->Rentings'],
+              required: false,
+            })],
+          }],
+        });
+
+        const currentRentingsIds =
+          [].concat.apply([], apartment.Rooms.map(({ Rentings }) =>
+            Rentings.map(({ id }) => id))
+          );
+
+        expect(currentRentingsIds.length).toEqual(2);
+        expect(currentRentingsIds).toContain(u.id('current-renting2'));
+        expect(currentRentingsIds).toContain(u.id('current-renting1'));
+      });
+    });
   });
 
 

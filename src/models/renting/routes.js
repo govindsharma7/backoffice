@@ -10,7 +10,7 @@ const makePublic        = require('../../middlewares/makePublic');
 const { CNError } = Utils;
 const _ = { capitalize, pick };
 
-module.exports = function(app, { Renting, Client, Room }) {
+module.exports = function(app, { Renting, Client, Room, Apartment }) {
   const LEA = Liana.ensureAuthenticated;
 
   // The frontend needs this route to be public
@@ -190,7 +190,9 @@ module.exports = function(app, { Renting, Client, Room }) {
 
   Renting.handleCreateClientAndRentingRoute = async (args) => {
     const { roomId, pack: packLevel, booking } = args;
-    const room = await Room.scope('apartment+availableAt').findById(roomId);
+    const room = await Room.scope('availableAt').findById(roomId, {
+      include: [Apartment],
+    });
     const { Apartment: { addressCity } } = room || {};
 
     if ( !room ) {

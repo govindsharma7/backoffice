@@ -246,10 +246,14 @@ Client.prototype.getRentingsFor = function(date = new Date()) {
       { status: 'active' },
       { ClientId: this.id },
       { bookingDate: { $lte: D.endOfMonth(date) } },
-      sequelize.literal(
-        // /!\ startOfMonth must be formatted using DATETIME_FORMAT
-        `(Events.id IS NULL OR Events.startDate >= '${startOfMonth}')`
-      ),
+      { $or: [
+        { $checkoutDate$: { $eq: null } },
+        { $checkoutDate$: { $gte: startOfMonth } },
+      ] },
+      // sequelize.literal(
+      //   // /!\ startOfMonth must be formatted using DATETIME_FORMAT
+      //   `(Events.id IS NULL OR Events.startDate >= '${startOfMonth}')`
+      // ),
     ]},
   });
 };

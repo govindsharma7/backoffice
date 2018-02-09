@@ -172,13 +172,75 @@ describe('Client', () => {
   // });
 
   describe('#getRentingsFor', () => {
-    it('should find all rentings for a specific month', () => {
-      return client.getRentingsFor(D.parse('2017-02 Z'))
-        .then((rentings) => {
-          expect(rentings.length).toEqual(2);
-          expect(rentings[0].Room).toBeDefined();
-          return true;
-        });
+    it('should find all rentings for a specific month', async () => {
+      const { instances: { client } } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room1'),
+          ApartmentId: u.id('apartment'),
+        }, {
+          id: u.id('room2'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('draft-renting'),
+          status: 'draft',
+          bookingDate: '2016-01-01',
+          ClientId: u.id('client'),
+          RoomId: u.id('room1'),
+        }, {
+          id: u.id('past-renting'),
+          status: 'active',
+          bookingDate: '2016-01-01',
+          ClientId: u.id('client'),
+          RoomId: u.id('room2'),
+        }, {
+          id: u.id('current-renting1'),
+          status: 'active',
+          bookingDate: '2016-01-01',
+          ClientId: u.id('client'),
+          RoomId: u.id('room1'),
+        }, {
+          id: u.id('current-renting2'),
+          status: 'active',
+          bookingDate: '2017-02-11',
+          ClientId: u.id('client'),
+          RoomId: u.id('room2'),
+        }, {
+          id: u.id('future-renting'),
+          status: 'active',
+          bookingDate: '2017-03-01',
+          ClientId: u.id('client'),
+          RoomId: u.id('room1'),
+        }],
+        Event: [{
+          type: 'checkout',
+          EventableId: u.id('current-renting1'),
+          eventable: 'Renting',
+          startDate: D.parse('2017-03-01 Z'),
+          endDate: D.parse('2017-03-01 Z'),
+        }, {
+          type: 'checkout',
+          EventableId: u.id('past-renting'),
+          eventable: 'Renting',
+          startDate: D.parse('2017-01-01 Z'),
+          endDate: D.parse('2017-01-01 Z'),
+        }],
+      }))({ method: 'create', hooks: false });
+
+      const rentings = await client.getRentingsFor(D.parse('2017-02-15 Z'));
+
+      expect(rentings.length).toEqual(2);
+      expect(rentings[0].Room).toBeDefined();
     });
   });
 

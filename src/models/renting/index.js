@@ -90,6 +90,8 @@ const Renting = sequelize.define('Renting', {
 });
 
 Renting.associate = (models) => {
+  const { col, literal } = sequelize;
+
   Renting.belongsTo(models.Client);
   Renting.belongsTo(models.Room);
   Renting.hasMany(models.OrderItem);
@@ -112,28 +114,52 @@ Renting.associate = (models) => {
     foreignKey: 'RoomId',
     constraints: false,
   });
+  Renting.hasOne(models.CurrentRenting, {
+    foreignKey: 'RoomId',
+    constraints: false,
+  });
 
   // checkinDate, checkoutDate scopes
   ['checkin', 'checkout'].forEach((type) => {
-    Renting.addScope(`${type}Date`, (fromTable = 'Renting') => ({
-      attributes: { include: [
-        [sequelize.col('LatestRenting->Events.startDate'), `${type}Date`],
-      ]},
+    Renting.addScope(`${type}Date`, {
+      attributes: { include: [[col('Events.startDate'), `${type}Date`]] },
       include: [{
-        model: models.LatestRenting,
+        model: models.Event,
+        required: false,
+        on: {
+          EventableId: { $col: 'Renting.id' },
+          type,
+        },
+      }],
+    });
+  });
+
+  ['latestRenting', 'currentRenting'].forEach((scopeName) => {
+    const modelName = scopeName.replace(/^./, ($0) => $0.toUpperCase());
+
+    Renting.addScope(scopeName, (includedFrom = 'Renting') => ({
+      // The checkoutDate is only useful/usable when this scope isn't included
+      // in another scope/query
+      attributes: includedFrom === 'Renting' ? { include: [
+        [literal('`Renting->Events`.`checkoutDate`'), 'checkoutDate'],
+      ]} : undefined,
+      where: {
+        status: 'active',
+        bookingDate: scopeName === 'currentRenting' ?
+          { $lte: new Date() } :
+          { $not: null },
+      },
+      include: [{
+        model: models[modelName],
         required: true,
         on: {
-          RoomId: { $col: `${fromTable}.RoomId` },
-          bookingDate: { $col: `${fromTable}.bookingDate` },
+          RoomId: { $col: `${includedFrom}.RoomId` },
+          bookingDate: { $col: `${includedFrom}.bookingDate` },
         },
-        include: [{
-          model: models.Event,
-          required: false,
-          on: {
-            EventableId: { $col: `${fromTable}.id` },
-            type,
-          },
-        }],
+      }, {
+        model: models.Event,
+        required: false,
+        where: { type: 'checkout'},
       }],
     }));
   });
@@ -272,7 +298,7 @@ Renting.findOrCreateRentOrder = async function(args) {
     transaction,
   } = args;
   const dueDate = Math.max(now, D.startOfMonth(renting.bookingDate));
-  const [order, isCreate] = await models.Order.findOrCreate({
+  const [order, isCreated] = await models.Order.findOrCreate({
     where: {
       status: { $not: 'cancelled' },
       dueDate,
@@ -291,7 +317,7 @@ Renting.findOrCreateRentOrder = async function(args) {
     transaction,
   });
 
-  if ( isCreate ) {
+  if ( isCreated ) {
     const orderItems =
       renting.toOrderItems({ order, date: renting.bookingDate, room });
 
@@ -308,11 +334,11 @@ Renting.findOrCreatePackOrder = async function(args) {
   const {
     renting = required(),
     packLevel = required(),
-    discount,
     apartment = required(),
+    discount,
     transaction,
   } = args;
-  const [order, isCreate] = await models.Order.findOrCreate({
+  const [order, isCreated] = await models.Order.findOrCreate({
     where: { status: { $not: 'cancelled' } },
     include: [{
       model: models.OrderItem,
@@ -328,7 +354,7 @@ Renting.findOrCreatePackOrder = async function(args) {
     transaction,
   });
 
-  if ( isCreate ) {
+  if ( isCreated ) {
     const { addressCity } = apartment;
     const packItem = Utils.buildPackItem({ order, renting, addressCity, packLevel });
     const orderItems = ([
@@ -364,7 +390,7 @@ Renting.findOrCreateDepositOrder = async function(args) {
   const { addressCity } = apartment;
   const ProductId = `${addressCity}-deposit`;
 
-  const [order, isCreate] = await models.Order.findOrCreate({
+  const [order, isCreated] = await models.Order.findOrCreate({
     where: {
       type: 'deposit',
       status: { $not: 'cancelled' },
@@ -383,7 +409,7 @@ Renting.findOrCreateDepositOrder = async function(args) {
     transaction,
   });
 
-  if ( isCreate ) {
+  if ( isCreated ) {
     const orderItems = [{
       label: 'Deposit',
       unitPrice: DEPOSIT_PRICES[addressCity],

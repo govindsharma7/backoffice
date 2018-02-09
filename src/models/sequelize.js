@@ -15,6 +15,8 @@ const sequelize = new Sequelize(
       freezeTableName: true,
     },
     benchmark: true,
+    // Symbol operators are far from stable yet
+    operatorsAliases: true,
   }
 );
 

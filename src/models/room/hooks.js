@@ -58,6 +58,13 @@ module.exports = function({ Room, Apartment, Client }) {
       }};
     }
 
+    if ( options.subQuery === true ) {
+      // Subqueries fail completely when using Renting related views.
+      console.warning('Sequelize subqueries have been disabled for Room');
+    }
+    // So far it proved safe to disable them completely on Room.
+    options.subQuery = false;
+
     return options;
   });
 };

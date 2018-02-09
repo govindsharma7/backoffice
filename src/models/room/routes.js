@@ -33,11 +33,11 @@ module.exports = function(app, { Room, Apartment, Client }) {
     ]);
 
     Promise.all([
-      _room.update( _.pick(room, roomFields) ),
-      _apartment.update( _.pick(apartment, apartmentFields) ),
-    ])
-    .then(Utils.createdSuccessHandler(res, 'Room and Apartment'))
-    .catch(Utils.logAndSend(res));
+        _room.update( _.pick(room, roomFields) ),
+        _apartment.update( _.pick(apartment, apartmentFields) ),
+      ])
+      .then(Utils.createdSuccessHandler(res, 'Room and Apartment'))
+      .catch(Utils.logAndSend(res));
   });
 
   Utils.addInternalRelationshipRoute({

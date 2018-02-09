@@ -69,8 +69,8 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
           descriptionFr: room.Rentings[0].Client.descriptionFr,
         },
         availableAt: room.Rentings.length > 0 && room.Rentings[0].Events.length > 0 ?
-        new Date(room.Rentings[0].Events[0].startDate) < new Date() ? new Date() :
-        new Date(room.Rentings[0].Events[0].startDate) :
+          new Date(room.Rentings[0].Events[0].startDate) < new Date() ? new Date() :
+          new Date(room.Rentings[0].Events[0].startDate) :
         false,
       }))
       .then((houseMates) => res.send(houseMates))

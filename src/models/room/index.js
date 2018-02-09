@@ -1,16 +1,13 @@
-const { DataTypes }   = require('sequelize');
-const Promise         = require('bluebird');
-const D               = require('date-fns');
-const {
-  TRASH_SCOPES,
-  UNAVAILABLE_DATE,
-}                     = require('../../const');
-const Utils           = require('../../utils');
-const sequelize       = require('../sequelize');
-const models          = require('../models'); //!\ Destructuring forbidden /!\
-const collection      = require('./collection');
-const routes          = require('./routes');
-const hooks           = require('./hooks');
+const { DataTypes }     = require('sequelize');
+const Promise           = require('bluebird');
+const D                 = require('date-fns');
+const { TRASH_SCOPES }  = require('../../const');
+const Utils             = require('../../utils');
+const sequelize         = require('../sequelize');
+const models            = require('../models'); //!\ Destructuring forbidden /!\
+const collection        = require('./collection');
+const routes            = require('./routes');
+const hooks             = require('./hooks');
 
 const { required } = Utils;
 
@@ -42,10 +39,10 @@ const Room = sequelize.define('Room', {
   availableAt: {
     type:                   DataTypes.VIRTUAL(DataTypes.DATE),
     get() {
-      return this.Rentings && ( this.Rentings.length === 0 ?
-        new Date(0) :
-        models.Renting.getLatest(this.Rentings).get('checkoutDate') || UNAVAILABLE_DATE
-      );
+      const { availableAt } = this.dataValues;
+
+      return availableAt == null || typeof availableAt == 'object' ?
+        availableAt : Utils.parseDBDate(availableAt);
     },
   },
   roomNumber: {
@@ -57,26 +54,8 @@ const Room = sequelize.define('Room', {
 });
 
 Room.associate = (models) => {
-  const { fn, col, literal } = sequelize;
-  // /!\ this scope doesn't give the availability date directly, only the
-  // checkout date for each renting of the room
-  const availableAt = {
-    model: models.Renting.scope('checkoutDate', {
-      method: ['checkoutDate', 'Rentings'],
-    }),
-    required: false,
-    attributes: { include: [
-      [literal('`Rentings->LatestRenting->Events`.`startDate`'), 'checkoutDate'],
-    ]},
-    where: { status: 'active' },
-  };
-
   Room.belongsTo(models.Apartment);
   Room.hasMany(models.Renting);
-  Room.hasOne(models.LatestRenting, {
-    foreignKey: 'RoomId',
-    constraints: false,
-  });
   Room.hasMany(models.Picture, {
     foreignKey: 'PicturableId',
     constraints: false,
@@ -94,22 +73,13 @@ Room.associate = (models) => {
   });
 
   Room.addScope('availableAt', {
-    include: [availableAt],
-  });
-
-  Room.addScope('latestHousemates', {
-    attributes:  [
-      'name',
-      'id',
-      [fn('max', col('Rentings.bookingDate')), 'latestBookingDate'],
-    ],
+    attributes: { include: [
+      [sequelize.literal('`Rentings->Events`.`startDate`'), 'availableAt'],
+    ]},
     include: [{
-      model: models.LatestRenting,
-      attributes: ['id'],
-      where: {
-        status: 'active',
-      },
+      model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
       required: false,
+<<<<<<< HEAD
       include: [{
         model: models.Client,
         attributes: ['id', 'firstName', 'lastName'],
@@ -120,15 +90,11 @@ Room.associate = (models) => {
         required: false,
         where: { type: 'checkout' },
       }],
+=======
+>>>>>>> Fix tests
     }],
-    group: ['Room.id'],
-  });
-
-  Room.addScope('apartment+availableAt', {
-    include: [{ model: models.Apartment }, availableAt],
   });
 };
-
 
 // calculate periodPrice and serviceFees for the room
 Room.prototype.getCalculatedProps = function(now = new Date()) {
