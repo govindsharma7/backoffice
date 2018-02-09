@@ -108,14 +108,23 @@ Renting.associate = (models) => {
     constraints: false,
     scope: { metadatable: 'Renting' },
   });
+  // We need to use hasMany because sourceKey isn't available with hasOne
+  Renting.hasMany(models.LatestRenting, {
+    sourceKey: 'RoomId',
+    foreignKey: 'RoomId',
+    constraints: false,
+  });
 
-  // checkinDate, checkoutDate, checkinEvent, checkoutEvent scopes
+  // checkinDate, checkoutDate scopes
   ['checkin', 'checkout'].forEach((type) => {
     Renting.addScope(`${type}Date`, {
       attributes: { include: [
         [sequelize.col('Events.startDate'), `${type}Date`],
       ]},
       include: [{
+        model: models.LatestRenting,
+        required: true,
+      }, {
         model: models.Event,
         required: false,
         where: { type },

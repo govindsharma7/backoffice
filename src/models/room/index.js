@@ -71,7 +71,7 @@ Room.associate = (models) => {
 
   Room.belongsTo(models.Apartment);
   Room.hasMany(models.Renting);
-  Room.hasMany(models.LatestRenting, {
+  Room.hasOne(models.LatestRenting, {
     foreignKey: 'RoomId',
     constraints: false,
   });
