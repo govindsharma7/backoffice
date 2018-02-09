@@ -108,9 +108,7 @@ Renting.associate = (models) => {
     constraints: false,
     scope: { metadatable: 'Renting' },
   });
-  // We need to use hasMany because sourceKey isn't available with hasOne
-  Renting.hasMany(models.LatestRenting, {
-    sourceKey: 'RoomId',
+  Renting.hasOne(models.LatestRenting, {
     foreignKey: 'RoomId',
     constraints: false,
   });
@@ -124,6 +122,10 @@ Renting.associate = (models) => {
       include: [{
         model: models.LatestRenting,
         required: true,
+        on: {
+          RoomId: { $col: 'Rentings.RoomId' },
+          bookingDate: { $col: 'Rentings.bookingDate' },
+        }
       }, {
         model: models.Event,
         required: false,

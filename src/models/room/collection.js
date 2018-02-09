@@ -8,7 +8,7 @@ const Utils               = require('../../utils');
 
 const _ = { capitalize };
 
-module.exports = function({ Room, Picture, Term }) {
+module.exports = function({ Room, Picture, Term, Apartment }) {
   const getCalculatedProps = Utils.methodMemoizer({
     model: Room.scope('apartment+availableAt'),
     method: 'getCalculatedProps',
@@ -102,7 +102,7 @@ module.exports = function({ Room, Picture, Term }) {
       },
       CITIES.map((city) => ({
         name: `Available Rooms ${_.capitalize(city)}`,
-        scope: 'apartment+availableAt',
+        // scope: 'apartment+availableAt',
         where: () =>
           // TODO: this query is awfull. We join on all rentings that ever
           // existed when we know only the one with the latest bookingDate
@@ -120,15 +120,15 @@ module.exports = function({ Room, Picture, Term }) {
           //     problem with a Renting scope
           //   - Switch to TypeORM and see if that makes things simpler for us
           //     using subrequest probably
-          Room.scope('apartment+availableAt')
-            .findAll({
-              where: { '$Apartment.addressCity$' : `${city}` },
-            })
-            .filter((room) => room.checkAvailability({ rentings: room.Rentings }))
-            .reduce((acc, curr) => {
-              acc.id.push(curr.id);
-              return acc;
-            }, { id: [] }),
+          Room.scope('availableAt').findAll({
+            include: [Apartment],
+            where: { '$Apartment.addressCity$' : `${city}` },
+          })
+          .filter((room) => room.checkAvailability({ rentings: room.Rentings }))
+          .reduce((acc, curr) => {
+            acc.id.push(curr.id);
+            return acc;
+          }, { id: [] }),
       }))
     ),
   };

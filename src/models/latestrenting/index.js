@@ -12,7 +12,6 @@ const LatestRenting = sequelize.define('LatestRenting', {
     type:                     DataTypes.DATE,
   },
 }, {
-  tableName: 'LatestRentingView',
   timestamps: false,
 });
 
@@ -20,7 +19,7 @@ LatestRenting.sync = async function({ logging }) {
   // query from https://stackoverflow.com/questions/612231/how-can-i-select-rows-with-maxcolumn-value-distinct-by-another-column-in-sql
   try {
     await sequelize.query([
-      'CREATE VIEW `LatestRentingView` AS',
+      'CREATE VIEW `LatestRenting` AS',
       'SELECT',
         '`Renting`.`RoomId`, MAX(`Renting`.`bookingDate`) AS bookingDate,',
         // For some reason we couldn't prevent Sequelize to look for an id :-(
@@ -39,16 +38,12 @@ LatestRenting.sync = async function({ logging }) {
 };
 
 LatestRenting.drop = function ({ logging }) {
-  return sequelize.query('DROP VIEW IF EXISTS `LatestRentingView`', { logging });
+  return sequelize.query('DROP VIEW IF EXISTS `LatestRenting`', { logging });
 };
 
 LatestRenting.associate = (models) => {
   LatestRenting.hasMany(models.Renting, {
     foreignKey: 'RoomId',
-    constraints: false,
-  });
-  LatestRenting.belongsTo(models.Room, {
-    foreignKey: 'id',
     constraints: false,
   });
 };
