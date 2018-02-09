@@ -17,6 +17,7 @@ const LatestRenting = sequelize.define('LatestRenting', {
   classMethods: {
     sync({ logging }) {
       // query from https://stackoverflow.com/questions/612231/how-can-i-select-rows-with-maxcolumn-value-distinct-by-another-column-in-sql
+      // TODO: fix that query
       return sequelize.query([
         'CREATE VIEW `LatestRentingView` AS',
         'SELECT',
