@@ -462,10 +462,11 @@ Client.getIdentityRecordUrl = function(identity) {
   const passport =
     identity && identity.passport.match(/uploads\/cheznestor\/(.+?)\/(.+?)\//);
 
-  return passport && `
-    https://eu.jotform.com/server.php?action=getSubmissionPDF\
-    &formID=${passport[1]}&sid=${passport[2]}
-  `.replace(/\s+/g, '');
+  return passport ? [
+      'https://eu.jotform.com/server.php?action=getSubmissionPDF',
+      `&formID=${passport[1]}&sid=${passport[2]}`,
+    ].join('') :
+    'MISSING';
 };
 
 Client.getDescriptionEn = function(client) {
