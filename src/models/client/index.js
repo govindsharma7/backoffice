@@ -461,11 +461,10 @@ Client.getIdentity = function(client, now = new Date()) {
 Client.getIdentityRecordUrl = function(identity) {
   const passport =
     identity && identity.passport.match(/uploads\/cheznestor\/(.+?)\/(.+?)\//);
+  const prefix = 'https://eu.jotform.com/server.php?action=getSubmissionPDF';
 
-  return passport ? [
-      'https://eu.jotform.com/server.php?action=getSubmissionPDF',
-      `&formID=${passport[1]}&sid=${passport[2]}`,
-    ].join('') :
+  return passport ?
+    `${prefix}&formID=${passport[1]}&sid=${passport[2]}` :
     'MISSING';
 };
 
