@@ -232,6 +232,7 @@ module.exports = fixtures((u) => {
     }],
     Event: [{
       id: u.id('event-1'),
+      type: 'checkout',
       summary: 'checkout',
       startDate: D.parse('2016-02-03 -01:00'),
       endDate: D.parse('2016-02-03 -01:00'),
@@ -239,6 +240,7 @@ module.exports = fixtures((u) => {
       EventableId: u.id('renting-1'),
     }, {
       id: u.id('event-2'),
+      type: 'checkout',
       summary: 'checkout',
       startDate: D.parse('2017-02-01 -01:00'),
       endDate: D.parse('2017-02-01 -01:00'),

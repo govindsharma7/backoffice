@@ -116,14 +116,7 @@ Room.associate = (models) => {
         model: models.Event,
         attributes: ['id', 'startDate'],
         required: false,
-        include:[{
-          model: models.Term,
-          attributes: [],
-          where: {
-            taxonomy: 'event-category',
-            name: 'checkout',
-          },
-        }],
+        where: { type: 'checkout' },
       }],
     }],
     group: ['Room.id'],

@@ -180,14 +180,7 @@ Client.associate = (models) => {
           model: models.Event,
           attributes: ['id', 'startDate'],
           required: false,
-          include: [{
-            model: models.Term,
-            attributes: [],
-            where: { $and: [
-              { taxonomy: 'event-category' },
-              { name: 'checkout' },
-            ]},
-          }],
+          where: { type: 'checkout' },
         }, {
           model: models.Room,
           attributes: ['id', 'ApartmentId'],

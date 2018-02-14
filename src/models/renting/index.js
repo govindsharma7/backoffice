@@ -118,13 +118,7 @@ Renting.associate = (models) => {
       include: [{
         model: models.Event,
         required: false,
-        include: [{
-          model: models.Term,
-          where: {
-            taxonomy: 'event-category',
-            name: type,
-          },
-        }],
+        where: { type },
       }],
     });
   });
