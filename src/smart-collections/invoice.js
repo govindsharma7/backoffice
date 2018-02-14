@@ -19,6 +19,10 @@ function collection(/*{ Order }*/) {
       field: 'id',
       type: 'String',
     }, {
+      field: 'status',
+      type: 'Enum',
+      enums: ['active', 'draft', 'cancelled'],
+    }, {
       field: 'label',
       type: 'String',
     }, {

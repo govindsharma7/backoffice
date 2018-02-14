@@ -49,7 +49,7 @@ module.exports = function(Model, Picture) {
     },
   };
 
-  const picFields = Array.from(Array(10)).map((val, key) =>
+  const picFields = Array.from(Array(12)).map((val, key) =>
     _.map({ alt: 'Enum', order: 'Number', url: 'String' }, (type, propName) => ({
       field: `pic ${key} ${propName}`,
       type,
