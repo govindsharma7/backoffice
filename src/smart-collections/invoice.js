@@ -95,7 +95,17 @@ function collection(/*{ Order }*/) {
     segments: [{
       name: 'future invoices',
     }, {
-      name: 'previous month invoices',
+      name: '1 month ago invoices',
+    }, {
+      name: '2 months ago invoices',
+    }, {
+      name: '3 months ago invoices',
+    }, {
+      name: '4 months ago invoices',
+    }, {
+      name: '5 months ago invoices',
+    }, {
+      name: '6 months ago invoices',
     }],
   };
 }
@@ -180,12 +190,16 @@ function getTotalPaid({ Payments }) {
   );
 }
 
-function getWhere(segment, date = D.subMonths(new Date(), 1)) {
+function getWhere(segment, now = new Date()) {
+  const sub = parseInt(segment) || 0;
+  const date = D.subMonths(now, sub);
+  const dueDate = sub === 0 ?
+    { $gte: D.startOfMonth(date) } :
+    { $gte: D.startOfMonth(date), $lt: D.endOfMonth(date) };
+
   return {
     receiptNumber: { $not: null },
-    dueDate: segment === 'previous month invoices' ?
-      { $gte: D.startOfMonth(date), $lt: D.endOfMonth(date) } :
-      { $gte: D.endOfMonth(date) },
+    dueDate,
   };
 }
 
