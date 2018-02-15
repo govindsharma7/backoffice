@@ -84,6 +84,10 @@ Order.associate = (models) => {
     constraints: false,
     scope: { metadatable: 'Order' },
   });
+  Order.hasOne(models.TotalPaid, {
+    foreignKey: 'OrderId',
+    constraints: false,
+  });
 
   Order.addScope('rentOrders', {
     include: [{
@@ -115,6 +119,17 @@ Order.associate = (models) => {
       include: [{
         model: models.Renting,
       }],
+    }],
+  });
+
+  // TODO: this is an attempt at simplifying Sequelize job using views
+  Order.addScope('totalPaid', {
+    attributes: { include: [
+      [sequelize.col('TotalPaid.totalPaid'), 'totalPaid'],
+    ] },
+    include: [{
+      model: models.TotalPaid,
+      required: false,
     }],
   });
 
