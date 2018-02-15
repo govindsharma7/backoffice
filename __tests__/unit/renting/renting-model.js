@@ -7,137 +7,211 @@ const { Renting } = models;
 describe('Renting - Model', () => {
 
   describe('scopes', () => {
-    test('checkinDate should include the checkin date', async () => {
-      const { unique: u } = await fixtures((u) => ({
-        Apartment: [{
-          id: u.id('apartment'),
-          DistrictId: 'lyon-ainay',
-        }],
-        Room: [{
-          id: u.id('room'),
-          ApartmentId: u.id('apartment'),
-        }],
-        Client: [{
-          id: u.id('client'),
-          firstName: 'John',
-          lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
-        }],
-        Renting: [{
-          id: u.id('renting'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-          status: 'active',
-          bookingDate: D.parse('2016-01-01'),
-        }],
-        Event: [{
-          type: 'checkin',
-          EventableId: u.id('renting'),
-          eventable: 'Renting',
-          startDate: D.parse('2017-05-14 Z'),
-          endDate: D.parse('2017-05-14 Z'),
-        }],
-      }))({ method: 'create', hooks: false });
+    describe('checkoinDate/checkoutDate', () => {
+      test('checkinDate should include the checkin date', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: D.parse('2016-01-01'),
+          }],
+          Event: [{
+            type: 'checkin',
+            EventableId: u.id('renting'),
+            eventable: 'Renting',
+            startDate: D.parse('2017-05-14 Z'),
+            endDate: D.parse('2017-05-14 Z'),
+          }],
+        }))({ method: 'create', hooks: false });
 
-      const renting =
-        await Renting.scope('checkinDate').findById(u.id('renting'));
+        const renting =
+          await Renting.scope('checkinDate').findById(u.id('renting'));
 
-      expect(renting.get('checkinDate')).toEqual(D.parse('2017-05-14 Z'));
+        expect(renting.checkinDate).toEqual(D.parse('2017-05-14 Z'));
+      });
+      test('checkinDate should be null when there is no checkin event', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: D.parse('2016-01-01'),
+          }],
+        }))({ method: 'create', hooks: false });
+
+        const renting =
+          await Renting.scope('checkinDate').findById(u.id('renting'));
+
+        expect(renting.checkinDate).toBeNull();
+      });
+
+      test('period should be future when the bookingDate is in the future', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: D.addMonths(new Date(), 1),
+          }],
+        }))({ method: 'create', hooks: false });
+
+        const renting =
+          await Renting.scope('checkoutDate').findById(u.id('renting'));
+
+        expect(renting.period).toEqual('future');
+      });
+
+      test('period should be past when the checkoutDate is in the past', async () => {
+        const oneMonthAgo = D.subMonths(new Date(), 1);
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: D.addMonths(new Date(), 1),
+          }],
+          Event: [{
+            type: 'checkout',
+            EventableId: u.id('past-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }],
+        }))({ method: 'create', hooks: false });
+
+        const renting =
+          await Renting.scope('checkoutDate').findById(u.id('renting'));
+
+        expect(renting.period).toEqual('past');
+      });
     });
-    test('checkinDate should be null when there is no checkin event', async () => {
-      const { unique: u } = await fixtures((u) => ({
-        Apartment: [{
-          id: u.id('apartment'),
-          DistrictId: 'lyon-ainay',
-        }],
-        Room: [{
-          id: u.id('room'),
-          ApartmentId: u.id('apartment'),
-        }],
-        Client: [{
-          id: u.id('client'),
-          firstName: 'John',
-          lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
-        }],
-        Renting: [{
-          id: u.id('renting'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-          status: 'active',
-          bookingDate: D.parse('2016-01-01'),
-        }],
-      }))({ method: 'create', hooks: false });
 
-      const renting =
-        await Renting.scope('checkinDate').findById(u.id('renting'));
+    describe('packLevel', () => {
+      test('it should return the comfort level of the housing pack', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: D.parse('2016-01-01'),
+          }],
+          OrderItem: [{
+            id: u.id('orderItem'),
+            label: 'Label shouldn\'t matter',
+            ProductId: 'privilege-pack',
+            RentingId: u.id('renting'),
+          }],
+        }))({ method: 'create', hooks: false });
 
-      expect(renting.get('checkinDate')).toBeNull();
-    });
+        const renting = await Renting.scope('packLevel').findById(u.id('renting'));
 
-    test('it should return the comfort level of the housing pack', async () => {
-      const { unique: u } = await fixtures((u) => ({
-        Apartment: [{
-          id: u.id('apartment'),
-          DistrictId: 'lyon-ainay',
-        }],
-        Room: [{
-          id: u.id('room'),
-          ApartmentId: u.id('apartment'),
-        }],
-        Client: [{
-          id: u.id('client'),
-          firstName: 'John',
-          lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
-        }],
-        Renting: [{
-          id: u.id('renting'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-          status: 'active',
-          bookingDate: D.parse('2016-01-01'),
-        }],
-        OrderItem: [{
-          id: u.id('orderItem'),
-          label: 'Label shouldn\'t matter',
-          ProductId: 'privilege-pack',
-          RentingId: u.id('renting'),
-        }],
-      }))({ method: 'create', hooks: false });
+        expect(renting.get('packLevel')).toEqual('privilege');
+      });
+      test('it should return null when there is no housing pack', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: D.parse('2016-01-01'),
+          }],
+        }))({ method: 'create', hooks: false });
 
-      const renting = await Renting.scope('packLevel').findById(u.id('renting'));
+        const renting = await Renting.scope('packLevel').findById(u.id('renting'));
 
-      expect(renting.get('packLevel')).toEqual('privilege');
-    });
-    test('it should return null when there is no housing pack', async () => {
-      const { unique: u } = await fixtures((u) => ({
-        Apartment: [{
-          id: u.id('apartment'),
-          DistrictId: 'lyon-ainay',
-        }],
-        Room: [{
-          id: u.id('room'),
-          ApartmentId: u.id('apartment'),
-        }],
-        Client: [{
-          id: u.id('client'),
-          firstName: 'John',
-          lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
-        }],
-        Renting: [{
-          id: u.id('renting'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-          status: 'active',
-          bookingDate: D.parse('2016-01-01'),
-        }],
-      }))({ method: 'create', hooks: false });
-
-      const renting = await Renting.scope('packLevel').findById(u.id('renting'));
-
-      expect(renting.get('packLevel')).toBeNull();
+        expect(renting.get('packLevel')).toBeNull();
+      });
     });
 
     describe('currentRenting & latestRenting', () => {
@@ -345,20 +419,29 @@ describe('Renting - Model', () => {
 
   describe('.getPeriod', () => {
     test('it should return the Renting\'s status', () => {
-      const date = D.parse('2017-07-07 Z');
+      const now = D.parse('2017-07-07 Z');
 
       expect(Renting.getPeriod({
-        get: () => D.parse('2016-03-03 Z'),
-        bookingDate: D.parse('2016-01-01 Z'),
-      }, date)).toEqual('past');
+        room: {
+          checkoutDate: D.parse('2016-03-03 Z'),
+          bookingDate: D.parse('2016-01-01 Z'),
+        },
+        now,
+      })).toEqual('past');
       expect(Renting.getPeriod({
-        get: () => D.parse('2018-03-03 Z'),
-        bookingDate: D.parse('2017-01-01 Z'),
-      }, date)).toEqual('current');
+        room: {
+          checkoutDate: D.parse('2018-03-03 Z'),
+          bookingDate: D.parse('2017-01-01 Z'),
+        },
+        now,
+      })).toEqual('current');
       expect(Renting.getPeriod({
-        get: () => D.parse('2018-03-03 Z'),
-        bookingDate: D.parse('2018-01-01 Z'),
-      }, date)).toEqual('future');
+        room: {
+          checkoutDate: D.parse('2018-03-03 Z'),
+          bookingDate: D.parse('2018-01-01 Z'),
+        },
+        now,
+      })).toEqual('future');
     });
   });
 

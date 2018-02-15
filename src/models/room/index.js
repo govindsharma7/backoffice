@@ -36,6 +36,7 @@ const Room = sequelize.define('Room', {
   descriptionEn:            DataTypes.TEXT,
   descriptionFr:            DataTypes.TEXT,
   descriptionEs:            DataTypes.TEXT,
+  // WATCH OUT: only meaningful when availableAt scope is used
   availableAt: {
     type:                   DataTypes.VIRTUAL(DataTypes.DATE),
     get() {
@@ -45,8 +46,28 @@ const Room = sequelize.define('Room', {
         availableAt : Utils.parseDBDate(availableAt);
     },
   },
-  roomNumber: {
+  // WATCH OUT: only meaningful when apartment and availableAt scopes are used
+  currentPrice: {
     type:                   DataTypes.VIRTUAL(DataTypes.INTEGER),
+    async get() {
+      if ( this.availableAt == null ) {
+        return Promise.resolve(null);
+      }
+
+      const [periodCoef, serviceFees] = await Promise.all([
+        Utils.getPeriodCoef(D.max(new Date(), this.availableAt)),
+        Utils.getServiceFees({ apartment: this.Apartment }),
+      ]);
+
+      return Utils.getPeriodPrice( this.basePrice, periodCoef, serviceFees );
+    },
+  },
+  // WATCH OUT: only meaningful when apartment scope is used
+  serviceFees: {
+    type:                   DataTypes.VIRTUAL(DataTypes.INTEGER),
+    get() {
+      return Utils.getServiceFees({ apartment: this.Apartment });
+    },
   },
 }, {
   paranoid: true,
@@ -79,41 +100,8 @@ Room.associate = (models) => {
     include: [{
       model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
       required: false,
-<<<<<<< HEAD
-      include: [{
-        model: models.Client,
-        attributes: ['id', 'firstName', 'lastName'],
-        required: false,
-      }, {
-        model: models.Event,
-        attributes: ['id', 'startDate'],
-        required: false,
-        where: { type: 'checkout' },
-      }],
-=======
->>>>>>> Fix tests
     }],
   });
-};
-
-// calculate periodPrice and serviceFees for the room
-Room.prototype.getCalculatedProps = function(now = new Date()) {
-  return Room.getCalculatedProps(
-    this.basePrice,
-    this.Apartment && this.Apartment.roomCount,
-    now
-  );
-};
-Room.getCalculatedProps = async function(basePrice, roomCount, now = new Date()) {
-  const [periodCoef, serviceFees] = await Promise.all([
-    Utils.getPeriodCoef(now),
-    Utils.getServiceFees(roomCount),
-  ]);
-
-  return {
-    periodPrice: Utils.getPeriodPrice( basePrice, periodCoef, serviceFees ),
-    serviceFees,
-  };
 };
 
 Room.prototype.checkAvailability = function(args) {

@@ -168,4 +168,12 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
     Renting.handleAfterUpdate(renting, opts)
   );
 
+  Renting.hook('beforeFind', (options) => {
+    if ( options.subQuery === true ) {
+      // Subqueries fail completely when using checkoutDate scope.
+      console.warning('Sequelize subqueries have been disabled for Renting');
+    }
+    // So far it proved safe to disable them completely on Renting.
+    options.subQuery = false;
+  });
 };

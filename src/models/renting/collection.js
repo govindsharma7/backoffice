@@ -7,22 +7,13 @@ const {
 const Utils       = require('../../utils');
 const Products    = require('../../../seed');
 
-module.exports = function(models) {
+module.exports = function() {
   return {
     fields: [{
       field: 'booking date coef',
       type: 'Number',
       get(object) {
         return Utils.getPeriodCoef(object.bookingDate);
-      },
-    }, {
-      field: 'period',
-      type: 'Enum',
-      enums: ['current', 'past', 'future'],
-      get(object) {
-        return models.Renting.scope('checkoutDate')
-          .findById(object.id)
-          .then(models.Renting.getPeriod);
       },
     }, {
       field: 'Housing Pack',
@@ -143,6 +134,9 @@ module.exports = function(models) {
     }, {
       name: 'Destroy Renting',
     }],
-    segments : TRASH_SEGMENTS,
+    segments : TRASH_SEGMENTS.concat({
+      name: 'default',
+      scope: 'checkoutDate',
+    }),
   };
 };

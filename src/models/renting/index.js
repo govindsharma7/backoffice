@@ -21,8 +21,6 @@ const collection            = require('./collection');
 const _ = { capitalize, values };
 const { required } = Utils;
 
-// TODO: for some reason sqlite seems to return a date in a strange format
-// find out why and fix this.
 function checkinoutDateGetter(type) {
   return function() {
     /* eslint-disable no-invalid-this */
@@ -67,7 +65,9 @@ const Renting = sequelize.define('Renting', {
     allowNull: false,
   },
   packLevel: {
-    type:                     DataTypes.VIRTUAL,
+    type:                     DataTypes.VIRTUAL(
+      DataTypes.ENUM('basic', 'comfort', 'privilege')
+    ),
   },
   discount: {
     type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
@@ -76,17 +76,26 @@ const Renting = sequelize.define('Renting', {
     type:                     DataTypes.VIRTUAL(DataTypes.BOOLEAN),
     defaultValue: false,
   },
+  // WATCH OUT: only meaningful when checkinDate scope is used
   checkinDate: {
     type:                     DataTypes.VIRTUAL(DataTypes.DATE),
     get: checkinoutDateGetter('checkin'),
   },
+  // WATCH OUT: only meaningful when checkoutDate scope is used
   checkoutDate: {
     type:                     DataTypes.VIRTUAL(DataTypes.DATE),
     get: checkinoutDateGetter('checkout'),
   },
+  // WATCH OUT: only meaningful when checkoutDate scope is used
+  period: {
+    type:                     DataTypes.VIRTUAL(
+      DataTypes.ENUM('current', 'past', 'future')
+    ),
+    get() { return Renting.getPeriod({ renting: this }); },
+  },
 }, {
   paranoid: true,
-  scopes: Object.assign({}, TRASH_SCOPES/*, UNTRASHED_SCOPE*/),
+  scopes: TRASH_SCOPES,
 });
 
 Renting.associate = (models) => {
@@ -807,14 +816,13 @@ Renting.prototype.futureDebit = function(args) {
     });
 };
 
-Renting.getPeriod = function(renting, date = new Date()) {
-  const checkoutDate = renting.get('checkoutDate');
-  const {bookingDate} = renting;
+Renting.getPeriod = function({ renting, now = new Date() }) {
+  const { checkoutDate, bookingDate } = renting;
 
-  if ( checkoutDate && checkoutDate < date ) {
+  if ( checkoutDate && checkoutDate < now ) {
     return 'past';
   }
-  else if ( bookingDate > date ) {
+  else if ( bookingDate > now ) {
     return 'future';
   }
 
@@ -828,32 +836,32 @@ Renting.getLatest = function(rentings) {
   );
 };
 
-Renting.calculatePriceAndFees = function({ room, bookingDate, hasTwoOccupants }) {
-  return models.Room
-    .getCalculatedProps(
-      room.basePrice,
-      room.Apartment && room.Apartment.roomCount,
-      bookingDate
-    )
-    .then(({periodPrice, serviceFees}) => {
-      return {
-        serviceFees,
-        price: periodPrice + ( hasTwoOccupants ? TWO_OCCUPANTS_FEES : 0 ),
-      };
-    });
+Renting.initializePriceAndFees = async function({ room, apartment, hasTwoOccupants }) {
+  const [periodCoef, serviceFees] = await Promise.all([
+    Utils.getPeriodCoef(room.bookingDate),
+    Utils.getServiceFees({ apartment }),
+  ]);
+  const periodPrice =
+    await Utils.getPeriodPrice( room.basePrice, periodCoef, serviceFees );
+
+  return {
+    periodCoef,
+    serviceFees,
+    price: periodPrice + ( hasTwoOccupants ? TWO_OCCUPANTS_FEES : 0 ),
+  };
 };
-Renting.prototype.calculatePriceAndFees = function(room) {
-  return Renting
-    .calculatePriceAndFees({
+Renting.prototype.initializePriceAndFees = async function(room) {
+  const { price, serviceFees } =
+    await Renting.calculatePriceAndFees({
       room,
       bookingDate: this.bookingDate,
       hasTwoOccupants: this.hasTwoOccupants,
-    })
-    .then(({price, serviceFees}) => {
-      this.setDataValue('price', price);
-      this.setDataValue('serviceFees', serviceFees);
-      return this;
     });
+
+  this.setDataValue('price', price);
+  this.setDataValue('serviceFees', serviceFees);
+
+  return this;
 };
 
 // Update all draft rentings as well as first rent order

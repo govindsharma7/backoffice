@@ -98,7 +98,7 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
     const renting = await Renting.scope('room+apartment', 'depositOption')
       .findById(ids[0]);
     // Take the comfort level from clients, as they might be switching room
-    const client = await Client.scope('packLevel', 'identity')
+    const client = await Client.scope('_packLevel', 'identity')
       .findById(renting.ClientId);
 
     if ( !client.Metadata.length ) {

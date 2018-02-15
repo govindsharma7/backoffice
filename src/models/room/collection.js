@@ -9,53 +9,11 @@ const Utils               = require('../../utils');
 const _ = { capitalize };
 
 module.exports = function({ Room, Picture, Term }) {
-  const getCalculatedProps = Utils.methodMemoizer({
-    model: Room.scope('availableAt'),
-    method: 'getCalculatedProps',
-  });
   const galeryFields = Utils.generateGaleryFields(Room, Picture);
   const featuresFields = Utils.generateFeaturesFields(Room, Term);
 
   return {
     fields: [{
-      field: 'current price',
-      type: 'Number',
-      async get(object) {
-        try {
-          const { periodPrice } = await getCalculatedProps(object);
-
-          return periodPrice;
-        }
-        catch (e) {
-          console.error(e);
-          return e;
-        }
-      },
-    }, {
-      field: 'service fees',
-      type: 'Number',
-      async get(object) {
-        try {
-          const { serviceFees } = await getCalculatedProps(object);
-
-          return serviceFees;
-        }
-        catch (e) {
-          console.error(e);
-          return e;
-        }
-      },
-    }, {
-      field: 'availableAt',
-      type: 'Date',
-      get(object) {
-        return object.availableAt;
-      },
-    }, {
-      field: 'current-client',
-      type: ['String'],
-      reference: 'Client.id',
-    }, {
       field: 'preview',
       description: 'frontend preview url',
       type: 'String',
@@ -100,8 +58,14 @@ module.exports = function({ Room, Picture, Term }) {
         name: 'Availability',
         scope: 'availableAt',
       },
+      {
+        name: 'default',
+        scope: 'availableAt',
+      },
       CITIES.map((city) => ({
         name: `Available Rooms ${_.capitalize(city)}`,
+        // There's no need to add Apartment to the scope, since Forest
+        // loads belongsTo relations automatically.
         scope: 'availableAt',
         where: {
           '$Rentings->Events.startDate$': { $lte: new Date() },

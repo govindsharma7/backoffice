@@ -222,7 +222,9 @@ Client.associate = (models) => {
     }],
   });
 
-  Client.addScope('packLevel', {
+  // For some reason, at some point it became impossible to have two scopes
+  // with the same name accross two different Models.
+  Client.addScope('_packLevel', {
     attributes: { include: [[
       sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
       'packLevel',
