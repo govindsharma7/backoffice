@@ -1,4 +1,3 @@
-const Promise  = require('bluebird');
 const D        = require('date-fns');
 const fixtures = require('../../__fixtures__');
 const Utils    = require('../../src/utils');
@@ -34,21 +33,23 @@ describe('Room', () => {
           }],
           Renting: [{
             id: u.id('renting'),
-            status: 'draft',
+            status: 'active',
             bookingDate: D.parse('2016-01-01 Z'),
             ClientId: u.id('client'),
             RoomId: u.id('room'),
           }],
           Event: [{
             type: 'checkout',
-            EventableId: u.id('current-renting1'),
+            EventableId: u.id('renting'),
             eventable: 'Renting',
             startDate: oneMonthFromNow,
             endDate: oneMonthFromNow,
           }],
         }))({ method: 'create', hooks: false });
 
-        const room = await Room.scope('availableAt').findById(u.id('room'));
+        const room = await Room.scope('availableAt').findById(u.id('room'), {
+          include: [models.Apartment],
+        });
         const actual = await room.currentPrice;
         const expected = await Utils.getPeriodPrice( basePrice, periodCoef, roomCount );
 
@@ -56,7 +57,7 @@ describe('Room', () => {
       });
 
       it('returns todays price if the room is already available', async () => {
-        const oneMonthAgo = D.addMonths(new Date(), 1);
+        const oneMonthAgo = D.subMonths(new Date(), 1);
         const basePrice = 12300;
         const roomCount = 3;
         const periodCoef = await Utils.getPeriodCoef(new Date());
@@ -79,21 +80,23 @@ describe('Room', () => {
           }],
           Renting: [{
             id: u.id('renting'),
-            status: 'draft',
+            status: 'active',
             bookingDate: D.parse('2016-01-01 Z'),
             ClientId: u.id('client'),
             RoomId: u.id('room'),
           }],
           Event: [{
             type: 'checkout',
-            EventableId: u.id('current-renting1'),
+            EventableId: u.id('renting'),
             eventable: 'Renting',
             startDate: oneMonthAgo,
             endDate: oneMonthAgo,
           }],
         }))({ method: 'create', hooks: false });
 
-        const room = await Room.scope('availableAt').findById(u.id('room'));
+        const room = await Room.scope('availableAt').findById(u.id('room'), {
+          include: [models.Apartment],
+        });
         const actual = await room.currentPrice;
         const expected = await Utils.getPeriodPrice( basePrice, periodCoef, roomCount );
 
@@ -136,7 +139,39 @@ describe('Room', () => {
       });
     });
 
-    describe()
+    describe('serviceFees', () => {
+      it('returns serviceFees calculated when apartment is included', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+            roomCount: 3,
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            status: 'draft',
+            bookingDate: D.parse('2016-01-01 Z'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+          }],
+        }))({ method: 'create', hooks: false });
+
+        const room = await Room.scope('availableAt').findById(u.id('room'));
+        const actual = await room.serviceFees;
+
+        expect(actual).toEqual(3000);
+      });
+    });
   });
 
   describe('scopes', () => {
@@ -353,5 +388,18 @@ describe('Room', () => {
       })
       .then((date) => expect(date).toEqual(now))
     );
+  });
+
+  describe('.getPriceAndFees', () => {
+    test('it should calculate the price and service fees for the renting', async () => {
+      const room = { basePrice: 9500 }; // rounding-safe price
+      const apartment = { roomCount: 3 };
+      const date = D.parse('2017-08-04 Z'); // 100% date
+      const { price, serviceFees } =
+        await Room.getPriceAndFees({ room, apartment, date });
+
+      expect(price).toEqual(9500);
+      expect(serviceFees).toEqual(3000);
+    });
   });
 });

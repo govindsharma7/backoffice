@@ -94,9 +94,9 @@ describe('Renting - Model', () => {
           }],
           Renting: [{
             id: u.id('renting'),
+            status: 'active',
             ClientId: u.id('client'),
             RoomId: u.id('room'),
-            status: 'active',
             bookingDate: D.addMonths(new Date(), 1),
           }],
         }))({ method: 'create', hooks: false });
@@ -126,14 +126,14 @@ describe('Renting - Model', () => {
           }],
           Renting: [{
             id: u.id('renting'),
+            status: 'active',
             ClientId: u.id('client'),
             RoomId: u.id('room'),
-            status: 'active',
-            bookingDate: D.addMonths(new Date(), 1),
+            bookingDate: D.parse('2016-01-01 Z'),
           }],
           Event: [{
             type: 'checkout',
-            EventableId: u.id('past-renting'),
+            EventableId: u.id('renting'),
             eventable: 'Renting',
             startDate: oneMonthAgo,
             endDate: oneMonthAgo,
@@ -422,45 +422,26 @@ describe('Renting - Model', () => {
       const now = D.parse('2017-07-07 Z');
 
       expect(Renting.getPeriod({
-        room: {
+        renting: {
           checkoutDate: D.parse('2016-03-03 Z'),
           bookingDate: D.parse('2016-01-01 Z'),
         },
         now,
       })).toEqual('past');
       expect(Renting.getPeriod({
-        room: {
+        renting: {
           checkoutDate: D.parse('2018-03-03 Z'),
           bookingDate: D.parse('2017-01-01 Z'),
         },
         now,
       })).toEqual('current');
       expect(Renting.getPeriod({
-        room: {
+        renting: {
           checkoutDate: D.parse('2018-03-03 Z'),
           bookingDate: D.parse('2018-01-01 Z'),
         },
         now,
       })).toEqual('future');
-    });
-  });
-
-  describe('.calculatePriceAndFees', () => {
-    test('it should calculate the price and service fees for the renting', () => {
-      const room = {
-        basePrice: 9500, // rounding-safe price
-        Apartment: { roomCount: 3 },
-      };
-      const bookingDate = D.parse('2017-08-04 Z'); // 100% date
-      const hasTwoOccupants = true;
-
-      return Renting
-        .calculatePriceAndFees({ room, bookingDate, hasTwoOccupants })
-        .then(({ price, serviceFees }) => {
-          expect(price).toEqual(18500);
-          expect(serviceFees).toEqual(3000);
-          return null;
-        });
     });
   });
 

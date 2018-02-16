@@ -9,7 +9,7 @@ const collection        = require('./collection');
 const routes            = require('./routes');
 const hooks             = require('./hooks');
 
-const { required } = Utils;
+const { methodify, required } = Utils;
 
 const Room = sequelize.define('Room', {
   id: {
@@ -152,6 +152,23 @@ Room.prototype.createMaintenancePeriod = function({ from, to }) {
     include: [models.Event],
   });
 };
+
+Room.getPriceAndFees = async function(args) {
+  const { room = required(), apartment /* not required! */, date } = args;
+  const [periodCoef, serviceFees] = await Promise.all([
+    Utils.getPeriodCoef(date),
+    Utils.getServiceFees({ apartment }),
+  ]);
+  const price =
+    await Utils.getPeriodPrice( room.basePrice, periodCoef, serviceFees );
+
+  return {
+    periodCoef,
+    serviceFees,
+    price,
+  };
+};
+methodify(Room, 'getPriceAndFees');
 
 Room.collection = collection;
 Room.routes = routes;

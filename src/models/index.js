@@ -18,14 +18,11 @@ const Setting       = require('./setting');
 const Term          = require('./term');
 // Keep models sorted alphabetically (easier to make sure they're all there)
 // And don't forget to add the name of the model to ./models.js !
-<<<<<<< HEAD
 const TotalPaid     = require('./TotalPaidView');
-=======
 const {
   LatestRenting,
   CurrentRenting,
 }                   = require('./rentingViews');
->>>>>>> Fix tests
 
 Object.assign(models, {
   Apartment,
@@ -44,12 +41,9 @@ Object.assign(models, {
   Setting,
   Term,
   // Keep models sorted alphabetically!
-<<<<<<< HEAD
   TotalPaid,
-=======
   LatestRenting,
   CurrentRenting,
->>>>>>> Fix tests
 });
 
 // Find by id should return soft-deleted records

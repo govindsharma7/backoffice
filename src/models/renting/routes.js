@@ -193,7 +193,6 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
     const room = await Room.scope('availableAt').findById(roomId, {
       include: [Apartment],
     });
-    const { Apartment: { addressCity } } = room || {};
 
     if ( !room ) {
       throw new CNError(`Room ${roomId} not found`, {
@@ -201,6 +200,7 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
       });
     }
 
+    const { Apartment: apartment, Apartment: { addressCity } } = room || {};
     const bookingDate =
       await Room.getEarliestAvailability({ rentings: room.Rentings });
 
@@ -211,7 +211,7 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
     }
 
     const [{ periodPrice, serviceFees }, [client]] = await Promise.all([
-      room.getCalculatedProps(bookingDate),
+      Room.getPriceAndFees({ room, apartment, date: bookingDate }),
       Client.findOrCreate({
         where: { email: booking.email },
         defaults: _.pick(booking, ['firstName', 'lastName', 'email']),

@@ -45,7 +45,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
       include: [{ model: Apartment }],
     });
 
-    return renting.calculatePriceAndFees(room);
+    return renting.initializePriceAndFees({ room, apartment: room.Apartment });
   };
   Renting.hook('beforeCreate', (renting, opts) =>
     Renting.handleBeforeCreate(renting, opts)

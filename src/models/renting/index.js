@@ -19,7 +19,7 @@ const hooks                 = require('./hooks');
 const collection            = require('./collection');
 
 const _ = { capitalize, values };
-const { required } = Utils;
+const { methodify, required } = Utils;
 
 function checkinoutDateGetter(type) {
   return function() {
@@ -836,33 +836,19 @@ Renting.getLatest = function(rentings) {
   );
 };
 
-Renting.initializePriceAndFees = async function({ room, apartment, hasTwoOccupants }) {
-  const [periodCoef, serviceFees] = await Promise.all([
-    Utils.getPeriodCoef(room.bookingDate),
-    Utils.getServiceFees({ apartment }),
-  ]);
-  const periodPrice =
-    await Utils.getPeriodPrice( room.basePrice, periodCoef, serviceFees );
-
-  return {
-    periodCoef,
-    serviceFees,
-    price: periodPrice + ( hasTwoOccupants ? TWO_OCCUPANTS_FEES : 0 ),
-  };
-};
-Renting.prototype.initializePriceAndFees = async function(room) {
+Renting.initializePriceAndFees = async function(args) {
+  const { renting = required(), room = required(), apartment } = args;
+  const date = renting.bookingDate;
   const { price, serviceFees } =
-    await Renting.calculatePriceAndFees({
-      room,
-      bookingDate: this.bookingDate,
-      hasTwoOccupants: this.hasTwoOccupants,
-    });
+    await models.Room.getPriceAndFees({ room, apartment, date });
+  const totalPrice = price + ( renting.hasTwoOccupants ? TWO_OCCUPANTS_FEES : 0 );
 
-  this.setDataValue('price', price);
-  this.setDataValue('serviceFees', serviceFees);
+  renting.setDataValue('price', totalPrice);
+  renting.setDataValue('serviceFees', serviceFees);
 
-  return this;
+  return renting;
 };
+methodify(Renting, 'initializePriceAndFees');
 
 // Update all draft rentings as well as first rent order
 Renting.updateDraftRentings = async function(now = new Date()) {

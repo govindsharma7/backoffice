@@ -25,6 +25,7 @@ const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
 const isHoliday                    = require('./isHoliday');
 const isValidPhoneNumber           = require('./isValidPhoneNumber');
 const logAndSend                   = require('./logAndSend');
+const methodify                    = require('./methodify');
 const methodMemoizer               = require('./methodMemoizer');
 const parseDBDate                  = require('./parseDBDate');
 const prorate                      = require('./prorate');
@@ -63,6 +64,7 @@ module.exports = {
   isHoliday,
   isValidPhoneNumber,
   logAndSend,
+  methodify,
   methodMemoizer,
   parseDBDate,
   prorate,

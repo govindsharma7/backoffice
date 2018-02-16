@@ -51,9 +51,9 @@ describe('Renting - Hooks', () => {
         }],
         Renting: [{
           id: u.id('currentRenting'),
+          status: 'active',
           ClientId: u.id('client1'),
           RoomId: u.id('room'),
-          status: 'active',
           bookingDate: new Date(),
         }],
       }))({ method: 'create', hooks: false })
@@ -95,9 +95,9 @@ describe('Renting - Hooks', () => {
         }],
         Renting: [{
           id: u.id('renting'),
+          status: 'active',
           ClientId: u.id('client1'),
           RoomId: u.id('room'),
-          status: 'active',
           bookingDate: new Date(),
         }],
       }))({ method: 'create', hooks: false })
@@ -116,8 +116,9 @@ describe('Renting - Hooks', () => {
   });
 
   describe('beforeCreate', () => {
-    it('should calculate renting price and fees when they\'re both 0', () =>
-      fixtures((u) => ({
+    it('should calculate renting price and fees when they\'re both 0', async () => {
+      const bookingDate = new Date();
+      const { instances: { room, apartment, client } } = await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
@@ -136,30 +137,22 @@ describe('Renting - Hooks', () => {
           ApartmentId: u.id('apartment'),
           basePrice: 69000,
         }],
-        Renting: [{
-          id: u.id('renting'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-        }],
-      }))({ method: 'create', hooks: 'Renting' })
-      .then(({ instances: { renting, room, apartment } }) => (Promise.all([
-        renting,
-        Room.getCalculatedProps(room.basePrice, apartment.roomCount),
-      ])))
-      .then(([renting, { periodPrice, serviceFees }]) => {
-        expect(renting.price).toEqual(periodPrice);
-        expect(renting.serviceFees).toEqual(serviceFees);
+      }))({ method: 'create', hooks: false });
+      const renting = await Renting.create({
+        ClientId: client.id,
+        RoomId: room.id,
+        bookingDate,
+      });
+      const { price, serviceFees } =
+        await Room.getPriceAndFees({ room, apartment, date: bookingDate });
 
-        return true;
-      })
-    );
-  });
+      expect(renting.price).toEqual(price);
+      expect(renting.serviceFees).toEqual(serviceFees);
+    });
 
-  describe('afterCreate', () => {
-    it('should create quote orders when packLevel is present', () => {
-      spiedHandleAfterCreate.mockImplementation(handleAfterCreate);
-
-      return fixtures((u) => ({
+    it('should add a fee for two occupants', async () => {
+      const bookingDate = new Date();
+      const { instances: { room, apartment, client } } = await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
@@ -168,61 +161,103 @@ describe('Renting - Hooks', () => {
           status: 'draft',
         }],
         District: [{ id: u.id('district') }],
-        Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
-        Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
-        Renting: [{
-          id: u.id('renting1'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-          status: 'draft',
-          packLevel: 'basic',
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: u.id('district'),
+          roomCount: 3,
         }],
-      }))({ method: 'create', hooks: 'Renting' })
-      .tap(({ unique: u }) => {
-        const cqoCall = Renting.createQuoteOrders.mock.calls[0][0];
-        const sbseCall = Sendinblue.sendBookingSummaryEmail.mock.calls[0][0];
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+          basePrice: 69000,
+        }],
+      }))({ method: 'create', hooks: false });
 
-        expect(cqoCall.packLevel).toEqual('basic');
-        expect(cqoCall.discount).toEqual(0);
-        expect(cqoCall.room.id).toEqual(u.id('room'));
-        expect(cqoCall.apartment.id).toEqual(u.id('apartment'));
-
-        expect(sbseCall.client.id).toEqual(u.id('client'));
-        expect(sbseCall.renting.id).toEqual(u.id('renting1'));
-        expect(sbseCall.apartment.id).toEqual(u.id('apartment'));
-
-        return Renting.create({
-          id: u.id('renting2'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-          status: 'draft',
-          packLevel: 'privilege',
-          discount: 123,
-        });
-      })
-      .tap(({ unique: u }) => {
-        const cqoCall = Renting.createQuoteOrders.mock.calls[1][0];
-        const sbseCall = Sendinblue.sendBookingSummaryEmail.mock.calls[1][0];
-
-        expect(cqoCall.packLevel).toEqual('privilege');
-        expect(cqoCall.discount).toEqual(12300);
-        expect(cqoCall.room.id).toEqual(u.id('room'));
-        expect(cqoCall.apartment.id).toEqual(u.id('apartment'));
-
-        expect(sbseCall.client.id).toEqual(u.id('client'));
-        expect(sbseCall.renting.id).toEqual(u.id('renting2'));
-        expect(sbseCall.apartment.id).toEqual(u.id('apartment'));
-
-        spiedHandleBeforeValidate.mockRestore();
-
-        return null;
+      const renting = await Renting.create({
+        ClientId: client.id,
+        RoomId: room.id,
+        bookingDate,
+        hasTwoOccupants: true,
       });
+      const { price, serviceFees } =
+        await Room.getPriceAndFees({ room, apartment, date: bookingDate });
+
+      expect(renting.price).toEqual(price + 9000);
+      expect(renting.serviceFees).toEqual(serviceFees);
+    });
+  });
+
+  describe('afterCreate', () => {
+    it('should create quote orders when packLevel is present', async () => {
+      spiedHandleAfterCreate.mockImplementation(handleAfterCreate);
+
+      const { unique: u } = await fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+          status: 'draft',
+        }],
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+        }],
+      }))({ method: 'create', hooks: false });
+
+      const renting1 = await Renting.create({
+        id: u.id('renting1'),
+        ClientId: u.id('client'),
+        RoomId: u.id('room'),
+        status: 'draft',
+        packLevel: 'basic',
+        price: 12300,
+      });
+      const cqoCall0 = Renting.createQuoteOrders.mock.calls[0][0];
+      const sbseCall0 = Sendinblue.sendBookingSummaryEmail.mock.calls[0][0];
+
+      expect(cqoCall0.packLevel).toEqual('basic');
+      expect(cqoCall0.discount).toEqual(0);
+      expect(cqoCall0.room.id).toEqual(u.id('room'));
+      expect(cqoCall0.apartment.id).toEqual(u.id('apartment'));
+
+      expect(sbseCall0.renting.id).toEqual(renting1.id);
+      expect(sbseCall0.client.id).toEqual(u.id('client'));
+      expect(sbseCall0.apartment.id).toEqual(u.id('apartment'));
+
+      const renting2 = await Renting.create({
+        id: u.id('renting2'),
+        ClientId: u.id('client'),
+        RoomId: u.id('room'),
+        status: 'draft',
+        packLevel: 'privilege',
+        discount: 123,
+        price: 12300,
+      });
+
+      const cqoCall1 = Renting.createQuoteOrders.mock.calls[1][0];
+      const sbseCall1 = Sendinblue.sendBookingSummaryEmail.mock.calls[1][0];
+
+      expect(cqoCall1.packLevel).toEqual('privilege');
+      expect(cqoCall1.discount).toEqual(12300);
+      expect(cqoCall1.room.id).toEqual(u.id('room'));
+      expect(cqoCall1.apartment.id).toEqual(u.id('apartment'));
+
+      expect(sbseCall1.renting.id).toEqual(renting2.id);
+      expect(sbseCall1.client.id).toEqual(u.id('client'));
+      expect(sbseCall1.apartment.id).toEqual(u.id('apartment'));
+
+      spiedHandleBeforeValidate.mockRestore();
     });
   });
 
   describe('afterUpdate', () => {
-    it('shouldn\'t do anything unless status is updated to active', () => {
-      return fixtures((u) => ({
+    it('shouldn\'t do anything unless status is updated to active', async () => {
+      const { instances: { renting } } = await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
@@ -239,87 +274,83 @@ describe('Renting - Hooks', () => {
           RoomId: u.id('room'),
           status: 'draft',
         }],
-      }))({ method: 'create', hooks: 'Renting' })
-      .then(({ instances: { renting } }) => {
-        const actual =
+      }))({ method: 'create', hooks: false });
+
+      const actual =
           Renting.handleAfterUpdate(renting.set({ status: 'cancelled' }), {});
 
-        return expect(actual).resolves.toEqual(true);
-      });
+      expect(actual).resolves.toEqual(true);
     });
 
-    it('should mark the client + related orders active, send email + update WP', () => {
-      Sendinblue.sendWelcomeEmail = jest.fn();
-      Wordpress.makeRoomUnavailable = jest.fn();
+    it('should mark the client + related orders active, send email + update WP',
+      async () => {
+        Sendinblue.sendWelcomeEmail = jest.fn();
+        Wordpress.makeRoomUnavailable = jest.fn();
 
-      return fixtures((u) => ({
-        Client: [{
-          id: u.id('client'),
-          firstName: 'John',
-          lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
-          status: 'draft',
-        }],
-        Order: [{
-          id: u.id('draftRentOrder'),
-          label: 'A random order',
-          ClientId: u.id('client'),
-          status: 'draft',
-        }, {
-          id: u.id('draftDepositOrder'),
-          label: 'A random order',
-          ClientId: u.id('client'),
-          status: 'draft',
-        }, {
-          id: u.id('draftPackOrder'),
-          label: 'A random order',
-          ClientId: u.id('client'),
-          status: 'draft',
-        }, {
-          id: u.id('cancelledRentOrder'),
-          label: 'A random order',
-          ClientId: u.id('client'),
-          status: 'cancelled',
-        }, {
-          id: u.id('unrelatedOrder'),
-          label: 'An unrelated order',
-          ClientId: u.id('client'),
-          status: 'draft',
-        }],
-        District: [{ id: u.id('district') }],
-        Apartment: [{ id: u.id('apartment'), DistrictId: u.id('district') }],
-        Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
-        Renting: [{
-          id: u.id('renting'),
-          ClientId: u.id('client'),
-          RoomId: u.id('room'),
-          status: 'draft',
-        }],
-        OrderItem: [{
-          label: 'A random item',
-          OrderId: u.id('draftRentOrder'),
-          RentingId: u.id('renting'),
-          ProductId: 'rent',
-        }, {
-          label: 'A random item',
-          OrderId: u.id('draftDepositOrder'),
-          RentingId: u.id('renting'),
-          ProductId: 'montpellier-deposit',
-        }, {
-          label: 'A random item',
-          OrderId: u.id('draftPackOrder'),
-          RentingId: u.id('renting'),
-          ProductId: 'comfort-pack',
-        }, {
-          label: 'A random item',
-          OrderId: u.id('cancelledRentOrder'),
-          RentingId: u.id('renting'),
-          ProductId: 'rent',
-        }],
-      }))({ method: 'create', hooks: 'Renting' })
-      .tap(({ instances: { renting } }) => renting.update({ status: 'active' }))
-      .tap(Promise.delay(200))
-      .then(({ instances }) => {
+        const { instances } = await fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+            status: 'draft',
+          }],
+          Order: [{
+            id: u.id('draftRentOrder'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+          }, {
+            id: u.id('draftDepositOrder'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+          }, {
+            id: u.id('draftPackOrder'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+          }, {
+            id: u.id('cancelledRentOrder'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'cancelled',
+          }, {
+            id: u.id('unrelatedOrder'),
+            label: 'An unrelated order',
+            ClientId: u.id('client'),
+            status: 'draft',
+          }],
+          Apartment: [{ id: u.id('apartment'), DistrictId: 'lyon-ainay' }],
+          Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'draft',
+          }],
+          OrderItem: [{
+            label: 'A random item',
+            OrderId: u.id('draftRentOrder'),
+            RentingId: u.id('renting'),
+            ProductId: 'rent',
+          }, {
+            label: 'A random item',
+            OrderId: u.id('draftDepositOrder'),
+            RentingId: u.id('renting'),
+            ProductId: 'montpellier-deposit',
+          }, {
+            label: 'A random item',
+            OrderId: u.id('draftPackOrder'),
+            RentingId: u.id('renting'),
+            ProductId: 'comfort-pack',
+          }, {
+            label: 'A random item',
+            OrderId: u.id('cancelledRentOrder'),
+            RentingId: u.id('renting'),
+            ProductId: 'rent',
+          }],
+        }))({ method: 'create', hooks: false });
         const {
           client,
           renting,
@@ -330,6 +361,10 @@ describe('Renting - Hooks', () => {
           cancelledRentOrder,
           unrelatedOrder,
         } = instances;
+
+        await renting.update({ status: 'active' });
+        await Promise.delay(200);
+
         const sendWelcomeArgs = Sendinblue.sendWelcomeEmail.mock.calls[0][0];
         const updateRoomArgs = Wordpress.makeRoomUnavailable.mock.calls[0][0];
 
@@ -355,7 +390,6 @@ describe('Renting - Hooks', () => {
           expect(unrelatedOrder.reload())
             .resolves.toEqual(expect.objectContaining({ status: 'draft' })),
         ]);
-      });
     });
   });
 });

@@ -8,7 +8,7 @@ const Utils               = require('../../utils');
 
 const _ = { kebabCase };
 
-module.exports = function({ Order, Metadata, Payment }) {
+module.exports = function({ Order, Metadata }) {
   const getCalculatedProps = Utils.methodMemoizer({
     model: Order,
     method: 'getCalculatedProps',
@@ -101,22 +101,6 @@ module.exports = function({ Order, Metadata, Payment }) {
           { '$TotalPaid.totalPaid$': null },
         ],
       },
-    }, {
-      name: 'HasPayment',
-      where: () =>
-        Order
-          .findAll({
-            where: {
-              'status': 'active',
-              'type': 'debit',
-              '$Payments.id$': { $not: null },
-            },
-            include: [{ model: Payment, attributes: ['id'] }],
-          })
-          .reduce((acc, curr) => {
-            acc.id.push(curr.id);
-            return acc;
-          }, { id: [] }),
     }),
   };
 };
