@@ -189,12 +189,10 @@ Client.associate = (models) => {
     };
   });
 
-  Client.addScope('latestClientRenting', {
-    attributes: { include: [
-      [fn('max', col('Rentings.bookingDate')), 'latestBookingDate'],
-    ]},
+  // This scope must be a function because 'latestRenting' isn't available yet
+  Client.addScope('latestClientRenting', () => ({
     include: [{
-      model: models.Renting,
+      model: models.Renting.scope('latestRenting'),
       include: [{
         model: models.Room,
         include: [{
@@ -203,8 +201,7 @@ Client.associate = (models) => {
         }],
       }],
     }],
-    group: ['Client.id'],
-  });
+  }));
 
   Client.addScope('paymentDelay', {
     include: [{
@@ -252,10 +249,6 @@ Client.prototype.getRentingsFor = function(date = new Date()) {
         { $checkoutDate$: { $eq: null } },
         { $checkoutDate$: { $gte: startOfMonth } },
       ] },
-      // sequelize.literal(
-      //   // /!\ startOfMonth must be formatted using DATETIME_FORMAT
-      //   `(Events.id IS NULL OR Events.startDate >= '${startOfMonth}')`
-      // ),
     ]},
   });
 };

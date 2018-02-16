@@ -4,17 +4,17 @@ const pickBy               = require('lodash/pickBy');
 const mapKeys              = require('lodash/mapKeys');
 const D                    = require('date-fns');
 const Multer               = require('multer');
+const { wrap }             = require('express-promise-wrap');
 const Liana                = require('forest-express-sequelize');
 const {
   SENDINBLUE_LIST_IDS,
-  SENDINBLUE_TEMPLATE_IDS,
 }                          = require('../../const');
 const Sendinblue           = require('../../vendor/sendinblue');
 const Utils                = require('../../utils');
 
 const _ = { pickBy, mapKeys };
 
-module.exports = (app, { Client, Order, Metadata, Payment, Renting }) => {
+module.exports = (app, { Client, Order, Metadata, Payment }) => {
   const LEA = Liana.ensureAuthenticated;
   const multer = Multer().fields([{ name: 'passport', maxCount: 1 }]);
   const Serializer = Liana.ResourceSerializer;
@@ -179,119 +179,76 @@ module.exports = (app, { Client, Order, Metadata, Payment, Renting }) => {
       .catch(Utils.logAndSend(res));
   });
 
-  app.post('/forest/actions/rental-attachments', multer, LEA, (req, res) => {
+  app.post('/forest/actions/rental-attachments', multer, LEA, async (req, res) => {
     const values = _.mapKeys(
       JSON.parse(req.body.rawRequest),
       (value, key) => key.replace(/(q[\d]*_)/g, '')
     );
-    const scoped = Client.scope('latestClientRenting');
+    const clientId = values.clientId.trim();
 
-    Promise
-      .resolve(/@/.test(values.clientId) ?
-        scoped.findAll({ where: { email: values.clientId.trim() } }) :
-        scoped.findAll({ where: { id: values.clientId.trim() } }))
-      .then(([client]) => client.createMetadatum({
+    const client =
+      await Client.scope('latestClientRenting').findOne({
+        where: /@/.test(clientId) ? { email: clientId } : { id: clientId },
+      });
+
+    return Metadata.create({
+        MetadatableId: client.id,
+        metadatable: 'Client',
         name: 'rentalAttachments',
         value: JSON.stringify(values),
-      }))
+      })
       .then(Utils.createdSuccessHandler(res, 'Client metadata'))
       .catch(Utils.logAndSend(res));
   });
 
   /*
-    Handle JotForm data (Identity - New Member)
-    in order to collect more information for a new client
+    Handle JotForm data
   */
-  app.post('/forest/actions/client-identity', multer, LEA, (req, res) => {
-    Client.normalizeIdentityRecord(JSON.parse(req.body.rawRequest))
-      .then((identityRecord) => {
-        const { fullName, phoneNumber, clientId, iPrefer } = identityRecord;
-        const fieldsToUpdate = {
-          firstName: fullName.first,
-          lastName: fullName.last,
-          phoneNumber: Utils.isValidPhoneNumber( phoneNumber ) && phoneNumber,
-          preferredLanguage: iPrefer === 'Français' ? 'fr' : 'en',
-        };
-        const scoped = Client.scope('latestClientRenting');
+  app.post('/forest/actions/client-identity', multer, LEA, wrap(async (req, res) => {
+    const identityRecord =
+      await Client.normalizeIdentityRecord(JSON.parse(req.body.rawRequest));
+    const { fullName, phoneNumber, clientId: _clientId, iPrefer } = identityRecord;
+    const clientId = _clientId.trim();
+    const fieldsToUpdate = {
+      firstName: fullName.first,
+      lastName: fullName.last,
+      phoneNumber: Utils.isValidPhoneNumber( phoneNumber ) && phoneNumber,
+      preferredLanguage: iPrefer === 'Français' ? 'fr' : 'en',
+    };
 
-        if ( !clientId ) {
-          throw new Error('clientId is missing');
-        }
+    if ( !clientId ) {
+      throw new Error('clientId is missing');
+    }
 
-        return Promise.all([
-          /@/.test(clientId) ?
-            scoped.findAll({ where: { email: clientId.trim() } }) :
-            scoped.findAll({ where: { id : clientId.trim() } }),
-          fieldsToUpdate,
-          identityRecord,
-        ]);
-      })
-      .tap(([[client], fieldsToUpdate, identityRecord]) => {
-        const { year, month, day, hour, min } = identityRecord.checkinDate;
-        const startDate = `${year}-${month}-${day} ${hour}:${min}`;
-        const {addressCity} = client.Rentings[0].Room.Apartment;
-        const {preferredLanguage} = client;
+    const client =
+      await Client.scope('latestClientRenting').findOne({
+        where: /@/.test(clientId) ? { email: clientId } : { id: clientId },
+      });
+    const { addressCity } = client.Rentings[0].Room.Apartment;
+    const { preferredLanguage } = client;
 
-        return Promise.all([
-          client.update(
-            _.pickBy(fieldsToUpdate, Boolean) // filter out falsy phoneNumber
-          ),
-          client.createMetadatum({ // sequelize pluralization ¯\_(ツ)_/¯
-            name: 'clientIdentity',
-            value: JSON.stringify(identityRecord),
-          }),
-          Renting.findOrCreateCheckinEvent({
-            startDate,
-            renting: client.Rentings[0],
-            client,
-            room: client.Rentings[0].Room,
-          }),
-          Sendinblue.updateContact(
-            client.email,
-            {
-              listIds: [
-                SENDINBLUE_LIST_IDS[preferredLanguage],
-                SENDINBLUE_LIST_IDS[addressCity].all,
-                SENDINBLUE_LIST_IDS[addressCity][preferredLanguage],
-              ],
-              unlinkListIds: [SENDINBLUE_LIST_IDS.prospects[preferredLanguage]],
-            }),
-        ]);
-      })
-      .then(([[client]]) => Promise.all([
-        Client.scope('currentApartment').findAll({
-          where: {
-            '$Rentings->Room.ApartmentId$': client.Rentings[0].Room.ApartmentId,
-            '$Rentings.bookingDate$': { $lte:  new Date() },
-            'id': { $ne: client.id },
-          },
-        }),
-        Metadata.findOne({
-          where: {
-            name: 'clientIdentity',
-            MetadatableId: client.id,
-          },
-        }),
-      ]))
-      .then(([houseMates, metadata]) =>
-        // TODO: this belongs in Sendinblue.js
-        // and should be merged with the code in the following then.
-        // see sendWelcomeEmail for example
-         Utils.serializeHousemate(houseMates, metadata)
-      )
-      .then(([attributesFr, attributesEn, emailToFr, emailToEn]) => Promise.all([
-        emailToFr.length && Sendinblue.sendTemplateEmail(
-          SENDINBLUE_TEMPLATE_IDS.newHousemate.fr,
-          { emailTo: emailToFr, attributes: attributesFr }
-        ),
-        emailToEn.length && Sendinblue.sendTemplateEmail(
-          SENDINBLUE_TEMPLATE_IDS.newHousemate.en,
-          { emailTo: emailToEn, attributes: attributesEn }
-        ),
-      ]))
-      .then(Utils.createdSuccessHandler(res, 'Client metadata'))
-      .catch(Utils.logAndSend(res));
-  });
+    await Promise.all([
+      client.update(
+        _.pickBy(fieldsToUpdate, Boolean) // filter out falsy phoneNumber
+      ),
+      Metadata.create({
+        MetadatableId: client.id,
+        metadatable: 'Client',
+        name: 'clientIdentity',
+        value: JSON.stringify(identityRecord),
+      }),
+      Sendinblue.updateContact(client.email, {
+        listIds: [
+          SENDINBLUE_LIST_IDS[preferredLanguage],
+          SENDINBLUE_LIST_IDS[addressCity].all,
+          SENDINBLUE_LIST_IDS[addressCity][preferredLanguage],
+        ],
+        unlinkListIds: [SENDINBLUE_LIST_IDS.prospects[preferredLanguage]],
+      }),
+    ]);
+
+    res.send(true);
+  }));
 
   Utils.addInternalRelationshipRoute({
     app,

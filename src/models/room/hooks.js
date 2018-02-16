@@ -3,7 +3,7 @@ const get = require('lodash/get');
 const _ = { get };
 
 module.exports = function({ Room, Apartment, Client }) {
-  Room.hook('beforeCreate', async (room) => {
+  Room.handleBeforeCreate = async (room) => {
     const { ApartmentId, roomNumber } = room;
     const apartment = await Apartment.findById(ApartmentId);
 
@@ -13,7 +13,10 @@ module.exports = function({ Room, Apartment, Client }) {
     if ( !apartment.roomCount || apartment.roomCount < roomNumber ) {
       apartment.update({ roomCount: roomNumber });
     }
-  });
+  };
+  Room.hook('beforeCreate', (room, opts) =>
+    Room.handleBeforeCreate(room, opts)
+  );
 
   Room.hook('beforeDestroy', async (room) => {
     const clients = await Client.scope('currentApartment').findAll({
@@ -58,11 +61,13 @@ module.exports = function({ Room, Apartment, Client }) {
       }};
     }
 
+    // It is safe to disable subqueries because it was used only with the default
+    // segment which includes Rentings through the availableAt scope.
+    // In this case, only a single Renting is ever returned.
     if ( options.subQuery === true ) {
       // Subqueries fail completely when using Renting related views.
       console.warning('Sequelize subqueries have been disabled for Room');
     }
-    // So far it proved safe to disable them completely on Room.
     options.subQuery = false;
 
     return options;

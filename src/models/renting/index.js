@@ -91,7 +91,7 @@ const Renting = sequelize.define('Renting', {
     type:                     DataTypes.VIRTUAL(
       DataTypes.ENUM('current', 'past', 'future')
     ),
-    get() { return Renting.getPeriod({ renting: this }); },
+    get() { return this.getPeriod(); },
   },
 }, {
   paranoid: true,
@@ -828,6 +828,7 @@ Renting.getPeriod = function({ renting, now = new Date() }) {
 
   return 'current';
 };
+methodify(Renting, 'getPeriod');
 
 Renting.getLatest = function(rentings) {
   return rentings.reduce(
@@ -843,8 +844,8 @@ Renting.initializePriceAndFees = async function(args) {
     await models.Room.getPriceAndFees({ room, apartment, date });
   const totalPrice = price + ( renting.hasTwoOccupants ? TWO_OCCUPANTS_FEES : 0 );
 
-  renting.setDataValue('price', totalPrice);
-  renting.setDataValue('serviceFees', serviceFees);
+  renting.price = totalPrice;
+  renting.serviceFees = serviceFees;
 
   return renting;
 };

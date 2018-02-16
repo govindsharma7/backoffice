@@ -164,16 +164,11 @@ module.exports = function({ Client }) {
     }],
     segments: CITIES.map((city) => ({
       name: `Currrent Clients ${_.capitalize(city)}`,
-      where: () => (
-        Client.scope('currentApartment')
-          .findAll({
-            where: { $and: [
-              { status: 'active' },
-              { '$Rentings->Room->Apartment.addressCity$': city },
-            ]},
-          })
-          .then((clients) => ({ id: { $in: _.map(clients, 'id') }}))
-      ),
+      scope: 'currentApartment',
+      where: {
+        status: 'active',
+        '$Rentings->Room->Apartment.addressCity$': city,
+      },
     })).concat(TRASH_SEGMENTS),
   };
 };

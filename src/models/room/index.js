@@ -69,6 +69,9 @@ const Room = sequelize.define('Room', {
       return Utils.getServiceFees({ apartment: this.Apartment });
     },
   },
+  roomNumber: {
+    type:                   DataTypes.VIRTUAL(DataTypes.INTEGER),
+  },
 }, {
   paranoid: true,
   scopes: TRASH_SCOPES,

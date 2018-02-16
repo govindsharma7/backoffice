@@ -49,15 +49,6 @@ module.exports = function({ Client }) {
     else {
       Sendinblue.updateContact(client.email, { client });
     }
-    if (
-      client.ninjaId && (
-        client.changed('firstName') ||
-        client.changed('lastName') ||
-        client.changed('email')
-      )
-    ) {
-      return client.ninjaUpdate();
-    }
 
     return true;
   });
