@@ -110,20 +110,6 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
       .catch(Utils.logAndSend(res));
   });
 
-  app.post('/forest/actions/add-note', LEA, (req, res) => {
-    const {values, ids, collection_name: metadatable} =
-      req.body.data.attributes;
-
-    Metadata.bulkCreate(ids.map((MetadatableId) => ({
-        name: 'note',
-        metadatable,
-        MetadatableId,
-        value: values.content,
-      })))
-      .then(Utils.createdSuccessHandler(res, `${metadatable} Note`))
-      .catch(Utils.logAndSend(res));
-  });
-
   app.get('/forest/Client/:recordId/relationships/Payments', LEA, (req, res) => {
     Payment
       .findAll({
@@ -204,9 +190,8 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
   /*
     Handle JotForm data
   */
-  app.post('/forest/actions/client-identity', multer, LEA, wrap(async (req, res) => {
-    const identityRecord =
-      await Client.normalizeIdentityRecord(JSON.parse(req.body.rawRequest));
+  Client.handleClientIdentityRoute = async function(rawIdentity) {
+    const identityRecord = await Client.normalizeIdentityRecord(rawIdentity);
     const { fullName, phoneNumber, clientId: _clientId, iPrefer } = identityRecord;
     const clientId = _clientId.trim();
     const fieldsToUpdate = {
@@ -220,14 +205,13 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
       throw new Error('clientId is missing');
     }
 
-    const client =
-      await Client.scope('latestClientRenting').findOne({
-        where: /@/.test(clientId) ? { email: clientId } : { id: clientId },
-      });
+    const client = await Client.scope('latestClientRenting').findOne({
+      where: /@/.test(clientId) ? { email: clientId } : { id: clientId },
+    });
     const { addressCity } = client.Rentings[0].Room.Apartment;
     const { preferredLanguage } = client;
 
-    await Promise.all([
+    return Promise.all([
       client.update(
         _.pickBy(fieldsToUpdate, Boolean) // filter out falsy phoneNumber
       ),
@@ -246,6 +230,9 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
         unlinkListIds: [SENDINBLUE_LIST_IDS.prospects[preferredLanguage]],
       }),
     ]);
+  };
+  app.post('/forest/actions/client-identity', multer, LEA, wrap(async (req, res) => {
+    await Client.handleClientIdentityRoute(JSON.parse(req.body.rawRequest));
 
     res.send(true);
   }));

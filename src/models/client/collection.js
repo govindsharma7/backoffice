@@ -18,11 +18,14 @@ module.exports = function({ Client }) {
      return cache.get(object);
     }
 
-    const promise = Client.getIdentity(object);
+    const identity = Client.getFullIdentity({
+      client: object,
+      identityMeta: object.Metadata && object.Metadata[0],
+    });
 
-    cache.set(object, promise);
+    cache.set(object, identity);
 
-    return promise;
+    return identity;
   }
 
   return {
@@ -61,41 +64,26 @@ module.exports = function({ Client }) {
       field: 'Download Identity Record',
       type: 'String',
       get(object) {
-        return getIdentyMemoized(object)
-          .then((identity) => Client.getIdentityRecordUrl(identity))
-          .catch((e) => { handleDescriptionError(e, object); });
+        return getIdentyMemoized(object).recordUrl || 'MISSING';
       },
     }, {
       field: 'Description En',
       type: 'String',
       get(object) {
-        return getIdentyMemoized(object)
-          .then((identity) =>
-            Client.getDescriptionEn(Object.assign({ identity }, object))
-          )
-          .catch((e) => { handleDescriptionError(e, object); });
+        return getIdentyMemoized(object).descriptionEn || 'MISSING';
       },
     }, {
       field: 'Description Fr',
       type: 'String',
       get(object) {
-        return getIdentyMemoized(object)
-          .then((identity) =>
-            Client.getDescriptionFr(Object.assign({ identity }, object))
-          )
-          .catch((e) => { handleDescriptionError(e, object); });
+        return getIdentyMemoized(object).descriptionFr || 'MISSING';
       },
     }, {
       field: 'gender',
       type: 'String',
       get(object) {
-        return getIdentyMemoized(object)
-          .then((identity) => identity ? identity.gender : undefined);
+        return getIdentyMemoized(object).gender || 'MISSING';
       },
-    }, {
-      field: 'Notes',
-      type: ['String'],
-      reference: 'Metadata.id',
     }, {
       field: 'jotform-attachments',
       type: ['String'],
@@ -169,11 +157,9 @@ module.exports = function({ Client }) {
         status: 'active',
         '$Rentings->Room->Apartment.addressCity$': city,
       },
-    })).concat(TRASH_SEGMENTS),
+    })).concat(TRASH_SEGMENTS, {
+      name: 'default',
+      scope: 'identity',
+    }),
   };
 };
-
-function handleDescriptionError(error, client) {
-  console.error(client, error);
-  return `An error occured while generating the description: ${error.message}`;
-}

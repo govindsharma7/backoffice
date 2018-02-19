@@ -1,8 +1,8 @@
 const Promise          = require('bluebird');
 const D                = require('date-fns');
-const models           = require('../../src/models');
-const clientFixtures   = require('../../__fixtures__/client');
-const fixtures         = require('../../__fixtures__');
+const models           = require('../../../src/models');
+const clientFixtures   = require('../../../__fixtures__/client');
+const fixtures         = require('../../../__fixtures__');
 
 const { Client } = models;
 
@@ -15,7 +15,7 @@ let renting2;
 let renting3;
 let u;
 
-describe('Client', () => {
+describe('Client - Model', () => {
   beforeAll(() => {
     return clientFixtures()
       .then(({instances, unique}) => {
@@ -345,85 +345,59 @@ describe('Client', () => {
   });
 
   describe('.getIdentity', () => {
-    const { findOne } = models.Metadata;
+    it('fetches and parse the identity record of the client', async () => {
+      const now = D.parse('2016-01-01 Z');
+      const rawIdentity = {
+        birthDate: { year: '1986', month: '07', day: '23' },
+        passport: 'uploads/cheznestor/123/456/',
+        isStudent: true,
+        nationalityEn: 'French',
+        nationalityFr: 'français',
+      };
+      const fullIdentity = await models.Client.getFullIdentity({
+        client: { firstName: 'John' },
+        identityMeta: { value: JSON.stringify(rawIdentity) },
+        now,
+      });
 
-    beforeAll(() => {
-      models.Metadata.findOne = jest.fn(() => Promise.resolve({
-          value: JSON.stringify(
-            { birthDate: { year: '1986', month: '07', day: '23' } }
-          ),
-        }));
-    });
-    afterAll(() => {
-      models.Metadata.findOne = findOne;
-    });
-
-    it('fetches and parse the identity record of the client', () => {
-      return models.Client.getIdentity({})
-        .then((identity) => {
-          return expect(identity).toEqual({
-            birthDate: { year: '1986', month: '07', day: '23' },
-            age: D.differenceInYears(new Date(), '1986-07-23 Z'),
-          });
-        });
+      expect(fullIdentity).toEqual(Object.assign(rawIdentity, {
+        age: 29,
+        recordUrl:
+          'https://eu.jotform.com/server.php?action=getSubmissionPDF&formID=123&sid=456',
+        descriptionEn: 'John, 29 years old French student',
+        descriptionFr: 'John, étudiant(e) français de 29 ans',
+      }));
     });
   });
 
-  describe('.getDescriptionEn/Fr', () => {
-    const client = {
-      firstName: 'Victor',
-      identity: {
-        age: 30,
+  describe('.normalizeIdentityRecord', () => {
+    it('adds nationality and translate country and nationality to FR', async () => {
+      const input = {
+        'q01_phoneNumber': { area: '+33', phone: '0671114171' },
+        'q02_nationality': 'United States',
+        'q03_birthPlace': { last: 'England' },
+        'q04_frenchStatus': 'Intern',
+        'q06_something': 'else',
+      };
+
+      const expected = {
+        phoneNumber: '+33671114171',
+        nationality: 'United States',
         nationalityEn: 'American',
         nationalityFr: 'américain',
-        isStudent: false,
-      },
-    };
+        countryEn: 'United States',
+        countryFr: 'États-Unis',
+        birthPlace: { last: 'England' },
+        birthCountryEn: 'England',
+        birthCountryFr: 'Angleterre',
+        frenchStatus: 'Intern',
+        isStudent: true,
+        something: 'else',
+      };
 
-    it('generates a valid English description of the client', () => {
-      return expect(models.Client.getDescriptionEn(client)).toEqual(
-        'Victor, 30 years old American young worker'
-      );
-    });
+      const actual = await models.Client.normalizeIdentityRecord(input);
 
-    it('generates a valid English description of the client', () => {
-      return expect(models.Client.getDescriptionFr(client)).toEqual(
-        'Victor, jeune actif(ve) américain de 30 ans'
-      );
+      expect(actual).toEqual(expected);
     });
   });
-
-  // describe('.normalizeIdentityRecord', () => {
-  //   it('adds nationality and translate country and nationality to FR', () => {
-  //     const input = {
-  //       'q01_phoneNumber': { area: '+33', phone: '0671114171' },
-  //       'q02_nationality': 'United States',
-  //       'q03_birthPlace': { last: 'England' },
-  //       'q04_frenchStatus': 'Intern',
-  //       'q06_something': 'else',
-  //     };
-  //
-  //     const expected = {
-  //       phoneNumber: '+33671114171',
-  //       nationality: 'United States',
-  //       nationalityEn: 'American',
-  //       nationalityFr: 'américain',
-  //       countryEn: 'United States',
-  //       countryFr: 'États-Unis',
-  //       birthPlace: { last: 'England' },
-  //       birthCountryEn: 'England',
-  //       birthCountryFr: 'Angleterre',
-  //       frenchStatus: 'Intern',
-  //       isStudent: true,
-  //       something: 'else',
-  //     };
-  //
-  //     return models.Client
-  //       .normalizeIdentityRecord(input)
-  //       .then((result) => {
-  //         return expect(result).toEqual(expected);
-  //       });
-  //   });
-  // });
-
 });

@@ -169,9 +169,8 @@ Client.associate = (models) => {
           { '$Rentings.Events.startDate$': { $gte: D.format(date) } },
       ] },
       include: [{
-        model: models.Renting,
+        model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
         required: false,
-        where: { status: 'active' },
         include: [{
           model: models.Event,
           attributes: ['id', 'startDate'],
@@ -192,7 +191,7 @@ Client.associate = (models) => {
   // This scope must be a function because 'latestRenting' isn't available yet
   Client.addScope('latestClientRenting', () => ({
     include: [{
-      model: models.Renting.scope('latestRenting'),
+      model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
       include: [{
         model: models.Room,
         include: [{
@@ -424,55 +423,35 @@ Client.prototype.applyLateFees = function(now = new Date()) {
     });
 };
 
-Client.getIdentity = function(client, now = new Date()) {
-  return models.Metadata.findOne({
-      where: { $and: [
-        { MetadatableId: client.id },
-        { name: 'clientIdentity' },
-      ]},
-    })
-    .then((metadata) => {
-      if ( metadata == null ) {
-        return null;
-      }
+Client.getFullIdentity = function({ client, identityMeta, now = new Date() }) {
+  if ( identityMeta == null ) {
+    return {};
+  }
 
-      const identity = JSON.parse(metadata.value.replace(/\r?\n|\r/g, ''));
-      const {day, month, year} = identity.birthDate;
-
-      identity.age =
-        D.differenceInYears(now, `${year}-${month}-${day} Z`);
-
-      return identity;
-    });
-};
-
-Client.getIdentityRecordUrl = function(identity) {
+  const identity = JSON.parse(identityMeta.value.replace(/\r?\n|\r/g, ''));
+  const { day, month, year } = identity.birthDate;
+  const age = D.differenceInYears(now, `${year}-${month}-${day} Z`);
   const passport =
     identity && identity.passport.match(/uploads\/cheznestor\/(.+?)\/(.+?)\//);
   const prefix = 'https://eu.jotform.com/server.php?action=getSubmissionPDF';
 
-  return passport ?
-    `${prefix}&formID=${passport[1]}&sid=${passport[2]}` :
-    'MISSING';
+  return Object.assign(identity, {
+    age,
+    recordUrl: passport && `${prefix}&formID=${passport[1]}&sid=${passport[2]}`,
+    descriptionEn: [
+      `${client.firstName},`,
+      `${age} years old ${identity.nationalityEn}`,
+      identity.isStudent ? 'student' : 'young worker',
+    ].join(' '),
+    descriptionFr: [
+      `${client.firstName},`,
+      identity.isStudent ? 'étudiant(e)' : 'jeune actif(ve)',
+      `${identity.nationalityFr} de ${age} ans`,
+    ].join(' '),
+  });
 };
 
-Client.getDescriptionEn = function(client) {
-  return client && client.identity && Utils.toSingleLine(`
-    ${client.firstName},
-    ${client.identity.age} years old ${client.identity.nationalityEn}
-    ${client.identity.isStudent ? 'student' : 'young worker'}
-  `);
-};
-
-Client.getDescriptionFr = function(client) {
-  return client && client.identity && Utils.toSingleLine(`
-    ${client.firstName},
-    ${client.identity.isStudent ? 'étudiant(e)' : 'jeune actif(ve)'}
-    ${client.identity.nationalityFr} de ${client.identity.age} ans
-  `);
-};
-
-Client.normalizeIdentityRecord = function(raw) {
+Client.normalizeIdentityRecord = async function(raw) {
   const values = _.mapKeys(raw, (value, key) => key.replace(/(q[\d]*_)/g, ''));
   const phoneNumber = values.phoneNumber.phone.replace(/^0/, '');
 
@@ -483,13 +462,13 @@ Client.normalizeIdentityRecord = function(raw) {
   values.birthCountryEn = values.birthPlace.last;
   values.isStudent = /^(Student|Intern)$/.test(values.frenchStatus);
 
-  return Promise.all([
-    Translate(values.birthCountryEn, 'en', 'fr'),
-    Translate(values.nationalityEn, 'en', 'fr'),
-  ])
-  .then(([{ translatedText : birthCountryFr }, { translatedText : nationalityFr }]) =>
-    Object.assign( values, { birthCountryFr, nationalityFr })
-  );
+  const [{ translatedText: birthCountryFr }, { translatedText: nationalityFr }] =
+    await Promise.all([
+      Translate(values.birthCountryEn, 'en', 'fr'),
+      Translate(values.nationalityEn, 'en', 'fr'),
+    ]);
+
+  return Object.assign( values, { birthCountryFr, nationalityFr });
 };
 
 Client.createAndSendRentInvoices = function(month = D.addMonths(Date.now(), 1)) {

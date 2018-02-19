@@ -35,47 +35,47 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
       .catch(Utils.logAndSend(res));
   });
 
-  app.get('/forest/Apartment/house-mates', makePublic, (req, res) => {
-    const { ApartmentId } = req.query;
-
-    Promise.resolve()
-      .then(() => Room.scope('latestHousemates').findAll({ where: { ApartmentId } })
-      )
-      .map((room) => {
-        if ( room.Rentings.length === 0 || !room.Rentings[0].Client ) {
-          return room;
-        }
-
-        return Client.getIdentity(room.Rentings[0].Client)
-          .then((identity) => {
-            room.Rentings[0].Client.identity = identity;
-            return room;
-          })
-          .then((_room) => Promise.all([
-            Client.getDescriptionFr(_room.Rentings[0].Client),
-            Client.getDescriptionEn(_room.Rentings[0].Client),
-          ]))
-          .then(([descriptionFr, descriptionEn]) => {
-            Object.assign( room.Rentings[0].Client, { descriptionEn, descriptionFr });
-            return room;
-          });
-      })
-      .map((room) => ({
-        name: room.name,
-        id: room.id,
-        client: room.Rentings.length > 0 && room.Rentings[0].Client && {
-          name: room.Rentings[0].Client.firstName,
-          descriptionEn: room.Rentings[0].Client.descriptionEn,
-          descriptionFr: room.Rentings[0].Client.descriptionFr,
-        },
-        availableAt: room.Rentings.length > 0 && room.Rentings[0].Events.length > 0 ?
-          new Date(room.Rentings[0].Events[0].startDate) < new Date() ? new Date() :
-          new Date(room.Rentings[0].Events[0].startDate) :
-        false,
-      }))
-      .then((houseMates) => res.send(houseMates))
-      .catch(Utils.logAndSend(res));
-  });
+  // app.get('/forest/Apartment/house-mates', makePublic, (req, res) => {
+  //   const { ApartmentId } = req.query;
+  //
+  //   Promise.resolve()
+  //     .then(() => Room.scope('latestHousemates').findAll({ where: { ApartmentId } })
+  //     )
+  //     .map((room) => {
+  //       if ( room.Rentings.length === 0 || !room.Rentings[0].Client ) {
+  //         return room;
+  //       }
+  //
+  //       return Client.getIdentity(room.Rentings[0].Client)
+  //         .then((identity) => {
+  //           room.Rentings[0].Client.identity = identity;
+  //           return room;
+  //         })
+  //         .then((_room) => Promise.all([
+  //           Client.getDescriptionFr(_room.Rentings[0].Client),
+  //           Client.getDescriptionEn(_room.Rentings[0].Client),
+  //         ]))
+  //         .then(([descriptionFr, descriptionEn]) => {
+  //           Object.assign( room.Rentings[0].Client, { descriptionEn, descriptionFr });
+  //           return room;
+  //         });
+  //     })
+  //     .map((room) => ({
+  //       name: room.name,
+  //       id: room.id,
+  //       client: room.Rentings.length > 0 && room.Rentings[0].Client && {
+  //         name: room.Rentings[0].Client.firstName,
+  //         descriptionEn: room.Rentings[0].Client.descriptionEn,
+  //         descriptionFr: room.Rentings[0].Client.descriptionFr,
+  //       },
+  //       availableAt: room.Rentings.length > 0 && room.Rentings[0].Events.length > 0 ?
+  //         new Date(room.Rentings[0].Events[0].startDate) < new Date() ? new Date() :
+  //         new Date(room.Rentings[0].Events[0].startDate) :
+  //       false,
+  //     }))
+  //     .then((houseMates) => res.send(houseMates))
+  //     .catch(Utils.logAndSend(res));
+  // });
 
   app.post('/forest/actions/maintenance-period', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;

@@ -52,4 +52,16 @@ module.exports = function({ Client }) {
 
     return true;
   });
+
+  // It is safe to disable subqueries because it was used only with the
+  // Current Client segment which includes Rentings through the
+  // currentApartment scope.
+  // In this case, only a single Renting is ever returned.
+  Client.hook('beforeFind', (options) => {
+    if ( options.subQuery === true ) {
+      // Subqueries fail completely when using checkoutDate scope.
+      console.warning('Sequelize subqueries have been disabled for Client');
+    }
+    options.subQuery = false;
+  });
 };
