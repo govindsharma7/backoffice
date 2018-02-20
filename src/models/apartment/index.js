@@ -69,23 +69,24 @@ Apartment.associate = (models) => {
     scope: { metadatable: 'Apartment' },
   });
 
+  // It seems this scope is never used
   // This must be a function because currentRenting scope doesn't exist yet
-  Apartment.addScope('currentHousemates', () => ({
-    include: [{
-      model: models.Room,
-      include: [{
-        model: models.Renting.scope('currentRenting'),
-        required: false,
-        include: [{
-          model: models.Client,
-          include: [{
-            model: models.Metadata,
-            where: { name: 'clientIdentity' },
-          }],
-        }],
-      }],
-    }],
-  }));
+  // Apartment.addScope('currentOccupants', () => ({
+  //   include: [{
+  //     model: models.Room,
+  //     include: [{
+  //       model: models.Renting.scope('currentRenting'),
+  //       required: false,
+  //       include: [{
+  //         model: models.Client,
+  //         include: [{
+  //           model: models.Metadata,
+  //           where: { name: 'clientIdentity' },
+  //         }],
+  //       }],
+  //     }],
+  //   }],
+  // }));
 };
 
 Apartment.prototype.calculateLatLng = function() {

@@ -7,7 +7,7 @@ const { Renting } = models;
 describe('Renting - Model', () => {
 
   describe('scopes', () => {
-    describe('checkoinDate/checkoutDate', () => {
+    describe('checkinDate/checkoutDate', () => {
       test('checkinDate should include the checkin date', async () => {
         const { unique: u } = await fixtures((u) => ({
           Apartment: [{
@@ -232,6 +232,9 @@ describe('Renting - Model', () => {
           }, {
             id: u.id('room2'),
             ApartmentId: u.id('apartment'),
+          }, {
+            id: u.id('room3'),
+            ApartmentId: u.id('apartment'),
           }],
           Client: [{
             id: u.id('client'),
@@ -246,7 +249,7 @@ describe('Renting - Model', () => {
             ClientId: u.id('client'),
             RoomId: u.id('room1'),
           }, {
-            id: u.id('past-renting'),
+            id: u.id('past-renting1'),
             status: 'active',
             bookingDate: oneYearAgo,
             ClientId: u.id('client'),
@@ -269,6 +272,12 @@ describe('Renting - Model', () => {
             bookingDate: oneMonthFromNow,
             ClientId: u.id('client'),
             RoomId: u.id('room1'),
+          }, {
+            id: u.id('past-renting2'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room3'),
           }],
           Event: [{
             type: 'checkout',
@@ -278,7 +287,13 @@ describe('Renting - Model', () => {
             endDate: oneMonthFromNow,
           }, {
             type: 'checkout',
-            EventableId: u.id('past-renting'),
+            EventableId: u.id('past-renting1'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }, {
+            type: 'checkout',
+            EventableId: u.id('past-renting2'),
             eventable: 'Renting',
             startDate: oneMonthAgo,
             endDate: oneMonthAgo,
@@ -300,9 +315,10 @@ describe('Renting - Model', () => {
             Rentings.map(({ id }) => id))
           );
 
-        expect(latestRentingsIds.length).toEqual(2);
+        expect(latestRentingsIds.length).toEqual(3);
         expect(latestRentingsIds).toContain(u.id('current-renting2'));
         expect(latestRentingsIds).toContain(u.id('future-renting'));
+        expect(latestRentingsIds).toContain(u.id('past-renting2'));
 
         apartment = await models.Apartment.findById(u.id('apartment'), {
           include: [{

@@ -7,7 +7,7 @@ const Utils               = require('../../utils');
 
 const _ = { capitalize };
 
-module.exports = function({ Apartment, Picture, Term }) {
+module.exports = function({ Apartment, Picture, Term, Room, Client }) {
   const galeryFields = Utils.generateGaleryFields(Apartment, Picture);
   const featuresFields = Utils.generateFeaturesFields(Apartment, Term);
 
@@ -22,6 +22,21 @@ module.exports = function({ Apartment, Picture, Term }) {
       field: 'current-clients',
       type: ['String'],
       reference: 'Client.id',
+    }, {
+      field: 'housemates',
+      type: 'String',
+      async get(object) {
+        const rooms = await Room.scope('currentOccupants').findAll({
+          where: { ApartmentId: object.id },
+        });
+
+        return rooms.map((room) =>
+          room.Rentings[0] && Client.getFullIdentity({
+            client: room.Rentings[0].Client,
+            clientIdentity: room.Rentings[0].Client.Metadata[0],
+          })
+        );
+      },
     }].concat(galeryFields, featuresFields),
 
     actions: [{

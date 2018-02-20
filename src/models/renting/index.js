@@ -152,12 +152,16 @@ Renting.associate = (models) => {
       attributes: includedFrom === 'Renting' ? { include: [
         [literal('`Renting->Events`.`checkoutDate`'), 'checkoutDate'],
       ]} : undefined,
-      where: {
-        status: 'active',
-        bookingDate: scopeName === 'currentRenting' ?
-          { $lte: new Date() } :
-          { $not: null },
-      },
+      where: Object.assign(
+        { status: 'active' },
+        scopeName === 'currentRenting' && {
+          bookingDate: { $lte: new Date() },
+          [`$${includedFrom}->Events.startDate$`]: { $or: [
+            null,
+            { $gt: new Date() },
+          ] },
+        }
+      ),
       include: [{
         model: models[modelName],
         required: true,

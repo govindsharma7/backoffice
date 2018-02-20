@@ -98,11 +98,34 @@ Room.associate = (models) => {
 
   Room.addScope('availableAt', {
     attributes: { include: [
-      [sequelize.literal('`Rentings->Events`.`startDate`'), 'availableAt'],
-    ]},
+      [sequelize.literal([
+        '(CASE WHEN `Rentings`.`id` IS NULL',
+          'THEN \'1970-01-01T00:00:00Z\'',
+          'ELSE `Rentings->Events`.`startDate`',
+        'END)',
+      ].join(' ')), 'availableAt'],
+    ] },
     include: [{
       model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
       required: false,
+    }],
+  });
+
+  Room.addScope('currentOccupant', {
+    attributes: { include: [
+      [sequelize.literal([
+        '(CASE WHEN `Rentings->Events`.`startDate` IS NULL',
+          'THEN \'1970-01-01T00:00:00Z\'',
+          'ELSE NULL',
+        'END)',
+      ].join(' ')), 'availableAt'],
+    ] },
+    include: [{
+      model: models.Renting.scope({ method: ['currentRenting', 'Rentings'] }),
+      required: false,
+      include: [{
+        model: models.Client.scope('identity'),
+      }],
     }],
   });
 };

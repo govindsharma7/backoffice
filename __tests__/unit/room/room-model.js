@@ -45,7 +45,7 @@ describe('Room - model', () => {
             startDate: oneMonthFromNow,
             endDate: oneMonthFromNow,
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const room = await Room.scope('availableAt').findById(u.id('room'), {
           include: [models.Apartment],
@@ -92,7 +92,7 @@ describe('Room - model', () => {
             startDate: oneMonthAgo,
             endDate: oneMonthAgo,
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const room = await Room.scope('availableAt').findById(u.id('room'), {
           include: [models.Apartment],
@@ -125,12 +125,12 @@ describe('Room - model', () => {
           }],
           Renting: [{
             id: u.id('renting'),
-            status: 'draft',
+            status: 'active',
             bookingDate: D.parse('2016-01-01 Z'),
             ClientId: u.id('client'),
             RoomId: u.id('room'),
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const room = await Room.scope('availableAt').findById(u.id('room'));
         const actual = await room.currentPrice;
@@ -164,7 +164,7 @@ describe('Room - model', () => {
             ClientId: u.id('client'),
             RoomId: u.id('room'),
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const room = await Room.scope('availableAt').findById(u.id('room'));
         const actual = await room.serviceFees;
@@ -200,6 +200,9 @@ describe('Room - model', () => {
             ApartmentId: u.id('apartment1'),
           }, {
             id: u.id('room3'),
+            ApartmentId: u.id('apartment1'),
+          }, {
+            id: u.id('room4'),
             ApartmentId: u.id('apartment2'),
           }],
           Client: [{
@@ -237,7 +240,7 @@ describe('Room - model', () => {
             status: 'active',
             bookingDate: oneMonthAgo,
             ClientId: u.id('client'),
-            RoomId: u.id('room3'),
+            RoomId: u.id('room4'),
           }, {
             id: u.id('future-renting'),
             status: 'draft',
@@ -258,7 +261,7 @@ describe('Room - model', () => {
             startDate: oneMonthAgo,
             endDate: oneMonthAgo,
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const rooms = await models.Room.scope('availableAt').findAll({
           include: [models.Apartment],
@@ -267,15 +270,140 @@ describe('Room - model', () => {
             '$Apartment.id$': { $in: [u.id('apartment1'), u.id('apartment2')] },
           },
         });
-        const roomsIds = rooms.map(({ id }) => id);
+        const room1 = rooms.find(({ id }) => id === u.id('room1'));
+        const room2 = rooms.find(({ id }) => id === u.id('room2'));
+        const room3 = rooms.find(({ id }) => id === u.id('room3'));
 
-        expect(rooms.length).toEqual(2);
-        expect(roomsIds).toContain(u.id('room1'));
-        expect(roomsIds).toContain(u.id('room2'));
-        expect(rooms.find(({ id }) => id === u.id('room1')).availableAt)
-          .toEqual(oneMonthFromNow);
-        expect(rooms.find(({ id }) => id === u.id('room2')).availableAt)
-          .toEqual(null);
+        expect(rooms.length).toEqual(3);
+        expect(room1.availableAt).toEqual(oneMonthFromNow);
+        expect(room2.availableAt).toEqual(null);
+        expect(room3.availableAt).toEqual(new Date(0));
+      });
+    });
+
+    describe('currentOccupant', () => {
+      it('should find all rooms\' current occupant or availability', async () => {
+        const now = new Date();
+        const oneYearAgo = D.subYears(now, 1);
+        const oneMonthAgo = D.subMonths(now, 1);
+        const oneMonthFromNow = D.addMonths(now, 1);
+
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room1'),
+            ApartmentId: u.id('apartment'),
+          }, {
+            id: u.id('room2'),
+            ApartmentId: u.id('apartment'),
+          }, {
+            id: u.id('room3'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client1'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }, {
+            id: u.id('client2'),
+            firstName: 'Jane',
+            lastName: 'Fonda',
+            email: `jane-${u.int(1)}@fonda.com`,
+          }, {
+            id: u.id('client3'),
+            firstName: 'Larry',
+            lastName: 'Page',
+            email: `larry-${u.int(1)}@page.com`,
+          }, {
+            id: u.id('client4'),
+            firstName: 'Sergey',
+            lastName: 'Brin',
+            email: `sergey-${u.int(1)}@brin.com`,
+          }],
+          Renting: [{
+            id: u.id('past-renting1'),
+            status: 'draft',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client1'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('current-renting'),
+            status: 'active',
+            bookingDate: oneMonthAgo,
+            ClientId: u.id('client2'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('future-renting'),
+            status: 'active',
+            bookingDate: oneMonthFromNow,
+            ClientId: u.id('client3'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('past-renting2'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client4'),
+            RoomId: u.id('room2'),
+          }],
+          Event: [{
+            type: 'checkout',
+            EventableId: u.id('past-renting1'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }, {
+            type: 'checkout',
+            EventableId: u.id('past-renting2'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }, {
+            type: 'checkout',
+            EventableId: u.id('current-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthFromNow,
+            endDate: oneMonthFromNow,
+          }],
+          Metadata: [{
+            MetadatableId: u.id('client2'),
+            metadatable: 'Client',
+            name: 'clientIdentity',
+            value: JSON.stringify({
+              birthDate: { year: '1986', month: '07', day: '23' },
+              passport: 'uploads/cheznestor/123/456/',
+              isStudent: true,
+              nationalityEn: 'French',
+              nationalityFr: 'français',
+            }),
+          }],
+        }))();
+
+        const rooms = await models.Room.scope('currentOccupant').findAll({
+          where: { ApartmentId: u.id('apartment') },
+        });
+        const room1 = rooms.find(({ id }) => id === u.id('room1'));
+        const room2 = rooms.find(({ id }) => id === u.id('room2'));
+        const room3 = rooms.find(({ id }) => id === u.id('room3'));
+
+        const client2Identity = models.Client.getFullIdentity({
+          client: room1.Rentings[0].Client,
+          identityMeta: room1.Rentings[0].Client.Metadata[0],
+          now: D.parse('2016-01-01 Z'),
+        });
+
+        expect(rooms.length).toEqual(3);
+        expect(room1.Rentings[0].ClientId).toEqual(u.id('client2'));
+        expect(room2.Rentings.length).toEqual(0);
+        expect(room3.Rentings.length).toEqual(0);
+        expect(room1.availableAt).toBeNull();
+        expect(room2.availableAt).toEqual(new Date(0));
+        expect(room3.availableAt).toEqual(new Date(0));
+        expect(client2Identity.descriptionEn)
+          .toEqual('Jane, 29 years old French student');
       });
     });
   });
