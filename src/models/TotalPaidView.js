@@ -13,6 +13,7 @@ const TotalPaid = sequelize.define('TotalPaid', {
   timestamps: false,
 });
 
+TotalPaid.isView = true;
 TotalPaid.sync = async function({ logging }) {
   // Sync only happens during deploy. So it's okay to drop/create view on
   // every sync (DROP OR REPLACE doesn't work with sqlite).

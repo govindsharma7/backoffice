@@ -13,6 +13,7 @@ const Amount = sequelize.define('Amount', {
   timestamps: false,
 });
 
+Amount.isView = true;
 Amount.sync = async function({ logging }) {
   // Sync only happens during deploy. So it's okay to drop/create view on
   // every sync (DROP OR REPLACE doesn't work with sqlite).
