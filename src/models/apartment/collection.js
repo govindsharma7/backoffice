@@ -39,6 +39,8 @@ module.exports = function({ Apartment, Picture, Term, Room, Client }) {
               clientIdentity: client.Metadata[0],
             });
 
+            // Each housemate is represented as a single string since
+            // Liana can't serialize complex values
             return client ? [
               client.firstName,
               client.gender,
