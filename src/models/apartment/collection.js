@@ -24,18 +24,28 @@ module.exports = function({ Apartment, Picture, Term, Room, Client }) {
       reference: 'Client.id',
     }, {
       field: 'housemates',
-      type: 'String',
+      type: ['String'],
       async get(object) {
-        const rooms = await Room.scope('currentOccupants').findAll({
+        const rooms = await Room.scope('currentOccupant').findAll({
           where: { ApartmentId: object.id },
         });
 
-        return rooms.map((room) =>
-          room.Rentings[0] && Client.getFullIdentity({
-            client: room.Rentings[0].Client,
-            clientIdentity: room.Rentings[0].Client.Metadata[0],
-          })
-        );
+        return rooms
+          .sort((a, b) => a.reference < b.reference ? -1 : 1)
+          .map((room) => {
+            const client = room.Rentings[0] && room.Rentings[0].Client;
+            const identity = client && Client.getFullIdentity({
+              client,
+              clientIdentity: client.Metadata[0],
+            });
+
+            return client ? [
+              client.firstName,
+              client.gender,
+              identity.descriptionEn,
+              identity.descriptionFr,
+            ].join('\n') : room.availableAt.toISOString();
+          });
       },
     }].concat(galeryFields, featuresFields),
 

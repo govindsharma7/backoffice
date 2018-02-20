@@ -35,8 +35,6 @@ const extractPortfolio =
   'node scripts/extractWordpress.js > data/portfolio.json';
 const extractPictures =
   'node scripts/extractWordpressPictures.js > data/pictures.json';
-const fixPicturableId =
-  'node scripts/fixPicturableId.js';
 const generateInvoices = 'node scripts/generateRentingInvoices.js';
 const deletePictures = 'node scripts/deletePictures.js';
 const updateDraftRentOrders = 'node scripts/updateDraftRentOrders.js';
@@ -62,7 +60,7 @@ const common = {
   extractClients,
   extractPortfolio,
   extractPictures,
-  fixPicturableId,
+  fixPicturableId: 'node scripts/fixPicturableId.js',
   fixLatLng: 'node scripts/fixLatLng.js',
   fixEventType: 'node scripts/fixEventType.js',
   fixFeatures: 'node scripts/fixFeatures.js',
