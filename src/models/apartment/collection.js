@@ -39,14 +39,17 @@ module.exports = function({ Apartment, Picture, Term, Room, Client }) {
               clientIdentity: client.Metadata[0],
             });
 
-            // Each housemate is represented as a single string since
+            // Each housemate/room is represented as a single string since
             // Liana can't serialize complex values
-            return client ? [
+            return (client ? [
               client.firstName,
-              client.gender,
+              (identity.gender || '').toLowerCase(),
               identity.descriptionEn,
               identity.descriptionFr,
-            ].join('\n') : room.availableAt.toISOString();
+            ] : [
+              room.id,
+              room.availableAt.toISOString(),
+            ]).join('\n');
           });
       },
     }].concat(galeryFields, featuresFields),
