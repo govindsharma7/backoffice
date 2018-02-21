@@ -9,13 +9,14 @@ const { INVOICENINJA_URL }  = require('../../config');
 const sequelize             = require('../sequelize');
 
 const _ = { find, capitalize, map };
+const { Op } = sequelize;
 
 module.exports = function({ Client }) {
   const cache = new WeakMap();
 
   function getIdentyMemoized(object) {
     if ( cache.has(object) ) {
-     return cache.get(object);
+      return cache.get(object);
     }
 
     const identity = Client.getFullIdentity({
@@ -39,7 +40,7 @@ module.exports = function({ Client }) {
         const split = search.split(' ');
 
         // modify the first $or of the search query
-        _.find(query.where.$and, '$or').$or.push(sequelize.and(
+        _.find(query.where[Op.and], Op.or)[Op.or].push(sequelize.and(
           { firstName: { $like: `%${split[0]}%` }},
           { lastName: { $like: `%${split[1]}%` }}
         ));

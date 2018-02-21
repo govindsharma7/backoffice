@@ -109,21 +109,15 @@ Client.associate = (models) => {
       }],
     }],
   });
-  // TODO: one of the following two scopes is useless. Get rid of it
-  Client.addScope('ordersFor', (date = new Date()) => ({
-    where: { $and: [
-      { '$Order.type$': 'debit' },
-      { '$Order.dueDate$': { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } },
-    ]},
-  }));
   Client.addScope('rentOrdersFor', (date = new Date()) => ({
     include: [{
       model : models.Order,
       required: false,
-      where: { $and: [
-        { type: 'debit' },
-        { dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) } },
-      ]},
+      where: {
+        type: 'debit',
+        status: 'active',
+        dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
+      },
       include: [{
         model: models.OrderItem,
         where: { ProductId: 'rent' },
@@ -471,19 +465,24 @@ Client.normalizeIdentityRecord = async function(raw) {
   return Object.assign( values, { birthCountryFr, nationalityFr });
 };
 
-Client.createAndSendRentInvoices = function(month = D.addMonths(Date.now(), 1)) {
-  return Client.scope(
-      { method: ['rentOrdersFor', month] },
-      'uncashedDepositCount'
-    )
-    .findAll({ where: { status: 'active', id: { $not: 'maintenance' } }})
-    // Filter-out clients who already have an order for this month
-    .then((clients) => clients.filter((client) => client.Orders.length === 0))
-    .then((clients) => Promise.map(clients, (client) =>
+// TODO: this can be vastly simplified to find all data in max two queries
+// (first clients and then all active rentings for example)
+Client.createAndSendRentInvoices = async function(month = D.addMonths(Date.now(), 1)) {
+  const rentOrdersForScope = { method: ['rentOrdersFor', month] };
+  const clients =
+    await Client.scope(rentOrdersForScope, 'uncashedDepositCount')
+      .findAll({ where: {
+        status: 'active',
+        id: { $not: 'maintenance' },
+        // Filter-out clients who already have a rent order for this month
+        '$Orders.id$': null,
+      } });
+
+    return Promise.map(clients, (client) =>
       Promise.all([
         client,
         client.getRentingsFor(month),
-      ]))
+      ])
     )
     // Filter-out clients with no active rentings
     .filter(([, rentings]) => rentings.length > 0)

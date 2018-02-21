@@ -110,13 +110,6 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         transaction,
       }),
     ]);
-
-    if ( !orders ) {
-      throw new Error(
-        `No orders found for renting ${renting.id}. Welcome email not sent.`
-      );
-    }
-
     const { Client: client, Room: room } = renting;
     const rentOrder = orders.find(({ OrderItems }) => (
       OrderItems.some(({ ProductId }) => ( ProductId === 'rent' ))
@@ -124,6 +117,11 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
     const depositOrder = orders.find(({ OrderItems }) => (
       OrderItems.some(({ ProductId }) => ( /-deposit$/.test(ProductId) ))
     ));
+
+    if ( !rentOrder || !depositOrder ) {
+      return Promise.resolve(true);
+    }
+
     const depositRentItemsIds =
       [].concat(rentOrder.OrderItems, depositOrder.OrderItems)
         .map(({ id }) => id)
@@ -138,7 +136,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
     return Promise.all([
       // Bulk update won't trigger Client update hooks
       Client.update({ status: 'active' }, {
-        where: { id: client.id },
+        where: { id: renting.ClientId },
         transaction,
       }),
       // Bulk update won't trigger Order update hooks
