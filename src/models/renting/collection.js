@@ -37,6 +37,10 @@ module.exports = function() {
         object.hasTwoOccupants = value;
         return object;
       },
+    }, {
+      field: 'period',
+      type: 'Enum',
+      enums: ['current', 'past', 'future'],
     }],
     actions: [{
       name: 'Create First Rent Order',

@@ -14,6 +14,17 @@ module.exports = function({ Room, Picture, Term }) {
 
   return {
     fields: [{
+      field: 'availableAt',
+      type: 'Date',
+    }, {
+      // For some reason I need to alias virtual fields which return promises
+      // TODO: find out why and fix the bug
+      field: '_currentPrice',
+      type: 'Number',
+      get(object) {
+        return object.currentPrice;
+      },
+    }, {
       field: 'preview',
       description: 'frontend preview url',
       type: 'String',
