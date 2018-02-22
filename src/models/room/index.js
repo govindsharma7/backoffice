@@ -130,6 +130,7 @@ Room.associate = (models) => {
   });
 };
 
+// TODO: rewrite using LatestRenting view
 Room.prototype.checkAvailability = function(args) {
   return Room.checkAvailability(Object.assign({ room: this }, args));
 };

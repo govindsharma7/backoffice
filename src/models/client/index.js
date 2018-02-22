@@ -10,7 +10,6 @@ const {
   TRASH_SCOPES,
   LATE_FEES,
   UNCASHED_DEPOSIT_FEE,
-  DATETIME_FORMAT,
 }                     = require('../../const');
 const Ninja           = require('../../vendor/invoiceninja');
 const payline         = require('../../vendor/payline');
@@ -24,6 +23,7 @@ const routes          = require('./routes');
 const hooks           = require('./hooks');
 
 const _ = { mapKeys, capitalize };
+const { methodify } = Utils;
 const Translate = Promise.promisify(
   GoogleTranslate(config.GOOGLE_TRANSLATE_API_KEY).translate
 );
@@ -237,22 +237,13 @@ Client.associate = (models) => {
   });
 };
 
-// TODO: this can probably be improved to use a Client scope
-Client.prototype.getRentingsFor = function(date = new Date()) {
-  const startOfMonth = D.format(D.startOfMonth(date), DATETIME_FORMAT);
-
-  return models.Renting.scope('room+apartment', 'checkoutDate').findAll({
-    where: { $and: [
-      { status: 'active' },
-      { ClientId: this.id },
-      { bookingDate: { $lte: D.endOfMonth(date) } },
-      { $or: [
-        { $checkoutDate$: { $eq: null } },
-        { $checkoutDate$: { $gte: startOfMonth } },
-      ] },
-    ]},
-  });
+Client.getRentingsFor = function({ client, date = new Date() }) {
+  return models.Renting
+    // Client.findOrCreateRentOrder requires the room and apartment
+    .scope({ method: ['activeForMonth', date] }, 'room+apartment')
+    .findAll({ where: { ClientId: client.id } });
 };
+methodify(Client, 'getRentingsFor');
 
 Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Date()) {
   const dueDate = D.startOfMonth(date);
@@ -486,12 +477,11 @@ Client.createAndSendRentInvoices = async function(month = D.addMonths(Date.now()
         '$Orders.id$': null,
       } });
 
-    return Promise.map(clients, (client) =>
-      Promise.all([
-        client,
-        client.getRentingsFor(month),
-      ])
-    )
+    return Promise.map(clients, async (client) => {
+      const rentings = await client.getRentingsFor(month);
+
+      return [client, rentings];
+    }, { concurrency: 10 })
     // Filter-out clients with no active rentings
     .filter(([, rentings]) => rentings.length > 0)
     // Uncomment following line to test invoice generation for a single customer

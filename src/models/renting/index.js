@@ -129,8 +129,8 @@ Renting.associate = (models) => {
   });
 
   // checkinDate, checkoutDate scopes
-  ['checkin', 'checkout'].forEach((type) => {
-    Renting.addScope(`${type}Date`, {
+  const [, checkoutDateScopeArgs] = ['checkin', 'checkout'].map((type) => {
+    const args = {
       attributes: { include: [[col('Events.startDate'), `${type}Date`]] },
       include: [{
         model: models.Event,
@@ -140,8 +140,22 @@ Renting.associate = (models) => {
           type,
         },
       }],
-    });
+    };
+
+    Renting.addScope(`${type}Date`, args);
+
+    return args;
   });
+
+  Renting.addScope('activeForMonth', (date = new Date()) => ({
+    attributes: checkoutDateScopeArgs.attributes,
+    where: {
+      status: 'active',
+      bookingDate: { $lte: D.endOfMonth(date) },
+      '$Events.startDate$': { $or: [{ $eq: null }, { $gte: D.startOfMonth(date) }] },
+    },
+    include: checkoutDateScopeArgs.include,
+  }));
 
   ['latestRenting', 'currentRenting'].forEach((scopeName) => {
     const modelName = scopeName.replace(/^./, ($0) => $0.toUpperCase());
@@ -639,103 +653,6 @@ Renting.prototype.changeDepositOption = function(option) {
       TermableId: this.id,
     }, {isNewRecord: false})
     .createOrUpdate(option === 'cash deposit' ? 'cash' : 'do-not-cash');
-};
-
-/*  handle update of an event, check if an Order
-    is related to this event and create/update it
-    Also update/create Refund Event if it's a 'Checkout' Event
-*/
-// TODO: this can probably be improved as well
-Renting.prototype.handleEventUpdate = function(event, options) {
-  const type = event.get('category');
-
-  return Renting.scope(
-      type === 'refund-deposit' ? [] : [`${type}Order`, 'room+apartment']
-    )
-    .findOne({
-      where: { id: this.id },
-      include: type === 'refund-deposit' ? [{ model: models.Client }] : undefined,
-    })
-    .then((renting) => {
-      if ( !renting ) {
-        throw new Error('Client doesn\'t have a pack order yet');
-      }
-      const {Orders} = renting.Client === undefined || null ? null : renting.Client;
-
-      return Promise.all([
-          type !== 'refund-deposit' ? Utils[`getC${type.substr(1)}Price`](
-            event.startDate,
-            this.get('packLevel'),
-            this.Room.Apartment.addressCity) : 0,
-          Orders && Orders.length ? Orders[0].id : null,
-          Utils.getLateNoticeFees(type, event.startDate),
-      ]);
-    })
-    .then(([price, OrderId, lateFees]) => {
-      if ( !price && !lateFees ) {
-        return models.Order
-          .destroy({
-            where: {
-              id: OrderId,
-            },
-        });
-      }
-      const items = [];
-
-      if ( price ) {
-        items.push({
-          label: `Special C${type.substr(1)}`,
-          unitPrice: price,
-          ProductId: 'special-checkinout',
-        });
-      }
-      else {
-        models.OrderItem
-          .destroy({
-            where: {
-              OrderId,
-              ProductId: 'special-checkinout',
-            },
-          });
-      }
-      if ( lateFees ) {
-        items.push({
-          label: `Late notice ${this.Room.name}`,
-          unitPrice: lateFees,
-          ProductId: 'late-notice',
-        });
-      }
-      else {
-        models.OrderItem
-          .destroy({
-            where: {
-              OrderId,
-              ProductId: 'late-notice',
-            },
-          });
-      }
-
-      return models.Order
-       .findOrCreate({
-            where: {
-              ClientId: this.ClientId,
-              label: `C${type.substr(1)}`,
-            },
-            defaults: {
-              type: 'debit',
-              label: `C${type.substr(1)}`,
-              ClientId: this.ClientId,
-              OrderItems: items,
-            },
-            include: [models.OrderItem],
-          });
-    })
-    .then(() => {
-      if ( type === 'checkout' ) {
-        return this.createOrUpdateRefundEvent(event.startDate, options);
-      }
-      return true;
-  });
 };
 
 Renting.prototype.generateLease = function(args) {
