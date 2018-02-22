@@ -369,7 +369,35 @@ module.exports = {
     }, {
       id: 'paris-pere-lachaise',
       label: 'Père Lachaise',
-    }],
+    }, {
+      id: 'lille-vieux-lille',
+      label: 'Vieux Lille',
+    }, {
+      id: 'lille-flandres-europe',
+      label: 'Flandres - Europe',
+    }, {
+      id: 'lille-rihour-grand-place',
+      label: 'Rihour - Grand Place',
+    }, {
+      id: 'lille-republique-beaux-arts',
+      label: 'République - Beaux Arts',
+    }, {
+      id: 'lille-saint-sauveur',
+      label: 'Saint Sauveur',
+    }, {
+      id: 'lille-wazemmes',
+      label: 'Wazemmes',
+    }, {
+      id: 'lille-vauban',
+      label: 'Vauban',
+    }, {
+      id: 'lille-bois-blancs',
+      label: 'Bois Blancs',
+    }, {
+      id: 'lille-massena-solferino',
+      label: 'Masséna - Solférino',
+    },
+  ],
   Term: _.flattenDeep(Object.keys(nearbySchools).map((district) =>
     nearbySchools[district].map((school) => ({
       name: school,

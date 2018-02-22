@@ -466,6 +466,7 @@ Client.normalizeIdentityRecord = async function(raw) {
 
 // TODO: this can be vastly simplified to find all data in max two queries
 // (first clients and then all active rentings for example)
+// TODO: unit test!
 Client.createAndSendRentInvoices = async function(month = D.addMonths(Date.now(), 1)) {
   const rentOrdersForScope = { method: ['rentOrdersFor', month] };
   const clients =
