@@ -64,8 +64,16 @@ const Client = sequelize.define('Client', {
     required: true,
     unique: true,
     allowNull: false,
+    set(val) {
+      return this.setDataValue('email', val.trim());
+    },
   },
-  secondaryEmail:             DataTypes.STRING,
+  secondaryEmail: {
+    type:                     DataTypes.STRING,
+    set(val) {
+      return this.setDataValue('secondaryEmail', val.trim());
+    },
+  },
   phoneNumber: {
     type:                     DataTypes.STRING,
     validate: { is: Utils.isValidPhoneNumber.rValidPhoneNumber },
@@ -488,14 +496,19 @@ Client.createAndSendRentInvoices = async function(month = D.addMonths(Date.now()
     .filter(([, rentings]) => rentings.length > 0)
     // Uncomment following line to test invoice generation for a single customer
     // .filter((tupple, index) => index === 0)
-    .mapSeries(([client, rentings]) =>
-      client
-        .findOrCreateRentOrder(rentings, month)
-        .then(([order]) => models.Order.scope('amount').findById(order.id))
-        .then((order) =>
-          Sendinblue.sendRentRequest({ order, client, amount: order.get('amount') })
-        )
-    );
+    .mapSeries(async ([client, rentings]) => {
+      const [{ id: orderId }] = await client.findOrCreateRentOrder(rentings, month);
+      const order = await models.Order.scope('amount').findById(orderId);
+      const amount = order.get('amount');
+
+      try {
+        return Sendinblue.sendPaymentRequest({ order, client, amount, isRent: true });
+      }
+      catch (error) {
+        console.error(error);
+        return { error, client };
+      }
+    });
 };
 
 Client.collection = collection;
