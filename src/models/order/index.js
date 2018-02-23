@@ -67,10 +67,7 @@ const Order = sequelize.define('Order', {
 Order.associate = (models) => {
   Order.hasMany(models.OrderItem);
   Order.belongsTo(models.Client, {
-    foreignKey: {
-      field: 'ClientId',
-      allowNull: false,
-    },
+    foreignKey: { notNull: true },
   });
   Order.hasMany(models.Payment);
   Order.hasMany(models.Credit);

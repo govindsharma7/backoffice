@@ -3,6 +3,7 @@ const Liana             = require('forest-express-sequelize');
 const { wrap }          = require('express-promise-wrap');
 const capitalize        = require('lodash/capitalize');
 const pick              = require('lodash/pick');
+const D                 = require('date-fns');
 const Webmerge          = require('../../vendor/webmerge');
 const Utils             = require('../../utils');
 const makePublic        = require('../../middlewares/makePublic');
@@ -199,17 +200,14 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
         code: 'renting.roomNotFound',
       });
     }
-
-    const { Apartment: apartment, Apartment: { addressCity } } = room || {};
-    const bookingDate =
-      await Room.getEarliestAvailability({ rentings: room.Rentings });
-
-    if ( !bookingDate ) {
+    if ( room.availableAt == null ) {
       throw new CNError(`Room ${room.name} is no longer available`, {
         code: 'renting.roomUnavailable',
       });
     }
 
+    const bookingDate = D.max(room.availableAt, new Date());
+    const { Apartment: apartment, Apartment: { addressCity } } = room || {};
     const [{ periodPrice, serviceFees }, [client]] = await Promise.all([
       Room.getPriceAndFees({ room, apartment, date: bookingDate }),
       Client.findOrCreate({

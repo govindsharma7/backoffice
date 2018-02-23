@@ -11,23 +11,17 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
       return true;
     }
 
-    // we always need the RoomId in the handler
-    const renting = await ( _renting.RoomId ? _renting : _renting.reload() );
-    const room = await Room.scope('availableAt').findById(renting.RoomId);
+    // we always need the RoomId and ClientId in the handler
+    const renting =
+      await ( _renting.RoomId && _renting.ClientId ? _renting : _renting.reload() );
+    const { availableAt, Rentings, name } =
+      await Room.scope('availableAt').findById(renting.RoomId);
 
-    const isAvailable = await room.checkAvailability({
-      // Exclude that renting from the list.
-      // Otherwise we simply never can update the bookingDate of a renting
-      // once it's created.
-      rentings: room.Rentings.filter(({ id }) => id !== renting.id),
-      date: renting.bookingDate,
-    });
-
-    if ( !isAvailable ) {
-      throw new Error('The room is already booked');
+    if ( availableAt == null && Rentings[0].ClientId !== _renting.ClientId ) {
+      throw new Error(`Room "${name}" is already booked`);
     }
 
-    return isAvailable;
+    return true;
   };
   Renting.hook('beforeValidate', (renting, opts) =>
     Renting.handleBeforeValidate(renting, opts)

@@ -47,7 +47,9 @@ const Payment = sequelize.define('Payment', {
 });
 
 Payment.associate = ({ Order, Credit }) => {
-  Payment.belongsTo(Order);
+  Payment.belongsTo(Order, {
+    foreignKey: { notNull: true },
+  });
   Payment.hasMany(Credit, {
     as: 'Refunds',
   });

@@ -47,7 +47,9 @@ const OrderItem = sequelize.define('OrderItem', {
 });
 
 OrderItem.associate = (models) => {
-  OrderItem.belongsTo(models.Order);
+  OrderItem.belongsTo(models.Order, {
+    foreignKey: { notNull: true },
+  });
   OrderItem.belongsTo(models.Renting, {
     constraints: false,
   });

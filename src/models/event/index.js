@@ -39,10 +39,12 @@ const Event = sequelize.define('Event', {
   eventable: {
     type:                     DataTypes.STRING,
     required: true,
+    allowNull: false,
   },
   EventableId: {
     type:                     DataTypes.STRING,
     required: true,
+    allowNull: false,
   },
   status: {
     type:                     DataTypes.ENUM('draft', 'active'),

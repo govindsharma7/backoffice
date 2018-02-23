@@ -101,8 +101,12 @@ const Renting = sequelize.define('Renting', {
 Renting.associate = (models) => {
   const { col, literal } = sequelize;
 
-  Renting.belongsTo(models.Client);
-  Renting.belongsTo(models.Room);
+  Renting.belongsTo(models.Client, {
+    foreignKey: { notNull: true },
+  });
+  Renting.belongsTo(models.Room, {
+    foreignKey: { notNull: true },
+  });
   Renting.hasMany(models.OrderItem);
   Renting.hasMany(models.Event, {
     foreignKey: 'EventableId',

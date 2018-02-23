@@ -8,21 +8,17 @@ describe('Payment - Routes', () => {
   // Initialize methods in route file
   Payment.routes(app, models);
 
+  // TODO: rewrite those tests to use fixture data, not mocked implementation
+  // (implementation changes!)
   describe('.handleCreatePaymentRoute', () => {
     const spiedOrderFind = jest.spyOn(Order, 'findById');
     const spiedOrderPay = jest.spyOn(Order, 'pay');
     const spiedRoomScope = jest.spyOn(Room, 'scope');
-    const spiedRoomAvailability = jest.spyOn(Room, 'getEarliestAvailability');
 
     // Be a gentleman and cleanup after yourself
     afterAll(() => {
-      [
-        spiedOrderFind,
-        spiedOrderPay,
-        spiedRoomScope,
-        spiedRoomAvailability,
-
-      ].forEach((spied) => spied.mockRestore());
+      [spiedOrderFind, spiedOrderPay, spiedRoomScope]
+        .forEach((spied) => spied.mockRestore());
     });
 
     it('should throw if the order isn\'t found', () => {
@@ -42,9 +38,8 @@ describe('Payment - Routes', () => {
         }],
       }));
       spiedRoomScope.mockImplementationOnce(() => ({ findById: () => ({
-        Rentings: {},
+        availableAt: null,
       }) }));
-      spiedRoomAvailability.mockImplementationOnce(() => false);
 
       const actual =
         Payment.handleCreatePaymentRoute({ body: {} });

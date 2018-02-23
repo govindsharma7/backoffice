@@ -9,10 +9,18 @@ const Metadata = sequelize.define('Metadata', {
     type:                     DataTypes.UUID,
     defaultValue:             DataTypes.UUIDV4,
   },
-  name:                      DataTypes.STRING,
-  value:                     DataTypes.TEXT,
-  metadatable:               DataTypes.STRING,
-  MetadatableId:             DataTypes.STRING,
+  name:                       DataTypes.STRING,
+  value:                      DataTypes.TEXT,
+  metadatable: {
+    type:                     DataTypes.STRING,
+    required: true,
+    allowNull: false,
+  },
+  MetadatableId: {
+    type:                     DataTypes.STRING,
+    required: true,
+    allowNull: false,
+  },
 });
 
 Metadata.associate = (models) => {

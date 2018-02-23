@@ -78,7 +78,9 @@ const Room = sequelize.define('Room', {
 });
 
 Room.associate = (models) => {
-  Room.belongsTo(models.Apartment);
+  Room.belongsTo(models.Apartment, {
+    foreignKey: { notNull: true },
+  });
   Room.hasMany(models.Renting);
   Room.hasMany(models.Picture, {
     foreignKey: 'PicturableId',
@@ -128,35 +130,6 @@ Room.associate = (models) => {
       }],
     }],
   });
-};
-
-// TODO: rewrite using LatestRenting view
-Room.prototype.checkAvailability = function(args) {
-  return Room.checkAvailability(Object.assign({ room: this }, args));
-};
-Room.checkAvailability = function({ rentings = required(), date = new Date() }) {
-  if ( rentings.length === 0 ) {
-    return Promise.resolve(true);
-  }
-
-  const checkoutDate = models.Renting.getLatest(rentings).get('checkoutDate');
-
-  return Promise.resolve( checkoutDate && checkoutDate <= date ? true : false );
-};
-
-Room.prototype.getEarliestAvailability = function(args) {
-  return Room.getEarliestAvailability(args);
-};
-Room.getEarliestAvailability = function({ rentings = required(), now = new Date() }) {
-  if ( rentings.length === 0 ) {
-    return Promise.resolve(now);
-  }
-
-  const checkoutDate = models.Renting.getLatest(rentings).get('checkoutDate');
-  const daysToAdd = checkoutDate && ( D.isSaturday(checkoutDate) ? 2 : 1 );
-  const availabilityDate = checkoutDate && D.addDays(checkoutDate, daysToAdd);
-
-  return Promise.resolve( checkoutDate ? D.max(availabilityDate, now) : false );
 };
 
 // Make a room unavailable for a period of time (from and to included)

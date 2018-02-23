@@ -54,12 +54,9 @@ module.exports = function(app, { Payment, Room, Order, OrderItem, Renting }) {
 
     if ( packItem ) {
       const roomId = packItem.Renting.RoomId;
-      const { Rentings: rentings } =
-        await Room.scope('availableAt').findById(roomId);
-      const earliestAvailability =
-        await Room.getEarliestAvailability({ rentings });
+      const room = await Room.scope('availableAt').findById(roomId);
 
-      if ( earliestAvailability === false ) {
+      if ( room.availableAt == null ) {
         throw new CNError(`Room ${roomId} is no longer available`, {
           code: 'payment.roomUnavailable',
         });

@@ -44,10 +44,6 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
 
     return Room.scope('availableAt')
       .findAll({ where })
-      .filter((room) => room.checkAvailability({
-        rentings: room.Rentings,
-        date: new Date(values.from),
-      }))
       .map((room) => room.createMaintenancePeriod(values))
       .then(Utils.createdSuccessHandler(res, 'Maintenance period'))
       .catch(Utils.logAndSend(res));

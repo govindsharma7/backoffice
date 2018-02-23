@@ -14,16 +14,18 @@ const Picture = sequelize.define('Picture', {
     type:                 DataTypes.STRING,
     allowNull: false,
   },
+  alt:                    DataTypes.STRING,
+  order:                  DataTypes.INTEGER,
   PicturableId: {
     type:                 DataTypes.STRING,
+    required: true,
+    allowNull: false,
   },
-  alt:                    DataTypes.STRING,
   picturable: {
     type:                 DataTypes.STRING,
     required: true,
     allowNull: false,
   },
-  order:                  DataTypes.INTEGER,
 });
 
 Picture.associate = (models) => {

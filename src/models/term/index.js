@@ -15,6 +15,8 @@ const Term = sequelize.define('Term', {
   TermableId: {
     primaryKey: true,
     type:                     DataTypes.STRING,
+    required: true,
+    allowNull: false,
   },
   termable: {
     type:                     DataTypes.STRING,
