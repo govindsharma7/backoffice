@@ -237,13 +237,5 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
     res.send(true);
   }));
 
-  Utils.addInternalRelationshipRoute({
-    app,
-    sourceModel: Client,
-    associatedModel: Metadata,
-    routeName: 'Notes',
-    where: (req) => ({ MetadatableId: req.params.recordId, name: 'note' }),
-  });
-
   Utils.addRestoreAndDestroyRoutes(app, Client);
 };

@@ -6,10 +6,11 @@ const {
   CITIES,
 }                           = require('../../const');
 const { INVOICENINJA_URL }  = require('../../config');
+const Op                    = require('../../operators');
 const sequelize             = require('../sequelize');
 
 const _ = { find, capitalize, map };
-const { Op } = sequelize;
+// const { Op } = sequelize;
 
 module.exports = function({ Client }) {
   const cache = new WeakMap();

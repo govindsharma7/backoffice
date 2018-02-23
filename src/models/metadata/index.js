@@ -23,6 +23,12 @@ const Metadata = sequelize.define('Metadata', {
   },
 });
 
+Metadata.hook('beforeValidate', (meta) => {
+  console.log(meta);
+
+  return meta;
+});
+
 Metadata.associate = (models) => {
   Metadata.belongsTo(models.Client, {
     foreignKey: 'MetadatableId',

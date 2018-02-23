@@ -170,6 +170,41 @@ Room.getPriceAndFees = async function(args) {
 };
 methodify(Room, 'getPriceAndFees');
 
+// Room.generateDescriptionFr = function(args) {
+//   const {
+//     room = required(),
+//     apartment = required(),
+//     random = Utils.getRandomValue,
+//   } = args
+//
+//   return [
+//     'Cette',
+//     random([
+//       'superbe',
+//       'magnifique',
+//       'belle',
+//       'ravissante',
+//       'merveilleuse',
+//       'splendide',
+//       'somptueuse',
+//       'sublime',
+//       'formidable',
+//     ]),
+//     'chambre',
+//     random(['', 'privative', 'privée']),
+//     'en colocation, meublée, équipée et',
+//     random(['tout inclus', 'prête-à-vivre', 'clef en main']),
+//     `à ${apartment.addressCity}`,
+//     random(['offre', 'allie', 'vous offre', 'associe', 'accorde', 'unit']),
+//     'confort et design.',
+//     'Elle',
+//     random(['dispose', 'possède', 'offre', 'a', 'propose', 'présente', 'dispose']),
+//     'de nombreux équipements comme un lit',
+//     //
+//
+//   ].join(' ');
+// };
+
 Room.collection = collection;
 Room.routes = routes;
 Room.hooks = hooks;

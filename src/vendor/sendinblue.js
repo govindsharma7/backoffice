@@ -246,7 +246,7 @@ Sendinblue.sendBookingSummaryEmail = async function(args) {
     client = required(),
     renting = required(),
     apartment = required(),
-    transaction,
+    // transaction,
   } = args;
   const lang = getClientLocale(client);
 
@@ -262,12 +262,14 @@ Sendinblue.sendBookingSummaryEmail = async function(args) {
     }
   );
 
-  return Metadata && Metadata.create({
-    name: 'messageId',
-    value: `Booking Summary: ${messageId}`,
-    MetadatableId: renting.id,
-    metadatable: 'Renting',
-  }, { transaction });
+  return messageId;
+
+  // return Metadata && Metadata.create({
+  //   name: 'messageId',
+  //   value: `Booking Summary: ${messageId}`,
+  //   MetadatableId: renting.id,
+  //   metadatable: 'Renting',
+  // }, { transaction });
 };
 
 Sendinblue.sendLateFeesEmail = async function(args) {

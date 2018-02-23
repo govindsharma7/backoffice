@@ -1,6 +1,8 @@
-const sequelize             = require('../sequelize');
+const Op                    = require('../../operators');
+// const sequelize             = require('../sequelize');
 
-const { Op } = sequelize;
+
+// const { Op } = sequelize;
 
 module.exports = function({ Room, Apartment, Client }) {
   Room.handleBeforeCreate = async (room) => {

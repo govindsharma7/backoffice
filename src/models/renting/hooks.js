@@ -61,18 +61,20 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         apartment,
         transaction,
       }),
-      () => renting.createQuoteOrders({
-        packLevel,
-        discount: discount * 100,
-        room,
-        apartment,
-        transaction,
-      }),
+      // () => renting.createQuoteOrders({
+      //   packLevel,
+      //   discount: discount * 100,
+      //   room,
+      //   apartment,
+      //   transaction,
+      // }),
     ];
     // sqlite doesn't like it when there's too much concurrency in a hook
     const concurrency = /^(test|dev)/.test(NODE_ENV) ? 1 : 2;
 
-    return Promise.map(fns, (fn) => fn(), { concurrency });
+    await Promise.map(fns, (fn) => fn(), { concurrency });
+
+    return _renting;
   };
   Renting.hook('afterCreate', (renting, opts) =>
     Renting.handleAfterCreate(renting, opts)
