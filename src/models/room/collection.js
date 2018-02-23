@@ -18,11 +18,19 @@ module.exports = function({ Room, Picture, Term }) {
       type: 'Date',
     }, {
       // For some reason I need to alias virtual fields which return promises
-      // TODO: find out why and fix the bug
+      // TODO: find out why and fix the bug (watch out, update website too)
       field: '_currentPrice',
       type: 'Number',
       get(object) {
         return object.currentPrice;
+      },
+    }, {
+      // For some reason I need to alias virtual fields which return promises
+      // TODO: find out why and fix the bug (watch out, update website too)
+      field: '_serviceFees',
+      type: 'Number',
+      get(object) {
+        return object.serviceFees;
       },
     }, {
       field: 'preview',
