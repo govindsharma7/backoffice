@@ -13,8 +13,4 @@ module.exports = function({ OrderItem, Order }) {
       return null;
     })
   );
-
-  OrderItem.hook('beforeFind', (options) => {
-    console.log(new Error().stack)
-  });
 };

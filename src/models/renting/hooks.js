@@ -1,7 +1,6 @@
 const Promise                     = require('bluebird');
 const Sendinblue                  = require('../../vendor/sendinblue');
 const Wordpress                   = require('../../vendor/wordpress');
-const { NODE_ENV }                = require('../../config');
 
 module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }) {
   // When a renting is created or updated, verify:
@@ -54,25 +53,22 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
       .findById(id, { include: [{ model: Client }], transaction });
 
     const { Client: client, Room: room, Room: { Apartment: apartment } } = renting;
-    const fns = [
-      () => Sendinblue.sendBookingSummaryEmail({
+
+    await Promise.all([
+      Sendinblue.sendBookingSummaryEmail({
         client,
         renting,
         apartment,
         transaction,
       }),
-      // () => renting.createQuoteOrders({
-      //   packLevel,
-      //   discount: discount * 100,
-      //   room,
-      //   apartment,
-      //   transaction,
-      // }),
-    ];
-    // sqlite doesn't like it when there's too much concurrency in a hook
-    const concurrency = /^(test|dev)/.test(NODE_ENV) ? 1 : 2;
-
-    await Promise.map(fns, (fn) => fn(), { concurrency });
+      renting.createQuoteOrders({
+        packLevel,
+        discount: discount * 100,
+        room,
+        apartment,
+        transaction,
+      }),
+    ]);
 
     return _renting;
   };
@@ -160,7 +156,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   };
   Renting.hook('afterUpdate', (renting, opts) =>
     Renting.handleAfterUpdate(renting, opts)
-);
+  );
 
   // It is safe to disable subqueries because it was used only with the default
   // segment which includes Events through the checkoutDate scope.
