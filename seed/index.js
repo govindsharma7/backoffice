@@ -319,8 +319,8 @@ module.exports = {
       id: 'paris-massena',
       label: 'Masséna',
     }, {
-      id: 'paris-monsouris',
-      label: 'Monsouris',
+      id: 'paris-montsouris',
+      label: 'Montsouris',
     }, {
       id: 'paris-alesia',
       label: 'Alesia',
