@@ -12,6 +12,7 @@ const District = sequelize.define('District', {
   descriptionEn:            DataTypes.TEXT,
   descriptionFr:            DataTypes.TEXT,
   descriptionEs:            DataTypes.TEXT,
+  nearbySchools:            DataTypes.TEXT,
 });
 
 District.associate = (models) => {
