@@ -65,13 +65,13 @@ const Client = sequelize.define('Client', {
     unique: true,
     allowNull: false,
     set(val) {
-      return this.setDataValue('email', val.trim());
+      return this.setDataValue('email', val && val.trim());
     },
   },
   secondaryEmail: {
     type:                     DataTypes.STRING,
     set(val) {
-      return this.setDataValue('secondaryEmail', val.trim());
+      return this.setDataValue('secondaryEmail', val && val.trim());
     },
   },
   phoneNumber: {

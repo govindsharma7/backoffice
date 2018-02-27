@@ -51,7 +51,6 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
     const { id, packLevel, discount = 0 } = _renting;
     const renting = await Renting.scope('room+apartment')
       .findById(id, { include: [{ model: Client }], transaction });
-
     const { Client: client, Room: room, Room: { Apartment: apartment } } = renting;
 
     await Promise.all([

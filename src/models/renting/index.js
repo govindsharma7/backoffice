@@ -712,33 +712,29 @@ Renting.prototype.futureCredit = function(args) {
   });
 };
 
-Renting.prototype.futureDebit = function(args) {
+Renting.prototype.futureDebit = async function(args) {
   const {amount, reason, label, invoiceWith} = args;
 
-  return models.Product
-    .find({
-      where: {
-        name: reason,
-      },
-      attributes: ['id'],
-    })
-    .then((product) => {
-      return models.OrderItem.create({
-        label,
-        quantity: 1,
-        unitPrice: amount,
-        status: 'draft',
-        RentingId: this.id,
-        ProductId: product.id,
-        Terms: [{
-          name: invoiceWith,
-          taxonomy: 'orderItem-category',
-          termable: 'OrderItem',
-        }],
-      }, {
-        include: models.Term,
-      });
-    });
+  const product = await models.Product.find({
+    where: { name: reason },
+    attributes: ['id'],
+  });
+
+  return models.OrderItem.create({
+    label,
+    quantity: 1,
+    unitPrice: amount,
+    status: 'draft',
+    RentingId: this.id,
+    ProductId: product.id,
+    Terms: [{
+      name: invoiceWith,
+      taxonomy: 'orderItem-category',
+      termable: 'OrderItem',
+    }],
+  }, {
+    include: models.Term,
+  });
 };
 
 Renting.getPeriod = function({ renting, now = new Date() }) {
