@@ -10,7 +10,7 @@ describe('Apartment - Model', () => {
         addressZip: '69002',
         addressCountry: 'france',
       } });
-      const [actualLat, actualLng] = actual.latLng.split(',').map(Number);
+      const [actualLat, actualLng] = actual.split(',').map(Number);
 
       expect(actualLat).toBeCloseTo(45.752, 5);
       expect(actualLng).toBeCloseTo(4.8266, 5);

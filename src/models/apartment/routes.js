@@ -36,9 +36,10 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
   });
 
   app.post('/forest/actions/maintenance-period', LEA, (req, res) => {
-    const {values, ids} = req.body.data.attributes;
+    const {values, ids, collection_name: collectionName } =
+      req.body.data.attributes;
 
-    const where = req.body.data.attributes['collection_name'] === 'Apartment' ?
+    const where = collectionName === 'Apartment' ?
       { ApartmentId : { $in : ids } } :
       { id : { $in : ids} } ;
 

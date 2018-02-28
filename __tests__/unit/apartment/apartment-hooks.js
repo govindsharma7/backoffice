@@ -6,39 +6,41 @@ const { Apartment } = models;
 describe('Apartment - Hooks', () => {
   describe(':beforeUpdate', () => {
     it('should set the coordinates if any address field has changed', async () => {
-      const { unique: u } = await fixtures((u) => ({
+      const { instances: { apartment } } = await fixtures((u) => ({
         Apartment: [{
           id: u.id('apartment'),
           DistrictId: 'lyon-ainay',
           addressStreet: '16 rue de Condé',
           addressZip: '69002',
-          addressCountry: 'Lyon',
-          status: 'draft',
+          addressCity: 'lyon',
+          addressCountry: 'France',
         }],
-      }))({ method: 'create', hooks: 'Order' });
-
-      const actual = await Apartment.handleBeforeUpdate({
-        id: u.id('apartment'),
-        _changed: { addressTest: 'whatever' },
-      });
+      }))();
+      const actual = await apartment.update({ addressStreet: '20 rue de Condé' });
       const [actualLat, actualLng] = actual.latLng.split(',').map(Number);
 
-      expect(actualLat).toBeCloseTo(45.752, 5);
-      expect(actualLng).toBeCloseTo(4.8266, 5);
+      expect(actualLat).toBeCloseTo(45.75191, 5);
+      expect(actualLng).toBeCloseTo(4.82686, 5);
     });
   });
 
   describe(':beforeCreate', () => {
     it('should set the coordinates if all address fields are set', async () => {
-      const actual = await Apartment.handleBeforeCreate({
+      await fixtures(() => ({}))();
+
+      const actual = await Apartment.create({
+        DistrictId: 'lyon-ainay',
         addressStreet: '16 rue de Condé',
         addressZip: '69002',
-        addressCountry: 'Lyon',
+        addressCity: 'lyon',
+        addressCountry: 'France',
       });
       const [actualLat, actualLng] = actual.latLng.split(',').map(Number);
 
       expect(actualLat).toBeCloseTo(45.752, 5);
       expect(actualLng).toBeCloseTo(4.8266, 5);
+      expect(actual.descriptionFr.length).toBeGreaterThan(100);
+      expect(actual.descriptionEn.length).toBeGreaterThan(100);
     });
   });
 });

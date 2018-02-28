@@ -5,7 +5,7 @@ const Op                    = require('../../operators');
 // const { Op } = sequelize;
 
 module.exports = function({ Room, Apartment, Client }) {
-  Room.handlebeforeCreateOrUpdate = async (room) => {
+  Room.handleBeforeCreate = async (room) => {
     const { ApartmentId, roomNumber } = room;
     const apartment = await Apartment.findById(ApartmentId);
 
@@ -14,10 +14,8 @@ module.exports = function({ Room, Apartment, Client }) {
     room.descriptionFr = Room.generateDescriptionFr({ room, apartment });
     room.descriptionEn = Room.generateDescriptionEn({ room, apartment });
   };
-  ['beforeCreate', 'beforeUpdate'].forEach((hookName) =>
-    Room.addHook(hookName, (room, opts) =>
-      Room.handlebeforeCreateOrUpdate(room, opts)
-    )
+  Room.addHook('beforeCreate', (room, opts) =>
+    Room.handleBeforeCreate(room, opts)
   );
 
   Room.hook('beforeDestroy', async (room) => {

@@ -150,8 +150,9 @@ Room.prototype.createMaintenancePeriod = function({ from, to }) {
         type: 'checkout',
       }] : [],
     }, {
-    include: [models.Event],
-  });
+      include: [models.Event],
+      hooks: false,
+    });
 };
 
 Room.getPriceAndFees = async function(args) {
@@ -195,8 +196,8 @@ Room.generateDescriptionFr = function({ room = required(), apartment = required(
     ])[0],
     _.shuffle(['votre valise', 'votre bagage', 'vos affaires', 'vos vêtements'])[0],
     'pour',
-    _.shuffle(['emménager !', 'y vivre !', 'vous installer !', 'être chez vous !'])[0],
-    'La chambre',
+    _.shuffle(['emménager', 'y vivre', 'vous installer', 'être chez vous'])[0],
+    '! La chambre',
     _.shuffle([
       'ferme à clef',
       'possède un verrou',

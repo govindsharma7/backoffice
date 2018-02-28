@@ -1,4 +1,4 @@
-module.exports = function({ Apartment, Client }) {
+module.exports = function({ Apartment, Client, District }) {
   Apartment.handleBeforeUpdate = async function(apartment) {
     // if no address field has been updated…
     if ( Object.keys(apartment._changed).every((name) => !/^address/.test(name)) ) {
@@ -9,21 +9,32 @@ module.exports = function({ Apartment, Client }) {
     const { dataValues } = await Apartment.findById(apartment.id);
     const allDataValues = Object.assign(dataValues, apartment.dataValues);
 
-    return Apartment.handleBeforeCreate(allDataValues);
-  };
-  Apartment.hook('beforeUpdate', (apartment, opts) => {
-    Apartment.handleBeforeUpdate(apartment, opts);
-  });
+    apartment.latLng = await Apartment.calculateLatLng({ apartment: allDataValues });
 
-  Apartment.handleBeforeCreate = function(apartment) {
-    const { addressStreet, addressZip, addressCountry } = apartment;
-
-    return ( addressStreet && addressZip && addressCountry ) ?
-      Apartment.calculateLatLng({ apartment }) : apartment;
+    return apartment;
   };
-  Apartment.hook('beforeCreate', (apartment, opts) => {
-    Apartment.handleBeforeCreate(apartment, opts);
-  });
+  Apartment.hook('beforeUpdate', (apartment, opts) =>
+    Apartment.handleBeforeUpdate(apartment, opts)
+  );
+
+  Apartment.handleBeforeCreate = async function(apartment) {
+    const { addressStreet, addressZip, addressCountry, DistrictId } = apartment;
+    const district = await District.findById(DistrictId);
+
+    apartment.descriptionFr =
+      Apartment.generateDescriptionFr({ apartment, district });
+    apartment.descriptionEn =
+      Apartment.generateDescriptionEn({ apartment, district });
+
+    if ( addressStreet && addressZip && addressCountry ) {
+      apartment.latLng = await Apartment.calculateLatLng({ apartment });
+    }
+
+    return apartment;
+  };
+  Apartment.hook('beforeCreate', (apartment, opts) =>
+    Apartment.handleBeforeCreate(apartment, opts)
+  );
 
   Apartment.hook('beforeDestroy', async (apartment) => {
     const clients = await Client.scope('currentApartment').findAll({
