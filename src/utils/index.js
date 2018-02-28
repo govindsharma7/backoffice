@@ -21,7 +21,6 @@ const {
 const getInvoiceLink               = require('./getInvoiceLink');
 const getLateNoticeFees            = require('./getLateNoticeFees');
 const getLeaseEndDate              = require('./getLeaseEndDate');
-const getRandomValue               = require('./getRandomValue');
 const getRoomSwitchPrice           = require('./getRoomSwitchPrice');
 const isHoliday                    = require('./isHoliday');
 const isValidPhoneNumber           = require('./isValidPhoneNumber');
@@ -60,7 +59,6 @@ module.exports = {
   getLeaseEndDate,
   getPeriodCoef,
   getPeriodPrice,
-  getRandomValue,
   getRoomSwitchPrice,
   getServiceFees,
   isHoliday,

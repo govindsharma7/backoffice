@@ -1,6 +1,7 @@
 const { DataTypes }     = require('sequelize');
 const Promise           = require('bluebird');
 const D                 = require('date-fns');
+const _                 = require('lodash');
 const { TRASH_SCOPES }  = require('../../const');
 const Utils             = require('../../utils');
 const sequelize         = require('../sequelize');
@@ -170,40 +171,107 @@ Room.getPriceAndFees = async function(args) {
 };
 methodify(Room, 'getPriceAndFees');
 
-// Room.generateDescriptionFr = function(args) {
-//   const {
-//     room = required(),
-//     apartment = required(),
-//     random = Utils.getRandomValue,
-//   } = args
-//
-//   return [
-//     'Cette',
-//     random([
-//       'superbe',
-//       'magnifique',
-//       'belle',
-//       'ravissante',
-//       'merveilleuse',
-//       'splendide',
-//       'somptueuse',
-//       'sublime',
-//       'formidable',
-//     ]),
-//     'chambre',
-//     random(['', 'privative', 'privée']),
-//     'en colocation, meublée, équipée et',
-//     random(['tout inclus', 'prête-à-vivre', 'clef en main']),
-//     `à ${apartment.addressCity}`,
-//     random(['offre', 'allie', 'vous offre', 'associe', 'accorde', 'unit']),
-//     'confort et design.',
-//     'Elle',
-//     random(['dispose', 'possède', 'offre', 'a', 'propose', 'présente', 'dispose']),
-//     'de nombreux équipements comme un lit',
-//     //
-//
-//   ].join(' ');
-// };
+Room.generateDescriptionFr = function({ room = required(), apartment = required() }) {
+  return [
+    'Cette',
+    _.shuffle(['superbe', 'magnifique', 'ravissante', 'splendide', 'sublime'])[0],
+    `chambre ${_.shuffle(['', 'privative', 'privée'])[0]}`,
+    'en colocation, meublée, équipée et',
+    _.shuffle(['tout inclus', 'prête-à-vivre', 'clef en main'])[0],
+    `à ${apartment.addressCity}`,
+    _.shuffle(['offre', 'allie', 'vous offre', 'associe', 'accorde', 'unit'])[0],
+    'confort et design. Elle',
+    _.shuffle(['dispose', 'possède', 'offre', 'propose', 'présente', 'dispose'])[0],
+    'de nombreux équipements comme un lit',
+    /double/.test(room.beds) ? 'double' : 'simple',
+    'confortable et hypoallergénique avec couette et oreillers.',
+    // TODO: add full list of equipments here,
+    _.shuffle([
+      'Il ne manque plus que',
+      'Il n\'y a plus à apporter que',
+      'Ne reste plus qu\'à apporter',
+      'Ne vous reste plus à apporter que',
+      'Ne vous manque plus à apporter que',
+    ])[0],
+    _.shuffle(['votre valise', 'votre bagage', 'vos affaires', 'vos vêtements'])[0],
+    'pour',
+    _.shuffle(['emménager !', 'y vivre !', 'vous installer !', 'être chez vous !'])[0],
+    'La chambre',
+    _.shuffle([
+      'ferme à clef',
+      'possède un verrou',
+      'possède un cadenas',
+      'peut se fermer à clef',
+    ])[0],
+    'pour',
+    _.shuffle([
+      'plus d\'intimité.',
+      'garder vos affaires en sécurité.',
+      'protéger vos affaires.',
+      'plus de sécurité.',
+    ])[0],
+
+  ].join(' ');
+};
+
+Room.generateDescriptionEn = function({ room = required(), apartment = required() }) {
+  return [
+    'This',
+    _.shuffle(['superb', 'elegant', 'splendid', 'is strategically', 'located'])[0],
+    _.shuffle(['room', 'bedroom', 'private bedroom', 'private room'])[0],
+    'in a fully equipped, furnished and',
+    _.shuffle(['all-inclusive', 'ready-to-live-in', 'turn-key'])[0],
+    `flatshare in ${apartment.addressCity}`,
+    _.shuffle([
+      'is a perfect combination of',
+      'offers you',
+      'will offer you',
+      'perfectly marries',
+      'perfectly combines',
+      'is a mix of',
+      'puts together',
+    ])[0],
+    'comfort and design. It',
+    _.shuffle(['has', 'comes with', 'has got', 'benefits from', 'consists of'])[0],
+    _.shuffle([
+      'household furnishings',
+      'lots of household goods',
+      'many household items',
+      'plenty of household equipment',
+    ])[0],
+    // TODO: add full list of equipments here,
+    `, including a ${/double/.test(room.beds) ? 'double' : 'simple'}`,
+    'bed with pillows and duvet',
+    _.shuffle([
+      'what is missing is',
+      'Now all you need is to bring',
+      'All you need to do is to bring',
+      'Just bring',
+    ])[0],
+    `your ${_.shuffle(['luggage', 'belongings', 'things', 'stuff'])[0]} to`,
+    _.shuffle([
+      'feel good in your new home!',
+      'feel at home!',
+      'make this place your own!',
+      'feel cosy in your new place!',
+      'settle in well!',
+    ])[0],
+    'The room',
+    _.shuffle([
+      'can be locked',
+      'has a lock',
+      'has a door latch',
+      'has a security lock',
+    ])[0],
+    _.shuffle([
+      'for more privacy',
+      'to keep your stuff safe',
+      'for security matters',
+      'to protect your privacy',
+    ])[0],
+
+  ].join(' ');
+};
 
 Room.collection = collection;
 Room.routes = routes;

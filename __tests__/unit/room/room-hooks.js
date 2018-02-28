@@ -11,9 +11,9 @@ describe('Room - hooks', () => {
           id: u.id('apartment'),
           DistrictId: 'lyon-ainay',
           reference: 'REF',
-          name: 'apartment REF',
+          name: 'Apartment REF',
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       const room = await Room.create({
         ApartmentId: u.id('apartment'),
@@ -21,7 +21,9 @@ describe('Room - hooks', () => {
       });
 
       expect(room.reference).toEqual('REF5');
-      expect(room.name).toEqual('apartment REF - chambre 5');
+      expect(room.name).toEqual('Apartment REF - Chambre 5');
+      expect(room.descriptionFr.length).toBeGreaterThan(100);
+      expect(room.descriptionEn.length).toBeGreaterThan(100);
     });
   });
 });
