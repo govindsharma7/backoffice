@@ -3,6 +3,7 @@ const Promise               = require('bluebird');
 const D                     = require('date-fns');
 const capitalize            = require('lodash/capitalize');
 const values                = require('lodash/values');
+const Op                    = require('../../operators');
 const {
   TRASH_SCOPES,
   DEPOSIT_PRICES,
@@ -331,7 +332,7 @@ Renting.findOrCreateRentOrder = async function(args) {
   const dueDate = Math.max(now, D.startOfMonth(renting.bookingDate));
   const [order, isCreated] = await models.Order.findOrCreate({
     where: {
-      status: { $not: 'cancelled' },
+      status: { [Op.not]: 'cancelled' },
       dueDate,
     },
     include: [{
@@ -370,7 +371,7 @@ Renting.findOrCreatePackOrder = async function(args) {
     transaction,
   } = args;
   const [order, isCreated] = await models.Order.findOrCreate({
-    where: { status: { $not: 'cancelled' } },
+    where: { status: { [Op.not]: 'cancelled' } },
     include: [{
       model: models.OrderItem,
       where: {
@@ -424,7 +425,7 @@ Renting.findOrCreateDepositOrder = async function(args) {
   const [order, isCreated] = await models.Order.findOrCreate({
     where: {
       type: 'deposit',
-      status: { $not: 'cancelled' },
+      status: { [Op.not]: 'cancelled' },
     },
     include: [{
       model: models.OrderItem,
@@ -491,7 +492,7 @@ Renting.findOrCreateDepositOrder = async function(args) {
 
           return models.Order
             .findOrCreate({
-              where: { $and: [{ status: { $not: 'cancelled' } }] },
+              where: { $and: [{ status: { [Op.not]: 'cancelled' } }] },
               include: [{
                 model: models.OrderItem,
                 where: {

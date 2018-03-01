@@ -390,6 +390,7 @@ Order.sendPaymentRequest = function(args) {
   return Sendinblue.sendPaymentRequest({ order, amount, client, isRent });
 };
 
+// TODO: improve that shit
 Order.sendRentReminders = function(now = new Date()) {
   return Order.scope('rentOrders')
     .findAll({

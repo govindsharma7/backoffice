@@ -4,6 +4,7 @@ const uniq        = require('lodash/uniq');
 const Liana       = require('forest-express-sequelize');
 const Schemas     = require('forest-express/generators/schemas');
 const CSVExporter = require('forest-express/services/csv-exporter');
+const Op          = require('../operators');
 
 const _ = { uniq };
 
@@ -198,7 +199,7 @@ function getWhere(segment, now = new Date()) {
     { $gte: D.startOfMonth(date), $lt: D.endOfMonth(date) };
 
   return {
-    receiptNumber: { $not: null },
+    receiptNumber: { [Op.not]: null },
     dueDate,
   };
 }

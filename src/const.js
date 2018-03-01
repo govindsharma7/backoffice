@@ -1,4 +1,5 @@
-const common = require('cheznestor-common/const');
+const common  = require('cheznestor-common/const');
+const Op      = require('./operators');
 
 module.exports = Object.assign(common, {
   TRASH_SEGMENTS: [{
@@ -10,7 +11,7 @@ module.exports = Object.assign(common, {
   }],
   TRASH_SCOPES: {
     trashed: {
-      where: { deletedAt: { $not: null } },
+      where: { deletedAt: { [Op.not]: null } },
       paranoid: false,
     },
     draft: {

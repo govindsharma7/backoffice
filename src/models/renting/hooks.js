@@ -1,4 +1,5 @@
 const Promise                     = require('bluebird');
+const Op                          = require('../../operators');
 const Sendinblue                  = require('../../vendor/sendinblue');
 const Wordpress                   = require('../../vendor/wordpress');
 
@@ -93,7 +94,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
       Renting.scope('room+apartment')
         .findById(_renting.id, { include: [{ model: Client }], transaction }),
       Order.findAll({
-        where: { status: { $not: 'cancelled' } },
+        where: { status: { [Op.not]: 'cancelled' } },
         include: [{
           model: OrderItem,
           where: { RentingId: _renting.id },

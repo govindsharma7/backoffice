@@ -1,12 +1,11 @@
-const kebabCase           = require('lodash/kebabCase');
+const _                   = require('lodash');
+const Op                  = require('../../operators');
 const { TRASH_SEGMENTS }  = require('../../const');
 const {
   REST_API_URL,
   WEBSITE_URL,
 }                         = require('../../config');
 const Utils               = require('../../utils');
-
-const _ = { kebabCase };
 
 module.exports = function({ Order, Metadata }) {
   const getCalculatedProps = Utils.methodMemoizer({
@@ -95,7 +94,7 @@ module.exports = function({ Order, Metadata }) {
       scope: 'totalPaid',
       where: {
         status: 'active',
-        ClientId: { $not: 'maintenance' },
+        ClientId: { [Op.not]: 'maintenance' },
         $or: [
           { '$TotalPaid.totalPaid$': 0 },
           { '$TotalPaid.totalPaid$': null },

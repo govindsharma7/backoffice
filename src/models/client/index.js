@@ -6,6 +6,7 @@ const { DataTypes }   = require('sequelize');
 const Payline         = require('payline');
 const Country         = require('countryjs');
 const GoogleTranslate = require('google-translate');
+const Op              = require('../../operators');
 const {
   TRASH_SCOPES,
   LATE_FEES,
@@ -206,17 +207,18 @@ Client.associate = (models) => {
 
   Client.addScope('paymentDelay', {
     include: [{
-      required: false,
       model: models.Metadata,
       where: { name: 'payment-delay' },
+      required: false,
+
     }],
   });
 
   Client.addScope('identity', {
     include: [{
-      required: false,
       model: models.Metadata,
       where: { name: 'clientIdentity' },
+      required: false,
     }],
   });
 
@@ -250,7 +252,7 @@ Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Dat
   const [order, isCreate] = await models.Order.findOrCreate({
     where: { $and: [
       // Only exclude cancelled orders. First rent order might still be draft
-      { status: { $not: 'cancelled' } },
+      { status: { [Op.not]: 'cancelled' } },
       { ClientId: this.id },
       { dueDate },
     ]},
@@ -473,7 +475,7 @@ Client.createAndSendRentInvoices = async function(month = D.addMonths(Date.now()
     await Client.scope(rentOrdersForScope, 'uncashedDepositCount')
       .findAll({ where: {
         status: 'active',
-        id: { $not: 'maintenance' },
+        id: { [Op.not]: 'maintenance' },
         // Filter-out clients who already have a rent order for this month
         '$Orders.id$': null,
       } });

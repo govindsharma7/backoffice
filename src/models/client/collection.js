@@ -1,6 +1,4 @@
-const find                  = require('lodash/find');
-const capitalize            = require('lodash/capitalize');
-const map                   = require('lodash/map');
+const _                     = require('lodash');
 const {
   TRASH_SEGMENTS,
   CITIES,
@@ -9,7 +7,6 @@ const { INVOICENINJA_URL }  = require('../../config');
 const Op                    = require('../../operators');
 const sequelize             = require('../sequelize');
 
-const _ = { find, capitalize, map };
 // const { Op } = sequelize;
 
 module.exports = function({ Client }) {
@@ -87,6 +84,12 @@ module.exports = function({ Client }) {
         return getIdentyMemoized(object).gender || 'MISSING';
       },
     }, {
+      field: 'paymentDelay',
+      type: 'String',
+      get(object) {
+        return _.get(object, 'Metadata[0].value');
+      },
+    }, {
       field: 'jotform-attachments',
       type: ['String'],
       reference: 'RentalAttachment.id',
@@ -162,6 +165,10 @@ module.exports = function({ Client }) {
     })).concat(TRASH_SEGMENTS, {
       name: 'default',
       scope: 'identity',
+    }, {
+      name: 'paymentDelay',
+      scope: 'paymentDelay',
+      where: { '$Metadata.value$': { [Op.not]: null } },
     }),
   };
 };
