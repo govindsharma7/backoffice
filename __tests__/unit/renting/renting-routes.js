@@ -11,8 +11,8 @@ describe('Renting - Routes', () => {
   Renting.routes(app, models);
 
   describe('.handleCreateClientAndRentingRoute', () => {
-    it('should throw a roomUnavailable error if the room is unavailable', () =>
-      fixtures((u) => ({
+    it('should throw a roomUnavailable error if the room is unavailable', async () => {
+      const { unique: u } = await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
@@ -34,14 +34,12 @@ describe('Renting - Routes', () => {
           status: 'active',
           bookingDate: D.parse('2016-01-01'),
         }],
-      }))({ method: 'create', hooks: false })
-      .then(({ unique: u }) => {
-        const actual =
-          Renting.handleCreateClientAndRentingRoute({ roomId: u.id('room') });
+      }))();
+      const actual =
+        Renting.handleCreateClientAndRentingRoute({ roomId: u.id('room') });
 
-        return expect(actual).rejects.toThrowErrorMatchingSnapshot();
-      })
-    );
+      expect(actual).rejects.toThrowErrorMatchingSnapshot();
+    });
 
     it('should create a client and a renting and send a booking summary', () => {
       jest.spyOn(Client, 'handleAfterCreate').mockImplementationOnce(() => true);
@@ -56,7 +54,7 @@ describe('Renting - Routes', () => {
           id: u.id('room'),
           ApartmentId: u.id('apartment'),
         }],
-      }))({ method: 'create', hooks: false })
+      }))()
       .then(async ({ unique: u }) => {
         const email = `john${Math.random().toString().slice(2)}@doe.fr`;
         const renting = await Renting.handleCreateClientAndRentingRoute({
@@ -118,7 +116,7 @@ describe('Renting - Routes', () => {
           status: 'active',
           bookingDate: D.parse('2016-01-01'),
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       await Renting.addCheckinDateHandler({
         values: { dateAndTime: D.parse('2016-01-02T12:30') },

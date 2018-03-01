@@ -1,15 +1,11 @@
 const Promise                     = require('bluebird');
 const Liana                       = require('forest-express-sequelize');
 const { wrap }                    = require('express-promise-wrap');
-const makePublic                  = require('../../middlewares/makePublic');
 const Aws                         = require('../../vendor/aws');
 const Utils                       = require('../../utils');
 
 module.exports = function(app, { Apartment, Room, Client, Picture }) {
   const LEA = Liana.ensureAuthenticated;
-
-  // The frontend needs this route to be public
-  app.get('/forest/Apartment/:apartmentId', makePublic);
 
   // TODO: re-implement this route using Sendinblue API
   app.post('/forest/actions/send-sms', LEA, (req, res) => {
@@ -35,20 +31,23 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
       .catch(Utils.logAndSend(res));
   });
 
-  app.post('/forest/actions/maintenance-period', LEA, (req, res) => {
-    const {values, ids, collection_name: collectionName } =
-      req.body.data.attributes;
+  Apartment.handleMaintenancePeriodRoute = function(attributes) {
+    const { values, ids, collection_name: collectionName } = attributes;
 
     const where = collectionName === 'Apartment' ?
       { ApartmentId : { $in : ids } } :
-      { id : { $in : ids} } ;
+      { id : { $in : ids } } ;
 
     return Room.scope('availableAt')
       .findAll({ where })
-      .map((room) => room.createMaintenancePeriod(values))
-      .then(Utils.createdSuccessHandler(res, 'Maintenance period'))
-      .catch(Utils.logAndSend(res));
-  });
+      .map((room) => room.createMaintenancePeriod(values));
+  };
+  app.post('/forest/actions/maintenance-period', LEA, wrap(async (req, res) => {
+    const result =
+      await Apartment.handleMaintenancePeriodRoute(req.body.data.attributes);
+
+    Utils.createdSuccessHandler(res, 'Maintenance period')(result);
+  }));
 
   app.post('/forest/actions/import-drive-pics', LEA, wrap(async (req, res) => {
     const { values, ids, collection_name: collectionName } =

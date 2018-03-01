@@ -20,6 +20,8 @@ const devDb = '.dev.sqlite';
 
 const dbSeed =
   'node scripts/dbSeed.js';
+const dbSync =
+  'node scripts/dbSync.js';
 const dbFixture =
   'node scripts/dbFixture.js';
 // TODO: Make filenames configurable for the two following commands
@@ -55,6 +57,7 @@ const common = {
   'migration:do': sequelizeMigrationDo,
   'migration:undo': sequelizeMigrationUndo,
   'db:seed': dbSeed,
+  'db:sync': dbSync,
   'db:fixture': dbFixture,
   'create:calendar': createCalendar,
   extractClients,
@@ -90,7 +93,8 @@ const others = {
   'stag:logs': envify('up logs -s 15m -f staging', 'development'),
   'prod:logs': envify('up logs -s 15m -f production', 'development'),
   'migration:create': sequelizeMigrationCreate,
-  'dev:db:copyprod': `${envify(dbDump, 'production')} && ${dbFill}`,
+  'dev:db:copyprod':
+    `${envify(dbDump, 'production')} && ${dbFill} && ${envify(dbSync, 'development')}`,
   'stag:db:copyprod': envify('bash ./scripts/mysqlcopy.sh', 'production'),
   'build:holidays': buildHolidays,
   'dev:deploy': './bin/up',
