@@ -38,14 +38,14 @@ describe('Renting - Routes', () => {
       const actual =
         Renting.handleCreateClientAndRentingRoute({ roomId: u.id('room') });
 
-      expect(actual).rejects.toThrowErrorMatchingSnapshot();
+      await expect(actual).rejects.toThrowErrorMatchingSnapshot();
     });
 
-    it('should create a client and a renting and send a booking summary', () => {
+    it('should create a client and a renting and send a booking summary', async () => {
       jest.spyOn(Client, 'handleAfterCreate').mockImplementationOnce(() => true);
       jest.spyOn(Renting, 'handleAfterCreate').mockImplementationOnce(() => true);
 
-      return fixtures((u) => ({
+      const { unique: u } = await fixtures((u) => ({
         Apartment: [{
           id: u.id('apartment'),
           DistrictId: 'lyon-ainay',
@@ -54,33 +54,29 @@ describe('Renting - Routes', () => {
           id: u.id('room'),
           ApartmentId: u.id('apartment'),
         }],
-      }))()
-      .then(async ({ unique: u }) => {
-        const email = `john${Math.random().toString().slice(2)}@doe.fr`;
-        const renting = await Renting.handleCreateClientAndRentingRoute({
-          pack: 'comfort',
-          booking: {
-            email,
-            firstName: 'John',
-            lastName: 'Doe',
-          },
-          roomId: u.id('room'),
-        });
-        const client = await Client.findById(renting.ClientId);
-
-        expect(renting.RoomId).toEqual(u.id('room'));
-        expect(client.email).toEqual(email);
-
-        expect(Client.handleAfterCreate).toHaveBeenCalled();
-        expect(Renting.handleAfterCreate).toHaveBeenCalledWith(
-          expect.objectContaining({
-            packLevel: 'comfort',
-          }),
-          expect.anything()
-        );
-
-        return true;
+      }))();
+      const email = `john${Math.random().toString().slice(2)}@doe.fr`;
+      const renting = await Renting.handleCreateClientAndRentingRoute({
+        pack: 'comfort',
+        booking: {
+          email,
+          firstName: 'John',
+          lastName: 'Doe',
+        },
+        roomId: u.id('room'),
       });
+      const client = await Client.findById(renting.ClientId);
+
+      expect(renting.RoomId).toEqual(u.id('room'));
+      expect(client.email).toEqual(email);
+
+      expect(Client.handleAfterCreate).toHaveBeenCalled();
+      expect(Renting.handleAfterCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          packLevel: 'comfort',
+        }),
+        expect.anything()
+      );
     });
   });
 
