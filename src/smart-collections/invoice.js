@@ -191,12 +191,14 @@ function getTotalPaid({ Payments }) {
   );
 }
 
-function getWhere(segment, now = new Date()) {
+function getWhere(segment, date = new Date()) {
   const sub = parseInt(segment) || 0;
-  const date = D.subMonths(now, sub);
+  const month = D.subMonths(date, sub);
+  const start = D.startOfMonth(month);
+  const end = D.startOfMonth(D.addMonths(month, 1));
   const dueDate = sub === 0 ?
-    { $gte: D.startOfMonth(date) } :
-    { $gte: D.startOfMonth(date), $lt: D.endOfMonth(date) };
+    { $gte: start } :
+    { $gte: start, $lt: end };
 
   return {
     receiptNumber: { [Op.not]: null },
