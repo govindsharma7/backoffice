@@ -104,7 +104,7 @@ Apartment.generateDescriptionFr = function(args) {
     ])[0],
     `dans le quartier ${district.label}, en plein`,
     `${_.shuffle(['centre', 'coeur'])[0]} de ${apartment.addressCity}.`,
-    `de nombreux ${_.shuffle(['commerces', 'restaurants', 'transports']).join(', ')}`,
+    `De nombreux ${_.shuffle(['commerces', 'restaurants', 'transports']).join(', ')}`,
     _.shuffle([
       'se situent',
       'se trouvent',
@@ -112,10 +112,10 @@ Apartment.generateDescriptionFr = function(args) {
       'sont localisés',
     ])[0],
     _.shuffle([
-      'à proximité',
-      'aux alentours',
-      'dans le quartier',
-      'aux environs',
+      'à proximité.',
+      'aux alentours.',
+      'dans le quartier.',
+      'aux environs.',
     ])[0],
     `La colocation est à l'étage n°${apartment.floor}`,
     `${apartment.elevator ? 'avec ascenceur' : ''}. Ell est`,
@@ -130,19 +130,21 @@ Apartment.generateDescriptionFr = function(args) {
     ])[0],
     `avec ${_.shuffle(['frigo', 'réfrégirateur'])[0]}`,
     // TODO: add aditional kitchen equipments
-    _.shuffle([
+    `${_.shuffle([
       'micro-ondes',
       'bouilloire',
       'poêles',
       'casseroles',
       'vaiselle',
       'ustensiles',
-    ]).join(', '),
-    '…',
+    ]).join(', ')}…`,
     _.shuffle(['Ainsi que', 'Mais aussi', 'De même que'])[0],
     // TODO: mention washing machine if present,
-    _.shuffle(['fer à repasser', 'planche à repasser', 'tancarville']).join(', '),
-    '.\n',
+    `${_.shuffle([
+      'fer à repasser',
+      'planche à repasser',
+      'tancarville',
+    ]).join(', ')}.\n`,
     _.shuffle([
       'Tout le materiel',
       'Tout le nécessaire',
@@ -153,10 +155,15 @@ Apartment.generateDescriptionFr = function(args) {
     _.shuffle(['présent', 'sur place', 'déjà présent', 'fourni'])[0],
     _.shuffle(['dans', 'au sein', 'à l\'intérieur de'])[0],
     `${_.shuffle(['la', 'cette'])[0]} colocation :`,
-    _.shuffle(['aspirateur', 'balai', 'balai-brosse', 'seau et serpillère']).join(', '),
-    `… Chaque colocation meublée Chez Nestor ${_.shuffle(['comprend', 'inclut'])[0]}`,
+    `${_.shuffle([
+      'aspirateur',
+      'balai',
+      'balai-brosse',
+      'seau et serpillère',
+    ]).join(', ')}…`,
+    `Chaque colocation meublée Chez Nestor ${_.shuffle(['comprend', 'inclut'])[0]}`,
     'toutes les charges :',
-    _.shuffle([
+    `${_.shuffle([
       'wifi illimité',
       'eau',
       'électricité',
@@ -164,8 +171,7 @@ Apartment.generateDescriptionFr = function(args) {
       'charges de copropriété',
       'taxe sur les ordures',
       // TODO: mention gas if present
-    ]).join(', '),
-    '.',
+    ]).join(', ')}.`,
 
   ].join(' ');
 };
@@ -182,7 +188,7 @@ Apartment.generateDescriptionEn = function(args) {
       'is strategically located',
     ])[0],
     `in the "${district.label}" neighborhood, in the`,
-    `${_.shuffle(['heart', 'centre'])[0]} of ${apartment.addressCity}`,
+    `${_.shuffle(['heart', 'centre'])[0]} of ${apartment.addressCity}.`,
     _.shuffle([
       'Several',
       'Many',
@@ -205,40 +211,40 @@ Apartment.generateDescriptionEn = function(args) {
       'close at hand.',
     ])[0],
     `The colocation is on floor ${apartment.floor}`,
-    `${apartment.elevator ? 'with elevator' : ''}. It is`,
+    `${apartment.elevator ? ', with elevator' : ''}. It is`,
     _.shuffle(['entirely equipped', 'entirely furnished', 'ready-to-live-in'])[0],
-    `and ${_.shuffle(['it is composed of', 'it includes', 'consists of'])[0]} a`,
+    `and ${_.shuffle(['is composed of', 'includes', 'consists of'])[0]} a`,
     _.shuffle(['fully equipped', 'large', 'fitted', 'complete'])[0],
     `kitchen with ${_.shuffle(['fridge', 'refregirator'])[0]}`,
     // TODO: add aditional kitchen equipments
-    _.shuffle([
+    `${_.shuffle([
       'microwave',
       'kettle',
       'pans',
       'crockery',
       'kitchen utensils',
-    ]).filter(Boolean).join(', '),
-    `… ${_.shuffle(['But also', 'And also', 'As well as'])[0]}`,
+    ]).filter(Boolean).join(', ')}…`,
+    `${_.shuffle(['But also', 'And also', 'As well as'])[0]}`,
     // TODO: mention washing machine if present,
     `${_.shuffle(['iron', 'ironing board', 'clothes rack']).join(', ')}.\n`,
     `${_.shuffle(['You will also', 'Additionally, you will'])[0]} find`,
     _.shuffle(['all you need', 'an equipment', 'the equipment'])[0],
     'for cleaning',
     _.shuffle([
-      'directly in the apartment',
-      'in the partment',
-      'in the colocation',
-      'already provided in the apartment',
+      'directly in the apartment:',
+      'in the partment:',
+      'in the colocation:',
+      'already provided in the apartment:',
     ])[0],
-    _.shuffle([
+    `${_.shuffle([
       'bagless hoover',
       'broom',
       'mop and bucket',
       'dustpan and brush',
-    ]).join(', '),
-    '… Every Chez Nestor furnished flatshare includes all',
+    ]).join(', ')}…`,
+    'Every Chez Nestor furnished flatshare includes all',
     `${_.shuffle(['bills', 'expenses'])[0]}:`,
-    _.shuffle([
+    `${_.shuffle([
       'unlimited wi-fi',
       'water',
       'electricity',
@@ -246,8 +252,7 @@ Apartment.generateDescriptionEn = function(args) {
       'condominum fees',
       'household waste tax',
       // TODO: mention gas if present
-    ]).join(', '),
-    '.',
+    ]).join(', ')}.`,
 
   ].join(' ');
 };

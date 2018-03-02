@@ -179,7 +179,7 @@ Room.generateDescriptionFr = function({ room = required(), apartment = required(
     `chambre ${_.shuffle(['', 'privative', 'privée'])[0]}`,
     'en colocation, meublée, équipée et',
     _.shuffle(['tout inclus', 'prête-à-vivre', 'clef en main'])[0],
-    `à ${apartment.addressCity}`,
+    `à ${_.capitalize(apartment.addressCity)}`,
     _.shuffle(['offre', 'allie', 'vous offre', 'associe', 'accorde', 'unit'])[0],
     'confort et design. Elle',
     _.shuffle(['dispose', 'possède', 'offre', 'propose', 'présente', 'dispose'])[0],
@@ -196,8 +196,8 @@ Room.generateDescriptionFr = function({ room = required(), apartment = required(
     ])[0],
     _.shuffle(['votre valise', 'votre bagage', 'vos affaires', 'vos vêtements'])[0],
     'pour',
-    _.shuffle(['emménager', 'y vivre', 'vous installer', 'être chez vous'])[0],
-    '! La chambre',
+    _.shuffle(['emménager !', 'y vivre !', 'vous installer !', 'être chez vous !'])[0],
+    'La chambre',
     _.shuffle([
       'ferme à clef',
       'possède un verrou',
@@ -218,11 +218,11 @@ Room.generateDescriptionFr = function({ room = required(), apartment = required(
 Room.generateDescriptionEn = function({ room = required(), apartment = required() }) {
   return [
     'This',
-    _.shuffle(['superb', 'elegant', 'splendid', 'is strategically', 'located'])[0],
+    _.shuffle(['superb', 'elegant', 'splendid', 'stunning', 'marvelous', 'lovely'])[0],
     _.shuffle(['room', 'bedroom', 'private bedroom', 'private room'])[0],
     'in a fully equipped, furnished and',
     _.shuffle(['all-inclusive', 'ready-to-live-in', 'turn-key'])[0],
-    `flatshare in ${apartment.addressCity}`,
+    `flatshare in ${_.capitalize(apartment.addressCity)}`,
     _.shuffle([
       'is a perfect combination of',
       'offers you',
@@ -235,13 +235,13 @@ Room.generateDescriptionEn = function({ room = required(), apartment = required(
     'comfort and design. It',
     _.shuffle(['has', 'comes with', 'has got', 'benefits from', 'consists of'])[0],
     _.shuffle([
-      'household furnishings',
-      'lots of household goods',
-      'many household items',
-      'plenty of household equipment',
+      'household furnishings,',
+      'lots of household goods,',
+      'many household items,',
+      'plenty of household equipment,',
     ])[0],
     // TODO: add full list of equipments here,
-    `, including a ${/double/.test(room.beds) ? 'double' : 'simple'}`,
+    `including a ${/double/.test(room.beds) ? 'double' : 'simple'}`,
     'bed with pillows and duvet',
     _.shuffle([
       'what is missing is',
@@ -265,10 +265,10 @@ Room.generateDescriptionEn = function({ room = required(), apartment = required(
       'has a security lock',
     ])[0],
     _.shuffle([
-      'for more privacy',
-      'to keep your stuff safe',
-      'for security matters',
-      'to protect your privacy',
+      'for more privacy.',
+      'to keep your stuff safe.',
+      'for security matters.',
+      'to protect your privacy.',
     ])[0],
 
   ].join(' ');
