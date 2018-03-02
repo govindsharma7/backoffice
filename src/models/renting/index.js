@@ -343,7 +343,7 @@ Renting.findOrCreateRentOrder = async function(args) {
       },
     }],
     defaults: renting.normalizeOrder({
-      label: `${D.format(dueDate, 'MMMM')} Invoice`,
+      label: `${D.format(dueDate, 'MMMM')} Rent`,
       dueDate,
     }),
     transaction,

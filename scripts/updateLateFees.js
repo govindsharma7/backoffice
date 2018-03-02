@@ -7,8 +7,9 @@ const { Client } = models;
 
 return Client
   .findAll()
-  .map((client) => {
-    return client.applyLateFees()
+  .map((client) =>
+    client
+      .applyLateFees()
       .map((order) => {
         return Promise.all([
           order.getCalculatedProps(),
@@ -19,11 +20,11 @@ return Client
             },
           }),
         ])
-        .then(([{amount}, orderItems]) => {
-          return Sendinblue.sendLateFeesEmail({ order, amount, orderItems, client });
-        });
-    });
-  })
+        .then(([{amount}, orderItems]) =>
+          Sendinblue.sendLateFeesEmail({ order, amount, orderItems, client })
+        );
+      })
+  )
   .then(() => {
     return process.exit(0);
   })
