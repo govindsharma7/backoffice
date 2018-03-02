@@ -817,7 +817,7 @@ Renting.updateDraftRentings = async function(now = new Date()) {
         .find(({ ProductId }) => ProductId === 'service-fees')
         .update({ unitPrice: serviceFees }),
     ]);
-  });
+  }, { concurrency: 3 });
 };
 
 Renting.collection = collection;
