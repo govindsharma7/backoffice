@@ -2,14 +2,29 @@
 
 const models  = require('../src/models');
 
-const { Term } = models;
+const { Term, Apartment } = models;
 
-fixEventType();
+fixApartmentFeatures();
 
-async function fixEventType() {
-  const result = await Term.destroy({
-    where: { taxonomy: { $like: '%-features-%' } },
+async function fixApartmentFeatures() {
+  const terms = [];
+  const apartments = await Apartment.findAll();
+
+  apartments.forEach((apartment) => {
+    const baseTerm = {
+      termable: 'Apartment',
+      TermableId: apartment.id,
+      taxonomy: 'apartment-features-kitchen',
+    };
+
+    terms.push(
+      Object.assign({ name: 'bakingTray' }, baseTerm),
+      Object.assign({ name: 'colander' }, baseTerm),
+      Object.assign({ name: 'dishwasher' }, baseTerm)
+    );
   });
 
-  console.log(result);
+  await Term.bulkCreate(terms);
+
+  console.log(`${terms.length} equipments created`);
 }
