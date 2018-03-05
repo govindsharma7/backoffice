@@ -208,7 +208,7 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
 
     const bookingDate = D.max(room.availableAt, new Date());
     const { Apartment: apartment, Apartment: { addressCity } } = room || {};
-    const [{ periodPrice, serviceFees }, [client]] = await Promise.all([
+    const [{ price, serviceFees }, [client]] = await Promise.all([
       Room.getPriceAndFees({ room, apartment, date: bookingDate }),
       Client.findOrCreate({
         where: { email: booking.email },
@@ -225,7 +225,7 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
       defaults: {
         ClientId: client.id,
         RoomId: roomId,
-        price: periodPrice,
+        price,
         serviceFees,
         bookingDate,
         packLevel,

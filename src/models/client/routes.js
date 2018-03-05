@@ -1,16 +1,17 @@
-const Promise              = require('bluebird');
-const uuid                 = require('uuid/v4');
-const pickBy               = require('lodash/pickBy');
-const mapKeys              = require('lodash/mapKeys');
-const D                    = require('date-fns');
-const Multer               = require('multer');
-const { wrap }             = require('express-promise-wrap');
-const Liana                = require('forest-express-sequelize');
+const Promise               = require('bluebird');
+const uuid                  = require('uuid/v4');
+const pickBy                = require('lodash/pickBy');
+const mapKeys               = require('lodash/mapKeys');
+const D                     = require('date-fns');
+const Multer                = require('multer');
+const { wrap }              = require('express-promise-wrap');
+const Liana                 = require('forest-express-sequelize');
+const Op                    = require('../../operators');
 const {
   SENDINBLUE_LIST_IDS,
-}                          = require('../../const');
-const Sendinblue           = require('../../vendor/sendinblue');
-const Utils                = require('../../utils');
+}                           = require('../../const');
+const Sendinblue            = require('../../vendor/sendinblue');
+const Utils                 = require('../../utils');
 
 const _ = { pickBy, mapKeys };
 
@@ -27,7 +28,7 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
       .map((order) => ids.push(order.id));
 
     Order
-      .findAll({ where: { id: { $in: ids } } })
+      .findAll({ where: { id: { [Op.in]: ids } } })
       .map((order) => Promise.all([
         order,
         order.getCalculatedProps(),
@@ -54,7 +55,7 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
           { method: ['rentOrdersFor', month] }, // required by createRentOrders
           'uncashedDepositCount', // required by findOrCreateRentOrder
           'paymentDelay' // required by findOrCreateRentOrder
-        ).findAll({ where: { id: { $in: ids } } });
+        ).findAll({ where: { id: { [Op.in]: ids } } });
       })
       .then((clients) => Client.createRentOrders(clients, month))
       .then(Utils.createdSuccessHandler(res, 'Renting Order'))
@@ -71,7 +72,7 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
         if ( !values.addDelay ) {
           throw new Error('You must specify a delay');
         }
-        return Client.findAll({ where: { id: { $in: ids } } });
+        return Client.findAll({ where: { id: { [Op.in]: ids } } });
       })
       .mapSeries((client) => Metadata.createOrUpdate({
         name: 'payment-delay',

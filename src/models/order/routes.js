@@ -1,11 +1,12 @@
-const kebabCase         = require('lodash/kebabCase');
-const Liana             = require('forest-express-sequelize');
-const { wrap }          = require('express-promise-wrap');
-const Promise           = require('bluebird');
-const { REST_API_URL }  = require('../../config');
-const Chromeless        = require('../../vendor/chromeless');
-const makePublic        = require('../../middlewares/makePublic');
-const Utils             = require('../../utils');
+const kebabCase           = require('lodash/kebabCase');
+const Liana               = require('forest-express-sequelize');
+const { wrap }            = require('express-promise-wrap');
+const Promise             = require('bluebird');
+const Op                  = require('../../operators');
+const { REST_API_URL }    = require('../../config');
+const Chromeless          = require('../../vendor/chromeless');
+const makePublic          = require('../../middlewares/makePublic');
+const Utils               = require('../../utils');
 
 const Serializer  = Liana.ResourceSerializer;
 const _ = { kebabCase };
@@ -38,7 +39,7 @@ module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
 
   app.post('/forest/actions/generate-invoice', wrap(async (req, res) => {
     const orders = await Order.findAll({
-      where: { id: { $in: req.body.data.attributes.ids } },
+      where: { id: { [Op.in]: req.body.data.attributes.ids } },
     });
 
     await Promise.mapSeries(orders, (order) => order.pickReceiptNumber());
@@ -55,7 +56,7 @@ module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
 
   app.post('/forest/actions/send-payment-request', LEA, wrap(async (req, res) => {
     const orders = await Order.findAll({
-        where: { id: { $in: req.body.data.attributes.ids } },
+        where: { id: { [Op.in]: req.body.data.attributes.ids } },
         include: [{ model: Client }, { model: OrderItem }],
       })
       .map((order) => Promise.all([

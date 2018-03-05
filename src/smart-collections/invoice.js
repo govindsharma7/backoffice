@@ -197,8 +197,8 @@ function getWhere(segment, date = new Date()) {
   const start = D.startOfMonth(month);
   const end = D.startOfMonth(D.addMonths(month, 1));
   const dueDate = sub === 0 ?
-    { $gte: start } :
-    { $gte: start, $lt: end };
+    { [Op.gte]: start } :
+    { [Op.gte]: start, [Op.lt]: end };
 
   return {
     receiptNumber: { [Op.not]: null },

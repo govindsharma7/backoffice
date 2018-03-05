@@ -1,3 +1,5 @@
+const Op                  = require('../../operators');
+
 module.exports = function({ Apartment, Client, District }) {
   Apartment.handleBeforeUpdate = async function(apartment) {
     // if no address field has been updated…
@@ -38,9 +40,9 @@ module.exports = function({ Apartment, Client, District }) {
 
   Apartment.hook('beforeDestroy', async (apartment) => {
     const clients = await Client.scope('currentApartment').findAll({
-      where: { $and: [
+      where: { [Op.and]: [
         { '$Rentings->Room.ApartmentId$': apartment.id },
-        { '$Rentings.bookingDate$': { $lte:  new Date() } },
+        { '$Rentings.bookingDate$': { [Op.lte]:  new Date() } },
       ]},
     });
 

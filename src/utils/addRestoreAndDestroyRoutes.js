@@ -1,5 +1,6 @@
 const Promise             = require('bluebird');
 const Liana               = require('forest-express-sequelize');
+const Op                  = require('../operators');
 const logAndSend          = require('./logAndSend');
 const {
   restoreSuccessHandler,
@@ -37,7 +38,7 @@ module.exports = function(app, Model) {
   app.post(`/forest/actions/restore-${name}`, LEA, (req, res) => {
     Model
       .findAll({
-        where: { id: { $in: req.body.data.attributes.ids } },
+        where: { id: { [Op.in]: req.body.data.attributes.ids } },
         paranoid: false,
       })
       .then((instances) => {
@@ -52,7 +53,7 @@ module.exports = function(app, Model) {
   app.post(`/forest/actions/destroy-${name}`, LEA, (req, res) => {
     Model
       .findAll({
-        where: { id: { $in: req.body.data.attributes.ids } },
+        where: { id: { [Op.in]: req.body.data.attributes.ids } },
         paranoid: false,
       })
       .then((instances) => {

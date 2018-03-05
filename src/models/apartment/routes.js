@@ -1,6 +1,7 @@
 const Promise                     = require('bluebird');
 const Liana                       = require('forest-express-sequelize');
 const { wrap }                    = require('express-promise-wrap');
+const Op                          = require('../../operators');
 const Aws                         = require('../../vendor/aws');
 const Utils                       = require('../../utils');
 
@@ -80,7 +81,7 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
     scope: 'currentApartment',
     where: (req) => ({
       '$Rentings->Room.ApartmentId$': req.params.recordId,
-      '$Rentings.bookingDate$': { $lte:  new Date() },
+      '$Rentings.bookingDate$': { [Op.lte]:  new Date() },
     }),
   });
 

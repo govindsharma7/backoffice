@@ -1,5 +1,6 @@
 const makePublic       = require('../../middlewares/makePublic');
 const Utils            = require('../../utils');
+const Op               = require('../../operators');
 
 module.exports = function(app, { Room, Client }) {
 
@@ -15,7 +16,7 @@ module.exports = function(app, { Room, Client }) {
     scope: 'currentApartment',
     where: (req) => ({
       '$Rentings.RoomId$': req.params.recordId,
-      '$Rentings.bookingDate$': { $lte:  new Date() },
+      '$Rentings.bookingDate$': { [Op.lte]:  new Date() },
     }),
   });
 

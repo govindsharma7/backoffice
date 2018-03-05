@@ -133,12 +133,12 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
       }),
       // Bulk update won't trigger Order update hooks
       Order.update({ status: 'active' }, {
-        where: { id: { $in: [rentOrder.id, depositOrder.id] } },
+        where: { id: { [Op.in]: [rentOrder.id, depositOrder.id] } },
         transaction,
       }),
       // Bulk update won't trigger OrderItem update hooks
       OrderItem.update({ status: 'active' }, {
-        where: { id: { $in: depositRentItemsIds } },
+        where: { id: { [Op.in]: depositRentItemsIds } },
         transaction,
       }),
       Wordpress.makeRoomUnavailable({ room }),

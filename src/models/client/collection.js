@@ -39,8 +39,8 @@ module.exports = function({ Client }) {
 
         // modify the first $or of the search query
         _.find(query.where[Op.and], Op.or)[Op.or].push(sequelize.and(
-          { firstName: { $like: `%${split[0]}%` }},
-          { lastName: { $like: `%${split[1]}%` }}
+          { firstName: { [Op.like]: `%${split[0]}%` }},
+          { lastName: { [Op.like]: `%${split[1]}%` }}
         ));
       },
     }, {

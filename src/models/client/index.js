@@ -8,8 +8,8 @@ const Country         = require('countryjs');
 const GoogleTranslate = require('google-translate');
 const Op              = require('../../operators');
 const {
-  TRASH_SCOPES,
   LATE_FEES,
+  TRASH_SCOPES,
   UNCASHED_DEPOSIT_FEE,
 }                     = require('../../const');
 const Ninja           = require('../../vendor/invoiceninja');
@@ -125,7 +125,7 @@ Client.associate = (models) => {
       where: {
         type: 'debit',
         status: 'active',
-        dueDate: { $gte: D.startOfMonth(date), $lte: D.endOfMonth(date) },
+        dueDate: { [Op.gte]: D.startOfMonth(date), [Op.lte]: D.endOfMonth(date) },
       },
       include: [{
         model: models.OrderItem,
@@ -156,7 +156,7 @@ Client.associate = (models) => {
       model: models.Renting,
       include: [{
         model: models.Term,
-        where: { $and: [
+        where: { [Op.and]: [
           { taxonomy: 'deposit-option' },
           { name: 'do-not-cash' },
         ]},
@@ -167,9 +167,9 @@ Client.associate = (models) => {
 
   Client.addScope('currentApartment', function(date = new Date()) {
     return {
-      where: { $or: [
+      where: { [Op.or]: [
           { '$Rentings.Events.id$': null },
-          { '$Rentings.Events.startDate$': { $gte: D.format(date) } },
+          { '$Rentings.Events.startDate$': { [Op.gte]: D.format(date) } },
       ] },
       include: [{
         model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
@@ -233,7 +233,7 @@ Client.associate = (models) => {
       model: models.Order,
       include: [{
         model: models.OrderItem,
-        where: { ProductId: { $like: '%-pack' } },
+        where: { ProductId: { [Op.like]: '%-pack' } },
       }],
     }],
   });
@@ -250,7 +250,7 @@ methodify(Client, 'getRentingsFor');
 Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Date()) {
   const dueDate = D.startOfMonth(date);
   const [order, isCreate] = await models.Order.findOrCreate({
-    where: { $and: [
+    where: { [Op.and]: [
       // Only exclude cancelled orders. First rent order might still be draft
       { status: { [Op.not]: 'cancelled' } },
       { ClientId: this.id },
@@ -385,9 +385,9 @@ Client.paylineCredit = async function(clientId, values, creditId) {
 Client.prototype.findUnpaidOrders = function () {
   return models.Order.scope('rentOrders')
     .findAll({
-      where: { $and: [
+      where: { [Op.and]: [
         { ClientId: this.id },
-        { dueDate: { $lt: new Date() } },
+        { dueDate: { [Op.lt]: new Date() } },
       ]},
     })
     .filter((order) =>

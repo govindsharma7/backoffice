@@ -3,6 +3,7 @@ const sortBy          = require('lodash/sortBy');
 const map             = require('lodash/map');
 const reduce          = require('lodash/reduce');
 const entries         = require('lodash/entries');
+const Op              = require('../operators');
 const sequelize       = require('../models/sequelize');
 const { ENUMS }       = require('../const');
 
@@ -41,7 +42,7 @@ module.exports = function(Model, Picture) {
 
       await Promise.all([
         // TODO: beforeBulkDestroy has never been tested
-        toCreate && Picture.destroy({ where: { id: { $in: toDestroy } } }),
+        toCreate && Picture.destroy({ where: { id: { [Op.in]: toDestroy } } }),
         toDestroy && Picture.bulkCreate(toCreate, { individualHooks: true }),
       ]);
 

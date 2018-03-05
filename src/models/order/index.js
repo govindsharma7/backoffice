@@ -3,6 +3,7 @@ const uuid                  = require('uuid/v4');
 const { DataTypes }         = require('sequelize');
 const D                     = require('date-fns');
 const padStart              = require('lodash/padStart');
+const Op                    = require('../../operators');
 const { TRASH_SCOPES }      = require('../../const');
 const payline               = require('../../vendor/payline');
 const Sendinblue            = require('../../vendor/sendinblue');
@@ -96,7 +97,7 @@ Order.associate = (models) => {
   Order.addScope('packItems', {
     include: [{
       model: models.OrderItem,
-      where: { ProductId: { $like: '%-pack' } },
+      where: { ProductId: { [Op.like]: '%-pack' } },
       include: [{
         model: models.Renting,
         include: [{
@@ -192,6 +193,29 @@ Order.associate = (models) => {
       }],
     }],
   });
+
+  Order.addScope('lateRents', (date = new Date()) => ({
+    where: {
+      dueDate: { [Op.lt]: date },
+      createdAt: { [Op.lt]: D.subDays(date, 7) },
+    },
+    include: [{
+      model: models.OrderItem,
+      where: { ProductId: 'rent' },
+      required: true,
+    }, {
+      model: models.Client,
+      where: {
+        status: 'active',
+        id: { [Op.not]: 'maintenance' },
+      },
+      required: true,
+    }, {
+      model: models.TotalPaid,
+      where: { totalPaid: { [Op.or]: [0, null] } },
+      required: true,
+    }],
+  }));
 };
 
 Order.prototype.getTotalPaidAndRefund = async function() {
@@ -395,7 +419,7 @@ Order.sendRentReminders = function(now = new Date()) {
   return Order.scope('rentOrders')
     .findAll({
       where: {
-        $or: [
+        [Op.or]: [
           { dueDate: now },
           { dueDate: D.addDays(now, 3) },
           { dueDate: D.addDays(now, 5) },
@@ -415,6 +439,10 @@ Order.sendRentReminders = function(now = new Date()) {
       Sendinblue.sendRentReminder({ order, client: order.Client, amount })
     );
 };
+
+// Order.updateLateFees = function(date = new Date()) {
+//
+// };
 
 Order.collection = collection;
 Order.routes = routes;

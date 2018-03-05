@@ -70,7 +70,7 @@ const common = {
   generateDescriptions: 'node scripts/generateDescriptions.js',
   deletePictures,
   'update:draftRentOrders': updateDraftRentOrders,
-  'update:lateFees': updateLateFees,
+  updateLateFees,
   'invoice:reminder': rentInvoiceReminder,
   'archive:pastRentings': archivePastRentings,
   'remove:deletedAt': removeDeletedAt,

@@ -2,6 +2,7 @@ const pick            = require('lodash/pick');
 const pickBy          = require('lodash/pickBy');
 const map             = require('lodash/map');
 const forEach         = require('lodash/forEach');
+const Op              = require('../operators');
 const sequelize       = require('../models/sequelize');
 const { ENUMS }       = require('../const');
 
@@ -57,8 +58,8 @@ module.exports = function(Model, Term) {
 };
 
 function getWhere({ object, featuresPrefix }) {
-  return { $and: [
-    { taxonomy: { $like: `${featuresPrefix}%` } },
+  return { [Op.and]: [
+    { taxonomy: { [Op.like]: `${featuresPrefix}%` } },
     { TermableId: object.id },
   ] };
 }

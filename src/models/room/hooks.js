@@ -22,7 +22,7 @@ module.exports = function({ Room, Apartment, Client }) {
     const clients = await Client.scope('currentApartment').findAll({
       where: {
         '$Rentings.RoomId$': room.id,
-        '$Rentings.bookingDate$': { $lte:  new Date() },
+        '$Rentings.bookingDate$': { [Op.lte]:  new Date() },
       },
     });
 

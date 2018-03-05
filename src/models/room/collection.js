@@ -1,4 +1,5 @@
 const capitalize          = require('lodash/capitalize');
+const Op                  = require('../../operators');
 const {
   TRASH_SEGMENTS,
   CITIES,
@@ -87,7 +88,7 @@ module.exports = function({ Room, Picture, Term }) {
         // loads belongsTo relations automatically.
         scope: 'availableAt',
         where: {
-          '$Rentings->Events.startDate$': { $lte: new Date() },
+          '$Rentings->Events.startDate$': { [Op.lte]: new Date() },
           '$Apartment.addressCity$': city,
         },
       }))

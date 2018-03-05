@@ -141,7 +141,7 @@ Renting.associate = (models) => {
         model: models.Event,
         required: false,
         on: {
-          EventableId: { $col: 'Renting.id' },
+          EventableId: { [Op.col]: 'Renting.id' },
           type,
         },
       }],
@@ -156,8 +156,10 @@ Renting.associate = (models) => {
     attributes: checkoutDateScopeArgs.attributes,
     where: {
       status: 'active',
-      bookingDate: { $lte: D.endOfMonth(date) },
-      '$Events.startDate$': { $or: [{ $eq: null }, { $gte: D.startOfMonth(date) }] },
+      bookingDate: { [Op.lte]: D.endOfMonth(date) },
+      '$Events.startDate$': {
+        [Op.or]: [{ [Op.eq]: null }, { [Op.gte]: D.startOfMonth(date) }],
+      },
     },
     include: checkoutDateScopeArgs.include,
   }));
@@ -174,10 +176,10 @@ Renting.associate = (models) => {
       where: Object.assign(
         { status: 'active' },
         scopeName === 'currentRenting' && {
-          bookingDate: { $lte: new Date() },
-          [`$${includedFrom}->Events.startDate$`]: { $or: [
+          bookingDate: { [Op.lte]: new Date() },
+          [`$${includedFrom}->Events.startDate$`]: { [Op.or]: [
             null,
-            { $gt: new Date() },
+            { [Op.gt]: new Date() },
           ] },
         }
       ),
@@ -185,8 +187,8 @@ Renting.associate = (models) => {
         model: models[modelName],
         required: true,
         on: {
-          RoomId: { $col: `${includedFrom}.RoomId` },
-          bookingDate: { $col: `${includedFrom}.bookingDate` },
+          RoomId: { [Op.col]: `${includedFrom}.RoomId` },
+          bookingDate: { [Op.col]: `${includedFrom}.bookingDate` },
         },
       }, {
         model: models.Event,
@@ -212,7 +214,7 @@ Renting.associate = (models) => {
     include: [{
       model: models.OrderItem,
       required: false,
-      where: { ProductId: { $like: '%-pack' } },
+      where: { ProductId: { [Op.like]: '%-pack' } },
     }],
   });
 
@@ -376,7 +378,7 @@ Renting.findOrCreatePackOrder = async function(args) {
       model: models.OrderItem,
       where: {
         RentingId: renting.id,
-        ProductId: { $like: '%-pack' },
+        ProductId: { [Op.like]: '%-pack' },
       },
     }],
     defaults: renting.normalizeOrder({
@@ -492,7 +494,7 @@ Renting.findOrCreateDepositOrder = async function(args) {
 
           return models.Order
             .findOrCreate({
-              where: { $and: [{ status: { [Op.not]: 'cancelled' } }] },
+              where: { [Op.and]: [{ status: { [Op.not]: 'cancelled' } }] },
               include: [{
                 model: models.OrderItem,
                 where: {
@@ -646,7 +648,7 @@ Renting.updatePackLevel = function(args) {
 
   return models.OrderItem.update(updatedItem, { where: {
     RentingId: renting.id,
-    ProductId: { $like: '%-pack' },
+    ProductId: { [Op.like]: '%-pack' },
     status: 'draft',
   } });
 };
@@ -779,16 +781,16 @@ Renting.updateDraftRentings = async function(now = new Date()) {
     where: {
       status: 'draft',
       bookingDate: {
-        $gt: D.subMonths(now, 1),
+        [Op.gt]: D.subMonths(now, 1),
         // Don't update future booking dates to 'now'!
-        $lt: D.startOfDay(now),
+        [Op.lt]: D.startOfDay(now),
       },
     },
     include: [{
       model: models.Room,
     }, {
       model: models.OrderItem,
-      where: { $or: [{ ProductId: 'rent' }, { ProductId: 'service-fees' }] },
+      where: { [Op.or]: [{ ProductId: 'rent' }, { ProductId: 'service-fees' }] },
     }],
   });
   const periodCoef = await Utils.getPeriodCoef(now);

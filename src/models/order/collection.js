@@ -95,11 +95,14 @@ module.exports = function({ Order, Metadata }) {
       where: {
         status: 'active',
         ClientId: { [Op.not]: 'maintenance' },
-        $or: [
+        [Op.or]: [
           { '$TotalPaid.totalPaid$': 0 },
           { '$TotalPaid.totalPaid$': null },
         ],
       },
+    }, {
+      name: 'Late Rent',
+      scope: 'lateRents',
     }),
   };
 };
