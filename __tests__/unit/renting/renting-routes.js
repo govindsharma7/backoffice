@@ -3,6 +3,7 @@ const D                       = require('date-fns');
 const app                     = require('express')();
 const fixtures                = require('../../../__fixtures__');
 const models                  = require('../../../src/models');
+const Utils                   = require('../../../src/utils');
 
 const { Renting, Client, Event } = models;
 
@@ -49,10 +50,12 @@ describe('Renting - Routes', () => {
         Apartment: [{
           id: u.id('apartment'),
           DistrictId: 'lyon-ainay',
+          roomCount: 3,
         }],
         Room: [{
           id: u.id('room'),
           ApartmentId: u.id('apartment'),
+          basePrice: 12300,
         }],
       }))();
       const email = `john${Math.random().toString().slice(2)}@doe.fr`;
@@ -66,8 +69,15 @@ describe('Renting - Routes', () => {
         roomId: u.id('room'),
       });
       const client = await Client.findById(renting.ClientId);
+      const expectedPeriodCoef = await Utils.getPeriodCoef(new Date());
+      const expectedPeriodPrice =
+        await Utils.getPeriodPrice( 12300, expectedPeriodCoef, 3000 );
 
       expect(renting.RoomId).toEqual(u.id('room'));
+      expect(D.startOfDay(renting.bookingDate))
+        .toEqual(D.startOfDay(new Date()));
+      expect(renting.price).toEqual(expectedPeriodPrice);
+      expect(renting.serviceFees).toEqual(3000);
       expect(client.email).toEqual(email);
 
       expect(Client.handleAfterCreate).toHaveBeenCalled();
