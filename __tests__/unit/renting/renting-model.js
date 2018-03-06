@@ -38,7 +38,7 @@ describe('Renting - Model', () => {
             startDate: D.parse('2017-05-14 Z'),
             endDate: D.parse('2017-05-14 Z'),
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const renting =
           await Renting.scope('checkinDate').findById(u.id('renting'));
@@ -68,7 +68,7 @@ describe('Renting - Model', () => {
             status: 'active',
             bookingDate: D.parse('2016-01-01'),
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const renting =
           await Renting.scope('checkinDate').findById(u.id('renting'));
@@ -99,7 +99,7 @@ describe('Renting - Model', () => {
             RoomId: u.id('room'),
             bookingDate: D.addMonths(new Date(), 1),
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const renting =
           await Renting.scope('checkoutDate').findById(u.id('renting'));
@@ -138,7 +138,7 @@ describe('Renting - Model', () => {
             startDate: oneMonthAgo,
             endDate: oneMonthAgo,
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const renting =
           await Renting.scope('checkoutDate').findById(u.id('renting'));
@@ -177,7 +177,7 @@ describe('Renting - Model', () => {
             ProductId: 'privilege-pack',
             RentingId: u.id('renting'),
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const renting = await Renting.scope('packLevel').findById(u.id('renting'));
 
@@ -206,7 +206,7 @@ describe('Renting - Model', () => {
             status: 'active',
             bookingDate: D.parse('2016-01-01'),
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         const renting = await Renting.scope('packLevel').findById(u.id('renting'));
 
@@ -298,7 +298,7 @@ describe('Renting - Model', () => {
             startDate: oneMonthAgo,
             endDate: oneMonthAgo,
           }],
-        }))({ method: 'create', hooks: false });
+        }))();
 
         apartment = await models.Apartment.findById(u.id('apartment'), {
           include: [{
@@ -374,7 +374,7 @@ describe('Renting - Model', () => {
           startDate: D.parse('2017-05-16 Z'),
           endDate: D.parse('2017-05-16 Z'),
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       const renting = await Renting.scope('room+apartment').findOne({
         where: { id: u.id('renting') },

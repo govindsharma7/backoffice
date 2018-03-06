@@ -5,7 +5,7 @@ const Op                          = require('../../operators');
 const Aws                         = require('../../vendor/aws');
 const Utils                       = require('../../utils');
 
-module.exports = function(app, { Apartment, Room, Client, Picture }) {
+module.exports = function(app, { Apartment, Room, Client, Picture, Renting }) {
   const LEA = Liana.ensureAuthenticated;
 
   // TODO: re-implement this route using Sendinblue API
@@ -76,7 +76,7 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
   Utils.addInternalRelationshipRoute({
     app,
     sourceModel: Apartment,
-    associatedModel: Client,
+    associatedModel: Renting,
     routeName: 'current-clients',
     scope: 'currentApartment',
     where: (req) => ({

@@ -1,13 +1,11 @@
 const Promise               = require('bluebird');
-const uuid                  = require('uuid/v4');
 const { DataTypes }         = require('sequelize');
 const D                     = require('date-fns');
-const padStart              = require('lodash/padStart');
+const _                     = require('lodash');
 const Op                    = require('../../operators');
 const { TRASH_SCOPES }      = require('../../const');
 const payline               = require('../../vendor/payline');
 const Sendinblue            = require('../../vendor/sendinblue');
-const { required, CNError } = require('../../utils');
 const Utils                 = require('../../utils');
 const sequelize             = require('../sequelize');
 const models                = require('../models'); //!\ Destructuring forbidden /!\
@@ -15,7 +13,7 @@ const collection            = require('./collection');
 const routes                = require('./routes');
 const hooks                 = require('./hooks');
 
-const _ = { padStart };
+const { required, CNError, methodify } = Utils;
 
 const Order = sequelize.define('Order', {
   id: {
@@ -332,9 +330,6 @@ Order.pickReceiptNumber = function({ order = required(), transaction }) {
     .thenReturn(order);
 };
 
-Order.prototype.pay = function(args) {
-  return Order.pay(Object.assign({ order: this }, args));
-};
 Order.pay = async function(args) {
   const { order = required(), balance = required(), card = required() } = args;
   const {
@@ -346,6 +341,7 @@ Order.pay = async function(args) {
   } = card;
   const expirationDate = _.padStart(`${expiryMonth}${expiryYear}`, 4, '0');
   const type = Utils.getCardType(number);
+  const purchaseId = `${order.id}-${new Date().getTime()}`;
   let purchase;
 
   try {
@@ -367,11 +363,28 @@ Order.pay = async function(args) {
       });
     }
 
+    // There's always a possibility that the payment is succesfully sent to
+    // Payline and that an asteroid destroys our servers before we receive
+    // the success message. This metadata allows us to track such problems.
+    await models.Metadata.create({
+      name: 'paymentAttempt',
+      value: purchaseId,
+      MetadatableId: order.id,
+      metadatable: 'Order',
+    });
+
     purchase = await payline.doPurchase(
-      uuid(),
+      purchaseId,
       { number, type, expirationDate, holder, cvx },
       -balance
     );
+
+    await models.Payment.create({
+      type: 'card',
+      amount: -balance,
+      paylineId: purchase.transactionId,
+      OrderId: order.id,
+    });
   }
   catch (error) {
     await models.Metadata.create({
@@ -384,19 +397,10 @@ Order.pay = async function(args) {
     throw error;
   }
 
-  await models.Payment.create({
-    type: 'card',
-    amount: -balance,
-    paylineId: purchase.transactionId,
-    OrderId: order.id,
-  });
-
   return purchase;
 };
+methodify(Order, 'pay');
 
-Order.prototype.sendPaymentRequest = function(args) {
-  return Order.sendPaymentRequest(Object.assign({ order: this }, args));
-};
 Order.sendPaymentRequest = function(args) {
   const {
     order = required(),
@@ -413,6 +417,7 @@ Order.sendPaymentRequest = function(args) {
 
   return Sendinblue.sendPaymentRequest({ order, amount, client, isRent });
 };
+methodify(Order, 'sendPaymentRequest');
 
 // TODO: improve that shit
 Order.sendRentReminders = function(now = new Date()) {

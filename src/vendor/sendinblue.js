@@ -26,19 +26,19 @@ SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey = SENDINBLUE_
 const _ = { capitalize, mapValues };
 const { required } = Utils;
 
-const SMTPApi = new SendinBlueApi.SMTPApi();
 const ContactsApi = new SendinBlueApi.ContactsApi();
 const replyTo = SUPPORT_EMAIL;
 const Sendinblue = {};
 let Metadata = null;
 
+Sendinblue.SMTPApi = new SendinBlueApi.SMTPApi();
 Sendinblue.init = function(model) {
   Metadata = model;
 };
 
 Sendinblue.sendTemplateEmail = function(id, data = {}) {
   const isProd = NODE_ENV === 'production';
-  const isTest = NODE_ENV === 'test';
+  const smtpMethod = NODE_ENV === 'test' ? 'sendTestTemplate' : 'sendTemplate';
   const emailTo = data.emailTo.filter(Boolean);
   const options = {
     emailTo: isProd ? emailTo : emailTo.map(Sendinblue.getSandboxEmail),
@@ -51,7 +51,7 @@ Sendinblue.sendTemplateEmail = function(id, data = {}) {
   };
 
   if (options.emailTo.length > 0) {
-    return SMTPApi[isTest ? 'sendTest' : 'sendTemplate'](isProd ? id : 1, options);
+    return Sendinblue.SMTPApi[smtpMethod](isProd ? id : 1, options);
   }
 
   return Promise.resolve({});

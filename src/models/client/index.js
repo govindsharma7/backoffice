@@ -99,7 +99,7 @@ const Client = sequelize.define('Client', {
  * Associations
  */
 Client.associate = (models) => {
-  const {fn, col} = sequelize;
+  const { fn, col, literal } = sequelize;
 
   Client.hasMany(models.Renting);
   Client.hasMany(models.Order);
@@ -165,21 +165,12 @@ Client.associate = (models) => {
     group: ['Client.id'],
   });
 
-  Client.addScope('currentApartment', function(date = new Date()) {
+  Client.addScope('currentApartment', function() {
     return {
-      where: { [Op.or]: [
-          { '$Rentings.Events.id$': null },
-          { '$Rentings.Events.startDate$': { [Op.gte]: D.format(date) } },
-      ] },
       include: [{
-        model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
+        model: models.Renting.scope({ method: ['currentRentingByClient', 'Rentings'] }),
         required: false,
         include: [{
-          model: models.Event,
-          attributes: ['id', 'startDate'],
-          required: false,
-          where: { type: 'checkout' },
-        }, {
           model: models.Room,
           attributes: ['id', 'ApartmentId'],
           include: [{
@@ -206,6 +197,14 @@ Client.associate = (models) => {
   }));
 
   Client.addScope('paymentDelay', {
+    attributes: { include: [
+      [literal([
+        '(CASE WHEN `Metadata`.`name` IS NULL',
+          'THEN 0',
+          'ELSE `Metadata`.`value`',
+        'END)',
+      ].join(' ')), 'paymentDelay'],
+    ] },
     include: [{
       model: models.Metadata,
       where: { name: 'payment-delay' },
@@ -215,6 +214,14 @@ Client.associate = (models) => {
   });
 
   Client.addScope('identity', {
+    attributes: { include: [
+      [literal([
+        '(CASE WHEN `Metadata`.`name` IS NULL',
+          'THEN 0',
+          'ELSE `Metadata`.`value`',
+        'END)',
+      ].join(' ')), 'identityRecord'],
+    ] },
     include: [{
       model: models.Metadata,
       where: { name: 'clientIdentity' },
@@ -226,7 +233,7 @@ Client.associate = (models) => {
   // with the same name accross two different Models.
   Client.addScope('_packLevel', {
     attributes: { include: [[
-      sequelize.fn('replace', sequelize.col('ProductId'), '-pack', ''),
+      fn('replace', col('ProductId'), '-pack', ''),
       'packLevel',
     ]]},
     include: [{
@@ -418,12 +425,12 @@ Client.prototype.applyLateFees = function(now = new Date()) {
     });
 };
 
-Client.getFullIdentity = function({ client, identityMeta, now = new Date() }) {
-  if ( identityMeta == null ) {
+Client.getFullIdentity = function({ client, identityRecord, now = new Date() }) {
+  if ( !identityRecord ) {
     return {};
   }
 
-  const identity = JSON.parse(identityMeta.value.replace(/\r?\n|\r/g, ''));
+  const identity = JSON.parse(identityRecord.replace(/\r?\n|\r/g, ''));
   const { day, month, year } = identity.birthDate;
   const age = D.differenceInYears(now, `${year}-${month}-${day} Z`);
   const passport =

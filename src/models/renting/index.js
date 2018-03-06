@@ -164,10 +164,16 @@ Renting.associate = (models) => {
     include: checkoutDateScopeArgs.include,
   }));
 
-  ['latestRenting', 'currentRenting'].forEach((scopeName) => {
+  [
+    'latestRenting',
+    'currentRenting',
+    'latestRentingByClient',
+    'currentRentingByClient',
+  ].forEach((scopeName) => {
     const modelName = scopeName.replace(/^./, ($0) => $0.toUpperCase());
+    const isCurrent = /^current/.test(scopeName);
 
-    Renting.addScope(scopeName, (includedFrom = 'Renting') => ({
+    Renting.addScope(scopeName, (includedFrom = 'Renting', date = new Date()) => ({
       // The checkoutDate is only useful/usable when this scope isn't included
       // in another scope/query
       attributes: includedFrom === 'Renting' ? { include: [
@@ -175,11 +181,10 @@ Renting.associate = (models) => {
       ]} : undefined,
       where: Object.assign(
         { status: 'active' },
-        scopeName === 'currentRenting' && {
-          bookingDate: { [Op.lte]: new Date() },
+        isCurrent && {
           [`$${includedFrom}->Events.startDate$`]: { [Op.or]: [
             null,
-            { [Op.gt]: new Date() },
+            { [Op.gt]: date },
           ] },
         }
       ),

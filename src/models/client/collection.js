@@ -17,10 +17,16 @@ module.exports = function({ Client }) {
       return cache.get(object);
     }
 
-    const identity = Client.getFullIdentity({
-      client: object,
-      identityMeta: object.Metadata && object.Metadata[0],
-    });
+    const identity = (async () => {
+      const client = object.get('identityRecord') != null ?
+        object :
+        await Client.scope('identity').findById(object.id);
+
+      return Client.getFullIdentity({
+        client,
+        identityRecord: client.get('identityRecord'),
+      });
+    })();
 
     cache.set(object, identity);
 
@@ -62,32 +68,32 @@ module.exports = function({ Client }) {
     }, {
       field: 'Download Identity Record',
       type: 'String',
-      get(object) {
-        return getIdentyMemoized(object).recordUrl || 'MISSING';
+      async get(object) {
+        return (await getIdentyMemoized(object)).recordUrl || 'MISSING';
       },
     }, {
       field: 'Description En',
       type: 'String',
-      get(object) {
-        return getIdentyMemoized(object).descriptionEn || 'MISSING';
+      async get(object) {
+        return (await getIdentyMemoized(object)).descriptionEn || 'MISSING';
       },
     }, {
       field: 'Description Fr',
       type: 'String',
-      get(object) {
-        return getIdentyMemoized(object).descriptionFr || 'MISSING';
+      async get(object) {
+        return (await getIdentyMemoized(object)).descriptionFr || 'MISSING';
       },
     }, {
       field: 'gender',
       type: 'String',
-      get(object) {
-        return getIdentyMemoized(object).gender || 'MISSING';
+      async get(object) {
+        return (await getIdentyMemoized(object)).gender || 'MISSING';
       },
     }, {
       field: 'paymentDelay',
       type: 'String',
       get(object) {
-        return _.get(object, 'Metadata[0].value');
+        return object.get('paymentDelay');
       },
     }, {
       field: 'jotform-attachments',

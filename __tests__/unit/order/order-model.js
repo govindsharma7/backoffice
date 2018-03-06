@@ -1,12 +1,12 @@
-jest.mock('../../../src/vendor/payline');
-
 const Promise       = require('bluebird');
+const fixtures      = require('../../../__fixtures__');
 const orderFixtures = require('../../../__fixtures__/order');
-const payline       = require('../../../src/vendor/payline');
 const models        = require('../../../src/models');
+const { payline }   = require('../../../src/vendor/payline');
+const Sendinblue    = require('../../../src/vendor/sendinblue');
 
 
-const { Order, Metadata } = models;
+const { Order, Metadata, Payment } = models;
 
 let order;
 let invoiceCounter;
@@ -94,20 +94,13 @@ describe('Order', () => {
   });
 
   describe('.pay', () => {
-    const mockedDoPurchase = jest.spyOn(payline, 'doPurchase')
-      .mockImplementation(() => ({ transactionId: Math.random() }));
-    const mockedCreate = jest.spyOn(Metadata, 'create')
-      .mockImplementation(() => Promise.resolve(true));
+    const mockedDoPurchase = jest.spyOn(payline, 'doPurchase');
+    const mockedSendTemplate = jest.spyOn(Sendinblue.SMTPApi, 'sendTestTemplate');
     const card = { cardNumber: '4242424242424242' };
-
-    afterAll(() => {
-      mockedDoPurchase.mockRestore();
-      mockedCreate.mockRestore();
-    });
 
     it('should throw if the card type is invalid', () => {
       const actual = Order.pay({
-        order: {},
+        order: { id: Math.random() },
         balance: -100,
         card: { cardNumber: '6666666666666666' },
       });
@@ -119,7 +112,7 @@ describe('Order', () => {
 
     it('should throw if the order is cancelled', () => {
       const actual = Order.pay({
-        order: { status: 'cancelled' },
+        order: { id: Math.random(), status: 'cancelled' },
         balance: -100,
         card,
       });
@@ -131,12 +124,12 @@ describe('Order', () => {
 
     it('should throw if balance is null or positive', async () => {
       const actualNull = Order.pay({
-        order: {},
+        order: { id: Math.random() },
         balance: 0,
         card,
       });
       const actualPositive = Order.pay({
-        order: {},
+        order: { id: Math.random() },
         balance: 100,
         card,
       });
@@ -151,20 +144,78 @@ describe('Order', () => {
       return true;
     });
 
-    it('should save error info as metadata', async () => {
-      const id = 123456;
+    it('should save payment attempt and error info as metadata', async () => {
+      mockedDoPurchase.mockImplementationOnce(() => {
+        throw new Error('Completely unexpected error');
+      });
+
+      const id = Math.random();
       const shouldThrow = Order.pay({
-        order: { id, status: 'cancelled' },
+        order: { id, status: 'active' },
         balance: -100,
         card,
       });
 
       await expect(shouldThrow).rejects.toThrow();
 
-      return expect(mockedCreate).lastCalledWith(expect.objectContaining({
-        name: 'paymentError',
+      const metadata = await Metadata.findAll({ where: {
+        metadatable: 'Order',
         MetadatableId: id,
-      }));
+      } });
+
+      expect(metadata.length).toEqual(2);
+      expect((metadata.some(({ name }) => name === 'paymentAttempt')))
+        .toBe(true);
+      expect((metadata.some(({ name }) => name === 'paymentError')))
+        .toBe(true);
+    });
+
+    it('should create a payment if the purchase is successful', async () => {
+      const { instances: { order } } = await fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+          status: 'active',
+        }],
+        Order: [{
+          id: u.id('order'),
+          ClientId: u.id('client'),
+          status: 'active',
+        }],
+        OrderItem: [{
+          label: 'label',
+          unitPrice: 100,
+          OrderId: u.id('order'),
+        }],
+      }))();
+      const transactionId = `${Math.random()}`;
+      const messageId = Math.random();
+
+      mockedDoPurchase.mockImplementationOnce(() => ({ transactionId }));
+      mockedSendTemplate.mockImplementationOnce(() => ({ messageId }));
+      await Order.pay({
+        order,
+        balance: -100,
+        card,
+      });
+
+      const metadata = await Metadata.findAll({ where: {
+        metadatable: 'Order',
+        MetadatableId: order.id,
+      } });
+
+      expect(metadata.length).toEqual(2);
+      expect((metadata.some(({ name }) => name === 'paymentAttempt')))
+        .toBe(true);
+      expect((metadata.some(({ value }) => value.endsWith(messageId))))
+        .toBe(true);
+
+      const payment = await Payment.findOne({ where: { OrderId: order.id } });
+
+      expect(payment.paylineId).toEqual(transactionId);
+      expect(payment.amount).toEqual(100);
     });
   });
 });

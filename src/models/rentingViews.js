@@ -4,14 +4,26 @@ const map                   = require('lodash/map');
 const sequelize             = require('./sequelize');
 
 const _ = { map };
-const conditions = {
-  'LatestRenting': '',
-  'CurrentRenting': 'AND `Renting`.`bookingDate` <= CURRENT_TIMESTAMP',
+const views = {
+  'LatestRenting': {
+    foreignKey: 'RoomId',
+  },
+  'CurrentRenting': {
+    foreignKey: 'RoomId',
+    isCurrent: true,
+  },
+  'LatestRentingByClient': {
+    foreignKey: 'ClientId',
+  },
+  CurrentRentingByClient: {
+    foreignKey: 'ClientId',
+    isCurrent: true,
+  },
 };
 const [
   LatestRenting,
   CurrentRenting,
-] = _.map(conditions, (condition, viewName) => {
+] = _.map(views, ({ foreignKey, isCurrent }, viewName) => {
   const View = sequelize.define(viewName, {
     RoomId: {
       primaryKey: true,
@@ -35,11 +47,12 @@ const [
     return sequelize.query([
       `CREATE VIEW \`${viewName}\` AS`,
       'SELECT',
-        '`Renting`.`RoomId`, MAX(`Renting`.`bookingDate`) AS bookingDate',
+        `\`Renting\`.\`${foreignKey}\`,`,
+        'MAX(`Renting`.`bookingDate`) AS bookingDate',
       'FROM `Renting`',
       'WHERE `Renting`.`deletedAt` IS NULL AND `Renting`.`status` = \'active\'',
-      condition,
-      'GROUP BY `Renting`.`RoomId`',
+      isCurrent ? 'AND `Renting`.`bookingDate` <= CURRENT_TIMESTAMP' : '',
+      `GROUP BY \`Renting\`.\`${foreignKey}\``,
     ].join(' '), { logging });
   };
 
@@ -49,7 +62,7 @@ const [
 
   View.associate = (models) => {
     View.hasMany(models.Renting, {
-      foreignKey: 'RoomId',
+      foreignKey,
       constraints: false,
     });
   };

@@ -36,7 +36,7 @@ module.exports = function({ Apartment, Picture, Term, Room, Client }) {
             const client = room.Rentings[0] && room.Rentings[0].Client;
             const identity = client && Client.getFullIdentity({
               client,
-              clientIdentity: client.Metadata[0],
+              identityRecord: client.get('identityRecord'),
             });
 
             // Each housemate/room is represented as a single string since
