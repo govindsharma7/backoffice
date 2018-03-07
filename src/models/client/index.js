@@ -50,16 +50,6 @@ const Client = sequelize.define('Client', {
       );
     },
   },
-  fullName: {
-    type:                     DataTypes.VIRTUAL(DataTypes.STRING),
-    get() {
-      const { firstName, lastName } = this.dataValues;
-
-      return (
-        `${firstName} ${(lastName || '').toUpperCase()}`
-      );
-    },
-  },
   email: {
     type:                     DataTypes.STRING,
     required: true,
@@ -89,6 +79,42 @@ const Client = sequelize.define('Client', {
     required: true,
     defaultValue: 'draft',
     allowNull: false,
+  },
+  fullName: {
+    type:                     DataTypes.VIRTUAL(DataTypes.STRING),
+    get() {
+      const { firstName, lastName } = this.dataValues;
+
+      return (
+        `${firstName} ${(lastName || '').toUpperCase()}`
+      );
+    },
+  },
+  identityRecord: {
+    type:                     DataTypes.VIRTUAL(DataTypes.STRING),
+    get() {
+      if ( this.hasScope('clientMeta') ) {
+        const identityRecord =
+          this.Metadata.find(({ name }) => name === 'clientIdentity');
+
+        return identityRecord ? identityRecord.value : false;
+      }
+
+      return undefined;
+    },
+  },
+  paymentDelay: {
+    type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
+    get() {
+      if ( this.hasScope('clientMeta') ) {
+        const paymentDelay =
+          this.Metadata.find(({ name }) => name === 'payment-delay');
+
+        return paymentDelay ? paymentDelay.value : 0;
+      }
+
+      return undefined;
+    },
   },
 }, {
   paranoid: true,
@@ -196,6 +222,27 @@ Client.associate = (models) => {
     }],
   }));
 
+  Client.addScope('clientMeta', {
+    include: [models.Metadata],
+  });
+
+  // TODO: use clientMeta scope instead of this one
+  Client.addScope('identity', {
+    attributes: { include: [
+      [literal([
+        '(CASE WHEN `Metadata`.`name` IS NULL',
+          'THEN 0',
+          'ELSE `Metadata`.`value`',
+        'END)',
+      ].join(' ')), 'identityRecord'],
+    ] },
+    include: [{
+      model: models.Metadata,
+      where: { name: 'clientIdentity' },
+      required: false,
+    }],
+  });
+
   Client.addScope('paymentDelay', {
     attributes: { include: [
       [literal([
@@ -210,22 +257,6 @@ Client.associate = (models) => {
       where: { name: 'payment-delay' },
       required: false,
 
-    }],
-  });
-
-  Client.addScope('identity', {
-    attributes: { include: [
-      [literal([
-        '(CASE WHEN `Metadata`.`name` IS NULL',
-          'THEN 0',
-          'ELSE `Metadata`.`value`',
-        'END)',
-      ].join(' ')), 'identityRecord'],
-    ] },
-    include: [{
-      model: models.Metadata,
-      where: { name: 'clientIdentity' },
-      required: false,
     }],
   });
 

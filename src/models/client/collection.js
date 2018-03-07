@@ -1,4 +1,5 @@
 const _                     = require('lodash');
+const Promise               = require('bluebird');
 const {
   TRASH_SEGMENTS,
   CITIES,
@@ -7,26 +8,26 @@ const { INVOICENINJA_URL }  = require('../../config');
 const Op                    = require('../../operators');
 const sequelize             = require('../sequelize');
 
-// const { Op } = sequelize;
+const { Model } = sequelize;
+// This object needs to be defined once otherwise memoization will be useless
+const scopes = ['clientMeta'];
 
 module.exports = function({ Client }) {
   const cache = new WeakMap();
 
   function getIdentyMemoized(object) {
     if ( cache.has(object) ) {
-      return cache.get(object);
+      return Promise.resolve(cache.get(object));
     }
 
     const identity = (async () => {
-      const client = object.get('identityRecord') != null ?
-        object :
-        await Client.scope('identity').findById(object.id);
+      const client = await Model.requireScopes(object, scopes);
 
       return Client.getFullIdentity({
         client,
-        identityRecord: client.get('identityRecord'),
+        identityRecord: client.identityRecord,
       });
-    })();
+    })().catch(console.error);
 
     cache.set(object, identity);
 
@@ -92,8 +93,8 @@ module.exports = function({ Client }) {
     }, {
       field: 'paymentDelay',
       type: 'String',
-      get(object) {
-        return object.get('paymentDelay');
+      async get(object) {
+        return (await object.requireScopes(scopes)).paymentDelay || 0;
       },
     }, {
       field: 'jotform-attachments',
@@ -170,7 +171,7 @@ module.exports = function({ Client }) {
       },
     })).concat(TRASH_SEGMENTS, {
       name: 'default',
-      scope: 'identity',
+      scope: 'clientMeta',
     }, {
       name: 'paymentDelay',
       scope: 'paymentDelay',

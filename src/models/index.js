@@ -1,3 +1,5 @@
+const memoize       = require('memoize-immutable');
+const WeakTupleMap  = require('weaktuplemap');
 const Sendinblue    = require('../vendor/sendinblue');
 const sequelize     = require('./sequelize');
 const models        = require('./models');
@@ -24,6 +26,8 @@ const {
   CurrentRenting,
 }                   = require('./rentingViews');
 
+const { Model } = sequelize;
+
 Object.assign(models, {
   Apartment,
   Client,
@@ -45,6 +49,76 @@ Object.assign(models, {
   LatestRenting,
   CurrentRenting,
 });
+
+function addWatermark(name, definition) {
+  const watermark = [sequelize.literal(1), `_scope_${name}`];
+
+  if ( Array.isArray(definition.attributes) ) {
+    definition.attributes.push(watermark);
+  }
+  else if ( definition.attributes == null ) {
+    definition.attributes = { include: [watermark] };
+  }
+  else {
+    definition.attributes.include.push(watermark);
+  }
+
+  return definition;
+}
+
+Model.requireScopes = async function requireScopes(instance, _scopes, _options) {
+  const options = Object.assign({}, _options, {
+    where: instance.where(),
+    include: instance._options.include || null,
+  });
+  const missingScopes = _scopes.filter((scope) =>
+    instance.get(`_scope_${scope}`) == null
+  );
+
+  if ( missingScopes.length === 0 ) {
+    return instance;
+  }
+
+  const scoped = Model.scope.apply(instance.constructor, missingScopes);
+  const reloaded = await scoped.findOne(options);
+
+  if ( !reloaded ) {
+    throw new sequelize.InstanceError(
+      'Instance could not be reloaded because it does not exist anymore'
+    );
+  }
+
+  // update the internal options of the instance
+  instance._options = reloaded._options;
+  // re-set instance values
+  instance.set(Object.assign({}, instance.dataValues, reloaded.dataValues), {
+    raw: true,
+    reset: true && !options.attributes,
+  });
+
+  return instance;
+};
+
+// TODO: find out why using requireScopesMemoized doesn't work and fix this!
+Model.requireScopesMemoized = memoize(Model.requireScopes, { cache: new WeakTupleMap() });
+
+Model._addScope = Model.addScope;
+Model.addScope = function(name, definition) {
+  return this._addScope(name, typeof definition === 'function' ?
+    function() { return addWatermark(name, definition.apply(null, arguments)); } :
+    addWatermark( name, definition )
+  );
+};
+
+Model.prototype.hasScope = function(name) {
+  return this.get(`_scope_${name}`) === 1;
+};
+
+// This method should only be used in collection.js files
+// In other files, scopes should simply be required using Model#scope
+Model.prototype.requireScopes = function(_scopes, _options) {
+  return Model.requireScopes(this, _scopes, _options);
+};
 
 // Find by id should return soft-deleted records
 sequelize.addHook('beforeFind', (options) => {

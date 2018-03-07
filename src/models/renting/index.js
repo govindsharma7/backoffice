@@ -232,12 +232,20 @@ Renting.associate = (models) => {
     }],
   });
 
+  Renting.addScope('client+meta', {
+    include: [{
+      model: models.Client.scope('clientMeta'),
+    }],
+  });
+
+  // TODO: use client+meta scope instead of this one
   Renting.addScope('client+identity', {
     include: [{
       model: models.Client.scope('identity'),
     }],
   });
 
+  // TODO: use client+meta scope instead of this one
   Renting.addScope('client+paymentDelay', {
     include: [{
       model: models.Client.scope('paymentDelay'),
