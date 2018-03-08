@@ -1,5 +1,4 @@
 const _                     = require('lodash');
-const Promise               = require('bluebird');
 const {
   TRASH_SEGMENTS,
   CITIES,
@@ -17,7 +16,7 @@ module.exports = function({ Client }) {
 
   function getIdentyMemoized(object) {
     if ( cache.has(object) ) {
-      return Promise.resolve(cache.get(object));
+      return cache.get(object);
     }
 
     const identity = (async () => {

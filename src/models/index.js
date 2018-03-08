@@ -50,7 +50,7 @@ Object.assign(models, {
   CurrentRenting,
 });
 
-function addWatermark(name, definition) {
+function addWatermark(model, name, definition) {
   const watermark = [sequelize.literal(1), `_scope_${name}`];
 
   if ( Array.isArray(definition.attributes) ) {
@@ -58,6 +58,10 @@ function addWatermark(name, definition) {
   }
   else if ( definition.attributes == null ) {
     definition.attributes = { include: [watermark] };
+    // TODO: report the following sequelize bug:
+    // { include: … } attributes are not auto-expanded when a scoped model
+    // is included in a scope. Let's work around it.
+    model._expandAttributes(definition);
   }
   else {
     definition.attributes.include.push(watermark);
@@ -104,9 +108,11 @@ Model.requireScopesMemoized = memoize(Model.requireScopes, { cache: new WeakTupl
 
 Model._addScope = Model.addScope;
 Model.addScope = function(name, definition) {
-  return this._addScope(name, typeof definition === 'function' ?
-    function() { return addWatermark(name, definition.apply(null, arguments)); } :
-    addWatermark( name, definition )
+  const self = this;
+
+  return self._addScope(name, typeof definition === 'function' ?
+    function() { return addWatermark(self, name, definition.apply(null, arguments)); } :
+    addWatermark(self, name, definition )
   );
 };
 
