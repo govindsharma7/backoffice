@@ -19,19 +19,21 @@ module.exports = function({ Room, Picture, Term }) {
       type: 'Date',
     }, {
       // For some reason I need to alias virtual fields which return promises
-      // TODO: find out why and fix the bug (watch out, update website too)
+      // TODO: find out why, fix the bug (watch out, update website too) and
+      // remove the underscore of this field
       field: '_currentPrice',
       type: 'Number',
-      get(object) {
-        return object.currentPrice;
+      async get(object) {
+        return (await object.requireScopes(['availableAt'])).currentPrice;
       },
     }, {
       // For some reason I need to alias virtual fields which return promises
-      // TODO: find out why and fix the bug (watch out, update website too)
+      // TODO: find out why, fix the bug (watch out, update website too) and
+      // remove the underscore of this field
       field: '_serviceFees',
       type: 'Number',
-      get(object) {
-        return object.serviceFees;
+      async get(object) {
+        return (await object.requireScopes(['availableAt'])).serviceFees;
       },
     }, {
       field: 'preview',
