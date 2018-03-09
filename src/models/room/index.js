@@ -99,7 +99,7 @@ Room.associate = (models) => {
     scope: { metadatable: 'Room' },
   });
 
-  Room.addScope('availableAt', {
+  Room.addScope('availableAt', (args = { includeClient: false }) => ({
     attributes: { include: [
       [sequelize.literal([
         '(CASE WHEN `Rentings`.`id` IS NULL',
@@ -111,26 +111,24 @@ Room.associate = (models) => {
     include: [{
       model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
       required: false,
+      include: args.includeClient ? [{
+        model: models.Client.scope('clientMeta'),
+      }] : [],
     }],
-  });
+  }));
 
-  Room.addScope('currentOccupant', {
-    attributes: { include: [
-      [sequelize.literal([
-        '(CASE WHEN `Rentings->Events`.`startDate` IS NULL',
-          'THEN \'1970-01-01T00:00:00Z\'',
-          'ELSE NULL',
-        'END)',
-      ].join(' ')), 'availableAt'],
-    ] },
-    include: [{
-      model: models.Renting.scope({ method: ['currentRenting', 'Rentings'] }),
-      required: false,
+  // This might be useful some day but isn't used now
+  ['currentClient', 'latestClient'].forEach((scopeName) =>
+    Room.addScope(scopeName, () => ({
       include: [{
-        model: models.Client.scope('identity'),
+        model: models.Renting.scope({
+          method: [scopeName.replace('Client', 'Renting'), 'Rentings'],
+        }),
+        required: false,
+        include: [models.Client],
       }],
-    }],
-  });
+    }))
+  );
 };
 
 // Make a room unavailable for a period of time (from and to included)

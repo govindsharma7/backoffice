@@ -59,8 +59,8 @@ describe('Client - Routes', () => {
         'q09_something': 'else',
       });
 
-      const client = await Client.scope('identity').findById(u.id('client'));
-      const identity = JSON.parse(client.Metadata[0].value);
+      const client = await Client.scope('clientMeta').findById(u.id('client'));
+      const identity = JSON.parse(client.identityRecord);
 
       expect(client.firstName).toEqual('Johny');
       expect(client.lastName).toEqual('Doey');

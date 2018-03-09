@@ -9,35 +9,29 @@ const {
 const { Client, Renting } = models;
 const now = new Date();
 
-return Client.scope('latestClientRenting')
+return Client.scope('latestApartment')
   .findAll()
-  .filter((client) => {
-    return client.Rentings.length > 0;
-  })
-  .map((client) => {
-    return Promise.all([
-      Renting.scope('checkoutDate')
-        .findOne({
-          where: {
-            id: client.Rentings[0].id,
-            '$checkoutDate$': {
-              $and: {
-                $lte: now,
-                $not: null,
-              },
+  .filter(({ Rentings }) => Rentings.length > 0)
+  .map((client) => Promise.all([
+    Renting.scope('checkoutDate')
+      .findOne({
+        where: {
+          id: client.Rentings[0].id,
+          '$checkoutDate$': {
+            $and: {
+              $lte: now,
+              $not: null,
             },
           },
-        }),
-      client,
-    ]);
-  })
-  .filter(([renting]) => {
-    return renting !== null;
-  })
-  .map(([, client]) => {
-    return SendinBlue.getContact(client.email)
+        },
+      }),
+    client,
+  ]))
+  .filter(([renting]) => renting !== null)
+  .map(([, client]) =>
+    SendinBlue.getContact(client.email)
       .then((_client) => {
-        if ( !_client.listIds.some((list) => { return list === 25; })) {
+        if ( !_client.listIds.some((list) => list === 25)) {
           return SendinBlue.updateContact(
             _client.email,
             {
@@ -46,5 +40,5 @@ return Client.scope('latestClientRenting')
             });
         }
         return true;
-      });
-  });
+      })
+  );

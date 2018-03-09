@@ -5,7 +5,7 @@ const Op                          = require('../../operators');
 const Aws                         = require('../../vendor/aws');
 const Utils                       = require('../../utils');
 
-module.exports = function(app, { Apartment, Room, Client, Picture, Renting }) {
+module.exports = function(app, { Apartment, Room, Client, Picture }) {
   const LEA = Liana.ensureAuthenticated;
 
   // TODO: re-implement this route using Sendinblue API
@@ -36,8 +36,8 @@ module.exports = function(app, { Apartment, Room, Client, Picture, Renting }) {
     const { values, ids, collection_name: collectionName } = attributes;
 
     const where = collectionName === 'Apartment' ?
-      { ApartmentId : { $in : ids } } :
-      { id : { $in : ids } } ;
+      { ApartmentId : { [Op.in]: ids } } :
+      { id : { [Op.in]: ids } } ;
 
     return Room.scope('availableAt')
       .findAll({ where })
@@ -76,13 +76,9 @@ module.exports = function(app, { Apartment, Room, Client, Picture, Renting }) {
   Utils.addInternalRelationshipRoute({
     app,
     sourceModel: Apartment,
-    associatedModel: Renting,
+    associatedModel: Client.scope('currentApartment'),
     routeName: 'current-clients',
-    scope: 'currentApartment',
-    where: (req) => ({
-      '$Rentings->Room.ApartmentId$': req.params.recordId,
-      '$Rentings.bookingDate$': { [Op.lte]:  new Date() },
-    }),
+    where: (req) => ({ '$Rentings->Room.ApartmentId$': req.params.recordId }),
   });
 
   Utils.addRestoreAndDestroyRoutes(app, Apartment);

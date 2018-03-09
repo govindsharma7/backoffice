@@ -173,10 +173,9 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
     );
     const clientId = values.clientId.trim();
 
-    const client =
-      await Client.scope('latestClientRenting').findOne({
-        where: /@/.test(clientId) ? { email: clientId } : { id: clientId },
-      });
+    const client = await Client.findOne({
+      where: /@/.test(clientId) ? { email: clientId } : { id: clientId },
+    });
 
     return Metadata.create({
         MetadatableId: client.id,
@@ -206,7 +205,7 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
       throw new Error('clientId is missing');
     }
 
-    const client = await Client.scope('latestClientRenting').findOne({
+    const client = await Client.scope('latestApartment').findOne({
       where: /@/.test(clientId) ? { email: clientId } : { id: clientId },
     });
     const { addressCity } = client.Rentings[0].Room.Apartment;

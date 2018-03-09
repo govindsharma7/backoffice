@@ -124,14 +124,6 @@ Renting.associate = (models) => {
     constraints: false,
     scope: { metadatable: 'Renting' },
   });
-  Renting.hasOne(models.LatestRenting, {
-    foreignKey: 'RoomId',
-    constraints: false,
-  });
-  Renting.hasOne(models.CurrentRenting, {
-    foreignKey: 'RoomId',
-    constraints: false,
-  });
 
   // checkinDate, checkoutDate scopes
   const [, checkoutDateScopeArgs] = ['checkin', 'checkout'].map((type) => {
@@ -170,8 +162,14 @@ Renting.associate = (models) => {
     'latestRentingByClient',
     'currentRentingByClient',
   ].forEach((scopeName) => {
-    const modelName = scopeName.replace(/^./, ($0) => $0.toUpperCase());
+    const view = models[scopeName.replace(/^./, ($0) => $0.toUpperCase())];
     const isCurrent = /^current/.test(scopeName);
+    const foreignKey = /ByClient$/.test(scopeName) ? 'ClientId' : 'RoomId';
+
+    Renting.hasOne(view, {
+      foreignKey,
+      constraints: false,
+    });
 
     Renting.addScope(scopeName, (includedFrom = 'Renting', date = new Date()) => ({
       // The checkoutDate is only useful/usable when this scope isn't included
@@ -189,15 +187,16 @@ Renting.associate = (models) => {
         }
       ),
       include: [{
-        model: models[modelName],
+        model: view,
         required: true,
         on: {
-          RoomId: { [Op.col]: `${includedFrom}.RoomId` },
+          [foreignKey]: { [Op.col]: `${includedFrom}.${foreignKey}` },
           bookingDate: { [Op.col]: `${includedFrom}.bookingDate` },
         },
       }, {
         model: models.Event,
         required: false,
+        attributes: ['type', 'startDate'],
         where: { type: 'checkout'},
       }],
     }));
@@ -235,20 +234,6 @@ Renting.associate = (models) => {
   Renting.addScope('client+meta', {
     include: [{
       model: models.Client.scope('clientMeta'),
-    }],
-  });
-
-  // TODO: use client+meta scope instead of this one
-  Renting.addScope('client+identity', {
-    include: [{
-      model: models.Client.scope('identity'),
-    }],
-  });
-
-  // TODO: use client+meta scope instead of this one
-  Renting.addScope('client+paymentDelay', {
-    include: [{
-      model: models.Client.scope('paymentDelay'),
     }],
   });
 };

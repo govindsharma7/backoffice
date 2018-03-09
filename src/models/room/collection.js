@@ -15,6 +15,10 @@ module.exports = function({ Room, Picture, Term }) {
 
   return {
     fields: [{
+      field: 'current-client',
+      type: ['String'],
+      reference: 'Client.id',
+    }, {
       field: 'availableAt',
       type: 'Date',
     }, {

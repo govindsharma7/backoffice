@@ -1,6 +1,5 @@
 const makePublic       = require('../../middlewares/makePublic');
 const Utils            = require('../../utils');
-const Op               = require('../../operators');
 
 module.exports = function(app, { Room, Client }) {
 
@@ -11,13 +10,9 @@ module.exports = function(app, { Room, Client }) {
   Utils.addInternalRelationshipRoute({
     app,
     sourceModel: Room,
-    associatedModel: Client,
+    associatedModel: Client.scope('currentApartment'),
     routeName: 'current-client',
-    scope: 'currentApartment',
-    where: (req) => ({
-      '$Rentings.RoomId$': req.params.recordId,
-      '$Rentings.bookingDate$': { [Op.lte]:  new Date() },
-    }),
+    where: (req) => ({ '$Rentings.RoomId$': req.params.recordId }),
   });
 
   Utils.addRestoreAndDestroyRoutes(app, Room);

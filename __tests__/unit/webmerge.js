@@ -30,27 +30,25 @@ describe('webmerge', () => {
         floorArea: 47,
       },
       depositTerm: false,
-      identityMeta: {
-        value: JSON.stringify({
-          address: {
-            1: '16 rue Conde',
-            2: 'Lyon',
-            3: undefined,
-            4: '69002',
-          },
-          birthDate: {
-            day: '23',
-            month: '07',
-            year: '1986',
-          },
-          birthPlace: {
-            first: 'New York',
-            last: 'United States',
-          },
-          birthCountryFr: 'Etats-Unis',
-          nationalityFr: 'américain',
-        }),
-      },
+      identityRecord: JSON.stringify({
+        address: {
+          1: '16 rue Conde',
+          2: 'Lyon',
+          3: undefined,
+          4: '69002',
+        },
+        birthDate: {
+          day: '23',
+          month: '07',
+          year: '1986',
+        },
+        birthPlace: {
+          first: 'New York',
+          last: 'United States',
+        },
+        birthCountryFr: 'Etats-Unis',
+        nationalityFr: 'américain',
+      }),
       packLevel: 'basique',
     };
     const now = new Date();

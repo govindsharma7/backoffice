@@ -9,167 +9,375 @@ const { Client } = models;
 let client;
 let client2;
 
-let apartment;
-
 let renting2;
 let renting3;
-let u;
 
 describe('Client - Model', () => {
   beforeAll(() => {
     return clientFixtures()
-      .then(({instances, unique}) => {
+      .then(({instances}) => {
         return (
           client = instances['client-1'],
           client2 = instances['client-2'],
           renting2 = instances['renting-2'],
-          renting3 = instances['renting-3'],
-          apartment = instances['apartment-1'],
-          u = unique
+          renting3 = instances['renting-3']
         );
       });
   });
 
   describe('Scopes', () => {
-    it('rentOrders scope find orders where orderItem is a `rent`', async() => {
-      const { unique: u } = await fixtures((u) => ({
-        Client: [{
-          id: u.id('client'),
-          firstName: 'John',
-          lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
-        }],
-        Order: [{
-          id: u.id('order1'),
-          label: 'June Invoice',
-          ClientId: u.id('client'),
-          dueDate: D.parse('2016-01-01 Z'),
-        }, {
-          id: u.id('order2'),
-          label: 'March Invoice',
-          ClientId: u.id('client'),
-          dueDate: D.parse('2017-07-01 Z'),
-        }, {
-          id: u.id('order3'),
-          label: 'July Invoice',
-          ClientId: u.id('client'),
-          dueDate: D.parse('2017-03-21 Z'),
-        }],
-        OrderItem: [{
-          id: u.id('orderitem1'),
-          label: 'Late Fees',
-          OrderId: u.id('order1'),
-          ProductId: 'late-fees',
-        }, {
-          id: u.id('orderitem2'),
-          label: 'Rent',
-          OrderId: u.id('order1'),
-          ProductId: 'rent',
-        }, {
-          id: u.id('orderitem3'),
-          label: 'Rent',
-          OrderId: u.id('order2'),
-          ProductId: 'rent',
-        }],
-      }))();
+    describe('rentOrder', () => {
+      it('finds orders where orderItem is a `rent`', async() => {
+        const { unique: u } = await fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Order: [{
+            id: u.id('order1'),
+            label: 'June Invoice',
+            ClientId: u.id('client'),
+            dueDate: D.parse('2016-01-01 Z'),
+          }, {
+            id: u.id('order2'),
+            label: 'March Invoice',
+            ClientId: u.id('client'),
+            dueDate: D.parse('2017-07-01 Z'),
+          }, {
+            id: u.id('order3'),
+            label: 'July Invoice',
+            ClientId: u.id('client'),
+            dueDate: D.parse('2017-03-21 Z'),
+          }],
+          OrderItem: [{
+            id: u.id('orderitem1'),
+            label: 'Late Fees',
+            OrderId: u.id('order1'),
+            ProductId: 'late-fees',
+          }, {
+            id: u.id('orderitem2'),
+            label: 'Rent',
+            OrderId: u.id('order1'),
+            ProductId: 'rent',
+          }, {
+            id: u.id('orderitem3'),
+            label: 'Rent',
+            OrderId: u.id('order2'),
+            ProductId: 'rent',
+          }],
+        }))();
 
-      const client = await Client.scope('rentOrders').findById(u.id('client'));
+        const client = await Client.scope('rentOrders').findById(u.id('client'));
 
-      client.Orders.forEach((order) =>
-        order.OrderItems.map((orderitem) =>
-          expect(orderitem.ProductId).toEqual('rent')
-        )
-      );
+        client.Orders.forEach((order) =>
+          order.OrderItems.map((orderitem) =>
+            expect(orderitem.ProductId).toEqual('rent')
+          )
+        );
 
-      return expect(client.Orders.length).toEqual(2);
+        return expect(client.Orders.length).toEqual(2);
+      });
+
+      it('returns no Order when there is no `rent` orderItem', async() => {
+        const { unique: u } = await fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Order: [{
+            id: u.id('order1'),
+            label: 'June Invoice',
+            ClientId: u.id('client'),
+            dueDate: D.parse('2016-01-01 Z'),
+          }, {
+            id: u.id('order2'),
+            label: 'March Invoice',
+            ClientId: u.id('client'),
+            dueDate: D.parse('2017-07-01 Z'),
+          }],
+          OrderItem: [{
+            id: u.id('orderitem1'),
+            label: 'Late Fees',
+            OrderId: u.id('order1'),
+            ProductId: 'late-fees',
+          }],
+        }))();
+
+        const client = await Client.scope('rentOrders').findById(u.id('client'));
+
+        return expect(client.Orders.length).toEqual(0);
+      });
     });
 
-    it('rentOrders scope return no Order when there is no `rent` orderItem', async() => {
-      const { unique: u } = await fixtures((u) => ({
-        Client: [{
-          id: u.id('client'),
-          firstName: 'John',
-          lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
-        }],
-        Order: [{
-          id: u.id('order1'),
-          label: 'June Invoice',
-          ClientId: u.id('client'),
-          dueDate: D.parse('2016-01-01 Z'),
-        }, {
-          id: u.id('order2'),
-          label: 'March Invoice',
-          ClientId: u.id('client'),
-          dueDate: D.parse('2017-07-01 Z'),
-        }],
-        OrderItem: [{
-          id: u.id('orderitem1'),
-          label: 'Late Fees',
-          OrderId: u.id('order1'),
-          ProductId: 'late-fees',
-        }],
-      }))();
+    describe('roomSwitchCount', () => {
+      it('counts the time a client switched room', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Order: [{
+            id: u.id('order'),
+            type: 'debit',
+            ClientId: u.id('client'),
+            dueDate: D.parse('2016-01-01 Z'),
+          }],
+          OrderItem: [{
+            id: u.id('orderitem'),
+            label: 'test item 2',
+            unitPrice: 200,
+            OrderId: u.id('order'),
+            ProductId: 'room-switch',
+          }],
+        }))();
 
-      const client = await Client.scope('rentOrders').findById(u.id('client'));
+        const client =
+          await models.Client.scope('roomSwitchCount').findById(u.id('client'));
 
-      return expect(client.Orders.length).toEqual(0);
+        expect(client.get('roomSwitchCount')).toEqual(1);
+      });
     });
 
-    it('roomSwitchCount scope counts the time a client switched room', () => {
-      return models.Client.scope('roomSwitchCount')
-        .findById(client.id)
-        .then((client) => {
-          return expect(client.get('roomSwitchCount')).toEqual(1);
-        });
+    describe('uncashedDepositCount', () => {
+      it('counts rentings with "do-not-cash" option', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('renting'),
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+            status: 'active',
+            bookingDate: D.parse('2016-01-01'),
+          }],
+          Term: [{
+            name: 'do-not-cash',
+            taxonomy: 'deposit-option',
+            termable: 'Renting',
+            TermableId: u.id('renting'),
+          }],
+        }))();
+
+        const client =
+          await models.Client.scope('uncashedDepositCount').findById(u.id('client'));
+
+        expect(client.get('uncashedDepositCount')).toEqual(1);
+      });
     });
 
-    it('uncashedDepositCount count rentings with "do-not-cash" option', () => {
-      return models.Client.scope('uncashedDepositCount')
-        .findById(client.id)
-        .then((client) => {
-          return expect(client.get('uncashedDepositCount')).toEqual(1);
-        });
+    describe('currentApartment', () => {
+      it('finds the current room & apartment', async () => {
+        const now = new Date();
+        const oneYearAgo = D.subYears(now, 1);
+        const oneMonthAgo = D.subMonths(now, 1);
+        const oneMonthFromNow = D.addMonths(now, 1);
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room1'),
+            ApartmentId: u.id('apartment'),
+          }, {
+            id: u.id('room2'),
+            ApartmentId: u.id('apartment'),
+          }, {
+            id: u.id('room3'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('draft-renting'),
+            status: 'draft',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('past-renting'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('current-renting'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room2'),
+          }, {
+            id: u.id('future-renting'),
+            status: 'active',
+            bookingDate: oneMonthFromNow,
+            ClientId: u.id('client'),
+            RoomId: u.id('room3'),
+          }],
+          Event: [{
+            type: 'checkout',
+            EventableId: u.id('current-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthFromNow,
+            endDate: oneMonthFromNow,
+          }, {
+            type: 'checkout',
+            EventableId: u.id('past-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }],
+        }))();
+
+        const client =
+          await models.Client.scope('currentApartment').findById(u.id('client'));
+
+        expect(client.Rentings[0].Room.id).toEqual(u.id('room2'));
+      });
+
+      it('finds no Renting when client already checkout', async () => {
+        const now = new Date();
+        const oneYearAgo = D.subYears(now, 1);
+        const oneMonthAgo = D.subMonths(now, 1);
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('draft-renting'),
+            status: 'draft',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+          }, {
+            id: u.id('past-renting'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room'),
+          }],
+          Event: [{
+            type: 'checkout',
+            EventableId: u.id('past-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }],
+        }))();
+
+        const client =
+          await models.Client.scope('currentApartment').findById(u.id('client'));
+
+        expect(client.Rentings.length).toEqual(0);
+      });
     });
 
-    it('currentApartment scope should return current client of a Room', () => {
-      return models.Client.scope('currentApartment')
-        .findById(client.id)
-        .then((client) => {
-          return expect(client.Rentings[0].Room.id).toEqual(u.id('room-1'));
-        });
-    });
+    describe('latestApartment', () => {
+      it('finds the latest room & apartment of the client', async () => {
+        const now = new Date();
+        const oneYearAgo = D.subYears(now, 1);
+        const oneMonthAgo = D.subMonths(now, 1);
+        const oneMonthFromNow = D.addMonths(now, 1);
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room1'),
+            ApartmentId: u.id('apartment'),
+          }, {
+            id: u.id('room2'),
+            ApartmentId: u.id('apartment'),
+          }, {
+            id: u.id('room3'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+          }],
+          Renting: [{
+            id: u.id('draft-renting'),
+            status: 'draft',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('past-renting'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('current-renting'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room2'),
+          }, {
+            id: u.id('future-renting'),
+            status: 'active',
+            bookingDate: oneMonthFromNow,
+            ClientId: u.id('client'),
+            RoomId: u.id('room3'),
+          }],
+          Event: [{
+            type: 'checkout',
+            EventableId: u.id('current-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthFromNow,
+            endDate: oneMonthFromNow,
+          }, {
+            type: 'checkout',
+            EventableId: u.id('past-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }],
+        }))();
 
-    it('currentApartment scope should return current clients of an Apartment', () => {
-      return models.Client.scope('currentApartment')
-        .findAll({
-          where: {
-            '$Rentings->Room.ApartmentId$': apartment.id,
-            '$Rentings.bookingDate$': { $lte:  new Date() },
-            'id': { $ne: client.id },
-          },
-        })
-        .then((clients) => {
-         return expect(clients[0].Rentings[0].Room.id).toEqual(u.id('room-2'));
-        });
-    });
-    it('currentApartment scope return no Renting as client already checkout', () => {
-      return models.Client.scope('currentApartment')
-        .findById(client2.id)
-        .then((client) => {
-          return expect(client.Rentings).toHaveLength(0);
-        });
+        const client =
+          await models.Client.scope('latestApartment').findById(u.id('client'));
+
+        expect(client.Rentings[0].Room.id).toEqual(u.id('room3'));
+      });
     });
   });
-
-  // describe('#getRentingOrdersFor()', () => {
-  //   it('should find the renting order for a specific month', () => {
-  //     return client.getRentingOrdersFor(D.parse('2016-01 Z'))
-  //       .then((orders) => {
-  //         return expect(orders[0].dueDate).toEqual('2016-01-01');
-  //       });
-  //   });
-  // });
 
   describe('#getRentingsFor', () => {
     it('should find all rentings for a specific month', async () => {
@@ -282,22 +490,6 @@ describe('Client - Model', () => {
     });
   });
 
-  describe('#ninjaSerialize()', () => {
-    it('should serialize the client for InvoiceNinja', () => {
-      return client.ninjaSerialize()
-        .then((obj) => {
-          return expect(obj).toEqual({
-            'name': 'John Doe',
-            'contact': {
-              'email': u.str('john@doe.com'),
-              'first_name': 'John',
-              'last_name': 'Doe',
-            },
-          });
-        });
-    });
-  });
-
   describe('#applyLateFees()', () => {
     it('should create a draft order with late fees', () => {
       const now = new Date();
@@ -356,7 +548,7 @@ describe('Client - Model', () => {
       };
       const fullIdentity = await models.Client.getFullIdentity({
         client: { firstName: 'John' },
-        identityMeta: { value: JSON.stringify(rawIdentity) },
+        identityRecord: JSON.stringify(rawIdentity),
         now,
       });
 

@@ -191,10 +191,12 @@ Client.associate = (models) => {
     group: ['Client.id'],
   });
 
-  Client.addScope('currentApartment', function() {
-    return {
+  ['currentApartment', 'latestApartment'].forEach((scopeName) =>
+    Client.addScope(scopeName, () => ({
       include: [{
-        model: models.Renting.scope({ method: ['currentRentingByClient', 'Rentings'] }),
+        model: models.Renting.scope({
+          method: [scopeName.replace('Apartment', 'RentingByClient'), 'Rentings'],
+        }),
         required: false,
         include: [{
           model: models.Room,
@@ -205,42 +207,11 @@ Client.associate = (models) => {
           }],
         }],
       }],
-    };
-  });
-
-  // This scope must be a function because 'latestRenting' isn't available yet
-  Client.addScope('latestClientRenting', () => ({
-    include: [{
-      model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
-      include: [{
-        model: models.Room,
-        include: [{
-          model: models.Apartment,
-          attributes: ['addressCity'],
-        }],
-      }],
-    }],
-  }));
+    }))
+  );
 
   Client.addScope('clientMeta', {
     include: [models.Metadata],
-  });
-
-  // TODO: use clientMeta scope instead of this one
-  Client.addScope('identity', {
-    attributes: { include: [
-      [literal([
-        '(CASE WHEN `Metadata`.`name` IS NULL',
-          'THEN 0',
-          'ELSE `Metadata`.`value`',
-        'END)',
-      ].join(' ')), 'identityRecord'],
-    ] },
-    include: [{
-      model: models.Metadata,
-      where: { name: 'clientIdentity' },
-      required: false,
-    }],
   });
 
   Client.addScope('paymentDelay', {
@@ -256,7 +227,6 @@ Client.associate = (models) => {
       model: models.Metadata,
       where: { name: 'payment-delay' },
       required: false,
-
     }],
   });
 

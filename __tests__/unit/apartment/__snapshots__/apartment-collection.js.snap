@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Apartment - Collection →housemates should find all rooms' current occupant or availability 1`] = `
+"Larry
+
+
+"
+`;

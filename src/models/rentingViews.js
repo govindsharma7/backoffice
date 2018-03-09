@@ -1,31 +1,19 @@
 // This is how you use views with Sequelize, from https://github.com/sequelize/sequelize/issues/7197
 const { DataTypes }         = require('sequelize');
-const map                   = require('lodash/map');
 const sequelize             = require('./sequelize');
 
-const _ = { map };
-const views = {
-  'LatestRenting': {
-    foreignKey: 'RoomId',
-  },
-  'CurrentRenting': {
-    foreignKey: 'RoomId',
-    isCurrent: true,
-  },
-  'LatestRentingByClient': {
-    foreignKey: 'ClientId',
-  },
-  CurrentRentingByClient: {
-    foreignKey: 'ClientId',
-    isCurrent: true,
-  },
-};
-const [
-  LatestRenting,
-  CurrentRenting,
-] = _.map(views, ({ foreignKey, isCurrent }, viewName) => {
+const views = {};
+
+[
+  'LatestRenting',
+  'CurrentRenting',
+  'LatestRentingByClient',
+  'CurrentRentingByClient',
+].forEach((viewName) => {
+  const isCurrent = /^Current/.test(viewName);
+  const foreignKey = /ByClient$/.test(viewName) ? 'ClientId' : 'RoomId';
   const View = sequelize.define(viewName, {
-    RoomId: {
+    [foreignKey]: {
       primaryKey: true,
       type:                     DataTypes.UUID,
     },
@@ -67,10 +55,7 @@ const [
     });
   };
 
-  return View;
+  views[viewName] = View;
 });
 
-module.exports = {
-  LatestRenting,
-  CurrentRenting,
-};
+module.exports = views;

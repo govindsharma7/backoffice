@@ -24,6 +24,8 @@ const TotalPaid     = require('./TotalPaidView');
 const {
   LatestRenting,
   CurrentRenting,
+  LatestRentingByClient,
+  CurrentRentingByClient,
 }                   = require('./rentingViews');
 
 const { Model } = sequelize;
@@ -48,6 +50,8 @@ Object.assign(models, {
   TotalPaid,
   LatestRenting,
   CurrentRenting,
+  LatestRentingByClient,
+  CurrentRentingByClient,
 });
 
 function addWatermark(model, name, definition) {

@@ -1,15 +1,14 @@
-const capitalize          = require('lodash/capitalize');
+const _                   = require('lodash');
 const {
   TRASH_SEGMENTS,
   CITIES,
 }                         = require('../../const');
 const Utils               = require('../../utils');
 
-const _ = { capitalize };
-
 module.exports = function({ Apartment, Picture, Term, Room, Client }) {
   const galeryFields = Utils.generateGaleryFields(Apartment, Picture);
   const featuresFields = Utils.generateFeaturesFields(Apartment, Term);
+  const scopedRoom = Room.scope({ method: ['availableAt', { includeClient: true }]});
 
   return {
     fields: [{
@@ -26,7 +25,7 @@ module.exports = function({ Apartment, Picture, Term, Room, Client }) {
       field: 'housemates',
       type: ['String'],
       async get(object) {
-        const rooms = await Room.scope('currentOccupant').findAll({
+        const rooms = await scopedRoom.findAll({
           where: { ApartmentId: object.id },
         });
 
@@ -36,19 +35,19 @@ module.exports = function({ Apartment, Picture, Term, Room, Client }) {
             const client = room.Rentings[0] && room.Rentings[0].Client;
             const identity = client && Client.getFullIdentity({
               client,
-              identityRecord: client.get('identityRecord'),
+              identityRecord: client.identityRecord,
             });
 
             // Each housemate/room is represented as a single string since
             // Liana can't serialize complex values
-            return (client ? [
+            return (room.availableAt != null ? [
+              room.id,
+              room.availableAt.toISOString(),
+            ] : [
               client.firstName,
               (identity.gender || '').toLowerCase(),
               identity.descriptionEn,
               identity.descriptionFr,
-            ] : [
-              room.id,
-              room.availableAt.toISOString(),
             ]).join('\n');
           });
       },

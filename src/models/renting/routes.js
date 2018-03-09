@@ -99,10 +99,10 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
     const renting = await Renting.scope('room+apartment', 'depositOption')
       .findById(ids[0]);
     // Take the comfort level from clients, as they might be switching room
-    const client = await Client.scope('_packLevel', 'identity')
+    const client = await Client.scope('_packLevel', 'clientMeta')
       .findById(renting.ClientId);
 
-    if ( !client.Metadata.length ) {
+    if ( !client.identityRecord ) {
       throw new Error('Identity record is missing for this client');
     }
     if ( !client.get('packLevel') ) {
@@ -112,10 +112,10 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
     const lease = await Webmerge.mergeLease({
       renting,
       client,
+      identityRecord: client.identityRecord,
       room: renting.Room,
       apartment: renting.Room.Apartment,
       depositTerm: renting.Terms && renting.Terms[0],
-      identityMeta: client.Metadata && client.Metadata[0],
       packLevel: client.get('packLevel'),
     });
 

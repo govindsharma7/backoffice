@@ -22,14 +22,14 @@ function serializeLease(args) {
     client = required(),
     room = required(),
     apartment = required(),
-    identityMeta = required(),
+    identityRecord = required(),
     packLevel = required(),
     depositTerm,
     now = new Date(), // used for testing purpose
   } = args;
   const { name, addressStreet, addressZip, addressCity } = apartment;
   const bookingDate = renting.bookingDate || now;
-  const identity = JSON.parse(identityMeta.value);
+  const identity = JSON.parse(identityRecord);
   const fullAddress = _.values(identity.address).filter(Boolean).join(', ');
   const birthDate = _.values(identity.birthDate).join('/');
   const roomNumber = name.split(' ').splice(-1)[0] === 'studio' ?
