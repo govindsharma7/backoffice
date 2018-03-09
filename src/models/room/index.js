@@ -100,6 +100,7 @@ Room.associate = (models) => {
   });
 
   Room.addScope('availableAt', (args = { includeClient: false }) => ({
+    subQuery: false, // we're good, there's only one latestRenting
     attributes: { include: [
       [sequelize.literal([
         '(CASE WHEN `Rentings`.`id` IS NULL',

@@ -157,15 +157,4 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   Renting.hook('afterUpdate', (renting, opts) =>
     Renting.handleAfterUpdate(renting, opts)
   );
-
-  // It is safe to disable subqueries because it was used only with the default
-  // segment which includes Events through the checkoutDate scope.
-  // In this case, only a single event is ever returned.
-  Renting.hook('beforeFind', (options) => {
-    if ( options.subQuery === true ) {
-      // Subqueries fail completely when using checkoutDate scope.
-      console.warning('Sequelize subqueries have been disabled for Renting');
-    }
-    options.subQuery = false;
-  });
 };

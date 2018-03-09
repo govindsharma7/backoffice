@@ -193,6 +193,7 @@ Client.associate = (models) => {
 
   ['currentApartment', 'latestApartment'].forEach((scopeName) =>
     Client.addScope(scopeName, () => ({
+      subQuery: false, // we're good, there's only one *RentingByClient
       include: [{
         model: models.Renting.scope({
           method: [scopeName.replace('Apartment', 'RentingByClient'), 'Rentings'],

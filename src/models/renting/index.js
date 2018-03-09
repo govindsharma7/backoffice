@@ -128,6 +128,7 @@ Renting.associate = (models) => {
   // checkinDate, checkoutDate scopes
   const [, checkoutDateScopeArgs] = ['checkin', 'checkout'].map((type) => {
     const args = {
+      subQuery: false, // we're good, there's only one event of this type
       attributes: { include: [[col('Events.startDate'), `${type}Date`]] },
       include: [{
         model: models.Event,

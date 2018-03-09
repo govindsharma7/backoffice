@@ -47,20 +47,9 @@ const Order = sequelize.define('Order', {
     type:                     DataTypes.ENUM('draft', 'active', 'cancelled'),
     defaultValue: 'active',
   },
-  // TODO: this getter creates a lot of regression
-  // We can only use this and get rid of #getComputedProperties after we've
-  // improved our test coverage
-  // balance: {
-  //   type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
-  //   get() {
-  //     return (
-  //       this.get('totalPaid') - this.get('amount') - this.get('totalRefund')
-  //     );
-  //   },
-  // },
 }, {
   paranoid: true,
-  scopes: Object.assign({}, TRASH_SCOPES/*, UNTRASHED_SCOPE*/),
+  scopes: Object.assign({}, TRASH_SCOPES),
 });
 
 Order.associate = (models) => {
@@ -193,6 +182,7 @@ Order.associate = (models) => {
   });
 
   Order.addScope('lateRents', (date = new Date()) => ({
+    subQuery: false, // we're good, all those include are singular
     where: {
       dueDate: { [Op.lt]: date },
       createdAt: { [Op.lt]: D.subDays(date, 7) },

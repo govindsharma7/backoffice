@@ -47,15 +47,6 @@ module.exports = function({ Room, Apartment, Client }) {
       options.where = { [Op.or]: [{ id }, { reference: id }] };
     }
 
-    // It is safe to disable subqueries because it was used only with the default
-    // segment which includes Rentings through the availableAt scope.
-    // In this case, only a single Renting is ever returned.
-    if ( options.subQuery === true ) {
-      // Subqueries fail completely when using Renting related views.
-      console.warning('Sequelize subqueries have been disabled for Room');
-    }
-    options.subQuery = false;
-
     return options;
   });
 };
