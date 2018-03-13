@@ -292,32 +292,30 @@ Renting.toOrderItems = function(args) {
 };
 
 // TODO: this can be optimized to use just two queries
-// This should be unti-tested before being optimized
-Renting.attachOrphanOrderItems = function(rentings, order) {
-  return Promise.map(rentings, (renting) =>
-    models.OrderItem
-      .findAll({
-        where: {
-          RentingId: renting.id,
-          status: 'draft',
-          OrderId: null,
-        },
-        include: [{
-          model: models.Term,
-          where: {
-            name: 'Next Rent Invoice',
-            taxonomy: 'orderItem-category',
-            termable: 'OrderItem',
-          },
-        }],
-      })
-      .map((orderItem) => {
-        return orderItem.update({
-          status: renting.status,
-          OrderId: order.id,
-        });
-      })
-  );
+// This should be unit-tested before being optimized
+Renting.attachOrphanOrderItems = async function(rentings, order) {
+  const items = await models.OrderItem.findAll({
+    where: {
+      RentingId: { [Op.in]: rentings.map(({ id }) => id) },
+      status: 'draft',
+      OrderId: null,
+    },
+    include: [{
+      model: models.Term,
+      where: {
+        name: 'Next Rent Invoice',
+        taxonomy: 'orderItem-category',
+        termable: 'OrderItem',
+      },
+    }],
+  });
+
+  return models.OrderItem.update({
+    status: 'active',
+    OrderId: order.id,
+  }, {
+    where: { id: { [Op.in]: items.map(({ id }) => id) } },
+  });
 };
 
 Renting.prototype.findOrCreateRentOrder = function (args) {

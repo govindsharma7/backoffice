@@ -181,7 +181,7 @@ Order.associate = (models) => {
     }],
   });
 
-  Order.addScope('lateRents', (date = new Date()) => ({
+  Order.addScope('lateRent', ({ date = new Date() }) => ({
     subQuery: false, // we're good, all those include are singular
     where: {
       dueDate: { [Op.lt]: date },

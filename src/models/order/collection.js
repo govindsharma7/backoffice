@@ -102,7 +102,7 @@ module.exports = function({ Order, Metadata }) {
       },
     }, {
       name: 'Late Rent',
-      scope: 'lateRents',
+      scope: 'lateRent',
     }),
   };
 };

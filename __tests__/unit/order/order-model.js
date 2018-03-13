@@ -1,4 +1,5 @@
 const Promise       = require('bluebird');
+const D             = require('date-fns');
 const fixtures      = require('../../../__fixtures__');
 const orderFixtures = require('../../../__fixtures__/order');
 const models        = require('../../../src/models');
@@ -35,6 +36,63 @@ describe('Order', () => {
       return Order.scope('amount')
         .findById(order.id)
         .then((order) => expect(order.get('amount')).toEqual(100 * 3 + 200));
+    });
+
+    describe('lateRent', () => {
+      it('finds rent orders that have no payment or 0€ payment', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+            status: 'draft',
+          }],
+          Order: [{
+            id: u.id('order1'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'active',
+            dueDate: D.parse('2016-01-01'),
+          }, {
+            id: u.id('order2'),
+            label: 'A second random order',
+            ClientId: u.id('client'),
+            status: 'active',
+            dueDate: D.parse('2016-01-01'),
+          }],
+          OrderItem: [{
+            id: u.id('item1'),
+            label: 'A random item',
+            OrderId: u.id('order1'),
+            ProductId: 'rent',
+          }, {
+            id: u.id('item2'),
+            label: 'A second random item',
+            OrderId: u.id('order1'),
+            ProductId: 'service-fees',
+          }, {
+            id: u.id('item3'),
+            label: 'A third random item',
+            OrderId: u.id('order2'),
+            ProductId: 'rent',
+          }],
+          Payment: [{
+            id: u.id('payment'),
+            type: 'card',
+            amount: 0,
+            OrderId: u.id('order1'),
+          }],
+        }))();
+        const scopedOrder = models.Order.scope({
+          method: ['lateRent', { date: D.addWeeks(new Date(), 2) }],
+        });
+        const lateRents = await scopedOrder.findAll({
+          where: { ClientId: u.id('client') },
+        });
+
+        expect(lateRents.length).toEqual(2);
+      });
     });
   });
 
