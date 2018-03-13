@@ -3,33 +3,32 @@ const fixtures              = require('../../__fixtures__');
 
 describe('OrderItem', () => {
   describe('hooks', () => {
-    it('should prevent any alteration of items of an order w/ a receipt #', () =>
-      fixtures((u) => ({
+    it('should prevent any alteration of items of an order w/ a receipt #', async () => {
+      const { instances: { item, order } } = await fixtures((u) => ({
         Client: [{
-          id: u.id('client-0'),
+          id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
           email: `john-${u.int(0)}@doe.something`,
         }],
         Order: [{
-          id: u.id('order-0'),
+          id: u.id('order'),
           label: 'A random order',
-          ClientId: u.id('client-0'),
+          ClientId: u.id('client'),
           receiptNumber: u.str('receipt-0'),
         }],
         OrderItem: [{
-          id: u.id('item-0'),
+          id: u.id('item'),
           label: 'An item',
-          OrderId: u.id('order-0'),
+          OrderId: u.id('order'),
         }],
-      }))()
-      .then(({ instances }) =>
-        Promise.all([
-          instances['item-0'].destroy(),
-          instances['item-0'].update({ label: 'different label' }),
-          instances['order-0'].createOrderItem({ label: 'another item' }),
-        ].map((operation) => expect(operation).rejects.toBeInstanceOf(Error)))
-      )
-    );
+      }))();
+
+      return Promise.all([
+        item.destroy(),
+        item.update({ label: 'different label' }),
+        order.createOrderItem({ label: 'another item' }),
+      ].map((operation) => expect(operation).rejects.toBeInstanceOf(Error)));
+    });
   });
 });

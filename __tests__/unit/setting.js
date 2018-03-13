@@ -1,30 +1,34 @@
-const fixtures = require('../../__fixtures__/setting');
-
-var setting;
+const fixtures = require('../../__fixtures__/');
 
 describe('Setting', () => {
-  beforeAll(() => {
-    return fixtures()
-      .then(({instances}) => {
-        return setting = instances['setting-1'];
-      });
-  });
 
   describe('type \'int\'', () => {
+    let setting;
+
+    beforeAll(async () => {
+      const { instances } = await fixtures((u) => ({
+        Setting: [{
+          id: u.id('setting'),
+          type: 'int',
+          value: 0,
+        }],
+      }))();
+
+      setting = instances.setting;
+    });
+
     test('it should set and get integer values', () => {
       expect(setting.value).toEqual(setting.intVal);
     });
 
-    test('it should be able to increment the value', () => {
+    test('it should be able to increment the value', async () => {
       const prevVal = setting.value;
 
-      return setting.increment()
-        .then((setting) => {
-          return setting.reload();
-        })
-        .then((setting) => {
-          return expect(setting.value).toEqual(prevVal + 1);
-        });
+      await setting.increment();
+
+      const _setting = await setting.reload();
+
+      expect(_setting.value).toEqual(prevVal + 1);
     });
   });
 });
