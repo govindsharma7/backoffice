@@ -1,13 +1,9 @@
 const Promise         = require('bluebird');
-const sortBy          = require('lodash/sortBy');
-const map             = require('lodash/map');
-const reduce          = require('lodash/reduce');
-const entries         = require('lodash/entries');
+const _               = require('lodash');
 const Op              = require('../operators');
 const sequelize       = require('../models/sequelize');
 const { ENUMS }       = require('../const');
 
-const _ = { sortBy, map, reduce, entries };
 const rBase64Image = /^data:image\/\w+;base64,/;
 
 module.exports = function(Model, Picture) {

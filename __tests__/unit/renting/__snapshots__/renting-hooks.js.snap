@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Renting - Hooks beforeValidate should't allow booking a room while it's rented 1`] = `"Room \\"null\\" is already booked"`;

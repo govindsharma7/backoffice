@@ -13,7 +13,6 @@ const hooks             = require('./hooks');
 const paymentTypes = DataTypes.ENUM.apply(DataTypes,
   'card,sepa,manual,manual-card,manual-cash,manual-transfer,manual-cheque'.split(',')
 );
-const postToZapier = Zapier.poster('ssjjcr');
 
 const Payment = sequelize.define('Payment', {
   id: {
@@ -83,7 +82,7 @@ Payment.zapCreated = function(args) {
     apartment = {},
   } = args;
 
-  return postToZapier({
+  return Zapier.post('ssjjcr', {
     messageType: 'payment',
     client: client.fullName,
     order: order.label,

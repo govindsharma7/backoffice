@@ -5,7 +5,6 @@ const _                     = require('lodash');
 const Op                    = require('../../operators');
 const { TRASH_SCOPES }      = require('../../const');
 const payline               = require('../../vendor/payline');
-const Sendinblue            = require('../../vendor/sendinblue');
 const Utils                 = require('../../utils');
 const sequelize             = require('../sequelize');
 const models                = require('../models'); //!\ Destructuring forbidden /!\
@@ -405,7 +404,7 @@ Order.sendPaymentRequest = function(args) {
     throw new Error('Can\'t send payment request, the balance is positive');
   }
 
-  return Sendinblue.sendPaymentRequest({ order, amount, client, isRent });
+  return client.sendPaymentRequest({ order, amount, isRent });
 };
 methodify(Order, 'sendPaymentRequest');
 
@@ -431,7 +430,7 @@ Order.sendRentReminders = function(now = new Date()) {
     ]))
     .filter(([, { balance }]) => balance < 0)
     .map(([order, { amount }]) =>
-      Sendinblue.sendRentReminder({ order, client: order.Client, amount })
+      order.Client.sendRentReminder({ order, amount })
     );
 };
 

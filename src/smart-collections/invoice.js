@@ -1,12 +1,10 @@
 const Promise     = require('bluebird');
 const D           = require('date-fns');
-const uniq        = require('lodash/uniq');
+const _           = require('lodash');
 const Liana       = require('forest-express-sequelize');
 const Schemas     = require('forest-express/generators/schemas');
 const CSVExporter = require('forest-express/services/csv-exporter');
 const Op          = require('../operators');
-
-const _ = { uniq };
 
 // This will be accessed by SmartFieldsValuesInjector when calling CSVExporter
 // Without this, CSVExporter would crash.

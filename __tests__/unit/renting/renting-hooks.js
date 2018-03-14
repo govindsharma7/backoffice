@@ -1,34 +1,21 @@
+jest.mock('../../../src/vendor/wordpress');
+
 const D                   = require('date-fns');
 const Promise             = require('bluebird');
 const fixtures            = require('../../../__fixtures__');
 const Wordpress           = require('../../../src/vendor/wordpress');
 const Sendinblue          = require('../../../src/vendor/sendinblue');
+const Utils               = require('../../../src/utils');
 const models              = require('../../../src/models');
 
 const { Renting, Room } = models;
 
 describe('Renting - Hooks', () => {
-  const { handleBeforeValidate, handleAfterCreate } = Renting;
-  const { createQuoteOrders } = Renting;
-  const { sendBookingSummaryEmail } = Sendinblue;
-  const spiedHandleBeforeValidate =
-    jest.spyOn(Renting, 'handleBeforeValidate')
-      .mockImplementation(() => true);
-  const spiedHandleAfterCreate =
-    jest.spyOn(Renting, 'handleAfterCreate')
-      .mockImplementation(() => true);
-
-  Renting.createQuoteOrders = jest.fn();
-  Sendinblue.sendBookingSummaryEmail = jest.fn();
-
-  afterAll(() => {
-    Renting.createQuoteOrders = createQuoteOrders;
-    Sendinblue.sendBookingSummaryEmail = sendBookingSummaryEmail;
-  });
+  const { handleBeforeValidate } = Renting;
 
   describe('beforeValidate', () => {
-    it('should\'t allow booking a room while it\'s rented', () =>
-      fixtures((u) => ({
+    it('should\'t allow booking a room while it\'s rented', async () => {
+      const { unique: u } = await fixtures((u) => ({
         Client: [{
           id: u.id('client1'),
           firstName: 'John',
@@ -56,23 +43,20 @@ describe('Renting - Hooks', () => {
           RoomId: u.id('room'),
           bookingDate: new Date(),
         }],
-      }))({ method: 'create', hooks: false })
-      .then(({ unique: u }) => {
-        const actual = handleBeforeValidate(models.Renting.build({
-          ClientId: u.id('client2'),
-          RoomId: u.id('room'),
-          status: 'active',
-          bookingDate: new Date(),
-        }));
+      }))();
 
-        expect(actual).rejects.toThrow();
+      const actual = handleBeforeValidate(models.Renting.build({
+        ClientId: u.id('client2'),
+        RoomId: u.id('room'),
+        status: 'active',
+        bookingDate: new Date(),
+      }));
 
-        return true;
-      })
-    );
+      return expect(actual).rejects.toThrowErrorMatchingSnapshot();
+    });
 
-    it('should allow modifying the bookingDate of a renting', () =>
-      fixtures((u) => ({
+    it('should allow modifying the bookingDate of a renting', async () => {
+      const { unique: u } = await fixtures((u) => ({
         Client: [{
           id: u.id('client1'),
           firstName: 'John',
@@ -100,19 +84,16 @@ describe('Renting - Hooks', () => {
           RoomId: u.id('room'),
           bookingDate: new Date(),
         }],
-      }))({ method: 'create', hooks: false })
-      .then(async ({ instances }) => {
-        spiedHandleBeforeValidate.mockImplementationOnce(handleBeforeValidate);
+      }))();
 
-        // We need to reload the renting using findById, otherwise the
-        // _changed properties will be eroneous
-        const renting = await Renting.findById(instances.renting.id);
-        const nextBooking = D.addDays(new Date(), 1);
-        const updated = await renting.update({ bookingDate: nextBooking });
+      // We need to reload the renting using findById, otherwise the
+      // _changed properties will be eroneous
+      const renting = await Renting.findById(u.id('renting'));
+      const nextBooking = D.addDays(new Date(), 1);
+      const updated = await renting.update({ bookingDate: nextBooking });
 
-        return expect(updated.bookingDate).toEqual(nextBooking);
-      })
-    );
+      return expect(updated.bookingDate).toEqual(nextBooking);
+    });
   });
 
   describe('beforeCreate', () => {
@@ -137,7 +118,7 @@ describe('Renting - Hooks', () => {
           ApartmentId: u.id('apartment'),
           basePrice: 69000,
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
       const renting = await Renting.create({
         ClientId: client.id,
         RoomId: room.id,
@@ -171,7 +152,7 @@ describe('Renting - Hooks', () => {
           ApartmentId: u.id('apartment'),
           basePrice: 69000,
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       const renting = await Renting.create({
         ClientId: client.id,
@@ -189,25 +170,25 @@ describe('Renting - Hooks', () => {
 
   describe('afterCreate', () => {
     it('should create quote orders when packLevel is present', async () => {
-      spiedHandleAfterCreate.mockImplementation(handleAfterCreate);
-
+      const spiedSendTemplate = jest.spyOn(Sendinblue, 'sendTemplateEmail');
       const { unique: u } = await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
+          email: `john-${u.int(0)}@doe.something`,
           status: 'draft',
         }],
         Apartment: [{
           id: u.id('apartment'),
+          addressCity: 'lyon',
           DistrictId: 'lyon-ainay',
         }],
         Room: [{
-          id: u.id('room'),
+          id: u.id('room1'),
           ApartmentId: u.id('apartment'),
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       const renting1 = await Renting.create({
         id: u.id('renting1'),
@@ -215,19 +196,42 @@ describe('Renting - Hooks', () => {
         RoomId: u.id('room'),
         status: 'draft',
         packLevel: 'basic',
-        price: 12300,
+        price: 24600,
+        bookingDate: D.parse('2017-02-14T12:00Z'),
       });
-      const cqoCall0 = Renting.createQuoteOrders.mock.calls[0][0];
-      const sbseCall0 = Sendinblue.sendBookingSummaryEmail.mock.calls[0][0];
 
-      expect(cqoCall0.packLevel).toEqual('basic');
-      expect(cqoCall0.discount).toEqual(0);
-      expect(cqoCall0.room.id).toEqual(u.id('room'));
-      expect(cqoCall0.apartment.id).toEqual(u.id('apartment'));
+      const orders1 = models.Order.findAll({
+        include: [{
+          model: models.OrderItem,
+          required: true,
+          where: { RentingId: renting1.id },
+        }],
+      });
 
-      expect(sbseCall0.renting.id).toEqual(renting1.id);
-      expect(sbseCall0.client.id).toEqual(u.id('client'));
-      expect(sbseCall0.apartment.id).toEqual(u.id('apartment'));
+      const packOrder1 = orders1.find(({ OrderItems: [{ ProductId }] }) =>
+        ProductId === 'basic-pack'
+      );
+      const depositOrder1 = orders1.find(({ OrderItems: [{ ProductId }] }) =>
+        ProductId === 'deposit'
+      );
+      const rentOrder1 = orders1.find(({ OrderItems: [{ ProductId }] }) =>
+        ProductId === 'rent'
+      );
+      const rentItem1 = rentOrder1.OrderItems.find(({ ProductId }) =>
+        ProductId === 'rent'
+      );
+      const serviceItem1 = rentOrder1.OrderItems.find(({ ProductId }) =>
+        ProductId === 'serviceFees'
+      );
+
+      expect(orders1.length).toEqual(3);
+      expect(packOrder1.OrderItems[0].unitPrice)
+        .toEqual(Utils.getPackPrice({ addressCity: 'lyon', packLevel: 'basic' }));
+      expect(depositOrder1.OrderItems[0].unitPrice)
+        .toEqual(Utils.getPackPrice({ addressCity: 'lyon' }));
+      expect(rentItem1.unitPrice).toEqual(12300);
+      expect(serviceItem1.unitPrice).toEqual(1500);
+      expect(spiedSendTemplate).toHaveBeenCalledWith();
 
       const renting2 = await Renting.create({
         id: u.id('renting2'),
@@ -236,22 +240,10 @@ describe('Renting - Hooks', () => {
         status: 'draft',
         packLevel: 'privilege',
         discount: 123,
-        price: 12300,
+        price: 44400,
       });
 
-      const cqoCall1 = Renting.createQuoteOrders.mock.calls[1][0];
-      const sbseCall1 = Sendinblue.sendBookingSummaryEmail.mock.calls[1][0];
 
-      expect(cqoCall1.packLevel).toEqual('privilege');
-      expect(cqoCall1.discount).toEqual(12300);
-      expect(cqoCall1.room.id).toEqual(u.id('room'));
-      expect(cqoCall1.apartment.id).toEqual(u.id('apartment'));
-
-      expect(sbseCall1.renting.id).toEqual(renting2.id);
-      expect(sbseCall1.client.id).toEqual(u.id('client'));
-      expect(sbseCall1.apartment.id).toEqual(u.id('apartment'));
-
-      spiedHandleBeforeValidate.mockRestore();
     });
   });
 

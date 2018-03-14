@@ -1,6 +1,5 @@
 const memoize       = require('memoize-immutable');
 const WeakTupleMap  = require('weaktuplemap');
-const Sendinblue    = require('../vendor/sendinblue');
 const sequelize     = require('./sequelize');
 const models        = require('./models');
 const Apartment     = require('./apartment');
@@ -152,9 +151,5 @@ Object.keys(models).forEach(function(modelName) {
     models[modelName].hooks(models);
   }
 });
-
-// Sendinblue needs Metadata to be initialized before it can save messageIds
-// in Metadata table
-Sendinblue.init(models.Metadata);
 
 module.exports = models;

@@ -1,3 +1,5 @@
+jest.mock('../../../src/vendor/sendinblue');
+
 const app               = require('express')();
 const D                 = require('date-fns');
 const models            = require('../../../src/models');
@@ -12,8 +14,7 @@ describe('Client - Routes', () => {
 
   describe('client-identity', () => {
     it('updates client and Sendinblue contact + normalizes metadata', async () => {
-      const spiedUpdateContact = jest.spyOn(Sendinblue, 'updateContact')
-        .mockImplementationOnce(() => true);
+      const spiedUpdateContact = jest.spyOn(Sendinblue, 'updateContact');
 
       const { unique: u } = await fixtures((u) => ({
         Apartment: [{
@@ -76,7 +77,8 @@ describe('Client - Routes', () => {
       expect(identity.frenchStatus).toEqual('Intern');
       expect(identity.isStudent).toEqual(true);
       expect(identity.something).toEqual('else');
-      expect(spiedUpdateContact).toHaveBeenCalledWith(client.email, expect.anything());
+      expect(spiedUpdateContact)
+        .toHaveBeenCalledWith(client.email, expect.anything());
     });
   });
 });

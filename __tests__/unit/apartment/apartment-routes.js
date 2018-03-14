@@ -1,3 +1,5 @@
+jest.mock('../../../src/vendor/gmaps');
+
 const D         = require('date-fns');
 const app       = require('express')();
 const fixtures  = require('../../../__fixtures__');

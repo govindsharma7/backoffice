@@ -2,6 +2,7 @@ const { DataTypes }     = require('sequelize');
 const Promise           = require('bluebird');
 const D                 = require('date-fns');
 const _                 = require('lodash');
+const uuid              = require('uuid/v4');
 const { TRASH_SCOPES }  = require('../../const');
 const Utils             = require('../../utils');
 const sequelize         = require('../sequelize');
@@ -134,24 +135,28 @@ Room.associate = (models) => {
 
 // Make a room unavailable for a period of time (from and to included)
 Room.prototype.createMaintenancePeriod = function({ from, to }) {
-  return models.Renting
-    .create({
+  const id = uuid();
+
+  // We can't use Sequelize's include option because it wouldn't allow us
+  // disabling hooks on event creation.
+  return Promise.all([
+    models.Renting.create({
+      id,
       bookingDate: from,
       status: 'active',
       ClientId: 'maintenance',
       RoomId: this.id,
-      Events: to ? [{
-        startDate: to,
-        endDate: to,
-        eventable: 'Renting',
-        summary: 'End of maintenance',
-        description: `${this.name}`,
-        type: 'checkout',
-      }] : [],
-    }, {
-      include: [models.Event],
-      hooks: false,
-    });
+    }, { hooks: false }),
+    to && models.Event.create({
+      startDate: to,
+      endDate: to,
+      EventableId: id,
+      eventable: 'Renting',
+      summary: 'End of maintenance',
+      description: `${this.name}`,
+      type: 'checkout',
+    }, { hooks: false }),
+  ]);
 };
 
 Room.getPriceAndFees = async function(args) {

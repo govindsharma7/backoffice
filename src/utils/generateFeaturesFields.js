@@ -1,12 +1,7 @@
-const pick            = require('lodash/pick');
-const pickBy          = require('lodash/pickBy');
-const map             = require('lodash/map');
-const forEach         = require('lodash/forEach');
+const _               = require('lodash');
 const Op              = require('../operators');
 const sequelize       = require('../models/sequelize');
 const { ENUMS }       = require('../const');
-
-const _ = { pick, pickBy, map, forEach };
 
 module.exports = function(Model, Term) {
   const featuresPrefix = `${Model.name.toLowerCase()}-features-`;

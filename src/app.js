@@ -3,7 +3,7 @@ const Jwt               = require('express-jwt');
 const Cors              = require('cors');
 const BodyParser        = require('body-parser');
 const Liana             = require('forest-express-sequelize');
-const forEach           = require('lodash/forEach');
+const _                 = require('lodash');
 const cookieParser      = require('cookie-parser');
 const Promise           = require('bluebird');
 // const GraphQLHTTP       = require('express-graphql');
@@ -20,7 +20,6 @@ const parentApp   = Express();
 const app         = Express();
 // const graphqlApp  = Express();
 const { Schemas } = Liana;
-const _           = { forEach };
 
 /*
  * Middleware that will handle our custom Forest routes

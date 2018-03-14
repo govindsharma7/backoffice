@@ -1,3 +1,5 @@
+jest.mock('../../../src/vendor/gmaps');
+
 const models = require('../../../src/models');
 
 const { Apartment } = models;
@@ -12,8 +14,9 @@ describe('Apartment - Model', () => {
       } });
       const [actualLat, actualLng] = actual.split(',').map(Number);
 
-      expect(actualLat).toBeCloseTo(45.752, 5);
-      expect(actualLng).toBeCloseTo(4.8266, 5);
+      // geocode is auto-mocked to "16 rue de Condé"'s coordinates
+      expect(actualLat).toEqual(45.752021);
+      expect(actualLng).toEqual(4.826661);
     });
   });
 });

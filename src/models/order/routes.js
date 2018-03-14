@@ -1,4 +1,4 @@
-const kebabCase           = require('lodash/kebabCase');
+const _                   = require('lodash');
 const Liana               = require('forest-express-sequelize');
 const { wrap }            = require('express-promise-wrap');
 const Promise             = require('bluebird');
@@ -9,7 +9,6 @@ const makePublic          = require('../../middlewares/makePublic');
 const Utils               = require('../../utils');
 
 const Serializer  = Liana.ResourceSerializer;
-const _ = { kebabCase };
 
 module.exports = (app, { Order, Client, OrderItem, Credit, Payment }) => {
   const LEA = Liana.ensureAuthenticated;

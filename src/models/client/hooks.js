@@ -1,15 +1,14 @@
 const Promise                 = require('bluebird');
 const { SENDINBLUE_LIST_IDS } = require('../../const');
 const Sendinblue              = require('../../vendor/sendinblue');
-const { NODE_ENV }            = require('../../config');
 
 module.exports = function({ Client }) {
   /*
-   * Those hooks are used to update Invoiceninja records when clients are updated
+   * Those hooks are used to update Sendinblue records when clients are updated
    * in Forest.
    */
   Client.handleAfterCreate = function (client) {
-    if ( NODE_ENV === 'test' || client.id === 'maintenance' ) {
+    if ( client.id === 'maintenance' ) {
       return client;
     }
 
@@ -19,37 +18,31 @@ module.exports = function({ Client }) {
     Client.handleAfterCreate(client)
   );
 
-  Client.hook('afterUpdate', (client) => {
-    if ( NODE_ENV === 'test' ) {
-      return client;
+  Client.hook('afterUpdate', async (client) => {
+    if ( !client.changed('email') ) {
+      return Sendinblue.updateContact(client.email, { client });
     }
+    // else
+    const contact =
+      await Sendinblue.getContact(client._previousDataValues.email);
 
-    if ( client.changed('email') ) {
-      Sendinblue.getContact(client._previousDataValues.email)
-        .then((_client) => Promise.all([
-          Sendinblue.updateContact(
-            _client.email,
-            {
-              listIds: [SENDINBLUE_LIST_IDS.archived],
-              unlinkListIds: _client.listIds,
-            }),
-          Sendinblue.createContact(client.email, {
-            client,
-            listIds: _client.listIds,
-          }),
-        ]))
-        .catch((err) => {
-          if ( err.response.body.code === 'document_not_found' ) {
-            return Sendinblue.createContact(client.email, { client });
-          }
+    // It's not possible to update the email of a contact. Instead we need
+    // to "archive" the current contact and create a new one
+    return Promise.all([
+      Sendinblue.updateContact(contact.email, {
+        listIds: [SENDINBLUE_LIST_IDS.archived],
+        unlinkListIds: contact.listIds,
+      }).catch((err) => {
+        if ( err.response.body.code === 'document_not_found' ) {
+          return Sendinblue.createContact(client.email, { client });
+        }
 
-          throw err;
-        });
-    }
-    else {
-      Sendinblue.updateContact(client.email, { client });
-    }
-
-    return true;
+        throw err;
+      }),
+      Sendinblue.createContact(client.email, {
+        client,
+        listIds: contact.listIds,
+      }),
+    ]);
   });
 };

@@ -1,7 +1,15 @@
-const D = require('date-fns');
-const roundBy100 = require('./roundBy100');
+const D           = require('date-fns');
+const roundBy100  = require('./roundBy100');
+const required    = require('./required');
 
-module.exports = function({ bookingDate, price, serviceFees, checkoutDate, date }) {
+module.exports = function(args) {
+  const {
+    date = required(),
+    bookingDate = required(),
+    price = required(),
+    serviceFees = required(),
+    checkoutDate,
+  } = args;
   const daysInMonth = D.getDaysInMonth(date);
   const startOfMonth = D.startOfMonth(date);
   const endOfMonth = D.endOfMonth(date);

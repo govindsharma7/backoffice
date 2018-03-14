@@ -1,4 +1,4 @@
-const capitalize          = require('lodash/capitalize');
+const _                   = require('lodash');
 const Op                  = require('../../operators');
 const {
   TRASH_SEGMENTS,
@@ -6,8 +6,6 @@ const {
 }                         = require('../../const');
 const { WEBSITE_URL }     = require('../../config');
 const Utils               = require('../../utils');
-
-const _ = { capitalize };
 
 module.exports = function({ Room, Picture, Term }) {
   const galeryFields = Utils.generateGaleryFields(Room, Picture);

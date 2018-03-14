@@ -1,3 +1,6 @@
+// do not mock vendor/payline, as we want to test its implementation
+// jest.mock('../../src/vendor/payline');
+
 const Promise       = require('bluebird');
 const payline       = require('../../src/vendor/payline');
 
@@ -8,12 +11,8 @@ describe('Payline', () => {
     paylineError.longMessage = 'payline error';
     paylineError.code = '01100';
 
-    const mockedDoPurchase = jest.spyOn(payline.payline, 'doPurchase')
-      .mockImplementation(() => Promise.reject(paylineError));
-
-    afterAll(() => {
-      mockedDoPurchase.mockRestore();
-    });
+    jest.spyOn(payline.payline, 'doPurchase')
+      .mockImplementationOnce(() => Promise.reject(paylineError));
 
     it('should convert a payline error to a CNError', async () => {
       let actual;

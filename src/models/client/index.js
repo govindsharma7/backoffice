@@ -1,6 +1,5 @@
 const Promise         = require('bluebird');
-const mapKeys         = require('lodash/mapKeys');
-const capitalize      = require('lodash/capitalize');
+const _               = require('lodash');
 const D               = require('date-fns');
 const { DataTypes }   = require('sequelize');
 const Payline         = require('payline');
@@ -12,19 +11,17 @@ const {
   TRASH_SCOPES,
   UNCASHED_DEPOSIT_FEE,
 }                     = require('../../const');
-const Ninja           = require('../../vendor/invoiceninja');
 const payline         = require('../../vendor/payline');
-const Sendinblue      = require('../../vendor/sendinblue');
 const Utils           = require('../../utils');
 const config          = require('../../config');
 const sequelize       = require('../sequelize');
 const models          = require('../models'); //!\ Destructuring forbidden /!\
+const emails          = require('./emails');
 const collection      = require('./collection');
 const routes          = require('./routes');
 const hooks           = require('./hooks');
 
-const _ = { mapKeys, capitalize };
-const { methodify } = Utils;
+const { methodify, required } = Utils;
 const Translate = Promise.promisify(
   GoogleTranslate(config.GOOGLE_TRANSLATE_API_KEY).translate
 );
@@ -114,6 +111,12 @@ const Client = sequelize.define('Client', {
       }
 
       return undefined;
+    },
+  },
+  locale: {
+    type:                     DataTypes.VIRTUAL(DataTypes.STRING),
+    get() {
+      return this.dataValues.preferredLanguage === 'fr' ? 'fr-FR' : 'en-US';
     },
   },
 }, {
@@ -256,13 +259,18 @@ Client.getRentingsFor = function({ client, date = new Date() }) {
 };
 methodify(Client, 'getRentingsFor');
 
-Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Date()) {
+Client.findOrCreateRentOrder = async function(args) {
+  const {
+    client = required(),
+    rentings = required(),
+    date = required(),
+  } = args;
   const dueDate = D.startOfMonth(date);
   const [order, isCreate] = await models.Order.findOrCreate({
     where: { [Op.and]: [
       // Only exclude cancelled orders. First rent order might still be draft
       { status: { [Op.not]: 'cancelled' } },
-      { ClientId: this.id },
+      { ClientId: client.id },
       { dueDate },
     ]},
     include: [{
@@ -272,7 +280,7 @@ Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Dat
     defaults: {
       label: `${D.format(date, 'MMMM')} Rent`,
       type: 'debit',
-      ClientId: this.id,
+      ClientId: client.id,
       dueDate,
     },
   });
@@ -280,7 +288,7 @@ Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Dat
     isCreate && [].concat.apply([], rentings.map((renting) =>
       renting.toOrderItems({ order, date, room: renting.Room }))
     )
-    .concat(this.get('uncashedDepositCount') > 0 && {
+    .concat(client.get('uncashedDepositCount') > 0 && {
       label: 'Option Liberté',
       unitPrice: UNCASHED_DEPOSIT_FEE,
       ProductId: 'uncashed-deposit',
@@ -295,6 +303,7 @@ Client.prototype.findOrCreateRentOrder = async function(rentings, date = new Dat
 
   return [order, isCreate];
 };
+methodify(Client, 'findOrCreateRentOrder');
 
 Client.createRentOrders = function(clients, date = new Date()) {
   return Promise
@@ -303,62 +312,7 @@ Client.createRentOrders = function(clients, date = new Date()) {
       client.getRentingsFor(date),
     ]))
     .filter(([, rentings]) => rentings.length !== 0)
-    .map(([client, rentings]) => client.findOrCreateRentOrder(rentings, date));
-};
-
-Client.prototype.ninjaSerialize = function() {
-  return Promise.resolve({
-    'name': `${this.firstName} ${this.lastName}`,
-    'contact': {
-      'first_name': this.firstName,
-      'last_name': this.lastName,
-      'email': this.email,
-    },
-  });
-};
-
-Client.prototype.ninjaCreate = function() {
-  return this
-    .ninjaSerialize()
-    .then((ninjaClient) => Ninja.client.createClient({ client: ninjaClient }))
-    .then((response) => {
-      this
-        .set('ninjaId', response.obj.data.id)
-        .save({hooks: false});
-      return response.obj.data;
-    });
-};
-
-Client.prototype.ninjaUpdate = function() {
-  return this
-    .ninjaSerialize()
-    .then((ninjaClient) => Ninja.client.updateClient({
-      'client_id': this.ninjaId,
-      'client': ninjaClient,
-    }))
-    .then((response) => response.obj.data);
-};
-
-Client.prototype.ninjaUpsert = function() {
-  if (this.ninjaId != null && this.ninjaId !== -1) {
-    return this.ninjaUpdate();
-  }
-
-  return Ninja.client
-    .listClients({
-      'email': this.email,
-      'per_page': 1,
-    })
-    .then((response) => {
-      if ( response.obj.data.length ) {
-        this
-          .set('ninjaId', response.obj.data[0].id)
-          .save({hooks: false});
-        return this.ninjaUpdate();
-      }
-
-      return this.ninjaCreate();
-    });
+    .map(([client, rentings]) => client.findOrCreateRentOrder({ rentings, date }));
 };
 
 Client.paylineCredit = async function(clientId, values, creditId) {
@@ -499,12 +453,13 @@ Client.createAndSendRentInvoices = async function(month = D.addMonths(Date.now()
     // Uncomment following line to test invoice generation for a single customer
     // .filter((tupple, index) => index === 0)
     .mapSeries(async ([client, rentings]) => {
-      const [{ id: orderId }] = await client.findOrCreateRentOrder(rentings, month);
+      const [{ id: orderId }] =
+        await client.findOrCreateRentOrder({ rentings, date: month });
       const order = await models.Order.scope('amount').findById(orderId);
       const amount = order.get('amount');
 
       try {
-        return Sendinblue.sendPaymentRequest({ order, client, amount, isRent: true });
+        return client.sendPaymentRequest({ order, amount, isRent: true });
       }
       catch (error) {
         console.error(error);
@@ -512,6 +467,11 @@ Client.createAndSendRentInvoices = async function(month = D.addMonths(Date.now()
       }
     });
 };
+
+_.forEach(emails, (method, methodName) => {
+  Client[methodName] = method;
+  methodify(Client, methodName);
+});
 
 Client.collection = collection;
 Client.routes = routes;

@@ -515,11 +515,10 @@ describe('Client - Model', () => {
         scopedRenting.findById(u.id('renting1')),
         scopedRenting.findById(u.id('renting2')),
       ]);
-      const [order, isCreated] = await client.findOrCreateRentOrder(
-        [renting1, renting2],
-        D.parse('2017-02-01 Z'),
-        Math.round(Math.random() * 1E12)
-      );
+      const [order, isCreated] = await client.findOrCreateRentOrder({
+        rentings: [renting1, renting2],
+        date: D.parse('2017-02-01 Z'),
+      });
 
       expect(isCreated).toEqual(true);
 

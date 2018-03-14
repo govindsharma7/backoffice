@@ -1,4 +1,5 @@
 const { DataTypes }         = require('sequelize');
+const _                     = require('lodash');
 const { TRASH_SCOPES }      = require('../../const');
 const Zapier                = require('../../vendor/zapier');
 const { required }          = require('../../utils');
@@ -7,7 +8,7 @@ const sequelize             = require('../sequelize');
 const collection            = require('./collection');
 const hooks                 = require('./hooks');
 
-const postToZapier = Zapier.poster('zdso65');
+const postToZapier = _.curry(Zapier.post, 2)('zdso65');
 
 const Event = sequelize.define('Event', {
   id: {

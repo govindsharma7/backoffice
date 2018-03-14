@@ -1,5 +1,4 @@
 const Promise                     = require('bluebird');
-const Sendinblue                  = require('../../vendor/sendinblue');
 
 module.exports = function({ Payment, Order, OrderItem, Client, Renting }) {
   // When a payment is created:
@@ -22,8 +21,7 @@ module.exports = function({ Payment, Order, OrderItem, Client, Renting }) {
     }
 
     return Promise.all([
-      Sendinblue.sendPaymentConfirmation({
-        client: order.Client,
+      order.Client.sendPaymentConfirmation({
         order,
         payment,
         transaction,

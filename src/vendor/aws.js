@@ -1,14 +1,15 @@
-const AWS         = require('aws-sdk');
-const Promise     = require('bluebird');
-const FormData    = require('form-data');
+const AWS           = require('aws-sdk');
+const Promise       = require('bluebird');
+const FormData      = require('form-data');
 const {
   AWS_ACCESS_KEY_ID,
   AWS_SECRET_ACCESS_KEY,
   AWS_REGION,
   IMAGE_OPTIM_KEY,
   AWS_BUCKET_PICTURES,
-}                 = require('../config');
-const fetch       = require('./fetch');
+}                   = require('../config');
+const { required }  = require('../utils');
+const fetch         = require('./fetch');
 
 AWS.config.update({
   accessKeyId: AWS_ACCESS_KEY_ID,
@@ -19,8 +20,8 @@ AWS.config.update({
 // Use bluebird Promises, instead of native ones
 AWS.config.setPromisesDependency(Promise);
 
-async function uploadFile(bucket, data) {
-  const s3Bucket = new AWS.S3( { params: {Bucket: bucket} });
+async function uploadFile(bucket = required(), data = required()) {
+  const s3Bucket = new AWS.S3( { params: { Bucket: bucket } });
   const { Location } = await s3Bucket.upload(data).promise();
 
   return Location;
@@ -85,7 +86,6 @@ function pingService() {
 }
 
 module.exports = {
-  // sendSms,
   uploadFile,
   deleteFile,
   deleteFiles,

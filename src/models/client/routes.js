@@ -1,7 +1,6 @@
 const Promise               = require('bluebird');
 const uuid                  = require('uuid/v4');
-const pickBy                = require('lodash/pickBy');
-const mapKeys               = require('lodash/mapKeys');
+const _                     = require('lodash');
 const D                     = require('date-fns');
 const Multer                = require('multer');
 const { wrap }              = require('express-promise-wrap');
@@ -12,8 +11,6 @@ const {
 }                           = require('../../const');
 const Sendinblue            = require('../../vendor/sendinblue');
 const Utils                 = require('../../utils');
-
-const _ = { pickBy, mapKeys };
 
 module.exports = (app, { Client, Order, Metadata, Payment }) => {
   const LEA = Liana.ensureAuthenticated;

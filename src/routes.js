@@ -2,7 +2,7 @@ const Promise           = require('bluebird');
 const { wrap }          = require('express-promise-wrap');
 const aws               = require('./vendor/aws');
 const chromeless        = require('./vendor/chromeless');
-const geocode           = require('./vendor/geocode');
+const gmaps             = require('./vendor/gmaps');
 const payline           = require('./vendor/payline');
 const sendinblue        = require('./vendor/sendinblue');
 const webmerge          = require('./vendor/webmerge');
@@ -19,7 +19,7 @@ module.exports = function(app) {
       await Promise.all([
         models.Client.findOne(),
         aws.pingService(),
-        geocode.pingService(),
+        gmaps.pingService(),
         payline.pingService(),
         sendinblue.pingService(),
         webmerge.pingService(),

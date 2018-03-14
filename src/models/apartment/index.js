@@ -5,7 +5,7 @@ const {
   TRASH_SCOPES,
   CITIES,
 }                                 = require('../../const');
-const Geocode                     = require('../../vendor/geocode');
+const Gmaps                       = require('../../vendor/gmaps');
 const sequelize                   = require('../sequelize');
 const collection                  = require('./collection');
 const routes                      = require('./routes');
@@ -79,7 +79,7 @@ Apartment.prototype.calculateLatLng = function() {
 Apartment.calculateLatLng = async function({ apartment }) {
   const { addressStreet, addressZip, addressCountry } = apartment;
   const { lat, lng } =
-    await Geocode(`${addressStreet}, ${addressZip}, ${addressCountry}`);
+    await Gmaps.geocode(`${addressStreet}, ${addressZip}, ${addressCountry}`);
 
   return `${lat},${lng}`;
 };

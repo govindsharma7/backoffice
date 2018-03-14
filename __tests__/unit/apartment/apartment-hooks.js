@@ -1,3 +1,5 @@
+jest.mock('../../../src/vendor/gmaps');
+
 const fixtures  = require('../../../__fixtures__');
 const models    = require('../../../src/models');
 
@@ -19,8 +21,9 @@ describe('Apartment - Hooks', () => {
       const actual = await apartment.update({ addressStreet: '20 rue de Condé' });
       const [actualLat, actualLng] = actual.latLng.split(',').map(Number);
 
-      expect(actualLat).toBeCloseTo(45.75191, 5);
-      expect(actualLng).toBeCloseTo(4.82686, 5);
+      // geocode is auto-mocked to "16 rue de Condé"'s coordinates
+      expect(actualLat).toEqual(45.752021);
+      expect(actualLng).toEqual(4.826661);
     });
   });
 
@@ -37,8 +40,9 @@ describe('Apartment - Hooks', () => {
       });
       const [actualLat, actualLng] = actual.latLng.split(',').map(Number);
 
-      expect(actualLat).toBeCloseTo(45.752, 5);
-      expect(actualLng).toBeCloseTo(4.8266, 5);
+      // geocode is auto-mocked to "16 rue de Condé"'s coordinates
+      expect(actualLat).toEqual(45.752021);
+      expect(actualLng).toEqual(4.826661);
       expect(actual.descriptionFr.length).toBeGreaterThan(100);
       expect(actual.descriptionEn.length).toBeGreaterThan(100);
     });

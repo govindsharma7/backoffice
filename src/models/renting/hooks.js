@@ -1,6 +1,5 @@
 const Promise                     = require('bluebird');
 const Op                          = require('../../operators');
-const Sendinblue                  = require('../../vendor/sendinblue');
 const Wordpress                   = require('../../vendor/wordpress');
 
 module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }) {
@@ -50,13 +49,14 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   // - Send booking summary email
   Renting.handleAfterCreate = async (_renting, { transaction }) => {
     const { id, packLevel, discount = 0 } = _renting;
-    const renting = await Renting.scope('room+apartment')
-      .findById(id, { include: [{ model: Client }], transaction });
+    const renting = await Renting.scope('room+apartment').findById(id, {
+      include: [{ model: Client }],
+      transaction,
+    });
     const { Client: client, Room: room, Room: { Apartment: apartment } } = renting;
 
     await Promise.all([
-      Sendinblue.sendBookingSummaryEmail({
-        client,
+      client.sendBookingSummaryEmail({
         renting,
         apartment,
         transaction,
@@ -142,11 +142,10 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         transaction,
       }),
       Wordpress.makeRoomUnavailable({ room }),
-      Sendinblue.sendWelcomeEmail({
+      client.sendWelcomeEmail({
+        renting,
         rentOrder,
         depositOrder,
-        client,
-        renting,
         room,
         apartment: room.Apartment,
         packLevel,

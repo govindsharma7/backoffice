@@ -22,23 +22,21 @@ function pingService() {
   return fetch(ZAPIER_API_URL);
 }
 
-function poster(zapId = required()) {
-  return function(_body) {
-    // querystring.stringify would strip `Date`s from body without this trick
-    const body = JSON.parse(JSON.stringify(_body));
+function post(zapId = required(), _body = required()) {
+  // querystring.stringify would strip `Date`s from body without this trick
+  const body = JSON.parse(JSON.stringify(_body));
 
-    body.environment = NODE_ENV;
+  body.environment = NODE_ENV;
 
-    return fetch(`${ZAPIER_API_URL}/${zapId}/`, {
-      method: 'post',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: querystring.stringify(body),
-    });
-  };
+  return fetch(`${ZAPIER_API_URL}/${zapId}/`, {
+    method: 'post',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: querystring.stringify(body),
+  });
 }
 
 module.exports = {
-  poster,
+  post,
   postRentInvoiceSuccess,
   pingService,
 };

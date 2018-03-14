@@ -1,9 +1,9 @@
-const { PACK_PRICES } = require('../const');
+const getPackPrice = require('./getPackPrice');
 
 module.exports = function({ renting, addressCity, packLevel, order }) {
   const item = {
     label: `Housing Pack ${addressCity} ${packLevel}`,
-    unitPrice: PACK_PRICES[addressCity][packLevel],
+    unitPrice: getPackPrice({ addressCity, packLevel }),
     RentingId: renting.id,
     status: renting.status,
     ProductId: packLevel.replace(/(-pack)?$/, '$1-pack'),

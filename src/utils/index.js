@@ -11,6 +11,8 @@ const {
   getCheckoutPrice,
 }                                  = require('./getCheckinoutPrice');
 const getCardType                  = require('./getCardType');
+const getDepositPrice              = require('./getDepositPrice');
+const getPackPrice                 = require('./getPackPrice');
 const getPeriodCoef                = require('./getPeriodCoef');
 const getPeriodPrice               = require('./getPeriodPrice');
 const getServiceFees               = require('./getServiceFees');
@@ -50,6 +52,7 @@ module.exports = {
   generateGaleryFields,
   generateFeaturesFields,
   getCardType,
+  getDepositPrice,
   getCheckinEndDate,
   getCheckinPrice,
   getCheckoutEndDate,
@@ -57,6 +60,7 @@ module.exports = {
   getInvoiceLink,
   getLateNoticeFees,
   getLeaseEndDate,
+  getPackPrice,
   getPeriodCoef,
   getPeriodPrice,
   getRoomSwitchPrice,

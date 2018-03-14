@@ -1,11 +1,9 @@
 const Liana           = require('forest-express-sequelize');
 const { wrap }        = require('express-promise-wrap');
-const pick            = require('lodash/pick');
+const _               = require('lodash');
 const { CNError }     = require('../../utils');
 const Utils           = require('../../utils');
 const makePublic      = require('../../middlewares/makePublic');
-
-const _ = { pick };
 
 module.exports = function(app, { Payment, Room, Order, OrderItem, Renting }) {
   const LEA = Liana.ensureAuthenticated;

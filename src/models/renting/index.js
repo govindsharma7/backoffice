@@ -1,16 +1,13 @@
 const { DataTypes }         = require('sequelize');
 const Promise               = require('bluebird');
 const D                     = require('date-fns');
-const capitalize            = require('lodash/capitalize');
-const values                = require('lodash/values');
+const _                     = require('lodash');
 const Op                    = require('../../operators');
 const {
   TRASH_SCOPES,
-  DEPOSIT_PRICES,
   DEPOSIT_REFUND_DELAYS,
   TWO_OCCUPANTS_FEES,
 }                           = require('../../const');
-const webmerge              = require('../../vendor/webmerge');
 const Utils                 = require('../../utils');
 const { NODE_ENV }          = require('../../config');
 const sequelize             = require('../sequelize');
@@ -19,10 +16,11 @@ const routes                = require('./routes');
 const hooks                 = require('./hooks');
 const collection            = require('./collection');
 
-const _ = { capitalize, values };
 const { methodify, required } = Utils;
 
 function checkinoutDateGetter(type) {
+  // TODO: use hasScope to return null when the checkin/outDate scope isn't
+  // present or false when we know there is no event.
   return function() {
     /* eslint-disable no-invalid-this */
     const date = this.dataValues[`${type}Date`];
@@ -240,37 +238,36 @@ Renting.associate = (models) => {
 };
 
 // Prorate the price and service fees of a renting for a given month
-Renting.prototype.prorate = function(date) {
+Renting.prorate = function({ renting = required(), date = required() }) {
   return Utils.prorate({
-    bookingDate: this.bookingDate,
-    price: this.price,
-    serviceFees: this.serviceFees,
-    checkoutDate: this.get('checkoutDate'),
+    bookingDate: renting.bookingDate,
+    price: renting.price,
+    serviceFees: renting.serviceFees,
+    checkoutDate: renting.get('checkoutDate'),
     date,
   });
 };
+methodify(Renting, 'prorate');
 
 // Propagate the status of the renting to that of first-rent/deposit/pack orders
-Renting.prototype.normalizeOrder = function(order) {
+Renting.normalizeOrder = function({ renting, order }) {
   return Object.assign({
-    ClientId: this.ClientId,
+    ClientId: renting.ClientId,
     // We want the order to be a draft if the renting is a draft
-    status: this.status,
-    deletedAt: this.deletedAt,
+    status: renting.status,
+    deletedAt: renting.deletedAt,
   }, order);
 };
+methodify(Renting, 'normalizeOrder');
 
-Renting.prototype.toOrderItems = function(args) {
-  return Renting.toOrderItems(Object.assign({ renting: this }, args));
-};
 Renting.toOrderItems = function(args) {
   const {
     renting = required(),
     room = required(),
     order = required(),
-    date = new Date(),
+    date = required(),
   } = args;
-  const prorated = renting.prorate(date);
+  const prorated = renting.prorate({ date });
   const apartment = room.Apartment;
   const month = D.format(date, 'MMMM');
 
@@ -290,6 +287,7 @@ Renting.toOrderItems = function(args) {
     RentingId: renting.id,
   }));
 };
+methodify(Renting, 'toOrderItems');
 
 // TODO: this can be optimized to use just two queries
 // This should be unit-tested before being optimized
@@ -318,9 +316,6 @@ Renting.attachOrphanOrderItems = async function(rentings, order) {
   });
 };
 
-Renting.prototype.findOrCreateRentOrder = function (args) {
-  return Renting.findOrCreateRentOrder(Object.assign({ renting: this }, args));
-};
 Renting.findOrCreateRentOrder = async function(args) {
   const {
     renting = required(),
@@ -341,10 +336,10 @@ Renting.findOrCreateRentOrder = async function(args) {
         ProductId: 'rent',
       },
     }],
-    defaults: renting.normalizeOrder({
+    defaults: renting.normalizeOrder({ order: {
       label: `${D.format(dueDate, 'MMMM')} Rent`,
       dueDate,
-    }),
+    } }),
     transaction,
   });
 
@@ -357,10 +352,8 @@ Renting.findOrCreateRentOrder = async function(args) {
 
   return order;
 };
+methodify(Renting, 'findOrCreateRentOrder');
 
-Renting.prototype.findOrCreatePackOrder = function (args) {
-  return Renting.findOrCreatePackOrder(Object.assign({ renting: this }, args));
-};
 Renting.findOrCreatePackOrder = async function(args) {
   const {
     renting = required(),
@@ -378,10 +371,10 @@ Renting.findOrCreatePackOrder = async function(args) {
         ProductId: { [Op.like]: '%-pack' },
       },
     }],
-    defaults: renting.normalizeOrder({
+    defaults: renting.normalizeOrder({ order: {
       label: 'Housing Pack',
       dueDate: Math.max(new Date(), D.startOfMonth(renting.bookingDate)),
-    }),
+    } }),
     transaction,
   });
 
@@ -408,10 +401,8 @@ Renting.findOrCreatePackOrder = async function(args) {
 
   return order;
 };
+methodify(Renting, 'findOrCreatePackOrder');
 
-Renting.prototype.findOrCreateDepositOrder = function (args) {
-  return Renting.findOrCreateDepositOrder(Object.assign({ renting: this }, args));
-};
 Renting.findOrCreateDepositOrder = async function(args) {
   const {
     renting = required(),
@@ -433,17 +424,17 @@ Renting.findOrCreateDepositOrder = async function(args) {
         ProductId,
       },
     }],
-    defaults: renting.normalizeOrder({
+    defaults: renting.normalizeOrder({ order: {
       type: 'deposit',
       label: 'Deposit',
-    }),
+    } }),
     transaction,
   });
 
   if ( isCreated ) {
     const orderItems = [{
       label: 'Deposit',
-      unitPrice: DEPOSIT_PRICES[addressCity],
+      unitPrice: Utils.getDepositPrice({ addressCity }),
       RentingId: renting.id,
       status: renting.status,
       OrderId: order.id,
@@ -455,14 +446,14 @@ Renting.findOrCreateDepositOrder = async function(args) {
 
   return order;
 };
+methodify(Renting, 'findOrCreateDepositOrder');
 
 // this function finds or creates checkin and checkout Order,
 // if it's a checkout order, it also creates a refund event
 ['checkin', 'checkout'].forEach((type) => {
   Renting.prototype[`findOrCreate${_.capitalize(type)}Order`] =
     function(number) {
-      const {name} = this.Room;
-      const {Apartment} = this.Room;
+      const { name, Apartment } = this.Room;
 
       return Promise.all([
           Utils[`get${_.capitalize(type)}Price`](
@@ -657,12 +648,6 @@ Renting.prototype.changeDepositOption = function(option) {
       TermableId: this.id,
     }, {isNewRecord: false})
     .createOrUpdate(option === 'cash deposit' ? 'cash' : 'do-not-cash');
-};
-
-Renting.prototype.generateLease = function(args) {
-  return webmerge
-    .serializeLease(Object.assign({ renting: this }, args))
-    .then((serialized) => webmerge.mergeLease(serialized));
 };
 
 Renting.prototype.createQuoteOrders = function(args) {

@@ -1,13 +1,10 @@
 const WebmergeApi         = require('webmerge').WebMergePromiseAPI;
 const Promise             = require('bluebird');
-const capitalize          = require('lodash/capitalize');
-const values              = require('lodash/values');
+const _                   = require('lodash');
 const D                   = require('date-fns');
-const { DEPOSIT_PRICES }  = require('../const');
 const Utils               = require('../utils');
 const config              = require('../config');
 
-const _ = { capitalize, values };
 const { required } = Utils;
 
 const webmerge = new WebmergeApi(
@@ -59,7 +56,7 @@ function serializeLease(args) {
     nationality: identity.nationalityFr,
     rent: renting.price / 100,
     serviceFees: renting.serviceFees / 100,
-    deposit: DEPOSIT_PRICES[addressCity] / 100,
+    deposit: Utils.getDepositPrice({ addressCity }) / 100,
     depositOption,
     packLevel: frPackLevel,
     roomNumber,
@@ -74,10 +71,12 @@ function serializeLease(args) {
 }
 
 function mergeLease(args) {
+  const serialized = serializeLease(args);
+
   return webmerge.mergeDocument(
     config.WEBMERGE_DOCUMENT_ID,
     config.WEBMERGE_DOCUMENT_KEY,
-    serializeLease(args),
+    serialized,
     config.NODE_ENV !== 'production' // webmerge's test environment switch
   );
 }

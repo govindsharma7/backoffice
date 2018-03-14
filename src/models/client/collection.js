@@ -3,7 +3,6 @@ const {
   TRASH_SEGMENTS,
   CITIES,
 }                           = require('../../const');
-const { INVOICENINJA_URL }  = require('../../config');
 const Op                    = require('../../operators');
 const sequelize             = require('../sequelize');
 
@@ -48,16 +47,6 @@ module.exports = function({ Client }) {
           { firstName: { [Op.like]: `%${split[0]}%` }},
           { lastName: { [Op.like]: `%${split[1]}%` }}
         ));
-      },
-    }, {
-      field: 'ninja',
-      type: 'String',
-      get(object) {
-        if (object.ninjaId !== null) {
-          return `${INVOICENINJA_URL}/clients/${object.ninjaId}`;
-        }
-
-        return null;
       },
     }, {
       field: 'Identity Record Form',

@@ -1,6 +1,6 @@
-const urlencode             = require('urlencode');
-const {GOOGLE_MAPS_API_KEY} = require('../config');
-const fetch                 = require('./fetch');
+const urlencode               = require('urlencode');
+const { GOOGLE_MAPS_API_KEY } = require('../config');
+const fetch                   = require('./fetch');
 
 const endpoint = 'https://maps.googleapis.com/maps/api/geocode/json';
 
@@ -13,8 +13,11 @@ async function geocode(address) {
   return json.results[0].geometry.location;
 }
 
-geocode.pingService = function() {
-  return geocode('16 Rue de Condé, 69007, Lyon');
-};
+function pingService() {
+  return geocode('16 Rue de Condé, 69002, Lyon');
+}
 
-module.exports = geocode;
+module.exports = {
+  geocode,
+  pingService,
+};

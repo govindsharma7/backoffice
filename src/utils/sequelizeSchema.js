@@ -1,5 +1,4 @@
-const reduce            = require('lodash/reduce');
-const forEach           = require('lodash/forEach');
+const _                 = require('lodash');
 const {
   GraphQLSchema,
   GraphQLList,
@@ -15,8 +14,6 @@ const {
   // relay,
 }                       = require('graphql-sequelize');
 const ResourcesGetter   = require('forest-express-sequelize/services/resources-getter');
-
-const _ = { reduce, forEach };
 
 module.exports = function(models) {
   const opts = { sequelize: Sequelize };

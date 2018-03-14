@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Payment - Hooks beforeDelete, beforeUpdate should prevent non-manual payments to be updated or deleted 1`] = `"Only manual payments can be updated"`;
+
+exports[`Payment - Hooks beforeDelete, beforeUpdate should prevent non-manual payments to be updated or deleted 2`] = `"Only manual payments can be destroyd"`;

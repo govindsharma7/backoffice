@@ -1,15 +1,13 @@
 const Promise           = require('bluebird');
 const Liana             = require('forest-express-sequelize');
 const { wrap }          = require('express-promise-wrap');
-const capitalize        = require('lodash/capitalize');
-const pick              = require('lodash/pick');
+const _                 = require('lodash');
 const D                 = require('date-fns');
 const Webmerge          = require('../../vendor/webmerge');
 const Utils             = require('../../utils');
 const makePublic        = require('../../middlewares/makePublic');
 
 const { CNError } = Utils;
-const _ = { capitalize, pick };
 
 module.exports = function(app, { Renting, Client, Room, Apartment }) {
   const LEA = Liana.ensureAuthenticated;
