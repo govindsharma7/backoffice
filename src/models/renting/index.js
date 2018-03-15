@@ -650,9 +650,6 @@ Renting.prototype.changeDepositOption = function(option) {
     .createOrUpdate(option === 'cash deposit' ? 'cash' : 'do-not-cash');
 };
 
-Renting.prototype.createQuoteOrders = function(args) {
-  return Renting.createQuoteOrders(Object.assign({ renting: this }, args));
-};
 Renting.createQuoteOrders = function(args) {
   const {
     renting = required(),
@@ -667,15 +664,15 @@ Renting.createQuoteOrders = function(args) {
     { suffix: 'DepositOrder', args: { apartment } },
     { suffix: 'PackOrder', args: { packLevel, discount, apartment } },
   ];
-  const concurrency = /^(test|dev)/.test(NODE_ENV) ? 1 : 3;
 
   return Promise.map(
     toCall,
     (def) =>
       renting[`findOrCreate${def.suffix}`](Object.assign(def.args, { transaction })),
-    { concurrency }
+    { concurrency: /^(test|dev)/.test(NODE_ENV) ? 1 : 3 }
   );
 };
+methodify(Renting, 'createQuoteOrders');
 
 Renting.prototype.futureCredit = function(args) {
   const { discount, label } = args;

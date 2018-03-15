@@ -138,7 +138,7 @@ Room.prototype.createMaintenancePeriod = function({ from, to }) {
   const id = uuid();
 
   // We can't use Sequelize's include option because it wouldn't allow us
-  // disabling hooks on event creation.
+  // to disable hooks on event creation.
   return Promise.all([
     models.Renting.create({
       id,
