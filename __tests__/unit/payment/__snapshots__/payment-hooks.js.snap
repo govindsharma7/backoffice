@@ -29,7 +29,7 @@ Array [
     "messageType": "payment",
     "order": "A random order",
     "room": undefined,
-    "time": "01:00",
+    "time": "10:10",
   },
 ]
 `;

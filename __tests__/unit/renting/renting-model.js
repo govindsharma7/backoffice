@@ -516,8 +516,8 @@ describe('Renting - Model', () => {
   describe('.updateDraftRentings', () => {
     const now = D.parse('2016-07-23');
 
-    it('should\'t allow booking a room while it\'s rented', () =>
-      fixtures((u) => ({
+    it('should\'t allow booking a room while it\'s rented', async () => {
+      await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
@@ -573,20 +573,17 @@ describe('Renting - Model', () => {
           status: 'draft',
           unitPrice: 34,
         }],
-      }))({ method: 'create', hooks: false })
-      .then(() => Renting.updateDraftRentings(now))
-      .then((updatedTuples) => {
-        const [[renting, rentItem, feesItem]] = updatedTuples;
+      }))();
 
-        expect(updatedTuples.length).toEqual(1); // Only one renting should be updated
-        expect(renting.bookingDate).toEqual(now);
-        expect(renting.price).not.toEqual(56);
-        expect(renting.serviceFees).toEqual(3000);
-        expect(rentItem.unitPrice).not.toEqual(12);
-        expect(feesItem.unitPrice).not.toEqual(34);
+      const updatedTuples = await Renting.updateDraftRentings(now);
+      const [[renting, rentItem, feesItem]] = updatedTuples;
 
-        return true;
-      })
-    );
+      expect(updatedTuples.length).toEqual(1); // Only one renting should be updated
+      expect(renting.bookingDate).toEqual(now);
+      expect(renting.price).not.toEqual(56);
+      expect(renting.serviceFees).toEqual(3000);
+      expect(rentItem.unitPrice).not.toEqual(12);
+      expect(feesItem.unitPrice).not.toEqual(34);
+    });
   });
 });

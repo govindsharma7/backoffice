@@ -13,6 +13,7 @@ describe('Payment - Hooks', () => {
     it('should send a payment confirmation after create', async () => {
       const spiedPost = jest.spyOn(Zapier, 'post');
       const spiedSendTemplate = jest.spyOn(Sendinblue, 'sendTemplateEmail');
+      const spiedFormat = jest.spyOn(D, 'format');
 
       const { unique: u } = await fixtures((u) => ({
         Client: [{
@@ -29,12 +30,18 @@ describe('Payment - Hooks', () => {
         }],
       }))();
 
+      // Without this the snapshot will be different locally and on the CI server
+      spiedFormat
+        .mockImplementationOnce(() => '02/01/2017')
+        .mockImplementationOnce(() => '10:10');
+
       await models.Payment.create({
         type: 'card',
         amount: 12300,
         OrderId: u.id('order'),
-        createdAt: D.parse('2017-01-02 Z'),
       });
+
+      spiedFormat.mockClear()
 
       const order = await models.Order.findById(u.id('order'), {
         include: [models.Metadata],
