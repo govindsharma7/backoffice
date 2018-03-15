@@ -9,13 +9,13 @@ describe('OrderItem', () => {
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: `john-${u.int(0)}@doe.something`,
+          email: `${u.id('client')}@test.com`,
         }],
         Order: [{
           id: u.id('order'),
           label: 'A random order',
           ClientId: u.id('client'),
-          receiptNumber: u.str('receipt-0'),
+          receiptNumber: `receipt-${u.id('order')}`,
         }],
         OrderItem: [{
           id: u.id('item'),

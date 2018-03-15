@@ -1,3 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Renting - Routes .handleAddCheckinDateHandler should create a checkin event and send it to zapier 1`] = `
+"John DOE
+room name
+tel: N/A"
+`;
+
+exports[`Renting - Routes .handleAddCheckinDateHandler should create a checkin event and send it to zapier 2`] = `undefined`;
+
 exports[`Renting - Routes .handleCreateClientAndRentingRoute should throw a roomUnavailable error if the room is unavailable 1`] = `"Room null is no longer available"`;

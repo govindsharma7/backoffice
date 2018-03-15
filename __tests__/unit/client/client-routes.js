@@ -1,8 +1,7 @@
-jest.mock('../../../src/vendor/sendinblue');
-
 const app               = require('express')();
 const D                 = require('date-fns');
 const models            = require('../../../src/models');
+const Utils             = require('../../../src/utils');
 const fixtures          = require('../../../__fixtures__');
 const Sendinblue        = require('../../../src/vendor/sendinblue');
 
@@ -14,7 +13,7 @@ describe('Client - Routes', () => {
 
   describe('client-identity', () => {
     it('updates client and Sendinblue contact + normalizes metadata', async () => {
-      const spiedUpdateContact = jest.spyOn(Sendinblue, 'updateContact');
+      const spiedUpdateContact = jest.spyOn(Sendinblue.ContactsApi, 'updateContact');
 
       const { unique: u } = await fixtures((u) => ({
         Apartment: [{
@@ -30,7 +29,7 @@ describe('Client - Routes', () => {
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
+          email: `${u.id('client')}@test.com`,
           phoneNumber: '0033612345678',
           preferredLanguage: 'fr',
         }],
@@ -44,7 +43,7 @@ describe('Client - Routes', () => {
       }))();
 
       await Client.handleClientIdentityRoute({
-        'q01_clientId': `john-${u.int(1)}@doe.something`,
+        'q01_clientId': `${u.id('client')}@test.com`,
         'q02_fullName': {
           first: 'Johny',
           last: 'Doey',
@@ -77,8 +76,8 @@ describe('Client - Routes', () => {
       expect(identity.frenchStatus).toEqual('Intern');
       expect(identity.isStudent).toEqual(true);
       expect(identity.something).toEqual('else');
-      expect(spiedUpdateContact)
-        .toHaveBeenCalledWith(client.email, expect.anything());
+      expect(Utils.snapshotableLastCall(spiedUpdateContact))
+        .toMatchSnapshot();
     });
   });
 });

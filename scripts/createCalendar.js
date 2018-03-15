@@ -12,28 +12,25 @@ return Promise.map([
   'Montpellier',
   'Paris',
   'refund_deposit',
-], (city) => {
-  return calendarsInsert({
-      auth: jwtClient,
-      resource: {
-        summary: city === 'refund_deposit' ?
-          'Refund Deposit' : `Checkin/Checkout ${city}`,
+], (city) => calendarsInsert({
+    auth: jwtClient,
+    resource: {
+      summary: city === 'refund_deposit' ?
+        'Refund Deposit' : `Checkin/Checkout ${city}`,
+    },
+  })
+  .tap((calendar) => aclInsert({
+    auth: jwtClient,
+    calendarId: calendar.id,
+    resource: {
+      role: 'writer',
+      scope: {
+        type: 'domain',
+        value: 'chez-nestor.com',
       },
-    })
-    .tap((calendar) => {
-      return aclInsert({
-        auth: jwtClient,
-        calendarId: calendar.id,
-        resource: {
-          role: 'writer',
-          scope: {
-            type: 'domain',
-            value: 'chez-nestor.com',
-          },
-        },
-      });
-    })
-    .then((calendar) => {
-      return console.log(`${city}: ${calendar.id}`);
-    });
-});
+    },
+  }))
+  .then((calendar) =>
+    console.log(`${city}: ${calendar.id}`)
+  )
+);

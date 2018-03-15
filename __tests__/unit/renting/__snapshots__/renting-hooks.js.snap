@@ -1,3 +1,55 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Renting - Hooks afterCreate should create quote orders when packLevel is present 1`] = `
+Array [
+  46,
+  Object {
+    "attributes": Object {
+      "APARTMENT": "Beautiful place",
+      "LINK": "http://localhost:8080/en-US/summary/SNAPSHOTABLE-UUID",
+      "NAME": "John",
+    },
+    "emailTo": Array [
+      "SNAPSHOTABLE-UUID@test.com",
+      Object {},
+    ],
+  },
+]
+`;
+
+exports[`Renting - Hooks afterUpdate should mark the client + orders active, send email + update WP 1`] = `
+Array [
+  40,
+  Object {
+    "attributes": Object {
+      "APARTMENT": "null, Lyon, null",
+      "BOOKINGDATE": "01/01/1970",
+      "CHECKIN_FORM_URL": "forms.chez-nestor.com/73344756704966",
+      "DEPOSIT": 700,
+      "DEPOSIT_LINK": "http://localhost:8080/en-US/payment/SNAPSHOTABLE-UUID",
+      "EMAIL": "SNAPSHOTABLE-UUID@test.com",
+      "HOME_CHECKIN_FEE": "free",
+      "IDENTITY_FORM_URL": "forms.chez-nestor.com/73344756704966",
+      "NAME": "John",
+      "RENT": 0,
+      "RENT_LINK": "http://localhost:8080/en-US/payment/SNAPSHOTABLE-UUID",
+      "ROOM": "<b>bedroom nº1</b>",
+      "SPECIAL_CHECKIN_FEE": "79€",
+    },
+    "emailTo": Array [
+      "SNAPSHOTABLE-UUID@test.com",
+      Object {},
+    ],
+  },
+]
+`;
+
+exports[`Renting - Hooks afterUpdate should mark the client + orders active, send email + update WP 2`] = `
+Array [
+  Object {
+    "reference": "REF-SNAPSHOTABLE-UUID-1",
+  },
+]
+`;
+
 exports[`Renting - Hooks beforeValidate should't allow booking a room while it's rented 1`] = `"Room \\"null\\" is already booked"`;

@@ -1,10 +1,9 @@
-const Promise            = require('bluebird');
-const D                  = require('date-fns');
-const {LATE_NOTICE_FEES} = require('../const');
+const Promise               = require('bluebird');
+const D                     = require('date-fns');
+const { LATE_NOTICE_FEES }  = require('../const');
 
-
-module.exports = function(type, date) {
-  const differenceDays = D.differenceInDays(date, new Date());
+module.exports = function(type, date, now) {
+  const differenceDays = D.differenceInDays(date, now);
 
   // there are no late-notice fees for a checkin
   if ( type === 'checkin' ) {

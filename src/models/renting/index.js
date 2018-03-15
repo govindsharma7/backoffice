@@ -143,7 +143,7 @@ Renting.associate = (models) => {
     return args;
   });
 
-  Renting.addScope('activeForMonth', (date = new Date()) => ({
+  Renting.addScope('activeForMonth', (date = Utils.now()) => ({
     attributes: checkoutDateScopeArgs.attributes,
     where: {
       status: 'active',
@@ -170,7 +170,7 @@ Renting.associate = (models) => {
       constraints: false,
     });
 
-    Renting.addScope(scopeName, (includedFrom = 'Renting', date = new Date()) => ({
+    Renting.addScope(scopeName, (includedFrom = 'Renting', date = Utils.now()) => ({
       // The checkoutDate is only useful/usable when this scope isn't included
       // in another scope/query
       attributes: includedFrom === 'Renting' ? { include: [
@@ -320,7 +320,7 @@ Renting.findOrCreateRentOrder = async function(args) {
   const {
     renting = required(),
     room = required(),
-    now = new Date(),
+    now = Utils.now(),
     transaction,
   } = args;
   const dueDate = Math.max(now, D.startOfMonth(renting.bookingDate));
@@ -373,7 +373,7 @@ Renting.findOrCreatePackOrder = async function(args) {
     }],
     defaults: renting.normalizeOrder({ order: {
       label: 'Housing Pack',
-      dueDate: Math.max(new Date(), D.startOfMonth(renting.bookingDate)),
+      dueDate: Math.max(Utils.now(), D.startOfMonth(renting.bookingDate)),
     } }),
     transaction,
   });
@@ -461,7 +461,7 @@ methodify(Renting, 'findOrCreateDepositOrder');
             this.get('packLevel'),
             Apartment.addressCity
           ),
-          Utils.getLateNoticeFees(type, this.get(`${type}Date`)),
+          Utils.getLateNoticeFees(type, this.get(`${type}Date`), Utils.now()),
         ])
         .then(([price, lateNoticeFees]) => {
           const ProductId = `special-${type}`;
@@ -508,8 +508,8 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
   const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.get('packLevel')]);
   const category = 'refund-deposit';
 
-  return sequelize.transaction((transaction) => {
-    return models.Event.scope('event-category')
+  return sequelize.transaction((transaction) =>
+    models.Event.scope('event-category')
       .findOne({
         where: {
           EventableId: this.id,
@@ -535,8 +535,8 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
             termable: 'Event',
           }],
         }, { transaction });
-      });
-  });
+      })
+  );
 };
 
 // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
@@ -722,7 +722,7 @@ Renting.prototype.futureDebit = async function(args) {
   });
 };
 
-Renting.getPeriod = function({ renting, now = new Date() }) {
+Renting.getPeriod = function({ renting, now = Utils.now() }) {
   const { checkoutDate, bookingDate } = renting;
 
   if ( checkoutDate && checkoutDate < now ) {
@@ -758,7 +758,7 @@ Renting.initializePriceAndFees = async function(args) {
 methodify(Renting, 'initializePriceAndFees');
 
 // Update all draft rentings as well as first rent order
-Renting.updateDraftRentings = async function(now = new Date()) {
+Renting.updateDraftRentings = async function(now = Utils.now()) {
   const rentings = await Renting.findAll({
     where: {
       status: 'draft',

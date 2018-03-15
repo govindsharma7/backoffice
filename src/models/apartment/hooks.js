@@ -1,4 +1,5 @@
 const Op                  = require('../../operators');
+const Utils               = require('../../utils');
 
 module.exports = function({ Apartment, Client, District }) {
   Apartment.handleBeforeUpdate = async function(apartment) {
@@ -42,7 +43,7 @@ module.exports = function({ Apartment, Client, District }) {
     const clients = await Client.scope('currentApartment').findAll({
       where: { [Op.and]: [
         { '$Rentings->Room.ApartmentId$': apartment.id },
-        { '$Rentings.bookingDate$': { [Op.lte]:  new Date() } },
+        { '$Rentings.bookingDate$': { [Op.lte]:  Utils.now() } },
       ]},
     });
 

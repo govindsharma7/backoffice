@@ -1,4 +1,5 @@
 const Op                    = require('../../operators');
+const Utils                 = require('../../utils');
 // const sequelize             = require('../sequelize');
 
 
@@ -22,7 +23,7 @@ module.exports = function({ Room, Apartment, Client }) {
     const clients = await Client.scope('currentApartment').findAll({
       where: {
         '$Rentings.RoomId$': room.id,
-        '$Rentings.bookingDate$': { [Op.lte]:  new Date() },
+        '$Rentings.bookingDate$': { [Op.lte]:  Utils.now() },
       },
     });
 

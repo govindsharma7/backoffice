@@ -1,7 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Payment - Routes .handleCreatePaymentRoute should call Order.pay if no error is detected 1`] = `
+Array [
+  "SNAPSHOTABLE-UUID-1483315200000",
+  Object {
+    "cvx": "e",
+    "expirationDate": "1299",
+    "holder": "ME",
+    "number": "4242424242424242",
+    "type": "visa",
+  },
+  123,
+]
+`;
+
 exports[`Payment - Routes .handleCreatePaymentRoute should throw if the order balance does't match the request one 1`] = `"Balance received doesn't match order balance"`;
 
 exports[`Payment - Routes .handleCreatePaymentRoute should throw if the order isn't found 1`] = `"Order inexistantOrderId not found"`;
 
-exports[`Payment - Routes .handleCreatePaymentRoute should throw if the room is no longer available 1`] = `"Room testRoomId is no longer available"`;
+exports[`Payment - Routes .handleCreatePaymentRoute should throw if the room is no longer available 1`] = `"Room \\"Room test\\" is no longer available"`;

@@ -147,7 +147,7 @@ Client.associate = (models) => {
       }],
     }],
   });
-  Client.addScope('rentOrdersFor', (date = new Date()) => ({
+  Client.addScope('rentOrdersFor', (date = Utils.now()) => ({
     include: [{
       model : models.Order,
       required: false,
@@ -251,7 +251,7 @@ Client.associate = (models) => {
   });
 };
 
-Client.getRentingsFor = function({ client, date = new Date() }) {
+Client.getRentingsFor = function({ client, date = Utils.now() }) {
   return models.Renting
     // Client.findOrCreateRentOrder requires the room and apartment
     .scope({ method: ['activeForMonth', date] }, 'room+apartment')
@@ -305,7 +305,7 @@ Client.findOrCreateRentOrder = async function(args) {
 };
 methodify(Client, 'findOrCreateRentOrder');
 
-Client.createRentOrders = function(clients, date = new Date()) {
+Client.createRentOrders = function(clients, date = Utils.now()) {
   return Promise
     .mapSeries(clients, (client) => Promise.all([
       client,
@@ -350,7 +350,7 @@ Client.prototype.findUnpaidOrders = function () {
     .findAll({
       where: { [Op.and]: [
         { ClientId: this.id },
-        { dueDate: { [Op.lt]: new Date() } },
+        { dueDate: { [Op.lt]: Utils.now() } },
       ]},
     })
     .filter((order) =>
@@ -359,7 +359,7 @@ Client.prototype.findUnpaidOrders = function () {
     );
 };
 
-Client.prototype.applyLateFees = function(now = new Date()) {
+Client.prototype.applyLateFees = function(now = Utils.now()) {
   return this.findUnpaidOrders()
     .map((order) => {
       const lateFees = D.differenceInDays(now, order.dueDate);
@@ -381,7 +381,7 @@ Client.prototype.applyLateFees = function(now = new Date()) {
     });
 };
 
-Client.getFullIdentity = function({ client, identityRecord, now = new Date() }) {
+Client.getFullIdentity = function({ client, identityRecord, now = Utils.now() }) {
   if ( !identityRecord ) {
     return {};
   }
@@ -432,7 +432,7 @@ Client.normalizeIdentityRecord = async function(raw) {
 // TODO: this can be vastly simplified to find all data in max two queries
 // (first clients and then all active rentings for example)
 // TODO: unit test!
-Client.createAndSendRentInvoices = async function(month = D.addMonths(Date.now(), 1)) {
+Client.createAndSendRentInvoices = async function(month = D.addMonths(Utils.now(), 1)) {
   const rentOrdersForScope = { method: ['rentOrdersFor', month] };
   const clients =
     await Client.scope(rentOrdersForScope, 'uncashedDepositCount')

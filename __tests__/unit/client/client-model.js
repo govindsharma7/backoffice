@@ -443,7 +443,7 @@ describe('Client - Model', () => {
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: u.str('john@doe.com'),
+          email: `${u.id('client')}@test.com`,
           phoneNumber: '0033612345678',
           status: 'active',
         }],

@@ -204,7 +204,7 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
       });
     }
 
-    const bookingDate = D.max(room.availableAt, new Date());
+    const bookingDate = D.max(room.availableAt, Utils.now());
     const { Apartment: apartment, Apartment: { addressCity } } = room || {};
     const [{ price, serviceFees }, [client]] = await Promise.all([
       Room.getPriceAndFees({ room, apartment, date: bookingDate }),

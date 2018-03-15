@@ -71,7 +71,7 @@ Client.sendRentReminder = async function(args) {
     client = required(),
     order = required(),
     amount = required(),
-    now = new Date(),
+    now = Utils.now(),
   } = args;
   const lang = client.locale;
   const templateId = D.getDate(now) === 1 ? 'lastRentReminder' : 'rentReminder';

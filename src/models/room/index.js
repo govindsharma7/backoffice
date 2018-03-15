@@ -57,7 +57,7 @@ const Room = sequelize.define('Room', {
       }
 
       const [periodCoef, serviceFees] = await Promise.all([
-        Utils.getPeriodCoef(D.max(new Date(), this.availableAt)),
+        Utils.getPeriodCoef(D.max(Utils.now(), this.availableAt)),
         Utils.getServiceFees({ apartment: this.Apartment }),
       ]);
 

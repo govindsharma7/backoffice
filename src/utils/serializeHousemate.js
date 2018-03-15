@@ -20,17 +20,13 @@ module.exports = function(houseMates, value) {
   const emailFr = [];
   const emailEn = [];
 
-  houseMates.filter((houseMate) => {
-    return houseMate.preferredLanguage === 'fr';
-  }).map((houseMate) => {
-    return emailFr.push(houseMate.email);
-  });
+  houseMates
+    .filter((houseMate) => houseMate.preferredLanguage === 'fr')
+    .map((houseMate) => emailFr.push(houseMate.email));
 
-  houseMates.filter((houseMate) => {
-    return houseMate.preferredLanguage === 'en';
-  }).map((houseMate) => {
-    return emailEn.push(houseMate.email);
-  });
+  houseMates
+    .filter((houseMate) => houseMate.preferredLanguage === 'en')
+    .map((houseMate) => emailEn.push(houseMate.email));
 
   return Promise.all([
     Object.assign({}, common, fr),

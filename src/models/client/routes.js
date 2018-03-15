@@ -38,9 +38,10 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
 
   app.post('/forest/actions/create-rent-order', LEA, (req, res) => {
     const {values, ids} = req.body.data.attributes;
+    const now = Utils.now();
     const month = values.for === 'current month' ?
-      D.startOfMonth(new Date()) :
-      D.addMonths(new Date(), values.for.slice(-1));
+      D.startOfMonth(now) :
+      D.addMonths(now, values.for.slice(-1));
 
     Promise.resolve()
       .then(() => {

@@ -1,13 +1,18 @@
+jest.mock('../../../src/vendor/zapier');
+
 const Promise                 = require('bluebird');
 const D                       = require('date-fns');
 const app                     = require('express')();
 const fixtures                = require('../../../__fixtures__');
 const models                  = require('../../../src/models');
 const Utils                   = require('../../../src/utils');
+const Zapier                  = require('../../../src/vendor/zapier');
 
 const { Renting, Client, Event } = models;
 
 describe('Renting - Routes', () => {
+  const spiedPost = jest.spyOn(Zapier, 'post');
+
   // Initialize methods in route file
   Renting.routes(app, models);
 
@@ -92,9 +97,6 @@ describe('Renting - Routes', () => {
 
   describe('.handleAddCheckinDateHandler', () => {
     it('should create a checkin event and send it to zapier', async () => {
-      jest.spyOn(Event, 'zapCreatedOrUpdated')
-        .mockImplementationOnce(() => true);
-
       const { unique: u } = await fixtures((u) => ({
         Apartment: [{
           id: u.id('apartment'),
@@ -106,7 +108,7 @@ describe('Renting - Routes', () => {
         }],
         Room: [{
           id: u.id('room'),
-          name: u.str('room name'),
+          name: 'room name',
           ApartmentId: u.id('apartment'),
         }],
         Client: [{
@@ -137,15 +139,10 @@ describe('Renting - Routes', () => {
       expect(event.endDate).toEqual(D.parse('2016-01-02T13:00'));
       expect(event.type).toEqual('checkin');
       expect(event.summary).toEqual('checkin John DOE');
-      expect(event.description).toEqual(expect.stringContaining('John DOE'));
-      expect(event.description).toEqual(expect.stringContaining(u.str('room name')));
+      expect(event.description).toMatchSnapshot();
       expect(event.location).toEqual('16 rue de Condé, 69002 lyon, France');
-
-      expect(Event.zapCreatedOrUpdated).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event: expect.objectContaining({ id: event.id }),
-        })
-      );
+      expect(Utils.snapshotableLastCall(spiedPost))
+        .toMatchSnapshot();
     });
   });
 });

@@ -22,10 +22,9 @@ function serializeLease(args) {
     identityRecord = required(),
     packLevel = required(),
     depositTerm,
-    now = new Date(), // used for testing purpose
   } = args;
   const { name, addressStreet, addressZip, addressCity } = apartment;
-  const bookingDate = renting.bookingDate || now;
+  const bookingDate = renting.bookingDate || Utils.now();
   const identity = JSON.parse(identityRecord);
   const fullAddress = _.values(identity.address).filter(Boolean).join(', ');
   const birthDate = _.values(identity.birthDate).join('/');

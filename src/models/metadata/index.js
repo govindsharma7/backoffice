@@ -55,16 +55,14 @@ Metadata.createOrUpdate = function({name, value, metadatable, MetadatableId}) {
 Metadata.routes = (app) => {
   const LEA = Liana.ensureAuthenticated;
 
-  app.get('/forest/Metadata', (req, res, next) => {
-    return (
+  app.get('/forest/Metadata', (req, res, next) => (
       req.query.filterType === 'and' &&
       req.query.filter &&
       req.query.filter.name === 'clientIdentity' &&
       req.query.filter.metadatable === 'Client'
     ) ?
-      makePublic(req, res, next) :
-      LEA(req, res, next);
-  });
+    makePublic(req, res, next) :
+    LEA(req, res, next));
 };
 
 module.exports = Metadata;

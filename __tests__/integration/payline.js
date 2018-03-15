@@ -1,19 +1,19 @@
 const uuid     = require('uuid/v4');
 const {Client} = require('../../src/models');
-const fixtures = require('../../__fixtures__/client');
-
-var client;
+const fixtures = require('../../__fixtures__');
 
 describe('Payline integration', () => {
-  beforeAll(() => {
-    return fixtures()
-      .then(({instances}) => {
-        return client = instances['client-1'];
-      });
-  });
-
   describe('Client.paylineCredit', () => {
-    test('it should creat an order with negative amount', () => {
+    test('it should creat an order with negative amount', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `${u.id('client')}@test.com`,
+        }],
+      }))();
+
       const values = {
         cardNumber: '4111111111111111',
         cardType: 'Visa',
@@ -27,7 +27,7 @@ describe('Payline integration', () => {
       };
       const idCredit = uuid();
 
-      return Client.paylineCredit(client.id, values, idCredit)
+      return Client.paylineCredit(u.id('client'), values, idCredit)
         .then((order) => {
           expect(order).toBeDefined();
           expect(order.Credits).toBeDefined();

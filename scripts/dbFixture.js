@@ -107,31 +107,26 @@ return sequelize.sync(/*{ force: true }*/)
 
     tuples.push(eventsTuple, termsTuple);
 
-    return Promise.reduce(tuples, (prev, {model, records}) => {
-      return Promise.resolve(records)
+    return Promise.reduce(tuples, (prev, {model, records}) =>
+      Promise.resolve(records)
         .then((records) => {
           if ( model !== 'Renting' ) {
             return records;
           }
 
-          return Promise.map(records, (record) => {
-            return models.Room
+          return Promise.map(records, (record) =>
+            models.Room
               .findOne({
                 where: { id: record.RoomId },
                 include: [{ model: models.Apartment }],
               })
-              .then((room) => {
-                return Utils.getServiceFees(room.get('roomCount'));
-              })
+              .then((room) => Utils.getServiceFees(room.get('roomCount')))
               .then((serviceFees) => {
                 record.serviceFees = serviceFees;
                 return record;
-              });
-          });
+              }));
         })
-        .then((records) => {
-          return models[model].bulkCreate(records, { hooks: false });
-        })
+        .then((records) => models[model].bulkCreate(records, { hooks: false }))
         .catch((err) => {
           console.error(`Failed loading records for model "${model}"`);
           if ( 'errors' in err ) {
@@ -139,8 +134,7 @@ return sequelize.sync(/*{ force: true }*/)
           }
 
           throw err;
-        });
-    }, false);
+        }), false);
   })
   .then(() => {
     console.log('DATABASE SUCCESSFULLY FIXTURED!');

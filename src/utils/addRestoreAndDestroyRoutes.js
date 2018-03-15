@@ -19,16 +19,10 @@ function restore(instances) {
 function destroy(instances) {
   return Promise.all(
     instances
-      .filter((instance) => {
-        return instance.deletedAt != null;
-      })
-      .map((instance) => {
-        return instance.destroy({force: true});
-      })
+      .filter((instance) => instance.deletedAt != null)
+      .map((instance) => instance.destroy({force: true}))
   )
-  .then((filterInstances) => {
-    return filterInstances.length;
-  });
+  .then((filterInstances) => filterInstances.length);
 }
 
 module.exports = function(app, Model) {
@@ -41,12 +35,8 @@ module.exports = function(app, Model) {
         where: { id: { [Op.in]: req.body.data.attributes.ids } },
         paranoid: false,
       })
-      .then((instances) => {
-        return restore(instances);
-      })
-      .then((value) => {
-        return restoreSuccessHandler(res, `${value} ${Model.name}s`);
-      })
+      .then((instances) => restore(instances))
+      .then((value) => restoreSuccessHandler(res, `${value} ${Model.name}s`))
       .catch(logAndSend(res));
   });
 
@@ -56,12 +46,8 @@ module.exports = function(app, Model) {
         where: { id: { [Op.in]: req.body.data.attributes.ids } },
         paranoid: false,
       })
-      .then((instances) => {
-        return destroy(instances);
-      })
-      .then((value) => {
-        return destroySuccessHandler(res, `${value} ${Model.name}s`);
-      })
+      .then((instances) => destroy(instances))
+      .then((value) => destroySuccessHandler(res, `${value} ${Model.name}s`))
       .catch(logAndSend(res));
   });
 };

@@ -92,7 +92,7 @@ module.exports = function({ Room, Picture, Term }) {
         // loads belongsTo relations automatically.
         scope: 'availableAt',
         where: {
-          '$Rentings->Events.startDate$': { [Op.lte]: new Date() },
+          '$Rentings->Events.startDate$': { [Op.lte]: Utils.now() },
           '$Apartment.addressCity$': city,
         },
       }))

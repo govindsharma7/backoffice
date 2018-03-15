@@ -16,12 +16,11 @@ const {
 SendinBlueApi.ApiClient.instance.authentications['api-key'].apiKey = SENDINBLUE_API_KEY;
 
 const { required } = Utils;
-
-const ContactsApi = new SendinBlueApi.ContactsApi();
 const replyTo = SUPPORT_EMAIL;
-const Sendinblue = {};
-
-Sendinblue.SMTPApi = new SendinBlueApi.SMTPApi();
+const Sendinblue = {
+  ContactsApi: new SendinBlueApi.ContactsApi(),
+  SMTPApi: new SendinBlueApi.SMTPApi(),
+};
 
 Sendinblue.sendTemplateEmail = function(id, data = {}) {
   const isProd = NODE_ENV === 'production';
@@ -65,13 +64,13 @@ Sendinblue.getSandboxEmail = function(email) {
 };
 
 Sendinblue.getContact = function(email) {
-  return ContactsApi.getContactInfo(email);
+  return Sendinblue.ContactsApi.getContactInfo(email);
 };
 
 Sendinblue.createContact = function(email, args) {
   const { client = required(), listIds } = args;
 
-  return ContactsApi.createContact({
+  return Sendinblue.ContactsApi.createContact({
     email: NODE_ENV === 'production' ? email : Sendinblue.getSandboxEmail(email),
     attributes: Sendinblue.serializeClient(client),
     listIds: listIds === null ?
@@ -89,7 +88,7 @@ Sendinblue.updateContact = function(email, { listIds, unlinkListIds, client }) {
     params.attributes = Sendinblue.serializeClient(client);
   }
 
-  return ContactsApi.updateContact(email, params);
+  return Sendinblue.ContactsApi.updateContact(email, params);
 };
 
 Sendinblue.pingService = function() {

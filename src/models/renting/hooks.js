@@ -141,7 +141,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
         where: { id: { [Op.in]: depositRentItemsIds } },
         transaction,
       }),
-      Wordpress.makeRoomUnavailable({ room }),
+      Wordpress.makeRoomUnavailable({ reference: room.reference }),
       client.sendWelcomeEmail({
         renting,
         rentOrder,

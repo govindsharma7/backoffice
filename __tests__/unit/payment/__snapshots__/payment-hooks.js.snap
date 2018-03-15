@@ -1,5 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Payment - Hooks afterCreate should send a payment confirmation after create 1`] = `
+Array [
+  48,
+  Object {
+    "attributes": Object {
+      "AMOUNT": 123,
+      "LABEL": "A random order",
+      "LINK": "http://localhost:3000/forest/actions/pdf-invoice/invoice-null.pdf?orderId=SNAPSHOTABLE-UUID&lang=en-US",
+      "NAME": "John",
+    },
+    "emailTo": Array [
+      "SNAPSHOTABLE-UUID@test.com",
+      Object {},
+    ],
+  },
+]
+`;
+
+exports[`Payment - Hooks afterCreate should send a payment confirmation after create 2`] = `
+Array [
+  "ssjjcr",
+  Object {
+    "amount": 123,
+    "city": undefined,
+    "client": "John DOE",
+    "date": "02/01/2017",
+    "messageType": "payment",
+    "order": "A random order",
+    "room": undefined,
+    "time": "01:00",
+  },
+]
+`;
+
 exports[`Payment - Hooks beforeDelete, beforeUpdate should prevent non-manual payments to be updated or deleted 1`] = `"Only manual payments can be updated"`;
 
 exports[`Payment - Hooks beforeDelete, beforeUpdate should prevent non-manual payments to be updated or deleted 2`] = `"Only manual payments can be destroyd"`;

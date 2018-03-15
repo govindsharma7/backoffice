@@ -12,6 +12,8 @@ const { Renting, Room } = models;
 
 describe('Renting - Hooks', () => {
   const { handleBeforeValidate } = Renting;
+  const spiedSendTemplate = jest.spyOn(Sendinblue, 'sendTemplateEmail');
+  const spiedMakeRoomUnavailable = jest.spyOn(Wordpress, 'makeRoomUnavailable');
 
   describe('beforeValidate', () => {
     it('should\'t allow booking a room while it\'s rented', async () => {
@@ -111,6 +113,7 @@ describe('Renting - Hooks', () => {
         Apartment: [{
           id: u.id('apartment'),
           DistrictId: u.id('district'),
+          addressCity: 'lyon',
           roomCount: 3,
         }],
         Room: [{
@@ -122,6 +125,7 @@ describe('Renting - Hooks', () => {
       const renting = await Renting.create({
         ClientId: client.id,
         RoomId: room.id,
+        packLevel: 'basic',
         bookingDate,
       });
       const { price, serviceFees } =
@@ -145,6 +149,7 @@ describe('Renting - Hooks', () => {
         Apartment: [{
           id: u.id('apartment'),
           DistrictId: u.id('district'),
+          addressCity: 'lyon',
           roomCount: 3,
         }],
         Room: [{
@@ -157,6 +162,7 @@ describe('Renting - Hooks', () => {
       const renting = await Renting.create({
         ClientId: client.id,
         RoomId: room.id,
+        packLevel: 'basic',
         bookingDate,
         hasTwoOccupants: true,
       });
@@ -170,49 +176,57 @@ describe('Renting - Hooks', () => {
 
   describe('afterCreate', () => {
     it('should create quote orders when packLevel is present', async () => {
-      const spiedSendTemplate = jest.spyOn(Sendinblue, 'sendTemplateEmail');
       const { unique: u } = await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: `john-${u.int(0)}@doe.something`,
+          email: `${u.id('client')}@test.com`,
           status: 'draft',
         }],
         Apartment: [{
           id: u.id('apartment'),
+          name: 'Beautiful place',
           addressCity: 'lyon',
           DistrictId: 'lyon-ainay',
         }],
         Room: [{
-          id: u.id('room1'),
+          id: u.id('room'),
           ApartmentId: u.id('apartment'),
         }],
       }))();
 
-      const renting1 = await Renting.create({
+      await Renting.create({
         id: u.id('renting1'),
         ClientId: u.id('client'),
         RoomId: u.id('room'),
         status: 'draft',
-        packLevel: 'basic',
+        packLevel: 'privilege',
         price: 24600,
-        bookingDate: D.parse('2017-02-14T12:00Z'),
+        serviceFees: 3000,
+        discount: 234,
+        bookingDate: D.parse('2017-02-15T12:00Z'), // 1st day of 2nd 1/2 of month
       });
 
-      const orders1 = models.Order.findAll({
+      const orders1 = await models.Order.findAll({
         include: [{
           model: models.OrderItem,
           required: true,
-          where: { RentingId: renting1.id },
+          where: { RentingId: u.id('renting1') },
         }],
       });
 
       const packOrder1 = orders1.find(({ OrderItems: [{ ProductId }] }) =>
-        ProductId === 'basic-pack'
+        ProductId === 'privilege-pack'
+      );
+      const packItem = packOrder1.OrderItems.find(({ ProductId, unitPrice }) =>
+        ProductId === 'privilege-pack' && unitPrice > 0
+      );
+      const discountItem = packOrder1.OrderItems.find(({ ProductId, unitPrice }) =>
+        ProductId === 'privilege-pack' && unitPrice < 0
       );
       const depositOrder1 = orders1.find(({ OrderItems: [{ ProductId }] }) =>
-        ProductId === 'deposit'
+        ProductId === 'lyon-deposit'
       );
       const rentOrder1 = orders1.find(({ OrderItems: [{ ProductId }] }) =>
         ProductId === 'rent'
@@ -221,36 +235,26 @@ describe('Renting - Hooks', () => {
         ProductId === 'rent'
       );
       const serviceItem1 = rentOrder1.OrderItems.find(({ ProductId }) =>
-        ProductId === 'serviceFees'
+        ProductId === 'service-fees'
       );
 
       expect(orders1.length).toEqual(3);
-      expect(packOrder1.OrderItems[0].unitPrice)
-        .toEqual(Utils.getPackPrice({ addressCity: 'lyon', packLevel: 'basic' }));
+      expect(packItem.unitPrice)
+        .toEqual(Utils.getPackPrice({
+          addressCity: 'lyon',
+          packLevel: 'privilege',
+        }));
+      expect(discountItem.unitPrice).toEqual(-23400);
       expect(depositOrder1.OrderItems[0].unitPrice)
-        .toEqual(Utils.getPackPrice({ addressCity: 'lyon' }));
-      expect(rentItem1.unitPrice).toEqual(12300);
+        .toEqual(Utils.getDepositPrice({ addressCity: 'lyon' }));
       expect(serviceItem1.unitPrice).toEqual(1500);
-      expect(spiedSendTemplate).toHaveBeenCalledWith();
-
-      const renting2 = await Renting.create({
-        id: u.id('renting2'),
-        ClientId: u.id('client'),
-        RoomId: u.id('room'),
-        status: 'draft',
-        packLevel: 'privilege',
-        discount: 123,
-        price: 44400,
-      });
-
-
+      expect(rentItem1.unitPrice).toEqual(12300);
+      expect(Utils.snapshotableLastCall(spiedSendTemplate))
+        .toMatchSnapshot();
     });
   });
 
   describe('afterUpdate', () => {
-    jest.spyOn(Sendinblue, 'sendWelcomeEmail').mockImplementation(() => true);
-    jest.spyOn(Wordpress, 'makeRoomUnavailable').mockImplementation(() => true);
-
     it('shouldn\'t do anything unless status is updated to active', async () => {
       const { instances: { renting } } = await fixtures((u) => ({
         Client: [{
@@ -283,7 +287,7 @@ describe('Renting - Hooks', () => {
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
+          email: `${u.id('client')}@test.com`,
           status: 'draft',
         }],
         Order: [{
@@ -312,8 +316,17 @@ describe('Renting - Hooks', () => {
           ClientId: u.id('client'),
           status: 'draft',
         }],
-        Apartment: [{ id: u.id('apartment'), DistrictId: 'lyon-ainay' }],
-        Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+        Apartment: [{
+          id: u.id('apartment'),
+          name: 'Beautiful place',
+          addressCity: 'lyon',
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+          reference: `REF-${u.id('room')}-1`,
+        }],
         Renting: [{
           id: u.id('renting'),
           ClientId: u.id('client'),
@@ -345,8 +358,6 @@ describe('Renting - Hooks', () => {
       const {
         client,
         renting,
-        room,
-        apartment,
         draftRentOrder,
         draftDepositOrder,
         cancelledRentOrder,
@@ -354,20 +365,11 @@ describe('Renting - Hooks', () => {
       } = instances;
 
       await renting.update({ status: 'active' });
-      await Promise.delay(200);
 
-      const sendWelcomeArgs = Sendinblue.sendWelcomeEmail.mock.calls[0][0];
-      const updateRoomArgs = Wordpress.makeRoomUnavailable.mock.calls[0][0];
-
-      expect(sendWelcomeArgs.rentOrder.id).toBe(draftRentOrder.id);
-      expect(sendWelcomeArgs.depositOrder.id).toBe(draftDepositOrder.id);
-      expect(sendWelcomeArgs.client.id).toBe(client.id);
-      expect(sendWelcomeArgs.renting.id).toBe(renting.id);
-      expect(sendWelcomeArgs.room.id).toBe(room.id);
-      expect(sendWelcomeArgs.apartment.id).toBe(apartment.id);
-      expect(sendWelcomeArgs.packLevel).toEqual('comfort');
-
-      expect(updateRoomArgs.room.id).toBe(room.id);
+      expect(Utils.snapshotableLastCall(spiedSendTemplate))
+        .toMatchSnapshot();
+      expect(Utils.snapshotableLastCall(spiedMakeRoomUnavailable))
+        .toMatchSnapshot();
 
       return Promise.all([
         expect(client.reload())

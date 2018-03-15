@@ -462,8 +462,8 @@ describe('Renting - Model', () => {
   });
 
   describe('.updatePackLevel', () => {
-    it('should update the label, price and productId of a pack item', () => {
-      return fixtures((u) => ({
+    it('should update the label, price and productId of a pack item', async () => {
+      const { instances: { renting, packitem } } = await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
@@ -495,24 +495,21 @@ describe('Renting - Model', () => {
           ProductId: 'basic-pack',
           status: 'draft',
         }],
-      }))({ method: 'create', hooks: false })
-      .tap(({ instances: { renting, packitem } }) => {
-        expect(packitem.unitPrice).toEqual(12300);
+      }))();
 
-        return Renting.updatePackLevel({
-          renting,
-          packLevel: 'comfort',
-          addressCity: 'lyon',
-        });
-      })
-      .then(({ instances: { packitem } }) => packitem.reload())
-      .then((packitem) => {
-        expect(packitem.label).toMatch(/co[mn]fort/);
-        expect(packitem.unitPrice).not.toEqual(12300);
-        expect(packitem.ProductId).toEqual('comfort-pack');
+      expect(packitem.unitPrice).toEqual(12300);
 
-        return null;
+      await Renting.updatePackLevel({
+        renting,
+        packLevel: 'comfort',
+        addressCity: 'lyon',
       });
+
+      await packitem.reload();
+
+      expect(packitem.label).toMatch(/co[mn]fort/);
+      expect(packitem.unitPrice).not.toEqual(12300);
+      expect(packitem.ProductId).toEqual('comfort-pack');
     });
   });
 

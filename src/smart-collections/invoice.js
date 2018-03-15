@@ -5,6 +5,7 @@ const Liana       = require('forest-express-sequelize');
 const Schemas     = require('forest-express/generators/schemas');
 const CSVExporter = require('forest-express/services/csv-exporter');
 const Op          = require('../operators');
+const Utils       = require('../utils');
 
 // This will be accessed by SmartFieldsValuesInjector when calling CSVExporter
 // Without this, CSVExporter would crash.
@@ -189,7 +190,7 @@ function getTotalPaid({ Payments }) {
   );
 }
 
-function getWhere(segment, date = new Date()) {
+function getWhere(segment, date = Utils.now()) {
   const sub = parseInt(segment) || 0;
   const month = D.subMonths(date, sub);
   const start = D.startOfMonth(month);

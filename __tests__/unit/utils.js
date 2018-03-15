@@ -61,15 +61,14 @@ describe('Utils', () => {
       WORK: 'work',
     };
 
-    test('serialized data for sendinblue', () => {
-      return serializeHousemate(houseMates, data)
-        .then(([dataFr, dataEn, emailFr, emailEn]) => {
-          expect(dataFr).toEqual(Object.assign({}, commonExpected, fr));
-          expect(dataEn).toEqual(Object.assign({}, commonExpected, en));
-          expect(emailFr).toEqual(['toto@gmail.com']);
-          expect(emailEn.length).toEqual(0);
-          return true;
-        });
+    test('serialized data for sendinblue', async () => {
+      const [dataFr, dataEn, emailFr, emailEn] =
+        await serializeHousemate(houseMates, data);
+
+      expect(dataFr).toEqual(Object.assign({}, commonExpected, fr));
+      expect(dataEn).toEqual(Object.assign({}, commonExpected, en));
+      expect(emailFr).toEqual(['toto@gmail.com']);
+      expect(emailEn.length).toEqual(0);
     });
   });
 

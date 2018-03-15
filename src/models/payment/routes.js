@@ -55,7 +55,7 @@ module.exports = function(app, { Payment, Room, Order, OrderItem, Renting }) {
       const room = await Room.scope('availableAt').findById(roomId);
 
       if ( room.availableAt == null ) {
-        throw new CNError(`Room ${roomId} is no longer available`, {
+        throw new CNError(`Room "${room.name}" is no longer available`, {
           code: 'payment.roomUnavailable',
         });
       }

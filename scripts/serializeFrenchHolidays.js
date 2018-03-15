@@ -6,9 +6,9 @@ const holidaysList = [];
 const currYear = new Date().getFullYear();
 
 function getHolidays(year) {
-  return frHolidays.getHolidays(year, 'FR').filter((holiday) => {
-    return holiday.type === 'public';
-  });
+  return frHolidays.getHolidays(year, 'FR').filter((holiday) =>
+    holiday.type === 'public'
+  );
 }
 
 for ( let year = currYear; year < currYear + 10; year++ ) {

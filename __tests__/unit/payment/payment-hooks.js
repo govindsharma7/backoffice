@@ -1,8 +1,10 @@
 jest.mock('../../../src/vendor/zapier');
 
 const Promise               = require('bluebird');
+const D                     = require('date-fns');
 const fixtures              = require('../../../__fixtures__');
 const models                = require('../../../src/models');
+const Utils                 = require('../../../src/utils');
 const Sendinblue            = require('../../../src/vendor/sendinblue');
 const Zapier                = require('../../../src/vendor/zapier');
 
@@ -17,7 +19,7 @@ describe('Payment - Hooks', () => {
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: `john-${u.int(0)}@doe.something`,
+          email: `${u.id('client')}@test.com`,
         }],
         Order: [{
           id: u.id('order'),
@@ -30,7 +32,8 @@ describe('Payment - Hooks', () => {
       await models.Payment.create({
         type: 'card',
         amount: 12300,
-        OrderId: u.id('order-0'),
+        OrderId: u.id('order'),
+        createdAt: D.parse('2017-01-02 Z'),
       });
 
       const order = await models.Order.findById(u.id('order'), {
@@ -41,22 +44,10 @@ describe('Payment - Hooks', () => {
       expect(order.status).toEqual('active');
       expect(order.Metadata.length).toEqual(1);
       expect(order.Metadata[0].name).toEqual('messageId');
-      expect(spiedSendTemplate)
-        .toHaveBeenCalledWith(expect.any(Number), expect.objectContaining({
-          emailTo: [`john-${u.int(0)}@doe.something`],
-          attributes: expect.objectContaining({
-            NAME: 'John',
-            AMOUNT: 123,
-            LABEL: 'A random order',
-          }),
-        }));
-      expect(spiedPost)
-        .toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
-          messageType: 'payment',
-          client: 'John Doe',
-          order: 'A rnadom order',
-          amount: 123,
-        }));
+      expect(Utils.snapshotableLastCall(spiedSendTemplate))
+        .toMatchSnapshot();
+      expect(Utils.snapshotableLastCall(spiedPost))
+        .toMatchSnapshot();
     });
   });
 

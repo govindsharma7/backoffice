@@ -40,7 +40,7 @@ const Order = sequelize.define('Order', {
   },
   dueDate: {
     type:                     DataTypes.DATEONLY,
-    defaultValue: new Date(),
+    defaultValue: Utils.now(),
   },
   status: {
     type:                     DataTypes.ENUM('draft', 'active', 'cancelled'),
@@ -180,7 +180,7 @@ Order.associate = (models) => {
     }],
   });
 
-  Order.addScope('lateRent', ({ date = new Date() }) => ({
+  Order.addScope('lateRent', ({ date = Utils.now() }) => ({
     subQuery: false, // we're good, all those include are singular
     where: {
       dueDate: { [Op.lt]: date },
@@ -330,7 +330,7 @@ Order.pay = async function(args) {
   } = card;
   const expirationDate = _.padStart(`${expiryMonth}${expiryYear}`, 4, '0');
   const type = Utils.getCardType(number);
-  const purchaseId = `${order.id}-${new Date().getTime()}`;
+  const purchaseId = `${order.id}-${Utils.now().getTime()}`;
   let purchase;
 
   try {
@@ -409,7 +409,7 @@ Order.sendPaymentRequest = function(args) {
 methodify(Order, 'sendPaymentRequest');
 
 // TODO: improve that shit
-Order.sendRentReminders = function(now = new Date()) {
+Order.sendRentReminders = function(now = Utils.now()) {
   return Order.scope('rentOrders')
     .findAll({
       where: {
@@ -434,7 +434,7 @@ Order.sendRentReminders = function(now = new Date()) {
     );
 };
 
-// Order.updateLateFees = function(date = new Date()) {
+// Order.updateLateFees = function(date = Utils.now()) {
 //
 // };
 

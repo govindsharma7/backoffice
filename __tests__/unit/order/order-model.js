@@ -1,8 +1,11 @@
+jest.mock('../../../src/vendor/zapier');
+
 const Promise       = require('bluebird');
-// const D             = require('date-fns');
+const D             = require('date-fns');
 const fixtures      = require('../../../__fixtures__');
 const orderFixtures = require('../../../__fixtures__/order');
 const models        = require('../../../src/models');
+const Utils         = require('../../../src/utils');
 const payline       = require('../../../src/vendor/payline');
 const Sendinblue    = require('../../../src/vendor/sendinblue');
 
@@ -154,7 +157,8 @@ describe('Order', () => {
 
   describe('.pay', () => {
     const spiedDoPurchase = jest.spyOn(payline, 'doPurchase');
-    const spiedSendTemplate = jest.spyOn(Sendinblue.SMTPApi, 'sendTestTemplate');
+    const spiedSendTemplate = jest.spyOn(Sendinblue, 'sendTemplateEmail');
+    const spiedNow = jest.spyOn(Utils, 'now');
     const card = { cardNumber: '4242424242424242' };
 
     it('should throw if the card type is invalid', () => {
@@ -235,7 +239,7 @@ describe('Order', () => {
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
+          email: `${u.id('client')}@test.com`,
           status: 'active',
         }],
         Order: [{
@@ -254,12 +258,20 @@ describe('Order', () => {
 
       spiedDoPurchase.mockImplementationOnce(() => ({ transactionId }));
       spiedSendTemplate.mockImplementationOnce(() => ({ messageId }));
+      spiedNow.mockImplementation(() => D.parse('2017-01-02 Z'));
 
       await Order.pay({
         order,
         balance: -100,
         card,
       });
+
+      spiedNow.mockClear();
+
+      expect(Utils.snapshotableLastCall(spiedDoPurchase))
+        .toMatchSnapshot();
+      expect(Utils.snapshotableLastCall(spiedSendTemplate))
+        .toMatchSnapshot();
 
       const metadata = await Metadata.findAll({ where: {
         metadatable: 'Order',

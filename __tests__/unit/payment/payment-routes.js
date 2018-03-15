@@ -1,8 +1,10 @@
 jest.mock('../../../src/vendor/zapier');
 
 const app                   = require('express')();
+const D                     = require('date-fns');
 const fixtures              = require('../../../__fixtures__');
 const models                = require('../../../src/models');
+const Utils                 = require('../../../src/utils');
 const Payline               = require('../../../src/vendor/payline');
 
 const { Payment } = models;
@@ -32,8 +34,15 @@ describe('Payment - Routes', () => {
           email: `john-${u.int(0)}@doe.something`,
           status: 'active',
         }],
-        Apartment: [{ id: u.id('apartment'), DistrictId: 'lyon-ainay' }],
-        Room: [{ id: u.id('room'), ApartmentId: u.id('apartment') }],
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+          name: 'Room test',
+        }],
         Renting: [{
           id: u.id('renting'),
           ClientId: u.id('client'),
@@ -46,10 +55,11 @@ describe('Payment - Routes', () => {
           label: 'label',
           ClientId: u.id('client'),
         }],
-        OrderItems: [{
+        OrderItem: [{
           OrderId: u.id('order'),
           ProductId: 'basic-pack',
           RentingId: u.id('renting'),
+          label: 'item label',
         }],
       }))();
 
@@ -73,9 +83,10 @@ describe('Payment - Routes', () => {
           label: 'label',
           ClientId: u.id('client'),
         }],
-        OrderItems: [{
+        OrderItem: [{
           OrderId: u.id('order'),
           ProductId: 'rent',
+          label: 'item label',
           unitPrice: 45600,
         }],
       }))();
@@ -90,6 +101,7 @@ describe('Payment - Routes', () => {
 
     it('should call Order.pay if no error is detected', async () => {
       const spiedDoPurchase = jest.spyOn(Payline, 'doPurchase');
+      const spiedNow = jest.spyOn(Utils, 'now');
 
       const { instances: { order } } = await fixtures((u) => ({
         Client: [{
@@ -124,6 +136,8 @@ describe('Payment - Routes', () => {
         }],
       }))();
 
+      spiedNow.mockImplementation(() => D.parse('2017-01-02 Z'));
+
       await Payment.handleCreatePaymentRoute(
         { body: {
           orderId: order.id,
@@ -137,17 +151,10 @@ describe('Payment - Routes', () => {
         { send: (res) => res }
       );
 
-      expect(spiedDoPurchase).toHaveBeenCalledWith(
-        expect.stringContaining(order.id),
-        expect.objectContaining({
-          number: '4242424242424242',
-          type: 'visa',
-          holder: 'ME',
-          expirationDate: '1299',
-          cvx: 'e',
-        }),
-        123
-      );
+      spiedNow.mockClear();
+
+      expect(Utils.snapshotableLastCall(spiedDoPurchase))
+        .toMatchSnapshot();
     });
   });
 });
