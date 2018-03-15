@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Client - Routes client-identity updates client and Sendinblue contact + normalizes metadata 1`] = `
+Array [
+  "SNAPSHOTABLE-UUID@test.com",
+  Object {
+    "attributes": Object {
+      "FIRSTNAME": "Johny",
+      "LASTNAME": "Doey",
+      "SMS": "+33698765432",
+    },
+    "listIds": undefined,
+    "unlinkListIds": undefined,
+  },
+]
+`;

@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Order .pay should create a payment if the purchase is successful 1`] = `
+Array [
+  "SNAPSHOTABLE-UUID-1483315200000",
+  Object {
+    "cvx": undefined,
+    "expirationDate": "undefinedundefined",
+    "holder": undefined,
+    "number": "4242424242424242",
+    "type": "visa",
+  },
+  100,
+]
+`;
+
+exports[`Order .pay should create a payment if the purchase is successful 2`] = `
+Array [
+  48,
+  Object {
+    "attributes": Object {
+      "AMOUNT": 1,
+      "LABEL": Object {},
+      "LINK": "http://localhost:3000/forest/actions/pdf-invoice/invoice-null.pdf?orderId=SNAPSHOTABLE-UUID&lang=en-US",
+      "NAME": "John",
+    },
+    "emailTo": Array [
+      "SNAPSHOTABLE-UUID@test.com",
+      Object {},
+    ],
+  },
+]
+`;
