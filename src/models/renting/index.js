@@ -660,8 +660,8 @@ Renting.createQuoteOrders = function(args) {
 
   return Promise.map(
     toCall,
-    (def) =>
-      renting[`findOrCreate${def.suffix}`](Object.assign(def.args, { transaction })),
+    ({ suffix, args }) =>
+      renting[`findOrCreate${suffix}`](Object.assign(args, { transaction })),
     { concurrency: /^(test|dev)/.test(NODE_ENV) ? 1 : 3 }
   );
 };
@@ -768,9 +768,14 @@ Renting.updateDraftRentings = async function(now = Utils.now()) {
   const periodCoef = await Utils.getPeriodCoef(now);
 
   return Promise.map(rentings, (renting) => {
+    const rentingPrice = Utils.getPeriodPrice(
+      renting.Room.basePrice,
+      periodCoef,
+      renting.serviceFees
+    );
     const { price, serviceFees } = Utils.prorate({
       bookingDate: now,
-      price: renting.Room.basePrice,
+      price: rentingPrice,
       serviceFees: renting.serviceFees,
       date: now,
     });
@@ -778,11 +783,7 @@ Renting.updateDraftRentings = async function(now = Utils.now()) {
     return Promise.all([
       renting.update({
         bookingDate: now,
-        price: Utils.getPeriodPrice(
-          renting.Room.basePrice,
-          periodCoef,
-          renting.serviceFees
-        ),
+        price: rentingPrice,
       }, { validate: false }), // bookingDate validation is useless at this point
       renting.OrderItems
         .find(({ ProductId }) => ProductId === 'rent')
@@ -790,6 +791,9 @@ Renting.updateDraftRentings = async function(now = Utils.now()) {
       renting.OrderItems
         .find(({ ProductId }) => ProductId === 'service-fees')
         .update({ unitPrice: serviceFees }),
+      models.Order.update({ dueDate: now }, {
+        where: { id: renting.OrderItems[0].OrderId },
+      }),
     ]);
   }, { concurrency: 3 });
 };

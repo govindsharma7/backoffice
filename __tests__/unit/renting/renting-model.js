@@ -519,10 +519,10 @@ describe('Renting - Model', () => {
   });
 
   describe('.updateDraftRentings', () => {
-    const now = D.parse('2016-07-23');
-
     it('should\'t allow booking a room while it\'s rented', async () => {
-      await fixtures((u) => ({
+      const now = D.parse('2016-06-03 Z');
+      const periodCoef = await Utils.getPeriodCoef(now);
+      const { instances: { order } } = await fixtures((u) => ({
         Client: [{
           id: u.id('client'),
           firstName: 'John',
@@ -544,7 +544,7 @@ describe('Renting - Model', () => {
           ClientId: u.id('client'),
           RoomId: u.id('room'),
           status: 'draft',
-          bookingDate: D.parse('2016-07-13'),
+          bookingDate: D.parse('2016-05-23'),
           price: 56,
           serviceFees: 3000,
         }, {
@@ -552,7 +552,7 @@ describe('Renting - Model', () => {
           ClientId: u.id('client'),
           RoomId: u.id('room'),
           status: 'draft',
-          bookingDate: D.parse('2016-07-27'),
+          bookingDate: D.parse('2016-06-13'),
           price: 89,
           serviceFees: 3000,
         }],
@@ -579,16 +579,19 @@ describe('Renting - Model', () => {
           unitPrice: 34,
         }],
       }))();
-
       const updatedTuples = await Renting.updateDraftRentings(now);
       const [[renting, rentItem, feesItem]] = updatedTuples;
 
+      await order.reload();
+
       expect(updatedTuples.length).toEqual(1); // Only one renting should be updated
+      expect(order.dueDate).toEqual(D.format(now, 'YYYY-MM-DD'));
       expect(renting.bookingDate).toEqual(now);
-      expect(renting.price).not.toEqual(56);
+      expect(renting.price).toEqual(Utils.roundBy100(65400 * periodCoef));
       expect(renting.serviceFees).toEqual(3000);
-      expect(rentItem.unitPrice).not.toEqual(12);
-      expect(feesItem.unitPrice).not.toEqual(34);
+      expect(rentItem.unitPrice)
+        .toEqual(Utils.roundBy100(65400 * periodCoef / 30 * 28));
+      expect(feesItem.unitPrice).toEqual(2800);
     });
   });
 });
