@@ -1,7 +1,6 @@
 jest.mock('../../../src/vendor/zapier');
 
 const D                   = require('date-fns');
-const Promise             = require('bluebird');
 const fixtures            = require('../../../__fixtures__');
 const models              = require('../../../src/models');
 const Utils               = require('../../../src/utils');
