@@ -345,6 +345,72 @@ module.exports = {
     }, {
       id: 'lille-massena-solferino',
       label: 'Masséna - Solférino',
+    }, {
+      id: 'toulouse-capitole',
+      label: 'Capitole',
+    }, {
+      id: 'toulouse-carmes',
+      label: 'Carmes',
+    }, {
+      id: 'toulouse-francois-verdier',
+      label: 'François Verdier',
+    }, {
+      id: 'toulouse-saint-aubin',
+      label: 'Saint Aubin',
+    }, {
+      id: 'toulouse-jean-jaures',
+      label: 'Jean Jaurès',
+    }, {
+      id: 'toulouse-jeanne-darc',
+      label: 'Jeanne d\'Arc',
+    }, {
+      id: 'toulouse-les-chalets',
+      label: 'Les Chalets',
+    }, {
+      id: 'toulouse-matabiau',
+      label: 'Matabiau',
+    }, {
+      id: 'toulouse-compans',
+      label: 'Compans',
+    }, {
+      id: 'toulouse-amidonniers',
+      label: 'Amidonniers',
+    }, {
+      id: 'toulouse-saint-cyprien',
+      label: 'Saint Cyprien',
+    }, {
+      id: 'toulouse-patte-doie',
+      label: 'Patte d\'Oie',
+    }, {
+      id: 'toulouse-minimes',
+      label: 'Minimes',
+    }, {
+      id: 'toulouse-bonnefoy',
+      label: 'Bonnefoy',
+    }, {
+      id: 'toulouse-roseraie',
+      label: 'Roseraie',
+    }, {
+      id: 'toulouse-jolimont',
+      label: 'Jolimont',
+    }, {
+      id: 'toulouse-cote-pavee',
+      label: 'Côte Pavée',
+    }, {
+      id: 'toulouse-pont-des-demoiselles',
+      label: 'Pont des Demoiselles',
+    }, {
+      id: 'toulouse-jardin-des-plantes',
+      label: 'Jardin des Plantes',
+    }, {
+      id: 'toulouse-saint-michel',
+      label: 'Saint Michel',
+    }, {
+      id: 'toulouse-saint-agne',
+      label: 'Saint Agne',
+    }, {
+      id: 'toulouse-rangueil',
+      label: 'Rangueil',
     },
   ],
 };
