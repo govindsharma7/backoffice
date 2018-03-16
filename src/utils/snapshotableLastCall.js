@@ -17,5 +17,9 @@ function stripUuidRecursive(value) {
 }
 
 module.exports = function(spiedFn) {
+  if ( !spiedFn.mock || spiedFn.mock.calls.length === 0 ) {
+    throw new Error('Last call data unavailable');
+  }
+
   return stripUuidRecursive(spiedFn.mock.calls.slice(-1)[0]);
 };

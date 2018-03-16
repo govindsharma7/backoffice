@@ -425,7 +425,7 @@ describe('Client - Model', () => {
           startDate: D.parse('2017-01-01 Z'),
           endDate: D.parse('2017-01-01 Z'),
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       const rentings = await client.getRentingsFor(D.parse('2017-02-15 Z'));
 

@@ -20,7 +20,7 @@ describe('hooks:afterUpdate', () => {
         ClientId: u.id('client'),
         status: 'draft',
       }],
-    }))({ method: 'create', hooks: 'Order' });
+    }))();
 
     const updated = await order.update({ status: 'cancelled' }, { hooks: false });
     const actual = await Order.handleAfterUpdate(updated, {});
@@ -62,7 +62,7 @@ describe('hooks:afterUpdate', () => {
         RentingId: u.id('renting'),
         status: 'draft',
       }],
-    }))({ method: 'create', hooks: 'Order' })
+    }))()
     .tap(({ instances: { order } }) => order.update({ status: 'active' }))
     .tap(Promise.delay(200))
     .then(({ instances: { item, renting } }) => Promise.all([

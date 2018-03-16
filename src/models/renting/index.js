@@ -550,7 +550,6 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
       client = required(),
       room = required(),
       apartment = required(),
-      hooks,
      } = args;
     const endDate = await Utils[`get${capType}EndDate`](startDate);
 
@@ -577,15 +576,9 @@ Renting.prototype.createOrUpdateRefundEvent = function(date) {
         eventable: 'Renting',
         EventableId: renting.id,
       },
-      hooks,
     });
   };
-
-  Renting.prototype[`findOrCreate${capType}Event`] = function(args) {
-    return Renting[`findOrCreate${capType}Event`](
-      Object.assign({ renting: this }, args)
-    );
-  };
+  methodify(Renting, `findOrCreate${capType}Event`);
 });
 
 Renting.prototype.createRoomSwitchOrder = function({ discount }) {

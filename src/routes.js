@@ -1,4 +1,5 @@
 const Promise           = require('bluebird');
+const _                 = require('lodash');
 const { wrap }          = require('express-promise-wrap');
 const aws               = require('./vendor/aws');
 const chromeless        = require('./vendor/chromeless');
@@ -38,13 +39,14 @@ module.exports = function(app) {
   app.get('/script/:scriptName', makePublic, wrap(async (req, res) => {
     let orders;
     let rentings;
+    const postSuccess = _.curry(Zapier.post, 2)('85f0oz');
 
     switch (req.params.scriptName) {
     case 'sendRentReminders':
       orders = await models.Order.sendRentReminders();
 
-      await Zapier.postRentInvoiceSuccess({
-        type: 'rent reminders',
+      await postSuccess({
+        messageType: 'rent reminders',
         count: orders.length,
       });
       break;
@@ -52,8 +54,8 @@ module.exports = function(app) {
     case 'createAndSendRentInvoices':
       orders = await models.Client.createAndSendRentInvoices();
 
-      await Zapier.postRentInvoiceSuccess({
-        type: 'rent invoices',
+      await postSuccess({
+        messageType: 'rent invoices',
         count: orders.length,
       });
       break;
@@ -65,7 +67,7 @@ module.exports = function(app) {
       break;
 
     default:
-      await Zapier.postRentInvoiceSuccess({ type: 'test', count: 1 });
+      await postSuccess({ messageType: 'test', count: 1 });
       break;
     }
 

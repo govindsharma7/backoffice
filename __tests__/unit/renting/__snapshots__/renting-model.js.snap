@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Renting - Model #findOrCreateCheckinEvent() It should create a checkin event and post to zapier 1`] = `
+Array [
+  "zdso65",
+  Object {
+    "EventableId": "SNAPSHOTABLE-UUID",
+    "createdAt": Object {},
+    "description": "John DOE
+
+tel: N/A",
+    "endDate": Object {},
+    "eventable": "Renting",
+    "id": "SNAPSHOTABLE-UUID",
+    "location": ", null null, ",
+    "startDate": Object {},
+    "status": "active",
+    "summary": "checkin John DOE",
+    "type": "checkin",
+    "updatedAt": Object {},
+  },
+]
+`;

@@ -6,6 +6,57 @@ room name
 tel: N/A"
 `;
 
-exports[`Renting - Routes .handleAddCheckinDateHandler should create a checkin event and send it to zapier 2`] = `undefined`;
+exports[`Renting - Routes .handleAddCheckinDateHandler should create a checkin event and send it to zapier 2`] = `
+Array [
+  "zdso65",
+  Object {
+    "EventableId": "SNAPSHOTABLE-UUID",
+    "createdAt": Object {},
+    "description": "John DOE
+room name
+tel: N/A",
+    "endDate": Object {},
+    "eventable": "Renting",
+    "id": "SNAPSHOTABLE-UUID",
+    "location": "16 rue de Condé, 69002 lyon, France",
+    "startDate": Object {},
+    "status": "active",
+    "summary": "checkin John DOE",
+    "type": "checkin",
+    "updatedAt": Object {},
+  },
+]
+`;
+
+exports[`Renting - Routes .handleCreateClientAndRentingRoute should create a client and a renting and send a booking summary 1`] = `
+Array [
+  46,
+  Object {
+    "attributes": Object {
+      "APARTMENT": Object {},
+      "LINK": "http://localhost:8080/en-US/summary/SNAPSHOTABLE-UUID",
+      "NAME": "John",
+    },
+    "emailTo": Array [
+      "SNAPSHOTABLE-UUID@test.com",
+      Object {},
+    ],
+  },
+]
+`;
+
+exports[`Renting - Routes .handleCreateClientAndRentingRoute should create a client and a renting and send a booking summary 2`] = `
+Array [
+  Object {
+    "attributes": Object {
+      "FIRSTNAME": "John",
+      "LASTNAME": "Doe",
+      "SMS": undefined,
+    },
+    "email": "lrbabe+SNAPSHOTABLE-UUID_at_test@chez-nestor.com",
+    "listIds": undefined,
+  },
+]
+`;
 
 exports[`Renting - Routes .handleCreateClientAndRentingRoute should throw a roomUnavailable error if the room is unavailable 1`] = `"Room null is no longer available"`;

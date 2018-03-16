@@ -6,18 +6,6 @@ const {
 }                         = require('../config');
 const fetch               = require('./fetch');
 
-function postRentInvoiceSuccess({ type, count }) {
-  return fetch(`${ZAPIER_API_URL}/85f0oz/`, {
-    method: 'post',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: querystring.stringify({
-      messageType: type,
-      count,
-      environment: NODE_ENV,
-    }),
-  });
-}
-
 function pingService() {
   return fetch(ZAPIER_API_URL);
 }
@@ -37,6 +25,5 @@ function post(zapId = required(), _body = required()) {
 
 module.exports = {
   post,
-  postRentInvoiceSuccess,
   pingService,
 };

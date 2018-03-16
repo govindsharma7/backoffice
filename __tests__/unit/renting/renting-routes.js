@@ -1,18 +1,16 @@
 jest.mock('../../../src/vendor/zapier');
 
-const Promise                 = require('bluebird');
 const D                       = require('date-fns');
 const app                     = require('express')();
 const fixtures                = require('../../../__fixtures__');
 const models                  = require('../../../src/models');
 const Utils                   = require('../../../src/utils');
 const Zapier                  = require('../../../src/vendor/zapier');
+const Sendinblue              = require('../../../src/vendor/sendinblue');
 
 const { Renting, Client, Event } = models;
 
 describe('Renting - Routes', () => {
-  const spiedPost = jest.spyOn(Zapier, 'post');
-
   // Initialize methods in route file
   Renting.routes(app, models);
 
@@ -48,13 +46,13 @@ describe('Renting - Routes', () => {
     });
 
     it('should create a client and a renting and send a booking summary', async () => {
-      jest.spyOn(Client, 'handleAfterCreate').mockImplementationOnce(() => true);
-      jest.spyOn(Renting, 'handleAfterCreate').mockImplementationOnce(() => true);
-
+      const spiedSendTemplate = jest.spyOn(Sendinblue, 'sendTemplateEmail');
+      const spiedCreateContact = jest.spyOn(Sendinblue.ContactsApi, 'createContact');
       const { unique: u } = await fixtures((u) => ({
         Apartment: [{
           id: u.id('apartment'),
           DistrictId: 'lyon-ainay',
+          addressCity: 'lyon',
           roomCount: 3,
         }],
         Room: [{
@@ -63,11 +61,10 @@ describe('Renting - Routes', () => {
           basePrice: 12300,
         }],
       }))();
-      const email = `john${Math.random().toString().slice(2)}@doe.fr`;
       const renting = await Renting.handleCreateClientAndRentingRoute({
         pack: 'comfort',
         booking: {
-          email,
+          email: `${u.id('client')}@test.com`,
           firstName: 'John',
           lastName: 'Doe',
         },
@@ -83,20 +80,18 @@ describe('Renting - Routes', () => {
         .toEqual(D.startOfDay(new Date()));
       expect(renting.price).toEqual(expectedPeriodPrice);
       expect(renting.serviceFees).toEqual(3000);
-      expect(client.email).toEqual(email);
+      expect(client.email).toEqual(`${u.id('client')}@test.com`);
 
-      expect(Client.handleAfterCreate).toHaveBeenCalled();
-      expect(Renting.handleAfterCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          packLevel: 'comfort',
-        }),
-        expect.anything()
-      );
+      expect(Utils.snapshotableLastCall(spiedSendTemplate))
+        .toMatchSnapshot();
+      expect(Utils.snapshotableLastCall(spiedCreateContact))
+        .toMatchSnapshot();
     });
   });
 
   describe('.handleAddCheckinDateHandler', () => {
     it('should create a checkin event and send it to zapier', async () => {
+      const spiedPost = jest.spyOn(Zapier, 'post');
       const { unique: u } = await fixtures((u) => ({
         Apartment: [{
           id: u.id('apartment'),
@@ -115,7 +110,7 @@ describe('Renting - Routes', () => {
           id: u.id('client'),
           firstName: 'John',
           lastName: 'Doe',
-          email: `john-${u.int(1)}@doe.something`,
+          email: `${u.id('client')}@test.com`,
         }],
         Renting: [{
           id: u.id('renting'),
@@ -130,8 +125,6 @@ describe('Renting - Routes', () => {
         values: { dateAndTime: D.parse('2016-01-02T12:30') },
         ids: [u.id('renting')],
       });
-
-      await Promise.delay(200);
 
       const event = await Event.findOne({ where: { EventableId: u.id('renting') }});
 

@@ -1,5 +1,4 @@
 const { DataTypes }         = require('sequelize');
-const _                     = require('lodash');
 const { TRASH_SCOPES }      = require('../../const');
 const Zapier                = require('../../vendor/zapier');
 const { required }          = require('../../utils');
@@ -8,7 +7,7 @@ const sequelize             = require('../sequelize');
 const collection            = require('./collection');
 const hooks                 = require('./hooks');
 
-const postToZapier = _.curry(Zapier.post, 2)('zdso65');
+const { methodify } = Utils;
 
 const Event = sequelize.define('Event', {
   id: {
@@ -82,19 +81,15 @@ Event.associate = (models) => {
   });
 };
 
-Event.prototype.zapCreatedOrUpdated = function(args) {
-  return Event.zapCreatedOrUpdated(Object.assign({ event: this }, args));
-};
 Event.zapCreatedOrUpdated = function({ event = required() }) {
-  return postToZapier(event.dataValues || event);
+  return Zapier.post('zdso65', event.dataValues || event);
 };
+methodify(Event, 'zapCreatedOrUpdated');
 
-Event.prototype.zapDeleted = function(args) {
-  return Event.zapDeleted(Object.assign({ event: this }, args));
-};
 Event.zapDeleted = function({ event = required() }) {
-  return postToZapier({ id: event.id, delete: true });
+  return Zapier.post('zdso65', { id: event.id, delete: true });
 };
+methodify(Event, 'zapDeleted');
 
 Event.collection = collection;
 Event.routes = (app) => {

@@ -1,6 +1,11 @@
+jest.mock('../../../src/vendor/zapier');
+
 const D                   = require('date-fns');
+const Promise             = require('bluebird');
 const fixtures            = require('../../../__fixtures__');
 const models              = require('../../../src/models');
+const Utils               = require('../../../src/utils');
+const Zapier              = require('../../../src/vendor/zapier');
 
 const { Renting } = models;
 
@@ -385,13 +390,13 @@ describe('Renting - Model', () => {
         client: renting.Client,
         room: renting.Room,
         apartment: renting.Room.Apartment,
-        hooks: false,
       });
 
       expect(isCreated).toEqual(false);
     });
 
-    test('It should create a checkin event', async () => {
+    test('It should create a checkin event and post to zapier', async () => {
+      const spiedPost = jest.spyOn(Zapier, 'post');
       const { unique: u } = await fixtures((u) => ({
         Apartment: [{
           id: u.id('apartment'),
@@ -414,7 +419,7 @@ describe('Renting - Model', () => {
           status: 'active',
           bookingDate: D.parse('2016-01-01'),
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       const renting = await Renting.scope('room+apartment').findOne({
         where: { id: u.id('renting') },
@@ -426,10 +431,11 @@ describe('Renting - Model', () => {
         client: renting.Client,
         room: renting.Room,
         apartment: renting.Room.Apartment,
-        hooks: false,
       });
 
       expect(isCreated).toEqual(true);
+      expect(Utils.snapshotableLastCall(spiedPost))
+        .toMatchSnapshot();
     });
   });
 

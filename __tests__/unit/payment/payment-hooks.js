@@ -41,7 +41,7 @@ describe('Payment - Hooks', () => {
         OrderId: u.id('order'),
       });
 
-      spiedFormat.mockClear()
+      spiedFormat.mockClear();
 
       const order = await models.Order.findById(u.id('order'), {
         include: [models.Metadata],
@@ -84,7 +84,7 @@ describe('Payment - Hooks', () => {
           amount: 10000,
           OrderId: u.id('order'),
         }],
-      }))({ method: 'create', hooks: false })
+      }))()
       .tap(({ instances: { cardPayment, manualPayment } }) => Promise.all([
         expect(cardPayment.update({ amount: 20000 }))
           .rejects.toThrowErrorMatchingSnapshot(),

@@ -273,7 +273,7 @@ describe('Renting - Hooks', () => {
           RoomId: u.id('room'),
           status: 'draft',
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       const actual =
           Renting.handleAfterUpdate(renting.set({ status: 'cancelled' }), {});

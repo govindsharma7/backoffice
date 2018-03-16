@@ -20,7 +20,7 @@ describe('Event', () => {
           termable: 'Event',
           TermableId: u.id('event'),
         }],
-      }))({ method: 'create', hooks: false });
+      }))();
 
       const event =
         await models.Event.scope('event-category').findById(u.id('event'));
