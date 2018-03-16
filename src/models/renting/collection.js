@@ -38,9 +38,18 @@ module.exports = function() {
         return object;
       },
     }, {
+      field: 'checkoutDate',
+      type: 'Date',
+      async get(object) {
+        return (await object.requireScopes(['checkoutDate'])).checkoutDate;
+      },
+    }, {
       field: 'period',
       type: 'Enum',
       enums: ['current', 'past', 'future'],
+      async get(object) {
+        return (await object.requireScopes(['checkoutDate'])).period;
+      },
     }],
     actions: [{
       name: 'Create First Rent Order',
