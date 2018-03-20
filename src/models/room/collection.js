@@ -43,7 +43,7 @@ module.exports = function({ Room, Picture, Term }) {
       field: 'depositPrice',
       type: 'Number',
       get(object) {
-        return Utils.getDepositPrice(object.Apartment);
+        return object.Apartment && Utils.getDepositPrice(object.Apartment);
       },
     }, {
       field: 'preview',

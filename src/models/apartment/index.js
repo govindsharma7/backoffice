@@ -117,8 +117,12 @@ Apartment.generateDescriptionFr = function(args) {
       'dans le quartier.',
       'aux environs.',
     ])[0],
-    `La colocation est à l'étage n°${apartment.floor}`,
-    `${apartment.elevator ? 'avec ascenceur' : ''}. Ell est`,
+    'La colocation est',
+    (apartment.floor ?
+      `à l'étage ${apartment.floor} ${apartment.elevator ? 'avec ascenceur' : ''}.` :
+      'au rez-de-chaussée.'
+    ),
+    'Elle est',
     `${_.shuffle(['prête-à-vivre', 'entièrement meublée'])[0]} et`,
     `${_.shuffle(['offre', 'possède', 'propose', 'dispose d\''])[0]} une cuisine`,
     _.shuffle([
@@ -210,8 +214,12 @@ Apartment.generateDescriptionEn = function(args) {
       'close-by.',
       'close at hand.',
     ])[0],
-    `The colocation is on floor ${apartment.floor}`,
-    `${apartment.elevator ? ', with elevator' : ''}. It is`,
+    'The colocation is on',
+    (apartment.floor ?
+      `the floor ${apartment.floor} ${apartment.elevator ? ', with elevator' : ''}.` :
+      'the ground floor.'
+    ),
+    'It is',
     _.shuffle(['entirely equipped', 'entirely furnished', 'ready-to-live-in'])[0],
     `and ${_.shuffle(['is composed of', 'includes', 'consists of'])[0]} a`,
     _.shuffle(['fully equipped', 'large', 'fitted', 'complete'])[0],
