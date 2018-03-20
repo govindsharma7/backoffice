@@ -38,6 +38,14 @@ module.exports = function({ Room, Picture, Term }) {
         return (await object.requireScopes(['availableAt'])).serviceFees;
       },
     }, {
+      // There's no need to add Apartment to the scope, since Forest
+      // loads belongsTo relations automatically.
+      field: 'depositPrice',
+      type: 'Number',
+      get(object) {
+        return Utils.getDepositPrice(object.Apartment);
+      },
+    }, {
       field: 'preview',
       description: 'frontend preview url',
       type: 'String',
