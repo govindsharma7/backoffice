@@ -205,6 +205,9 @@ describe('Room - model', () => {
           }, {
             id: u.id('room4'),
             ApartmentId: u.id('apartment2'),
+          }, {
+            id: u.id('room5'),
+            ApartmentId: u.id('apartment2'),
           }],
           Client: [{
             id: u.id('client'),
@@ -219,17 +222,23 @@ describe('Room - model', () => {
             ClientId: u.id('client'),
             RoomId: u.id('room1'),
           }, {
-            id: u.id('past-renting'),
-            status: 'active',
-            bookingDate: oneYearAgo,
-            ClientId: u.id('client'),
-            RoomId: u.id('room2'),
-          }, {
             id: u.id('current-renting1'),
             status: 'active',
             bookingDate: oneYearAgo,
             ClientId: u.id('client'),
             RoomId: u.id('room1'),
+          }, {
+            id: u.id('future-renting'),
+            status: 'draft',
+            bookingDate: oneMonthFromNow,
+            ClientId: u.id('client'),
+            RoomId: u.id('room1'),
+          }, {
+            id: u.id('past-renting'),
+            status: 'active',
+            bookingDate: oneYearAgo,
+            ClientId: u.id('client'),
+            RoomId: u.id('room2'),
           }, {
             id: u.id('current-renting2'),
             status: 'active',
@@ -243,11 +252,11 @@ describe('Room - model', () => {
             ClientId: u.id('client'),
             RoomId: u.id('room4'),
           }, {
-            id: u.id('future-renting'),
-            status: 'draft',
-            bookingDate: oneMonthFromNow,
+            id: u.id('past-renting2'),
+            status: 'active',
+            bookingDate: oneYearAgo,
             ClientId: u.id('client'),
-            RoomId: u.id('room1'),
+            RoomId: u.id('room5'),
           }],
           Event: [{
             type: 'checkout',
@@ -258,6 +267,12 @@ describe('Room - model', () => {
           }, {
             type: 'checkout',
             EventableId: u.id('past-renting'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }, {
+            type: 'checkout',
+            EventableId: u.id('past-renting2'),
             eventable: 'Renting',
             startDate: oneMonthAgo,
             endDate: oneMonthAgo,
@@ -296,10 +311,12 @@ describe('Room - model', () => {
         });
         const room1 = rooms.find(({ id }) => id === u.id('room1'));
         const room3 = rooms.find(({ id }) => id === u.id('room3'));
+        const room5 = rooms.find(({ id }) => id === u.id('room5'));
 
-        expect(rooms.length).toEqual(2);
+        expect(rooms.length).toEqual(3);
         expect(room1.availableAt).toEqual(oneMonthFromNow);
         expect(room3.availableAt).toEqual(new Date(0));
+        expect(room5.availableAt).toEqual(oneMonthAgo);
       });
 
       it('can find only available rooms', async () => {
@@ -312,9 +329,11 @@ describe('Room - model', () => {
           },
         });
         const room3 = rooms.find(({ id }) => id === u.id('room3'));
+        const room5 = rooms.find(({ id }) => id === u.id('room5'));
 
-        expect(rooms.length).toEqual(1);
+        expect(rooms.length).toEqual(2);
         expect(room3.availableAt).toEqual(new Date(0));
+        expect(room5.availableAt).toEqual(oneMonthAgo);
       });
     });
   });

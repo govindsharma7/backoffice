@@ -86,10 +86,6 @@ module.exports = function({ Room, Picture, Term }) {
 
     segments: TRASH_SEGMENTS.concat(
       {
-        name: 'Availability',
-        scope: 'availableAt',
-      },
-      {
         name: 'default',
         scope: 'availableAt',
       },

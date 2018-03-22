@@ -111,10 +111,9 @@ Room.associate = (models) => {
     if ( args.availability === 'sellable' || args.availability === 'available' ) {
       where = { [Op.or]: [
         { '$Rentings.id$': null },
-        { '$Rentings->Events.id$': args.availability === 'sellable' ?
-          { [Op.not]: null } :
-          { [Op.lte]: Utils.now() },
-        },
+        args.availability === 'sellable' ?
+          { '$Rentings->Events.id$': { [Op.not]: null } } :
+          { '$Rentings->Events.startDate$': { [Op.lte]: Utils.now() } },
       ] };
     }
 
