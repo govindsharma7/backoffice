@@ -32,7 +32,7 @@ const Room = sequelize.define('Room', {
   ),
   status: {
     type:                   DataTypes.ENUM('draft', 'active'),
-    defaultValue: 'active',
+    defaultValue: 'draft',
     // required: true,
     // allowNull: false,
   },
@@ -106,15 +106,15 @@ Room.associate = (models) => {
        includeClient: false,
        availability: 'any',
     }, _args);
-    let where = {};
+    const where = { status: 'active' };
 
     if ( args.availability === 'sellable' || args.availability === 'available' ) {
-      where = { [Op.or]: [
+      where[Op.or] = [
         { '$Rentings.id$': null },
         args.availability === 'sellable' ?
           { '$Rentings->Events.id$': { [Op.not]: null } } :
           { '$Rentings->Events.startDate$': { [Op.lte]: Utils.now() } },
-      ] };
+      ];
     }
 
     return {
@@ -138,7 +138,7 @@ Room.associate = (models) => {
     };
   });
 
-  // This might be useful some day but isn't used now
+  // This might be useful some day but isn't used nor tested now
   ['currentClient', 'latestClient'].forEach((scopeName) =>
     Room.addScope(scopeName, () => ({
       include: [{
