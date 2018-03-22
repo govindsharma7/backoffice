@@ -3,6 +3,7 @@ const Promise           = require('bluebird');
 const D                 = require('date-fns');
 const _                 = require('lodash');
 const uuid              = require('uuid/v4');
+const Op                = require('../../operators');
 const { TRASH_SCOPES }  = require('../../const');
 const Utils             = require('../../utils');
 const sequelize         = require('../sequelize');
@@ -100,24 +101,43 @@ Room.associate = (models) => {
     scope: { metadatable: 'Room' },
   });
 
-  Room.addScope('availableAt', (args = { includeClient: false }) => ({
-    subQuery: false, // we're good, there's only one latestRenting
-    attributes: { include: [
-      [sequelize.literal([
-        '(CASE WHEN `Rentings`.`id` IS NULL',
-          'THEN \'1970-01-01T00:00:00Z\'',
-          'ELSE `Rentings->Events`.`startDate`',
-        'END)',
-      ].join(' ')), 'availableAt'],
-    ] },
-    include: [{
-      model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
-      required: false,
-      include: args.includeClient ? [{
-        model: models.Client.scope('clientMeta'),
-      }] : [],
-    }],
-  }));
+  Room.addScope('availableAt', (_args) => {
+    const args = Object.assign({
+       includeClient: false,
+       availability: 'any',
+    }, _args);
+    let where = {};
+
+    if ( args.availability === 'sellable' || args.availability === 'available' ) {
+      where = { [Op.or]: [
+        { '$Rentings.id$': null },
+        { '$Rentings->Events.id$': args.availability === 'sellable' ?
+          { [Op.not]: null } :
+          { [Op.lte]: Utils.now() },
+        },
+      ] };
+    }
+
+    return {
+      subQuery: false, // we're good, there's only one latestRenting
+      attributes: { include: [
+        [sequelize.literal([
+          '(CASE WHEN `Rentings`.`id` IS NULL',
+            'THEN \'1970-01-01T00:00:00Z\'',
+            'ELSE `Rentings->Events`.`startDate`',
+          'END)',
+        ].join(' ')), 'availableAt'],
+      ] },
+      where,
+      include: [{
+        model: models.Renting.scope({ method: ['latestRenting', 'Rentings'] }),
+        required: false,
+        include: args.includeClient ? [{
+          model: models.Client.scope('clientMeta'),
+        }] : [],
+      }],
+    };
+  });
 
   // This might be useful some day but isn't used now
   ['currentClient', 'latestClient'].forEach((scopeName) =>

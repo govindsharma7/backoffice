@@ -24,6 +24,8 @@ module.exports = function({ Apartment, Picture, Term, Room, Client }) {
     }, {
       field: 'housemates',
       type: ['String'],
+      // TODO: this is too complex and doesn't belong here.
+      // It should move to apartment/index.js and be unit-tested
       async get(object) {
         const rooms = await scopedRoom.findAll({
           where: { ApartmentId: object.id },

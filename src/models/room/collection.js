@@ -1,5 +1,4 @@
 const _                   = require('lodash');
-const Op                  = require('../../operators');
 const {
   TRASH_SEGMENTS,
   CITIES,
@@ -98,11 +97,8 @@ module.exports = function({ Room, Picture, Term }) {
         name: `Available Rooms ${_.capitalize(city)}`,
         // There's no need to add Apartment to the scope, since Forest
         // loads belongsTo relations automatically.
-        scope: 'availableAt',
-        where: {
-          '$Rentings->Events.startDate$': { [Op.lte]: Utils.now() },
-          '$Apartment.addressCity$': city,
-        },
+        scope: { method: ['availableAt', { availability: 'sellable' }] },
+        where: { '$Apartment.addressCity$': city },
       }))
     ),
   };

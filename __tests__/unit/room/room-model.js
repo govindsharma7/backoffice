@@ -176,13 +176,14 @@ describe('Room - model', () => {
 
   describe('scopes', () => {
     describe('availableAt', () => {
-      it('can find all rooms from lyon with their availability', async () => {
-        const now = new Date();
-        const oneYearAgo = D.subYears(now, 1);
-        const oneMonthAgo = D.subMonths(now, 1);
-        const oneMonthFromNow = D.addMonths(now, 1);
+      const now = new Date();
+      const oneYearAgo = D.subYears(now, 1);
+      const oneMonthAgo = D.subMonths(now, 1);
+      const oneMonthFromNow = D.addMonths(now, 1);
+      let u;
 
-        const { unique: u } = await fixtures((u) => ({
+      beforeAll(async () => {
+        const { unique } = await fixtures((u) => ({
           Apartment: [{
             id: u.id('apartment1'),
             addressCity: 'lyon',
@@ -263,11 +264,15 @@ describe('Room - model', () => {
           }],
         }))();
 
+        u = unique;
+      });
+
+      it('can find all rooms from lyon with their availability', async () => {
         const rooms = await models.Room.scope('availableAt').findAll({
           include: [models.Apartment],
           where: {
             '$Apartment.addressCity$': 'lyon',
-            '$Apartment.id$': { $in: [u.id('apartment1'), u.id('apartment2')] },
+            'ApartmentId': { $in: [u.id('apartment1'), u.id('apartment2')] },
           },
         });
         const room1 = rooms.find(({ id }) => id === u.id('room1'));
@@ -279,118 +284,40 @@ describe('Room - model', () => {
         expect(room2.availableAt).toEqual(null);
         expect(room3.availableAt).toEqual(new Date(0));
       });
+
+      it('can find only sellable rooms', async () => {
+        const scoped = models.Room.scope({
+          method: ['availableAt', { availability: 'sellable' }],
+        });
+        const rooms = await scoped.findAll({
+          where: {
+            'ApartmentId': { $in: [u.id('apartment1'), u.id('apartment2')] },
+          },
+        });
+        const room1 = rooms.find(({ id }) => id === u.id('room1'));
+        const room3 = rooms.find(({ id }) => id === u.id('room3'));
+
+        expect(rooms.length).toEqual(2);
+        expect(room1.availableAt).toEqual(oneMonthFromNow);
+        expect(room3.availableAt).toEqual(new Date(0));
+      });
+
+      it('can find only available rooms', async () => {
+        const scoped = models.Room.scope({
+          method: ['availableAt', { availability: 'available' }],
+        });
+        const rooms = await scoped.findAll({
+          where: {
+            'ApartmentId': { $in: [u.id('apartment1'), u.id('apartment2')] },
+          },
+        });
+        const room3 = rooms.find(({ id }) => id === u.id('room3'));
+
+        expect(rooms.length).toEqual(1);
+        expect(room3.availableAt).toEqual(new Date(0));
+      });
     });
   });
-
-  // describe('.checkAvailability', () => {
-  //   const date = D.parse('2017-07-07 Z');
-  //
-  //   test('no Rentings == isAvailable', () =>
-  //     Room.checkAvailability({ rentings: [], date })
-  //       .then((isAvailable) => expect(isAvailable).toEqual(true))
-  //   );
-  //
-  //   test('past bookingDate + no checkoutDate == !isAvailable', () =>
-  //     Room.checkAvailability({
-  //         rentings: [{ bookingDate: D.parse('2017-01-01 Z'), get: getNull }],
-  //         date,
-  //       })
-  //       .then((isAvailable) => expect(isAvailable).toEqual(false))
-  //   );
-  //
-  //   test('future bookingDate + no checkoutDate == !isAvailable', () =>
-  //     Room.checkAvailability({
-  //         rentings: [{ bookingDate: D.parse('2017-12-12 Z'), get: getNull }],
-  //         date,
-  //       })
-  //       .then((isAvailable) => expect(isAvailable).toEqual(false))
-  //   );
-  //
-  //   test('past bookingDate + future checkoutDate == !isAvailable', () =>
-  //     Room.checkAvailability({
-  //         rentings: [{
-  //           bookingDate: D.parse('2017-01-01 Z'),
-  //           get: () => D.parse('2017-12-12'),
-  //         }],
-  //         date,
-  //       })
-  //       .then((isAvailable) => expect(isAvailable).toEqual(false))
-  //   );
-  //
-  //   test('past bookingDate + past checkoutDate == !isAvailable', () =>
-  //     Room.checkAvailability({
-  //         rentings: [{
-  //           bookingDate: D.parse('2017-01-01 Z'),
-  //           get: () => D.parse('2017-02-02'),
-  //         }],
-  //         date,
-  //       })
-  //       .then((isAvailable) => expect(isAvailable).toEqual(true))
-  //   );
-  // });
-  //
-  // describe('.getEarliestAvailability', () => {
-  //   const now = D.parse('2017-06-06');
-  //   const futureDate = D.parse('2017-12-12');
-  //   const futureSat = D.parse('2017-12-16');
-  //   const pastDate = D.parse('2017-02-02');
-  //
-  //   test('no Rentings == now', () => Room.getEarliestAvailability({
-  //       rentings: [],
-  //       now,
-  //     })
-  //     .then((date) => expect(date).toBe(now))
-  //   );
-  //
-  //   test('past bookingDate + no checkoutDate == !isAvailable', () =>
-  //     Room.getEarliestAvailability({
-  //       rentings: [{ bookingDate: D.parse('2017-01-01 Z'), get: getNull }],
-  //       now,
-  //     })
-  //     .then((date) => expect(date).toEqual(false))
-  //   );
-  //
-  //   test('future bookingDate + no checkoutDate == !isAvailable', () =>
-  //     Room.getEarliestAvailability({
-  //       rentings: [{ bookingDate: D.parse('2017-12-12 Z'), get: getNull }],
-  //       now,
-  //     })
-  //     .then((date) => expect(date).toEqual(false))
-  //   );
-  //
-  //   test('past bookingDate + future checkoutDate == checkoutDate + 1 day', () =>
-  //     Room.getEarliestAvailability({
-  //       rentings: [{
-  //         bookingDate: D.parse('2017-01-01 Z'),
-  //         get: () => futureDate,
-  //       }],
-  //       now,
-  //     })
-  //     .then((date) => expect(date).toEqual(D.addDays(futureDate, 1)))
-  //   );
-  //
-  //   test('past bookingDate + future checkoutDate (Sat) == checkoutDate + 2 days', () =>
-  //     Room.getEarliestAvailability({
-  //       rentings: [{
-  //         bookingDate: D.parse('2017-01-01 Z'),
-  //         get: () => futureSat,
-  //       }],
-  //       now,
-  //     })
-  //     .then((date) => expect(date).toEqual(D.addDays(futureSat, 2)))
-  //   );
-  //
-  //   test('past bookingDate + past checkoutDate == now', () =>
-  //     Room.getEarliestAvailability({
-  //       rentings: [{
-  //         bookingDate: D.parse('2017-01-01 Z'),
-  //         get: () => pastDate,
-  //       }],
-  //       now,
-  //     })
-  //     .then((date) => expect(date).toEqual(now))
-  //   );
-  // });
 
   describe('.getPriceAndFees', () => {
     test('it should calculate the price and service fees for the renting', async () => {
