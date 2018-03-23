@@ -95,16 +95,21 @@ module.exports = function({ Room, Picture, Term }) {
         // There's no need to add Apartment to the scope, since Forest
         // loads belongsTo relations automatically.
         scope: { method: ['availableAt', { availability: 'sellable' }] },
-        where: { '$Apartment.addressCity$': city },
+        where: {
+          status: 'active',
+          '$Apartment.addressCity$': city,
+        },
       })),
       ['3,6,7,8', '1,2,4', '5,9'].map((zone) => ({
         name: `Available Rooms Lyon${zone}`,
         // There's no need to add Apartment to the scope, since Forest
         // loads belongsTo relations automatically.
         scope: { method: ['availableAt', { availability: 'sellable' }] },
-        where: { '$Apartment.addressZip$': {
-            [Op.or]: zone.split(',').map((arrdt) => `6900${arrdt}`),
-        } },
+        where: {
+          status: 'active',
+          '$Apartment.addressZip$':
+            { [Op.or]: zone.split(',').map((arrdt) => `6900${arrdt}`) },
+        },
       }))
     ),
   };

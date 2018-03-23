@@ -106,7 +106,7 @@ Room.associate = (models) => {
        includeClient: false,
        availability: 'any',
     }, _args);
-    const where = { status: 'active' };
+    const where = {};
 
     if ( args.availability === 'sellable' || args.availability === 'available' ) {
       where[Op.or] = [
