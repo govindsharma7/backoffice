@@ -85,6 +85,7 @@ Payment.zapCreated = function(args) {
   return Zapier.post('ssjjcr', {
     messageType: 'payment',
     client: client.fullName,
+    email: client.email,
     order: order.label,
     amount: payment.amount / 100,
     date: D.format(payment.createdAt, 'DD/MM/YYYY'),

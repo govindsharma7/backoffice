@@ -26,6 +26,7 @@ Array [
     "city": undefined,
     "client": "John DOE",
     "date": "02/01/2017",
+    "email": "SNAPSHOTABLE-UUID@test.com",
     "messageType": "payment",
     "order": "A random order",
     "room": undefined,
