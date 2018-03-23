@@ -44,6 +44,7 @@ const errorCodesMap = {
   '01111': 'payment.invalidCardNumber',
   '01113': 'payment.expensesNotAccepted',
   '01116': 'payment.amountLimit',
+  '01121': 'payment.amountLimit',
   '01118': 'payment.cardNotRegistered',
   '01130': 'payment.invalidCVV',
   '01206': 'payment.tooManyAttempts',

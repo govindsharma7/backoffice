@@ -35,6 +35,10 @@ function collection(/*{ Order }*/) {
       get: ({ Client: { firstName, lastName } }) =>
         `${firstName} ${lastName.toUpperCase()}`,
     }, {
+      field: 'clientEmail',
+      type: 'String',
+      get: ({ Client: { email } }) => email,
+    }, {
       field: 'amountTaxExcluded',
       type: 'Number',
       get: ({ OrderItems }) =>
@@ -116,7 +120,7 @@ function routes(app, models) {
     order: [['dueDate', 'DESC']],
     include: [{
       model: Client,
-      attributes: ['firstName', 'lastName'],
+      attributes: ['firstName', 'lastName', 'email'],
     }, {
       model: Payment,
       required: false,
