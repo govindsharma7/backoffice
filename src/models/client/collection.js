@@ -1,5 +1,6 @@
 const _                     = require('lodash');
 const {
+  IDENTITY_FORM_URL,
   TRASH_SEGMENTS,
   CITIES,
 }                           = require('../../const');
@@ -52,7 +53,7 @@ module.exports = function({ Client }) {
       field: 'Identity Record Form',
       type: 'String',
       get(object) {
-        return `https://forms.chez-nestor.com/50392735671964?clientId=${object.id}`;
+        return `${IDENTITY_FORM_URL}?clientId=${object.id}`;
       },
     }, {
       field: 'Download Identity Record',
