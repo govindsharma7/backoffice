@@ -9,7 +9,6 @@ const Utils         = require('../../../src/utils');
 const payline       = require('../../../src/vendor/payline');
 const Sendinblue    = require('../../../src/vendor/sendinblue');
 
-
 const { Order, Metadata, Payment } = models;
 
 let order;

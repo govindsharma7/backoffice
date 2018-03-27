@@ -1,6 +1,9 @@
 const Promise               = require('bluebird');
 const D                     = require('date-fns');
 const fixtures              = require('../../__fixtures__');
+const models                = require('../../src/models');
+
+const { OrderItem } = models;
 
 describe('OrderItem', () => {
   describe('hooks', () => {
@@ -27,13 +30,15 @@ describe('OrderItem', () => {
 
       return Promise.all([
         item.destroy(),
-        item.update({ label: 'different label' }),
+        OrderItem
+          .findById(item.id)
+          .then((item) => item.update({ label: 'different label' })),
         order.createOrderItem({ label: 'another item' }),
       ].map((operation) => expect(operation).rejects.toBeInstanceOf(Error)));
     });
 
     it('should allow updating the foreign keys of an item w/ a receipt #', async () => {
-      const { instances: { item }, unique: u } = await fixtures((u) => ({
+      const { unique: u } = await fixtures((u) => ({
         Apartment: [{
           id: u.id('apartment'),
           DistrictId: 'lyon-ainay',
@@ -63,6 +68,7 @@ describe('OrderItem', () => {
           id: u.id('order'),
           label: 'A random order',
           ClientId: u.id('client'),
+          receiptNumber: `receipt-${u.id('order')}`,
         }],
         OrderItem: [{
           id: u.id('item'),
@@ -73,19 +79,24 @@ describe('OrderItem', () => {
         }],
       }))();
 
-      const wontUpdate = item.update({
-        ProductId: 'comfort-pack',
-        RentingId: u.id('renting2'),
-        quantity: 2,
-      });
+      const wontUpdate =
+        OrderItem
+          .findById(u.id('item'))
+          .then((item) => item.update({
+            ProductId: 'comfort-pack',
+            RentingId: u.id('renting2'),
+            quantity: 2,
+          }));
+      const willUpdate =
+        OrderItem
+          .findById(u.id('item'))
+          .then((item) => item.update({
+            ProductId: 'comfort-pack',
+            RentingId: u.id('renting2'),
+          }));
 
-      const willUpdate = item.update({
-        ProductId: 'comfort-pack',
-        RentingId: u.id('renting2'),
-      });
-
-      expect(wontUpdate).rejects.toBeInstanceOf(Error);
-      expect(willUpdate).resolves.not.toThrow();
+      await expect(wontUpdate).rejects.toBeInstanceOf(Error);
+      await expect(willUpdate).resolves.toEqual(expect.anything());
     });
   });
 });
