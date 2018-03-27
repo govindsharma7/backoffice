@@ -70,6 +70,8 @@ module.exports = function({ Apartment, Picture, Term, Room, Client }) {
         type: 'Date',
       }],
     }, {
+      name: 'Archive Rooms',
+    }, {
       name: 'Import Drive Pics',
       fields: [{
         field: 'urls',

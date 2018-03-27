@@ -32,6 +32,22 @@ module.exports = function(app, { Apartment, Room, Client, Picture }) {
       .catch(Utils.logAndSend(res));
   });
 
+  Apartment.handleArchiveRoomsRoute = function(attributes) {
+    const { ids, collection_name: collectionName } = attributes;
+
+    const where = collectionName === 'Apartment' ?
+      { ApartmentId : { [Op.in]: ids } } :
+      { id : { [Op.in]: ids } } ;
+
+    return Room.destroy({ where });
+  };
+  app.post('/forest/actions/archive-rooms', LEA, wrap(async (req, res) => {
+    const result =
+      await Apartment.handleArchiveRoomsRoute(req.body.data.attributes);
+
+    Utils.createdSuccessHandler(res, 'Archive')(result);
+  }));
+
   Apartment.handleMaintenancePeriodRoute = function(attributes) {
     const { values, ids, collection_name: collectionName } = attributes;
 

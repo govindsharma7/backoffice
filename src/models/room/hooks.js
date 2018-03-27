@@ -34,6 +34,9 @@ module.exports = function({ Room, Apartment, Client }) {
     return true;
   });
 
+  // TODO: find a way to prevent bulkDestroy when a room is occupied
+  // (which happens when archiving an apartment)
+
   // To simplify interaction with WordPress, alias findById to findByIdOrReference
   Room.hook('beforeFind', (options) => {
     let id;

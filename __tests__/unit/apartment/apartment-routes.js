@@ -5,7 +5,7 @@ const app       = require('express')();
 const fixtures  = require('../../../__fixtures__');
 const models    = require('../../../src/models');
 
-const { Apartment } = models;
+const { Apartment, Room, Renting } = models;
 
 describe('Apartment - Routes', () => {
   // Initialize methods in route file
@@ -126,6 +126,51 @@ describe('Apartment - Routes', () => {
       expect(actual[0].Rentings[0].Events.length).toEqual(1);
       expect(actual[0].Rentings[0].Events[0].type).toEqual('checkout');
       expect(actual[0].Rentings[0].Events[0].startDate).toEqual(D.parse('2017-07-23 Z'));
+    });
+  });
+
+  describe('/archive-accomodation', () => {
+    it('should delete all rooms', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Apartment: [{
+          id: u.id('apartment'),
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room1'),
+          ApartmentId: u.id('apartment'),
+        }, {
+          id: u.id('room2'),
+          ApartmentId: u.id('apartment'),
+        }],
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `john-${u.int(1)}@doe.something`,
+        }],
+        Renting: [{
+          id: u.id('renting'),
+          status: 'draft',
+          bookingDate: D.parse('2016-01-01 Z'),
+          ClientId: u.id('client'),
+          RoomId: u.id('room1'),
+        }],
+      }))();
+
+      await Apartment.handleArchiveRoomsRoute({
+        ids: [u.id('apartment')],
+        'collection_name': 'Apartment',
+      });
+
+      const rooms = await Room.findAll({ where: {
+        ApartmentId: u.id('apartment'),
+        deletedAt: null, // during the tests, instances are destroyed in the future :-/
+      } });
+      const renting = await Renting.findById(u.id('renting'));
+
+      expect(rooms.length).toEqual(0);
+      expect(renting.RoomId).toEqual(u.id('room1'));
     });
   });
 });
