@@ -15,7 +15,9 @@ module.exports = function(Model, Picture) {
     field: 'galery',
     type: ['String'],
     async get(object) {
-      const pics = await getPictures({ object });
+      const pics = object.Pictures && object.Pictures.length ?
+        object.Pictures :
+        await getPictures({ object });
 
       return _.sortBy(pics, ['order']).map(({ url }) => url);
     },
@@ -52,7 +54,9 @@ module.exports = function(Model, Picture) {
       type,
       enums: propName === 'alt' ? alts : undefined,
       async get(object) {
-        const pics = await getPictures({ object });
+        const pics = object.Pictures && object.Pictures.length ?
+          object.Pictures :
+          await getPictures({ object });
 
         return (pics[key] || {})[propName];
       },

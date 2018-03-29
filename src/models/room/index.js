@@ -88,7 +88,7 @@ Room.associate = (models) => {
   Room.hasMany(models.Picture, {
     foreignKey: 'PicturableId',
     constraints: false,
-    scope: { picturable: 'Room' },
+    // we don't scope this association → we can retrieve apartment pics as well
   });
   Room.hasMany(models.Term, {
     foreignKey: 'TermableId',
@@ -118,7 +118,9 @@ Room.associate = (models) => {
     }
 
     return {
-      subQuery: false, // we're good, there's only one latestRenting
+      // We can safely prevent subqueries since there's max 1 association with
+      // included models. This prevents combining this scope with other scopes.
+      subQuery: false,
       attributes: { include: [
         [sequelize.literal([
           '(CASE WHEN `Rentings`.`id` IS NULL',
@@ -150,6 +152,17 @@ Room.associate = (models) => {
       }],
     }))
   );
+
+  // This scope isn't used, as it can't be combined with availableAt
+  Room.addScope('allPictures', {
+    include: [{
+      model: models.Picture,
+      on: { PicturableId: { [Op.or]: [
+        { [Op.col]: 'Room.id' },
+        { [Op.col]: 'Room.ApartmentId' },
+      ] } },
+    }],
+  });
 };
 
 // Make a room unavailable for a period of time (from and to included)

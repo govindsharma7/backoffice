@@ -259,6 +259,12 @@ describe('Room - model', () => {
             RoomId: u.id('room5'),
           }],
           Event: [{
+            type: 'checkin',
+            EventableId: u.id('current-renting1'),
+            eventable: 'Renting',
+            startDate: oneMonthAgo,
+            endDate: oneMonthAgo,
+          }, {
             type: 'checkout',
             EventableId: u.id('current-renting1'),
             eventable: 'Renting',
@@ -308,6 +314,7 @@ describe('Room - model', () => {
           where: {
             'ApartmentId': { $in: [u.id('apartment1'), u.id('apartment2')] },
           },
+          limit: 3, // ← make sur the scope is compatible with limit
         });
         const room1 = rooms.find(({ id }) => id === u.id('room1'));
         const room3 = rooms.find(({ id }) => id === u.id('room3'));
@@ -327,6 +334,7 @@ describe('Room - model', () => {
           where: {
             'ApartmentId': { $in: [u.id('apartment1'), u.id('apartment2')] },
           },
+          limit: 2, // ← make sur the scope is compatible with limit
         });
         const room3 = rooms.find(({ id }) => id === u.id('room3'));
         const room5 = rooms.find(({ id }) => id === u.id('room5'));
@@ -334,6 +342,69 @@ describe('Room - model', () => {
         expect(rooms.length).toEqual(2);
         expect(room3.availableAt).toEqual(new Date(0));
         expect(room5.availableAt).toEqual(oneMonthAgo);
+      });
+    });
+
+    describe('allPictures', () => {
+      it('finds all pictures associated with the room or its apartment', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Picture: [{
+            url: 'http://www.test.com/room.jpg',
+            picturable: 'Room',
+            PicturableId: u.id('room'),
+          }, {
+            url: 'http://www.test.com/apartment.jpg',
+            picturable: 'Apartment',
+            PicturableId: u.id('apartment'),
+          }],
+        }))();
+
+        const room = await Room.scope('allPictures').findById(u.id('room'));
+
+        expect(room.Pictures.length).toEqual(2);
+      });
+    });
+
+    // /!\ This test was only used to prove availableAt and allPictures can't
+    // be used toegether with a limit parameter /!\
+    describe('availableAt & allPictures', () => {
+      it('should find available rooms and all their pictures', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{
+            id: u.id('apartment'),
+            DistrictId: 'lyon-ainay',
+          }],
+          Room: [{
+            id: u.id('room'),
+            ApartmentId: u.id('apartment'),
+          }],
+          Picture: [{
+            url: 'http://www.test.com/room.jpg',
+            picturable: 'Room',
+            PicturableId: u.id('room'),
+          }, {
+            url: 'http://www.test.com/apartment.jpg',
+            picturable: 'Apartment',
+            PicturableId: u.id('apartment'),
+          }],
+        }))();
+
+        const scoped = Room.scope('availableAt', 'allPictures');
+        const [room] = await scoped.findAll({
+          where: { id: u.id('room') },
+          // limit: 1, → /!\ limit doesn't work!
+        });
+
+        expect(room.Pictures.length).toEqual(2);
+        expect(room.availableAt).toEqual(new Date(0));
       });
     });
   });
