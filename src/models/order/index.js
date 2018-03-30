@@ -72,6 +72,10 @@ Order.associate = (models) => {
     foreignKey: 'OrderId',
     constraints: false,
   });
+  Order.hasOne(models.Amount, {
+    foreignKey: 'OrderId',
+    constraints: false,
+  });
 
   Order.addScope('rentOrders', {
     include: [{
@@ -180,16 +184,29 @@ Order.associate = (models) => {
     }],
   });
 
-  Order.addScope('lateRent', ({ date = Utils.now() }) => ({
+  const totalPaid = 'IFNULL(`TotalPaid`.`totalPaid`, 0)';
+  const amount = 'IFNULL(`Amount`.`amount`, 0)';
+
+  Order.addScope('pendingRent', () => ({
     subQuery: false, // we're good, all those include are singular
-    where: {
-      dueDate: { [Op.lt]: date },
-      createdAt: { [Op.lt]: D.subDays(date, 7) },
-    },
+    attributes: { include: [
+      [sequelize.literal(totalPaid), 'totalPaid'],
+      [sequelize.literal(amount), 'amount'],
+      [sequelize.literal(`(${totalPaid} - ${amount})`), 'balance'],
+    ] },
+    having: sequelize.literal('`balance` < 0'),
     include: [{
+      attributes: [],
       model: models.OrderItem,
       where: { ProductId: 'rent' },
       required: true,
+      // exclude first-rent orders
+      include: [{
+        attributes: [],
+        model: models.Renting,
+        where: { status: 'active' },
+        required: true,
+      }],
     }, {
       model: models.Client,
       where: {
@@ -199,9 +216,10 @@ Order.associate = (models) => {
       required: true,
     }, {
       model: models.TotalPaid,
-      where: { totalPaid: { [Op.or]: [0, null] } },
-      required: true,
+    }, {
+      model: models.Amount,
     }],
+    group: ['Order.id'],
   }));
 };
 
@@ -408,10 +426,8 @@ Order.sendPaymentRequest = function(args) {
 };
 methodify(Order, 'sendPaymentRequest');
 
-// TODO: improve that shit
 Order.sendRentReminders = function(now = Utils.now()) {
-  return Order.scope('rentOrders')
-    .findAll({
+  return Order.scope('pendingRent').findAll({
       where: {
         [Op.or]: [
           { dueDate: now },
@@ -419,18 +435,11 @@ Order.sendRentReminders = function(now = Utils.now()) {
           { dueDate: D.addDays(now, 5) },
         ],
       },
-      include: [{
-        model: models.Client,
-        where: { status: 'active' },
-      }],
+      include: [models.Amount],
     })
-    .map((order) => Promise.all([
-      order,
-      order.getCalculatedProps(),
-    ]))
-    .filter(([, { balance }]) => balance < 0)
-    .map(([order, { amount }]) =>
-      order.Client.sendRentReminder({ order, amount })
+    // .filter((args, i) => i === 0)
+    .map((order) =>
+      order.Client.sendRentReminder({ order, amount: order.amount })
     );
 };
 

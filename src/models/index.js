@@ -19,6 +19,7 @@ const Setting       = require('./setting');
 const Term          = require('./term');
 // Keep models sorted alphabetically (easier to make sure they're all there)
 // And don't forget to add the name of the model to ./models.js !
+const Amount        = require('./AmountView');
 const TotalPaid     = require('./TotalPaidView');
 const {
   LatestRenting,
@@ -46,6 +47,7 @@ Object.assign(models, {
   Setting,
   Term,
   // Keep models sorted alphabetically!
+  Amount,
   TotalPaid,
   LatestRenting,
   CurrentRenting,

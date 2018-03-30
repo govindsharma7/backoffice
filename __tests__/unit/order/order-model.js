@@ -6,6 +6,7 @@ const fixtures      = require('../../../__fixtures__');
 const orderFixtures = require('../../../__fixtures__/order');
 const models        = require('../../../src/models');
 const Utils         = require('../../../src/utils');
+const Op            = require('../../../src/operators');
 const payline       = require('../../../src/vendor/payline');
 const Sendinblue    = require('../../../src/vendor/sendinblue');
 
@@ -40,63 +41,119 @@ describe('Order', () => {
         .then((order) => expect(order.get('amount')).toEqual(100 * 3 + 200));
     });
 
-    // TODO: fix the code and restor those tests!
-    // describe('lateRent', () => {
-    //   it('finds rent orders that have no payment or 0€ payment', async () => {
-    //     const { unique: u } = await fixtures((u) => ({
-    //       Client: [{
-    //         id: u.id('client'),
-    //         firstName: 'John',
-    //         lastName: 'Doe',
-    //         email: `john-${u.int(1)}@doe.something`,
-    //         status: 'draft',
-    //       }],
-    //       Order: [{
-    //         id: u.id('order1'),
-    //         label: 'A random order',
-    //         ClientId: u.id('client'),
-    //         status: 'active',
-    //         dueDate: D.parse('2016-01-01'),
-    //       }, {
-    //         id: u.id('order2'),
-    //         label: 'A second random order',
-    //         ClientId: u.id('client'),
-    //         status: 'active',
-    //         dueDate: D.parse('2016-01-01'),
-    //       }],
-    //       OrderItem: [{
-    //         id: u.id('item1'),
-    //         label: 'A random item',
-    //         OrderId: u.id('order1'),
-    //         ProductId: 'rent',
-    //       }, {
-    //         id: u.id('item2'),
-    //         label: 'A second random item',
-    //         OrderId: u.id('order1'),
-    //         ProductId: 'service-fees',
-    //       }, {
-    //         id: u.id('item3'),
-    //         label: 'A third random item',
-    //         OrderId: u.id('order2'),
-    //         ProductId: 'rent',
-    //       }],
-    //       Payment: [{
-    //         id: u.id('payment'),
-    //         type: 'card',
-    //         amount: 0,
-    //         OrderId: u.id('order1'),
-    //       }],
-    //     }))();
-    //     const scopedOrder = models.Order.scope({
-    //       method: ['lateRent', { date: D.addWeeks(new Date(), 2) }],
-    //     });
-    //     const lateRents = await scopedOrder.findAll({
-    //       where: { ClientId: u.id('client') },
-    //     });
-    //
-    //     expect(lateRents.length).toEqual(2);
-    //   });
-    // });
+    describe.only('pendingRent', () => {
+      it('finds rent orders that have no payment or 0€ payment', async () => {
+        const { unique: u } = await fixtures((u) => ({
+          Apartment: [{ id: u.id('apart'), DistrictId: 'lyon-ainay' }],
+          Room: [{ id: u.id('room'), ApartmentId: u.id('apart') }],
+          Client: [{
+            id: u.id('client'),
+            firstName: 'John',
+            lastName: 'Doe',
+            email: `john-${u.int(1)}@doe.something`,
+            status: 'active',
+          }],
+          Renting: [{ id: u.id('renting'), status: 'active' }],
+          Order: [{
+            id: u.id('order1'),
+            label: 'A random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+            dueDate: D.parse('2016-01-01'),
+          }, {
+            id: u.id('order2'),
+            label: 'A second random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+            dueDate: D.parse('2016-01-01'),
+          }, {
+            id: u.id('order3'),
+            label: 'A third random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+            dueDate: D.parse('2016-01-01'),
+          }, {
+            id: u.id('order4'),
+            label: 'A fourth random order',
+            ClientId: u.id('client'),
+            status: 'draft',
+            dueDate: D.parse('2016-01-01'),
+          }],
+          OrderItem: [{
+            id: u.id('item1'),
+            label: 'A random item',
+            OrderId: u.id('order1'),
+            ProductId: 'rent',
+            RentingId: u.id('renting'),
+            unitPrice: 12300,
+          }, {
+            id: u.id('item2'),
+            label: 'A second random item',
+            OrderId: u.id('order1'),
+            ProductId: 'service-fees',
+            RentingId: u.id('renting'),
+            untiPrice: 45600,
+          }, {
+            id: u.id('item3'),
+            label: 'A third random item',
+            OrderId: u.id('order2'),
+            ProductId: 'rent',
+            RentingId: u.id('renting'),
+            unitPrice: 78900,
+          }, {
+            id: u.id('item4'),
+            label: 'A fourth random item',
+            OrderId: u.id('order3'),
+            ProductId: 'rent',
+            RentingId: u.id('renting'),
+            unitPrice: 98700,
+          }, {
+            id: u.id('item5'),
+            label: 'A fifth random item',
+            OrderId: u.id('order4'),
+            ProductId: 'rent',
+            RentingId: u.id('renting'),
+            unitPrice: 65400,
+          }],
+          Payment: [{
+            id: u.id('null-payment'),
+            type: 'card',
+            amount: 0,
+            OrderId: u.id('order1'),
+          }, {
+            id: u.id('incomplete-payment'),
+            type: 'card',
+            amount: 8900,
+            OrderId: u.id('order2'),
+          }, {
+            id: u.id('full-payment'),
+            type: 'card',
+            amount: 98700,
+            OrderId: u.id('order3'),
+          }],
+        }))();
+        const now = D.addWeeks(new Date(), 2);
+        const lateRents = await models.Order.scope('pendingRent').findAll({
+          where: { ClientId: u.id('client') },
+          dueDate: { [Op.lt]: now },
+          createdAt: { [Op.lt]: D.subDays(Utils.now(), 7) },
+        });
+        const order1 = lateRents.find(({ id }) => id === u.id('order1'));
+        const order2 = lateRents.find(({ id }) => id === u.id('order2'));
+        const order4 = lateRents.find(({ id }) => id === u.id('order4'));
+
+        expect(lateRents.length).toEqual(3);
+        expect(order1.get('totalPaid')).toEqual(0);
+        expect(order1.get('amount')).toEqual(12300);
+        expect(order1.get('balance')).toEqual(-12300);
+        expect(order2.get('totalPaid')).toEqual(8900);
+        expect(order2.get('amount')).toEqual(78900);
+        expect(order2.get('balance')).toEqual(-70000);
+        expect(order4.get('totalPaid')).toEqual(0);
+        expect(order4.get('amount')).toEqual(65400);
+        expect(order4.get('balance')).toEqual(-65400);
+      });
+    });
   });
 
   describe('#getAmount()', () => {

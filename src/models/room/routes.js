@@ -48,9 +48,15 @@ module.exports = function(app, { Room, Client, Picture, Apartment }) {
       });
 
       rooms.forEach((room) =>
-        room.Pictures = pictures.filter(({ PicturableId }) =>
-          PicturableId === room.id || PicturableId === room.ApartmentId
-        )
+        room.Pictures =
+          pictures
+            .filter(({ PicturableId }) =>
+              PicturableId === room.id || PicturableId === room.ApartmentId
+            )
+            .sort((pic1, pic2) =>
+              pic1.order * ( pic1.picturable === 'Room' ? 1 : 100 ) -
+              pic2.order * ( pic2.picturable === 'Room' ? 1 : 100 )
+            )
       );
     }
 

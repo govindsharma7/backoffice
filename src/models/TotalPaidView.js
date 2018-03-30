@@ -22,7 +22,7 @@ TotalPaid.sync = async function({ logging }) {
   // query from https://stackoverflow.com/questions/612231/how-can-i-select-rows-with-maxcolumn-value-distinct-by-another-column-in-sql
   return sequelize.query([
     'CREATE VIEW `TotalPaid` AS',
-    'SELECT `Payment`.`OrderId`, SUM(`Payment`.`amount`) AS totalPaid',
+    'SELECT `Payment`.`OrderId`, IFNULL(SUM(`Payment`.`amount`), 0) AS totalPaid',
     'FROM `Payment`',
     'WHERE `Payment`.`deletedAt` IS NULL',
     'GROUP BY `Payment`.`OrderId`',

@@ -1,4 +1,5 @@
 const _                   = require('lodash');
+const D                   = require('date-fns');
 const Op                  = require('../../operators');
 const { TRASH_SEGMENTS }  = require('../../const');
 const {
@@ -101,8 +102,15 @@ module.exports = function({ Order, Metadata }) {
         ],
       },
     }, {
+      name: 'Pending Rent',
+      scope: 'pendingRent',
+    }, {
       name: 'Late Rent',
-      scope: 'lateRent',
+      scope: 'pendingRent',
+      where: {
+        dueDate: { [Op.lt]: Utils.now() },
+        createdAt: { [Op.lt]: D.subDays(Utils.now(), 7) },
+      },
     }),
   };
 };
