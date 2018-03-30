@@ -190,6 +190,7 @@ Order.associate = (models) => {
   Order.addScope('pendingRent', () => ({
     subQuery: false, // we're good, all those include are singular
     attributes: { include: [
+      // TODO: get rid of the first two aliases once we got rid of getCalculatedProps
       [sequelize.literal(totalPaid), 'totalPaid'],
       [sequelize.literal(amount), 'amount'],
       [sequelize.literal(`(${totalPaid} - ${amount})`), 'balance'],

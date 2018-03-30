@@ -41,7 +41,7 @@ describe('Order', () => {
         .then((order) => expect(order.get('amount')).toEqual(100 * 3 + 200));
     });
 
-    describe.only('pendingRent', () => {
+    describe('pendingRent', () => {
       it('finds rent orders that have no payment or 0€ payment', async () => {
         const { unique: u } = await fixtures((u) => ({
           Apartment: [{ id: u.id('apart'), DistrictId: 'lyon-ainay' }],
