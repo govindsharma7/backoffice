@@ -24,6 +24,7 @@ const Sendinblue = {
 
 Sendinblue.sendTemplateEmail = function(id, data = {}) {
   const isProd = NODE_ENV === 'production';
+  // const isDev = NODE_ENV === 'development';
   const emailTo = data.emailTo.filter(Boolean);
   const options = {
     emailTo: isProd ? emailTo : emailTo.map(Sendinblue.getSandboxEmail),
@@ -34,9 +35,11 @@ Sendinblue.sendTemplateEmail = function(id, data = {}) {
       ) :
       { ID: id, DATA: JSON.stringify(data, null, '  ') },
   };
+  // const method = isDev ? 'sendTestTemplate' : 'sendTemplate';
+  const method = 'sendTemplate';
 
   if (options.emailTo.length > 0) {
-    return Sendinblue.SMTPApi.sendTemplate(isProd ? id : 1, options);
+    return Sendinblue.SMTPApi[method](isProd ? id : 1, options);
   }
 
   return Promise.resolve({});

@@ -43,7 +43,7 @@ module.exports = function(app) {
 
     switch (req.params.scriptName) {
     case 'sendRentReminders':
-      orders = await models.Order.sendRentReminders();
+      orders = await models.Client.sendRentReminders();
 
       await postSuccess({
         messageType: 'rent reminders',

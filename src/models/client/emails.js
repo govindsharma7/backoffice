@@ -1,6 +1,7 @@
 const D                     = require('date-fns');
 const fr                    = require('date-fns/locale/fr');
 const _                     = require('lodash');
+const Op                    = require('../../operators');
 const Sendinblue            = require('../../vendor/sendinblue');
 const {
   HOME_CHECKIN_FEES,
@@ -211,6 +212,38 @@ Client.sendLateFeesEmail = async function(args) {
     MetadatableId: order.id,
     metadatable: 'Order',
   });
+};
+
+Client.sendRentReminders = function(now = Utils.now()) {
+  return models.Order.scope('pendingRent').findAll({
+      where: {
+        [Op.or]: [
+          { dueDate: now },
+          { dueDate: D.addDays(now, 3) },
+          { dueDate: D.addDays(now, 5) },
+        ],
+      },
+    })
+    // .filter((args, i) => i === 0)
+    .map((order) =>
+      order.Client.sendRentReminder({ order, amount: order.get('amount') })
+    );
+};
+
+Client.updateAndSendLateFees = function(now = Utils.now()) {
+  return models.Order.scope('pendingRent').findAll({
+      where: {
+        dueDate: { [Op.lt]: now },
+        createdAt: { [Op.lt]: D.subDays(now, 7) },
+      },
+    })
+    // .filter((args, i) => i === 0)
+    .map(async (order) => {
+      const updatedOrder = await order.updateLateFees();
+
+      return order.Client
+        .sendRentReminder({ updatedOrder, amount: updatedOrder.get('amount') });
+    });
 };
 
 module.exports = Client;

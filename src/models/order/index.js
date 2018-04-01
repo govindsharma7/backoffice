@@ -1,6 +1,5 @@
 const Promise               = require('bluebird');
 const { DataTypes }         = require('sequelize');
-const D                     = require('date-fns');
 const _                     = require('lodash');
 const Op                    = require('../../operators');
 const { TRASH_SCOPES }      = require('../../const');
@@ -195,7 +194,9 @@ Order.associate = (models) => {
       [sequelize.literal(amount), 'amount'],
       [sequelize.literal(`(${totalPaid} - ${amount})`), 'balance'],
     ] },
-    having: sequelize.literal('`balance` < 0'),
+    where: { [Op.and]: [
+      sequelize.where(sequelize.literal(`(${totalPaid} - ${amount})`), { [Op.lt]: 0 }),
+    ] },
     include: [{
       attributes: [],
       model: models.OrderItem,
@@ -220,7 +221,6 @@ Order.associate = (models) => {
     }, {
       model: models.Amount,
     }],
-    group: ['Order.id'],
   }));
 };
 
@@ -427,26 +427,11 @@ Order.sendPaymentRequest = function(args) {
 };
 methodify(Order, 'sendPaymentRequest');
 
-Order.sendRentReminders = function(now = Utils.now()) {
-  return Order.scope('pendingRent').findAll({
-      where: {
-        [Op.or]: [
-          { dueDate: now },
-          { dueDate: D.addDays(now, 3) },
-          { dueDate: D.addDays(now, 5) },
-        ],
-      },
-      include: [models.Amount],
-    })
-    // .filter((args, i) => i === 0)
-    .map((order) =>
-      order.Client.sendRentReminder({ order, amount: order.amount })
-    );
-};
+Order.updateLateFees = function({ order = required() }) {
 
-// Order.updateLateFees = function(date = Utils.now()) {
-//
-// };
+  return order;
+};
+methodify(Order, 'updateLateFees');
 
 Order.collection = collection;
 Order.routes = routes;
