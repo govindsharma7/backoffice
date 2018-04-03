@@ -63,22 +63,6 @@ Event.associate = (models) => {
     constraints: false,
     as: 'Renting',
   });
-  Event.hasMany(models.Term, {
-    foreignKey: 'TermableId',
-    constraints: false,
-    scope: { termable: 'Event' },
-  });
-
-  Event.addScope('event-category', {
-    attributes: { include: [
-      [sequelize.col('Terms.name'), 'category'],
-    ]},
-    include: [{
-      required: false,
-      model: models.Term,
-      where: { taxonomy: 'event-category' },
-    }],
-  });
 };
 
 Event.zapCreatedOrUpdated = function({ event = required() }) {

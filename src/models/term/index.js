@@ -47,11 +47,6 @@ Term.associate = (models) => {
     constraints: false,
     as: 'Order',
   });
-  Term.belongsTo(models.Event, {
-    foreignKey: 'TermableId',
-    constraints: false,
-    as: 'Event',
-  });
   Term.belongsTo(models.Renting, {
     foreignKey: 'TermableId',
     constraints: false,

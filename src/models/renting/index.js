@@ -502,42 +502,43 @@ methodify(Renting, 'findOrCreateDepositOrder');
   };
 });
 
-Renting.prototype.createOrUpdateRefundEvent = function(date) {
-  const {name} = this.Room;
-  const {firstName, lastName} = this.Client;
-  const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.get('packLevel')]);
-  const category = 'refund-deposit';
-
-  return sequelize.transaction((transaction) =>
-    models.Event.scope('event-category')
-      .findOne({
-        where: {
-          EventableId: this.id,
-          category,
-        },
-        transaction,
-      })
-      .then((event) => {
-        if ( event ) {
-          return event.update({ startDate, endDate: startDate }, transaction);
-        }
-
-        return models.Event.create({
-          startDate,
-          endDate: startDate,
-          summary: `Refund deposit ${firstName} ${lastName}`,
-          description: `${name}`,
-          eventable: 'Renting',
-          EventableId: this.id,
-          Terms: [{
-            name: 'refund-deposit',
-            taxonomy: 'event-category',
-            termable: 'Event',
-          }],
-        }, { transaction });
-      })
-  );
-};
+// TODO: fix this thing
+// Renting.prototype.createOrUpdateRefundEvent = function(date) {
+//   const {name} = this.Room;
+//   const {firstName, lastName} = this.Client;
+//   const startDate = D.addDays(date, DEPOSIT_REFUND_DELAYS[this.get('packLevel')]);
+//   const category = 'refund-deposit';
+//
+//   return sequelize.transaction((transaction) =>
+//     models.Event.scope('event-category')
+//       .findOne({
+//         where: {
+//           EventableId: this.id,
+//           category,
+//         },
+//         transaction,
+//       })
+//       .then((event) => {
+//         if ( event ) {
+//           return event.update({ startDate, endDate: startDate }, transaction);
+//         }
+//
+//         return models.Event.create({
+//           startDate,
+//           endDate: startDate,
+//           summary: `Refund deposit ${firstName} ${lastName}`,
+//           description: `${name}`,
+//           eventable: 'Renting',
+//           EventableId: this.id,
+//           Terms: [{
+//             name: 'refund-deposit',
+//             taxonomy: 'event-category',
+//             termable: 'Event',
+//           }],
+//         }, { transaction });
+//       })
+//   );
+// };
 
 // #findOrCreateCheckinEvent and #findOrCreateCheckoutEvent
 ['checkin', 'checkout'].forEach((type) => {
