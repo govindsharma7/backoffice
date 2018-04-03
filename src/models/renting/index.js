@@ -5,7 +5,7 @@ const _                     = require('lodash');
 const Op                    = require('../../operators');
 const {
   TRASH_SCOPES,
-  DEPOSIT_REFUND_DELAYS,
+  // DEPOSIT_REFUND_DELAYS,
   TWO_OCCUPANTS_FEES,
 }                           = require('../../const');
 const Utils                 = require('../../utils');
