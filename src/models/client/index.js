@@ -103,7 +103,7 @@ const Client = sequelize.define('Client', {
   paymentDelay: {
     type:                     DataTypes.VIRTUAL(DataTypes.INTEGER),
     get() {
-      if ( this.hasScope('clientMeta') ) {
+      if ( this.hasScope('clientMeta') || this.hasScope('hasPaymentDelay') ) {
         const paymentDelay =
           this.Metadata.find(({ name }) => name === 'payment-delay');
 
@@ -128,7 +128,7 @@ const Client = sequelize.define('Client', {
  * Associations
  */
 Client.associate = (models) => {
-  const { fn, col, literal } = sequelize;
+  const { fn, col } = sequelize;
 
   Client.hasMany(models.Renting);
   Client.hasMany(models.Order);
@@ -217,20 +217,11 @@ Client.associate = (models) => {
   Client.addScope('clientMeta', {
     include: [models.Metadata],
   });
-
-  Client.addScope('paymentDelay', {
-    attributes: { include: [
-      [literal([
-        '(CASE WHEN `Metadata`.`name` IS NULL',
-          'THEN 0',
-          'ELSE `Metadata`.`value`',
-        'END)',
-      ].join(' ')), 'paymentDelay'],
-    ] },
+  Client.addScope('hasPaymentDelay', {
     include: [{
+      required: true,
       model: models.Metadata,
       where: { name: 'payment-delay' },
-      required: false,
     }],
   });
 

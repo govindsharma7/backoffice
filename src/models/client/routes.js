@@ -52,7 +52,7 @@ module.exports = (app, { Client, Order, Metadata, Payment }) => {
         return Client.scope(
           { method: ['rentOrdersFor', month] }, // required by createRentOrders
           'uncashedDepositCount', // required by findOrCreateRentOrder
-          'paymentDelay' // required by findOrCreateRentOrder
+          'clientMeta' // required by findOrCreateRentOrder
         ).findAll({ where: { id: { [Op.in]: ids } } });
       })
       .then((clients) => Client.createRentOrders(clients, month))

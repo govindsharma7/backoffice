@@ -437,7 +437,7 @@ describe('Client - Model', () => {
   describe('#findOrCreateRentOrder', () => {
     it('creates an order with appropriate orderitems and attaches orphans', async () => {
       const scopedRenting = models.Renting.scope('room+apartment');
-      const scopedClient = models.Client.scope('uncashedDepositCount', 'paymentDelay');
+      const scopedClient = models.Client.scope('uncashedDepositCount', 'clientMeta');
       const { unique: u } = await fixtures((u) => ({
         Client:[{
           id: u.id('client'),

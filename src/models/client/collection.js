@@ -163,8 +163,7 @@ module.exports = function({ Client }) {
       scope: 'clientMeta',
     }, {
       name: 'paymentDelay',
-      scope: 'paymentDelay',
-      where: { '$Metadata.value$': { [Op.not]: null } },
+      scope: 'hasPaymentDelay',
     }),
   };
 };
