@@ -19,14 +19,17 @@ Amount.sync = async function({ logging }) {
   // every sync (DROP OR REPLACE doesn't work with sqlite).
   await sequelize.query('DROP VIEW IF EXISTS `Amount`', { logging });
 
+  const unitPrice = '`OrderItem`.`unitPrice`';
+  const quantity = '`OrderItem`.`quantity`';
+  // we need to convert enum to DECIMAL
+  const vatRate = 'CAST(CAST(`OrderItem`.`vatRate` AS CHAR) AS DECIMAL)';
+
   // query from https://stackoverflow.com/questions/612231/how-can-i-select-rows-with-maxcolumn-value-distinct-by-another-column-in-sql
   return sequelize.query([
     'CREATE VIEW `Amount` AS',
     'SELECT',
       '`OrderItem`.`OrderId`,',
-      'IFNULL( SUM(',
-        '`OrderItem`.`unitPrice` * `OrderItem`.`quantity` * (`OrderItem`.`vatRate` + 1)',
-      '), 0) AS amount',
+      `IFNULL( SUM( ${unitPrice} * ${quantity} * (${vatRate} + 1) ), 0) AS amount`,
     'FROM `OrderItem`',
     'WHERE `OrderItem`.`deletedAt` IS NULL',
     'GROUP BY `OrderItem`.`OrderId`',
