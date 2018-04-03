@@ -1,8 +1,6 @@
-const {TRASH_SEGMENTS} = require('../../const');
+const { TRASH_SEGMENTS }  = require('../../const');
 
-const cache = new WeakMap();
-
-module.exports = function({ Order, Client }) {
+module.exports = function() {
   return {
     fields: [{
       field: 'type',
@@ -12,16 +10,19 @@ module.exports = function({ Order, Client }) {
     }, {
       field: 'client',
       type: 'String',
-      reference: 'Client.id',
-      get(object) {
-        return getClientMemoized(object);
+      reference: 'Order.ClientId',
+      async get(object) {
+        return (
+          await object.requireScopes(['order+client'], { include: null })
+        ).Order.Client;
       },
     }, {
       field: 'clientName',
       type: 'String',
-      get(object) {
-        return getClientMemoized(object)
-          .then((client) => client.fullName);
+      async get(object) {
+        return (
+          await object.requireScopes(['order+client'], { include: null })
+        ).Order.Client.fullName;
       },
     }],
     actions: [{
@@ -39,22 +40,9 @@ module.exports = function({ Order, Client }) {
     }, {
       name: 'Destroy Payment',
     }],
-    segments: TRASH_SEGMENTS,
+    segments: TRASH_SEGMENTS.concat({
+      name: 'default',
+      scope: 'order+client',
+    }),
   };
-
-  function getClientMemoized(payment) {
-    if ( cache.has(payment) ) {
-      return cache.get(payment);
-    }
-
-    const promise = Order
-      .findById(payment.OrderId, {
-        include: [{ model: Client }],
-      })
-      .then((order) => order.Client);
-
-    cache.set(payment, promise);
-
-    return promise;
-  }
 };

@@ -52,6 +52,15 @@ Payment.associate = ({ Order, Credit }) => {
   Payment.hasMany(Credit, {
     as: 'Refunds',
   });
+
+  Payment.addScope('order+client', {
+    include: [{
+      model: models.Order,
+      include: [{
+        model: models.Client,
+      }],
+    }],
+  });
 };
 
 Payment.refund = (id, values) => Payment

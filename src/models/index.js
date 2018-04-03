@@ -76,10 +76,10 @@ function addWatermark(model, name, definition) {
 }
 
 Model.requireScopes = async function requireScopes(instance, _scopes, _options) {
-  const options = Object.assign({}, _options, {
+  const options = Object.assign({
     where: instance.where(),
     include: instance._options.include || null,
-  });
+  }, _options);
   const missingScopes = _scopes.filter((scope) =>
     instance.get(`_scope_${scope}`) == null
   );
