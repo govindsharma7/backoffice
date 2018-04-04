@@ -48,7 +48,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
   // - Create quote orders
   // - Send booking summary email
   Renting.handleAfterCreate = async (_renting, { transaction }) => {
-    const { id, packLevel, discount = 0 } = _renting;
+    const { id, packLevel, discount = 0, dontSendBookingSummary } = _renting;
     const renting = await Renting.scope('room+apartment').findById(id, {
       include: [{ model: Client }],
       transaction,
@@ -56,7 +56,7 @@ module.exports = function({ Renting, Room, Apartment, Order, Client, OrderItem }
     const { Client: client, Room: room, Room: { Apartment: apartment } } = renting;
 
     await Promise.all([
-      client.sendBookingSummaryEmail({
+      !dontSendBookingSummary && client.sendBookingSummaryEmail({
         renting,
         apartment,
         transaction,

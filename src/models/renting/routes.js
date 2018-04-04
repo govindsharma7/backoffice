@@ -87,6 +87,23 @@ module.exports = function(app, { Renting, Client, Room, Apartment }) {
     Utils.createdSuccessHandler(res, 'Quote order')(result);
   }));
 
+  app.post('/forest/actions/send-booking-summary', LEA, wrap(async (req, res) => {
+    const { ids } = req.body.data.attributes;
+
+    if ( ids.length > 1 ) {
+      throw new Error('Can\'t send multiple booking summary');
+    }
+
+    const renting = await Renting.scope('room+apartment').findById(ids[0], {
+      include: [{ model: Client }],
+    });
+    const { Client: client, Room: { Apartment: apartment } } = renting;
+
+    const result = await client.sendBookingSummaryEmail({ renting, apartment });
+
+    Utils.sentSuccessHandler(res, 'Booking Summary')(result);
+  }));
+
   app.post('/forest/actions/generate-lease', LEA, wrap(async (req, res) => {
     const { ids } = req.body.data.attributes;
 

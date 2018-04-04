@@ -38,17 +38,34 @@ module.exports = function() {
         return object;
       },
     }, {
+      field: 'Do not send Booking Summary',
+      type: 'Boolean',
+      set(object, value) {
+        object.dontSendBookingSummary = value;
+        return object;
+      },
+    }, {
       field: 'checkoutDate',
       type: 'Date',
       async get(object) {
-        return (await object.requireScopes(['checkoutDate'])).checkoutDate;
+        return (await object.requireScopes(['checkoutDate+meta'])).checkoutDate;
       },
     }, {
       field: 'period',
       type: 'Enum',
       enums: ['current', 'past', 'future'],
       async get(object) {
-        return (await object.requireScopes(['checkoutDate'])).period;
+        return (await object.requireScopes(['checkoutDate+meta'])).period;
+      },
+    }, {
+      field: 'isSent',
+      type: 'Enum',
+      enums: ['pending', 'Sent'],
+      async get(object) {
+        const { Metadata } = (await object.requireScopes(['checkoutDate+meta']));
+
+        return Metadata.some(({ value }) => /^Booking Summary/.test(value)) ?
+          'Sent' : 'pending';
       },
     }],
     actions: [{
@@ -77,6 +94,8 @@ module.exports = function() {
         field: 'discount',
         type: 'Number',
       }],
+    }, {
+      name: 'Send Booking Summary',
     }, {
       name: 'Update "do not cash deposit" Option',
       fields: [{
@@ -149,7 +168,7 @@ module.exports = function() {
     }],
     segments : TRASH_SEGMENTS.concat({
       name: 'default',
-      scope: 'checkoutDate',
+      scope: 'checkoutDate+meta',
     }),
   };
 };

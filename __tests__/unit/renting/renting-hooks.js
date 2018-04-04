@@ -252,6 +252,46 @@ describe('Renting - Hooks', () => {
       expect(Utils.snapshotableLastCall(spiedSendTemplate))
         .toMatchSnapshot();
     });
+
+    it('shouldn\'t send a booking summary when noEmail option is true', async () => {
+      const { unique: u } = await fixtures((u) => ({
+        Client: [{
+          id: u.id('client'),
+          firstName: 'John',
+          lastName: 'Doe',
+          email: `${u.id('client')}@test.com`,
+          status: 'draft',
+        }],
+        Apartment: [{
+          id: u.id('apartment'),
+          name: 'Beautiful place',
+          addressCity: 'lyon',
+          DistrictId: 'lyon-ainay',
+        }],
+        Room: [{
+          id: u.id('room'),
+          ApartmentId: u.id('apartment'),
+        }],
+      }))();
+
+      const sendTemplateCallsBefore = spiedSendTemplate.mock.calls.length;
+
+      await Renting.create({
+        id: u.id('renting1'),
+        ClientId: u.id('client'),
+        RoomId: u.id('room'),
+        status: 'draft',
+        packLevel: 'privilege',
+        dontSendBookingSummary: true,
+        price: 24600,
+        serviceFees: 3000,
+        bookingDate: D.parse('2017-02-15T12:00Z'), // 1st day of 2nd 1/2 of month
+      });
+
+      const sendTemplateCallsAfter = spiedSendTemplate.mock.calls.length;
+
+      expect(sendTemplateCallsAfter).toEqual(sendTemplateCallsBefore);
+    });
   });
 
   describe('afterUpdate', () => {
@@ -276,7 +316,7 @@ describe('Renting - Hooks', () => {
       }))();
 
       const actual =
-          Renting.handleAfterUpdate(renting.set({ status: 'cancelled' }), {});
+        Renting.handleAfterUpdate(renting.set({ status: 'cancelled' }), {});
 
       expect(actual).resolves.toEqual(true);
     });

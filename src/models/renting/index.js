@@ -75,6 +75,10 @@ const Renting = sequelize.define('Renting', {
     type:                     DataTypes.VIRTUAL(DataTypes.BOOLEAN),
     defaultValue: false,
   },
+  dontSendBookingSummary: {
+    type:                     DataTypes.VIRTUAL(DataTypes.BOOLEAN),
+    defaultValue: false,
+  },
   // WATCH OUT: only meaningful when checkinDate scope is used
   checkinDate: {
     type:                     DataTypes.VIRTUAL(DataTypes.DATE),
@@ -143,17 +147,21 @@ Renting.associate = (models) => {
     return args;
   });
 
-  Renting.addScope('activeForMonth', (date = Utils.now()) => ({
-    attributes: checkoutDateScopeArgs.attributes,
-    where: {
-      status: 'active',
-      bookingDate: { [Op.lte]: D.endOfMonth(date) },
-      '$Events.startDate$': {
-        [Op.or]: [{ [Op.eq]: null }, { [Op.gte]: D.startOfMonth(date) }],
-      },
-    },
-    include: checkoutDateScopeArgs.include,
+  Renting.addScope('checkoutDate+meta', Object.assign({}, checkoutDateScopeArgs, {
+    include: checkoutDateScopeArgs.include.concat(models.Metadata),
   }));
+
+  Renting.addScope('activeForMonth', (date = Utils.now()) =>
+    Object.assign({}, checkoutDateScopeArgs, {
+      where: {
+        status: 'active',
+        bookingDate: { [Op.lte]: D.endOfMonth(date) },
+        '$Events.startDate$': {
+          [Op.or]: [{ [Op.eq]: null }, { [Op.gte]: D.startOfMonth(date) }],
+        },
+      },
+    })
+  );
 
   [
     'latestRenting',
