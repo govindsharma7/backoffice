@@ -83,32 +83,6 @@ Order.associate = (models) => {
     }],
   });
 
-  Order.addScope('packItems', {
-    include: [{
-      model: models.OrderItem,
-      where: { ProductId: { [Op.like]: '%-pack' } },
-      include: [{
-        model: models.Renting,
-        include: [{
-          model: models.Room,
-        }],
-      }],
-    }],
-  });
-
-  Order.addScope('draftRentOrders', {
-    include: [{
-      model: models.OrderItem,
-      where: {
-        ProductId: 'rent',
-        status: 'draft',
-      },
-      include: [{
-        model: models.Renting,
-      }],
-    }],
-  });
-
   // TODO: this is an attempt at simplifying Sequelize job using views
   Order.addScope('totalPaid', {
     attributes: { include: [
@@ -146,6 +120,8 @@ Order.associate = (models) => {
   ] = 'unitPrice,quantity,vatRate'.split(',')
     .map((col) => `\`OrderItems\`.\`${col}\``);
 
+  // TODO; is this scope in use? I doubt it, because the result of the operation
+  // is incorrect (vatRate ENUM isn't casted to DECIMAL)
   Order.addScope('amount', {
     attributes: [
       'id',

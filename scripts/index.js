@@ -38,7 +38,6 @@ const extractPortfolio =
 const extractPictures =
   'node scripts/extractWordpressPictures.js > data/pictures.json';
 const deletePictures = 'node scripts/deletePictures.js';
-const updateDraftRentOrders = 'node scripts/updateDraftRentOrders.js';
 const updateLateFees = 'node scripts/updateLateFees.js';
 const rentInvoiceReminder = 'node scripts/rentInvoiceReminder.js';
 const archivePastRentings = 'node scripts/archivePastRentings.js';
@@ -69,7 +68,6 @@ const common = {
   generateInvoices: 'node scripts/generateRentingInvoices.js',
   generateDescriptions: 'node scripts/generateDescriptions.js',
   deletePictures,
-  'update:draftRentOrders': updateDraftRentOrders,
   updateLateFees,
   'invoice:reminder': rentInvoiceReminder,
   'archive:pastRentings': archivePastRentings,
