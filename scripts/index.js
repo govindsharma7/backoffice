@@ -65,6 +65,7 @@ const common = {
   fixLatLng: 'node scripts/fixLatLng.js',
   fixEventType: 'node scripts/fixEventType.js',
   fixFeatures: 'node scripts/fixFeatures.js',
+  fixVillebois: 'node scripts/fixVillebois.js',
   generateInvoices: 'node scripts/generateRentingInvoices.js',
   generateDescriptions: 'node scripts/generateDescriptions.js',
   deletePictures,
