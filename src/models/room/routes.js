@@ -1,5 +1,6 @@
 const Promise           = require('bluebird');
 const _                 = require('lodash');
+const D                 = require('date-fns');
 const Liana             = require('forest-express-sequelize');
 const sequelize         = require('../sequelize');
 const makePublic        = require('../../middlewares/makePublic');
@@ -19,13 +20,16 @@ module.exports = function(app, { Room, Client, Picture, Apartment }) {
   // Retrieving just the right amount of info for the website using segments
   // was a pain, so we implemented a specific route
   app.get('/forest/SellableRoom', async (req, res) => {
-    const { page, zone, fields: _fields } = req.query;
+    const { page, zone, date, fields: _fields } = req.query;
     const zips =
       zone.replace(/[^\d,]/g, '').split(',').map((arrdt) => `6900${arrdt}`);
     const zoneFilter = /^lyon\d/.test(zone) ?
       { '$Apartment.addressZip$': { [Op.or]: zips } } :
       { '$Apartment.addressCity$': zone };
-    const where = Object.assign({ status: 'active' }, zoneFilter);
+    const dateFilter = D.isFuture(Number(date)) ?
+      { '$Rentings->Events.startDate$': { [Op.gte]: new Date(Number(date)) } } :
+      {};
+    const where = Object.assign({ status: 'active' }, zoneFilter, dateFilter);
     const include = [Apartment];
     const params = {
       where,

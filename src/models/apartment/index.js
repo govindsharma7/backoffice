@@ -139,7 +139,7 @@ Apartment.generateDescriptionFr = function(args) {
       'bouilloire',
       'poêles',
       'casseroles',
-      'vaiselle',
+      'vaisselle',
       'ustensiles',
     ]).join(', ')}…`,
     _.shuffle(['Ainsi que', 'Mais aussi', 'De même que'])[0],
